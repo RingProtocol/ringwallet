@@ -39,6 +39,11 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ]
+      },
+      workbox: {
+        // Increase the maximum asset size to cache.
+        // Here we set it to 3 MiB (3 * 1024 * 1024 = 3145728 bytes)
+        maximumFileSizeToCacheInBytes: 3145728
       }
     })
   ],

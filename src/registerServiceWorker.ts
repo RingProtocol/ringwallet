@@ -11,4 +11,4 @@ const updateSW = registerSW({
   },
 })
 
-export default updateSW 
+export default updateSW
