@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 export default {
-  driver: 'mysql2',
+  driver: 'pg',
   dbCredentials: {
     connectionString: process.env.DATABASE_URL!,
   },
