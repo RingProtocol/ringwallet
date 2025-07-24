@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/registerserviceworker.ts","./src/vite-env.d.ts","./src/components/actionbuttonlist.tsx","./src/components/infolist.tsx","./src/components/smartcontractactionbuttonlist.tsx","./src/config/index.tsx"],"errors":true,"version":"5.7.3"}
