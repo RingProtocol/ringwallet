@@ -301,7 +301,7 @@ export default function Index() {
       )}
 
       {/* Not mobile (desktop) - Come back on mobile */}
-      {onboardingStatus === 'not-mobile' && (
+      {/*{onboardingStatus === 'not-mobile' && (
         <Page
           colors={{
             bgIos: '#FEFEFE',
@@ -311,7 +311,7 @@ export default function Index() {
           <div>Not mobile</div>
           <div>Please visit site on your mobile device</div>
         </Page>
-      )}
+      )}*/}
 
       {/* Mobile but not PWA - Come back on mobile */}
       {onboardingStatus === 'mobile-not-pwa' && (
