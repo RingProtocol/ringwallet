@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import Head from 'next/head'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, Coins, Home, Copy } from 'lucide-react'
+import { Bell, Coins, Home, Copy, ChevronDown } from 'lucide-react'
 import {
   Page,
   Navbar,
@@ -22,7 +22,7 @@ import { MouseEventHandler, use, useEffect, useState } from 'react'
 import { attestUserAndCreateSubOrg } from '@shared/turnkey'
 import { createAccount } from '@turnkey/viem'
 import { createWalletClient, http } from 'viem'
-import { sepolia } from 'viem/chains'
+import { sepolia, mainnet } from 'viem/chains'
 import { WebauthnStamper } from '@turnkey/webauthn-stamper'
 import { TurnkeyClient } from '@turnkey/http'
 import axios from 'axios'
@@ -126,6 +126,39 @@ export default function Index() {
   const isTabbarIcons = true
   const isTabbarLabels = false
 
+  // 链切换相关状态
+  const [selectedChain, setSelectedChain] = useState<'ethereum' | 'solana' | 'bitcoin' | 'sepolia'>('ethereum')
+  const [chainSelectorOpen, setChainSelectorOpen] = useState(false)
+
+  const chainConfigs = {
+    ethereum: {
+      name: '以太坊',
+      symbol: 'ETH',
+      viemChain: mainnet,
+      color: '#627EEA'
+    },
+    sepolia: {
+      name: 'Sepolia 测试网',
+      symbol: 'ETH',
+      viemChain: sepolia,
+      color: '#627EEA'
+    },
+    solana: {
+      name: 'Solana',
+      symbol: 'SOL',
+      viemChain: null, // Solana 不使用 viem
+      color: '#9945FF'
+    },
+    bitcoin: {
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      viemChain: null, // Bitcoin 不使用 viem
+      color: '#F7931A'
+    }
+  }
+
+  const currentChainConfig = chainConfigs[selectedChain]
+
   const createSubOrgMutation = useMutation({
     mutationFn: async () => {
       const subOrgId = await attestUserAndCreateSubOrg({
@@ -150,6 +183,7 @@ export default function Index() {
     subOrgId: string,
     privateKeyId: string,
     privateKeyPublicAddress: string,
+    chainConfig: typeof currentChainConfig,
   ) => {
     if (!subOrgId || !privateKeyId || !privateKeyPublicAddress) {
       throw new Error('sub-org id or private key not found')
@@ -161,9 +195,14 @@ export default function Index() {
       ethereumAddress: privateKeyPublicAddress,
     })
 
+    // 只有以太坊兼容链才能使用 viem 签名
+    if (!chainConfig.viemChain) {
+      throw new Error(`${chainConfig.name} 暂不支持消息签名`)
+    }
+
     const viemClient = createWalletClient({
       account: viemAccount,
-      chain: sepolia,
+      chain: chainConfig.viemChain,
       transport: http(),
     })
 
@@ -183,6 +222,7 @@ export default function Index() {
       user?.turnkey_suborg!,
       user?.turnkey_private_key_id!,
       user?.turnkey_private_key_public_address!,
+      currentChainConfig,
     )
 
     setTimeout(() => {
@@ -479,8 +519,52 @@ export default function Index() {
                   <Copy className="w-4 h-4" />
                 </Button>
               </BlockTitle>
+              {/* 链选择器 */}
+              <Block strong inset>
+                <Button
+                  onClick={() => setChainSelectorOpen(true)}
+                  className="flex items-center justify-between w-full"
+                  style={{ backgroundColor: currentChainConfig.color, color: 'white' }}
+                >
+                  <span>{currentChainConfig.name}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </Block>
+
+              <Dialog
+                opened={chainSelectorOpen}
+                onBackdropClick={() => setChainSelectorOpen(false)}
+                title="选择区块链网络"
+                content="请选择要使用的区块链网络"
+                buttons={
+                  <>
+                    {Object.entries(chainConfigs).map(([key, config]) => (
+                      <DialogButton
+                        key={key}
+                        onClick={() => {
+                          setSelectedChain(key as any)
+                          setChainSelectorOpen(false)
+                        }}
+                        style={{
+                          backgroundColor: selectedChain === key ? config.color : undefined,
+                          color: selectedChain === key ? 'white' : undefined
+                        }}
+                      >
+                        {config.name} ({config.symbol})
+                      </DialogButton>
+                    ))}
+                    <DialogButton onClick={() => setChainSelectorOpen(false)}>
+                      取消
+                    </DialogButton>
+                  </>
+                }
+              />
+
               <Block>
-                <p>Balance: {ethBalanceQuery.data?.formatted} ETH</p>
+                <p>余额: {ethBalanceQuery.data?.formatted} {currentChainConfig.symbol}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  当前网络: {currentChainConfig.name}
+                </p>
               </Block>
               <Block strong inset className="space-y-4">
                 {!user?.web_push_subscription && (
