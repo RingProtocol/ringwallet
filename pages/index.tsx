@@ -18,7 +18,7 @@ import {
   DialogButton,
   Dialog,
 } from 'konsta/react'
-import { MouseEventHandler, use, useEffect, useState } from 'react'
+import { MouseEventHandler, use, useEffect, useMemo, useState } from 'react'
 import { attestUserAndCreateSubOrg } from '@shared/turnkey'
 import { createAccount } from '@turnkey/viem'
 import { createWalletClient, http } from 'viem'
@@ -30,6 +30,7 @@ import { useBalance } from 'wagmi'
 import { base64ToUint8Array, truncateEthAddress } from '@shared/client-utils'
 import { useInstallWebhookAndOfferUserUpgradeIfAvailable } from '../hooks/useInstallWebhookAndPromptUserUpgradeIfAvailable'
 import { useDetectRuntimeEnvironment } from '../hooks/useDetectRuntimeEnvironment'
+import { useReadLocalStorage, useSaveLocalStorage } from '../utils'
 
 type subOrgFormData = {
   subOrgName: string
@@ -53,6 +54,8 @@ const passkeyHttpClient = new TurnkeyClient(
   },
   stamper,
 )
+
+type typeOfChain = 'ethereum' | 'solana' | 'bitcoin' | 'sepolia'
 
 export default function Index() {
   const isSWInstalled = useInstallWebhookAndOfferUserUpgradeIfAvailable()
@@ -82,9 +85,61 @@ export default function Index() {
   const walletAddress = user?.turnkey_private_key_public_address as
     | `0x${string}`
     | undefined
+
+  // 链切换相关状态
+  const [selectedChain, setSelectedChain] = useState<typeOfChain>('ethereum')
+  const [chainSelectorOpen, setChainSelectorOpen] = useState(false)
+
+  const chainConfigs = {
+    ethereum: {
+      name: '以太坊',
+      symbol: 'ETH',
+      viemChain: mainnet,
+      color: '#627EEA',
+      id: 1,
+    },
+    sepolia: {
+      name: 'Sepolia 测试网',
+      symbol: 'ETH',
+      viemChain: sepolia,
+      color: '#627EEA',
+      id: 11155111
+    },
+    solana: {
+      name: 'Solana',
+      symbol: 'SOL',
+      viemChain: null, // Solana 不使用 viem
+      color: '#9945FF',
+      id: 507
+    },
+    bitcoin: {
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      viemChain: null, // Bitcoin 不使用 viem
+      color: '#F7931A',
+      id: 0
+    }
+  }
+
+  // 使用 selectedChain 作为依赖，当链切换时重新查询余额
+  console.log('selectedChain=', selectedChain);
+  console.log('walletAddress=', walletAddress);
+  console.log('chainConfigs[selectedChain].viemChain?.id,= ', chainConfigs[selectedChain].viemChain?.id)
+
   const ethBalanceQuery = useBalance({
     address: walletAddress,
+    chainId: chainConfigs[selectedChain].viemChain?.id,
+    onError: () => {
+      console.log('ethBalanceQuery error')
+    },
+    onSuccess: () => {
+      console.log('ethBalanceQuery success')
+    },
+    watch: true,
+    // refetchInterval: 10000
   })
+
+  console.log('ethBalanceQuery.data=', ethBalanceQuery.data);
 
   const isLoadingDataToDeriveUi =
     userDataQuery.isLoading || web2Auth.isLoaded === false
@@ -126,36 +181,22 @@ export default function Index() {
   const isTabbarIcons = true
   const isTabbarLabels = false
 
-  // 链切换相关状态
-  const [selectedChain, setSelectedChain] = useState<'ethereum' | 'solana' | 'bitcoin' | 'sepolia'>('ethereum')
-  const [chainSelectorOpen, setChainSelectorOpen] = useState(false)
+  // 从本地存储读取保存的链ID并在组件挂载时设置
+  const saved_chain_id = useReadLocalStorage('selectedChain')
 
-  const chainConfigs = {
-    ethereum: {
-      name: '以太坊',
-      symbol: 'ETH',
-      viemChain: mainnet,
-      color: '#627EEA'
-    },
-    sepolia: {
-      name: 'Sepolia 测试网',
-      symbol: 'ETH',
-      viemChain: sepolia,
-      color: '#627EEA'
-    },
-    solana: {
-      name: 'Solana',
-      symbol: 'SOL',
-      viemChain: null, // Solana 不使用 viem
-      color: '#9945FF'
-    },
-    bitcoin: {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      viemChain: null, // Bitcoin 不使用 viem
-      color: '#F7931A'
+  useEffect(() => {
+    if (saved_chain_id && typeof saved_chain_id === 'string' && Object.keys(chainConfigs).includes(saved_chain_id)) {
+      setSelectedChain(saved_chain_id as typeOfChain)
     }
-  }
+  }, [saved_chain_id]);
+
+  // 当选择的链改变时，重新查询余额
+  useEffect(() => {
+    if (walletAddress && ethBalanceQuery.refetch) {
+      console.log('balance query refetch')
+      ethBalanceQuery.refetch()
+    }
+  }, [selectedChain, walletAddress, ethBalanceQuery]);
 
   const currentChainConfig = chainConfigs[selectedChain]
 
@@ -542,8 +583,12 @@ export default function Index() {
                       <DialogButton
                         key={key}
                         onClick={() => {
-                          setSelectedChain(key as any)
+                          setSelectedChain(key as typeOfChain)
                           setChainSelectorOpen(false)
+                          //切换的链保存起来，供下次启动使用
+                          localStorage.setItem('selectedChain', key)
+                          console.log('set to key=', key, 'value=', config);
+                          // 余额查询会在 useEffect 中自动触发
                         }}
                         style={{
                           backgroundColor: selectedChain === key ? config.color : undefined,
@@ -561,7 +606,7 @@ export default function Index() {
               />
 
               <Block>
-                <p>余额: {ethBalanceQuery.data?.formatted} {currentChainConfig.symbol}</p>
+                <p>余额: {ethBalanceQuery.data?.formatted || '0'} {currentChainConfig.symbol}</p>
                 <p className="text-sm text-gray-500 mt-1">
                   当前网络: {currentChainConfig.name}
                 </p>
