@@ -5,3 +5,6 @@ src/.DS_Store
 .env
 .next
 public/sw.js.map
+public/swe-worker-*.js
+public/*-development.*
+public/workbox-*

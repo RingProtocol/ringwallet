@@ -67,28 +67,15 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-cca50194'], (function (workbox) { 'use strict';
+define(['./workbox-fb90b81a'], (function (workbox) { 'use strict';
 
-  importScripts("/fallback-development.js", "/worker-development.js");
+  importScripts("/worker-development.js");
   self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
       self.skipWaiting();
     }
   });
   workbox.clientsClaim();
-
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
-  workbox.precacheAndRoute([{
-    "url": "/~offline",
-    "revision": "development"
-  }], {
-    "ignoreURLParametersMatching": [/^utm_/, /^fbclid$/, /ts/]
-  });
-  workbox.cleanupOutdatedCaches();
   workbox.registerRoute("/", new workbox.NetworkFirst({
     "cacheName": "start-url",
     plugins: [{
@@ -99,19 +86,11 @@ define(['./workbox-cca50194'], (function (workbox) { 'use strict';
         statusText: "OK",
         headers: e.headers
       }) : e
-    }, {
-      handlerDidError: async ({
-        request: e
-      }) => "undefined" != typeof self ? self.fallback(e) : Response.error()
     }]
   }), 'GET');
   workbox.registerRoute(/.*/i, new workbox.NetworkOnly({
     "cacheName": "dev",
-    plugins: [{
-      handlerDidError: async ({
-        request: e
-      }) => "undefined" != typeof self ? self.fallback(e) : Response.error()
-    }]
+    plugins: []
   }), 'GET');
 
 }));
