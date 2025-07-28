@@ -655,15 +655,11 @@ export default function Index() {
                   Sign Out
                 </Button>
                 <p>
-                  <b>Tab 1</b>
+                  <b>Ring Wallet</b>
                 </p>
                 <p>
                   <span>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                    Alias accusantium necessitatibus, nihil quas praesentium at
-                    quibusdam cupiditate possimus et repudiandae dolorum
-                    delectus quo, similique voluptatem magni explicabo adipisci
-                    magnam ratione!
+                    Ring wallet is a pwa wallet, it's tiny and convinient. Support all chains and all tokens.
                   </span>
                 </p>
               </Block>
@@ -672,7 +668,7 @@ export default function Index() {
           {activeTab === 'feed' && (
             <Block strong inset className="space-y-4">
               <p>
-                <b>Tab 2</b>
+                <b>Transaction History</b>
               </p>
               <p>
                 <span>
@@ -687,7 +683,7 @@ export default function Index() {
           {activeTab === 'airdrop' && (
             <Block strong inset className="space-y-4">
               <p>
-                <b>Tab 3</b>
+                <b>Wallet Settings</b>
               </p>
               <p>
                 <span>
