@@ -136,10 +136,6 @@ export default function Index() {
       console.log('ethBalanceQuery success')
     },
     watch: true,
-<<<<<<< HEAD
-=======
-    // cacheTime: 50000,
->>>>>>> 1ea8121 (fix: balance by set rpc)
     // refetchInterval: 10000
   })
 
@@ -652,9 +648,9 @@ export default function Index() {
                   Sign Message
                 </Button>
 
-                <Button onClick={handleSignMessageClick} rounded large>
+                {/* <Button onClick={handleSignMessageClick} rounded large>
                   Swap 1 USDC to ETH
-                </Button>
+                </Button> */}
                 <Button clear onClick={handleSignoutClick} rounded large>
                   Sign Out
                 </Button>
