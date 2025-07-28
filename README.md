@@ -41,7 +41,8 @@ Let's set up the application. This requires some one-time configuration for cert
 Clone the repository:
 
 ```sh
-git clone https://github.com/anagrambuild/mobile-pwa-with-wallet
+git clone https://github.com/Few-Protocol/PWAWallet
+origin https://github.com/anagrambuild/mobile-pwa-with-wallet
 ```
 
 Install the dependencies

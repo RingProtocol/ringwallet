@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import Head from 'next/head'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, Coins, Home } from 'lucide-react'
+import { Bell, Coins, Home, Copy } from 'lucide-react'
 import {
   Page,
   Navbar,
@@ -463,8 +463,21 @@ export default function Index() {
           </Tabbar>
           {activeTab === 'home' && (
             <>
-              <BlockTitle>
-                {truncateEthAddress(walletAddress ?? undefined)}
+              <BlockTitle className="flex items-center justify-between">
+                <span>{truncateEthAddress(walletAddress ?? undefined)}</span>
+                <Button
+                  clear
+                  small
+                  onClick={() => {
+                    if (walletAddress) {
+                      navigator.clipboard.writeText(walletAddress)
+                      alert('地址已复制到剪贴板')
+                    }
+                  }}
+                  className="ml-2"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
               </BlockTitle>
               <Block>
                 <p>Balance: {ethBalanceQuery.data?.formatted} ETH</p>

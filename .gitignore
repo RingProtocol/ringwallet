@@ -4,4 +4,4 @@ dist
 src/.DS_Store
 .env
 .next
-.public/sw.js.map
+public/sw.js.map
