@@ -644,13 +644,26 @@ export default function Index() {
                     </DialogButton>
                   }
                 />
-                <Button onClick={handleSignMessageClick} rounded large>
-                  Sign Message
+
+                {/* add input text area for send ETH amount */}
+                {/* ETH 发送数量输入 */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    发送数量 ({currentChainConfig.symbol})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    min="0"
+                    placeholder={`输入 ${currentChainConfig.symbol} 数量`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <Button onClick={handleSignMessageClick} rounded small>
+                  Send
                 </Button>
 
-                {/* <Button onClick={handleSignMessageClick} rounded large>
-                  Swap 1 USDC to ETH
-                </Button> */}
+
                 <Button clear onClick={handleSignoutClick} rounded large>
                   Sign Out
                 </Button>
