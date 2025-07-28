@@ -1,4 +1,8 @@
 import { useBalance } from 'wagmi'
+<<<<<<< HEAD
+=======
+import { Address } from 'wagmi'
+>>>>>>> 1ea8121 (fix: balance by set rpc)
 
 function BalanceComponent(walletAddress: Address, chainId: number) {
   const { data, isError, isLoading } = useBalance({

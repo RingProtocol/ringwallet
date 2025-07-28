@@ -7,11 +7,15 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import '../globals.css'
 import { WagmiConfig, configureChains, createConfig, mainnet } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
-import { base } from 'wagmi/chains'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { base, sepolia } from 'wagmi/chains'
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [base],
-  [publicProvider()],
+  [mainnet, sepolia, base],
+  [
+    alchemyProvider({ apiKey: 'NOrtL9VcGcMtAVSWxGOt9' }),
+    publicProvider(),
+  ],
 )
 
 const wagmiConfig = createConfig({
@@ -37,10 +41,10 @@ export default function App({ Component, pageProps }: AppProps) {
     setCurrentColorTheme(color)
   }
   useEffect(() => {
-    ;(global as any).setTheme = (t: any) => setTheme(t)
-    ;(global as any).setMode = (mode: any) => {
-      document.documentElement.classList.remove('dark')
-    }
+    ; (global as any).setTheme = (t: any) => setTheme(t)
+      ; (global as any).setMode = (mode: any) => {
+        document.documentElement.classList.remove('dark')
+      }
   }, [])
   const inIFrame = global.parent !== global.window
   useLayoutEffect(() => {

@@ -136,6 +136,10 @@ export default function Index() {
       console.log('ethBalanceQuery success')
     },
     watch: true,
+<<<<<<< HEAD
+=======
+    // cacheTime: 50000,
+>>>>>>> 1ea8121 (fix: balance by set rpc)
     // refetchInterval: 10000
   })
 
