@@ -203,6 +203,15 @@ export default function Index() {
   // 从本地存储读取保存的链ID并在组件挂载时设置
   const saved_chain_id = useReadLocalStorage('selectedChain')
 
+  // First, logout user if there is no current wallet set
+  useEffect(() => {
+    (async () => {
+      if (!wallet) {
+        await turnkey?.logoutUser();
+      }
+    })();
+  });
+
   useEffect(() => {
     if (saved_chain_id && typeof saved_chain_id === 'string' && Object.keys(chainConfigs).includes(saved_chain_id)) {
       setSelectedChain(saved_chain_id as typeOfChain)
