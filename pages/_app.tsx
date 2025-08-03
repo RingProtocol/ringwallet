@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs'
+import { TurnkeyProvider } from '@turnkey/sdk-react'
 import type { AppProps } from 'next/app'
 import { App as AppProvider } from 'konsta/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -60,40 +61,50 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [theme])
 
+  const turnkeyConfig = {
+    apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+    defaultOrganizationId: process.env.TURNKEY_ORGANIZATION_ID!,
+    rpId: process.env.NEXT_PUBLIC_RPID!,
+    // serverSignUrl: process.env.NEXT_PUBLIC_SERVER_SIGN_URL!,
+    iframeUrl: process.env.NEXT_PUBLIC_IFRAME_URL ?? "https://auth.turnkey.com", // not necessary for this example
+  };
+
   return (
     <>
       <AppProvider theme={theme as any} safeAreas={true}>
         <ClerkProvider {...pageProps}>
-          <QueryClientProvider client={queryClient}>
-            <WagmiConfig config={wagmiConfig}>
-              <Head>
-                <meta name="application-name" content={APP_NAME} />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-                <meta name="description" content={APP_DESCRIPTION} />
-                <meta name="format-detection" content="telephone=no" />
-                <meta name="mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta
-                  name="apple-mobile-web-app-status-bar-style"
-                  content="black-translucent"
-                />
-                <meta name="theme-color" content="#FFFFFF" />
-                <meta
-                  name="viewport"
-                  content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
-                />
-                <link
-                  rel="apple-touch-icon"
-                  sizes="180x180"
-                  href="/icons/apple-touch-icon.png"
-                />
-                <link rel="manifest" href="/manifest.json" />
-                <link rel="shortcut icon" href="/favicon.ico" />
-              </Head>
-              <Component {...pageProps} />
-            </WagmiConfig>
-          </QueryClientProvider>
+          <TurnkeyProvider config={turnkeyConfig}>
+            <QueryClientProvider client={queryClient}>
+              <WagmiConfig config={wagmiConfig}>
+                <Head>
+                  <meta name="application-name" content={APP_NAME} />
+                  <meta name="apple-mobile-web-app-capable" content="yes" />
+                  <meta name="apple-mobile-web-app-title" content={APP_NAME} />
+                  <meta name="description" content={APP_DESCRIPTION} />
+                  <meta name="format-detection" content="telephone=no" />
+                  <meta name="mobile-web-app-capable" content="yes" />
+                  <meta name="apple-mobile-web-app-capable" content="yes" />
+                  <meta
+                    name="apple-mobile-web-app-status-bar-style"
+                    content="black-translucent"
+                  />
+                  <meta name="theme-color" content="#FFFFFF" />
+                  <meta
+                    name="viewport"
+                    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+                  />
+                  <link
+                    rel="apple-touch-icon"
+                    sizes="180x180"
+                    href="/icons/apple-touch-icon.png"
+                  />
+                  <link rel="manifest" href="/manifest.json" />
+                  <link rel="shortcut icon" href="/favicon.ico" />
+                </Head>
+                <Component {...pageProps} />
+              </WagmiConfig>
+            </QueryClientProvider>
+          </TurnkeyProvider>
         </ClerkProvider>
       </AppProvider>
     </>

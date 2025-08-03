@@ -1,4 +1,7 @@
+"use client"
 import { useAuth } from '@clerk/nextjs'
+import { useTurnkey } from "@turnkey/sdk-react";
+
 import { User } from '@shared/db/schema'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Head from 'next/head'
@@ -31,6 +34,7 @@ import { base64ToUint8Array, truncateEthAddress } from '@shared/client-utils'
 import { useInstallWebhookAndOfferUserUpgradeIfAvailable } from '../hooks/useInstallWebhookAndPromptUserUpgradeIfAvailable'
 import { useDetectRuntimeEnvironment } from '../hooks/useDetectRuntimeEnvironment'
 import { useReadLocalStorage, useSaveLocalStorage } from '../utils'
+import { TWalletDetails } from './types';
 
 type subOrgFormData = {
   subOrgName: string
@@ -43,6 +47,13 @@ type privateKeyFormData = {
 type signingFormData = {
   messageToSign: string
 }
+
+type TWalletState = TWalletDetails | null;
+
+const humanReadableDateTime = (): string => {
+  const now = new Date();
+  return `${now.toLocaleDateString().replaceAll("/", "-")}_${now.getHours()}.${now.getMinutes()}.${now.getSeconds()}.${now.getMilliseconds()}`;
+};
 
 const stamper = new WebauthnStamper({
   rpId: global.location?.hostname,
@@ -58,6 +69,10 @@ const passkeyHttpClient = new TurnkeyClient(
 type typeOfChain = 'ethereum' | 'solana' | 'bitcoin' | 'sepolia'
 
 export default function Index() {
+
+  const { turnkey, passkeyClient } = useTurnkey();
+  const [wallet, setWallet] = useState<TWalletState>(null);
+
   const isSWInstalled = useInstallWebhookAndOfferUserUpgradeIfAvailable()
   const web2Auth = useAuth()
 
@@ -441,6 +456,96 @@ export default function Index() {
     // await meQuery.refetch()
   }
 
+  const register = async () => {
+    const subOrgName = `Ring Wallet - ${humanReadableDateTime()}`;
+    const credential = await passkeyClient?.createUserPasskey({
+      publicKey: {
+        rp: {
+          id: "wallet.ring.com",
+          name: "Ring Wallet",
+        },
+        user: {
+          name: subOrgName,
+          displayName: subOrgName,
+        },
+      },
+    });
+    console.log("credential:", credential)
+    if (!credential?.encodedChallenge || !credential?.attestation) {
+      console.log("credential not found when register")
+      return false;
+    }
+
+    const res = await axios.post("/api/createSubOrg", {
+      subOrgName: subOrgName,
+      challenge: credential?.encodedChallenge,
+      attestation: credential?.attestation,
+    });
+
+    const response = res.data as TWalletDetails;
+    setWallet(response);
+    console.log("register success, wallet:", response)
+  };
+
+  const login = async () => {
+    if (!window.isSecureContext) {
+      alert("请通过 HTTPS 访问此页面");
+      return;
+    }
+    // 添加浏览器兼容性检查
+    if (typeof window === 'undefined' || !navigator.credentials || !navigator.credentials.get) {
+      console.error("WebAuthn is not supported in this environment");
+      alert("您的浏览器不支持安全密钥登录");
+      return;
+    }
+    try {
+      // Initiate login (read-only passkey session)
+      const loginResponse = await passkeyClient?.login();
+      if (!loginResponse?.organizationId) {
+        console.log("organizationId not found, register it.")
+        await register()
+        return;
+      }
+
+      // console.log("loginResponse", loginResponse);
+
+      const currentUserSession = await turnkey?.currentUserSession();
+      // console.log("currentUserSession", currentUserSession);
+      if (!currentUserSession) {
+        console.log("currentUserSession not found")
+        return;
+      }
+
+      const walletsResponse = await currentUserSession?.getWallets();
+      if (!walletsResponse?.wallets[0].walletId) {
+        console.log("walletsResponse not found")
+        return;
+      }
+
+      const walletId = walletsResponse?.wallets[0].walletId;
+      const walletAccountsResponse =
+        await currentUserSession?.getWalletAccounts({
+          organizationId: loginResponse?.organizationId,
+          walletId,
+        });
+
+      if (!walletAccountsResponse?.accounts[0].address) {
+        console.log("walletAccountsResponse not found")
+        return;
+      }
+
+      setWallet({
+        id: walletId,
+        address: walletAccountsResponse?.accounts[0].address,
+        subOrgId: loginResponse.organizationId,
+      } as TWalletDetails);
+    } catch (e: any) {
+      const message = `caught error: ${e.toString()}`;
+      console.error(message);
+      alert(message);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -494,22 +599,15 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold flex justify-center items-center">
-                  PWA with wallet
+                  Ring Web Wallet
                 </h1>
               </div>
             </div>
             {/* Bottom of page */}
             <div className="p-8 pb-16 flex flex-col justify-end space-y-2">
-              <Link href={'/sign-in'}>
-                <Button rounded large>
-                  Sign In
-                </Button>
-              </Link>
-              {isRegistered && (
-                <Button outline onClick={handleSignoutClick} rounded large>
-                  Sign Out
-                </Button>
-              )}
+              <Button rounded large onClick={login}>
+                Unlock wallet
+              </Button>
             </div>
           </div>
         </Page>

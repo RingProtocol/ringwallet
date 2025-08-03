@@ -34,6 +34,8 @@
     "@turnkey/api-key-stamper": "^0.1.0",
     "@turnkey/http": "^1.1.0",
     "@turnkey/viem": "^0.2.1",
+    "@turnkey/sdk-react": "0.1.0",
+    "@turnkey/sdk-browser": "0.1.0",
     "@turnkey/webauthn-stamper": "^0.1.0",
     "axios": "^1.4.0",
     "bs58": "^5.0.0",
