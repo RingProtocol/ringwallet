@@ -1,0 +1,84 @@
+<mxfile host="65bd71144e">
+    <diagram id="cnsH2foPMgBa8ntLmamf" name="Page-1">
+        <mxGraphModel dx="826" dy="521" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="4" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="启动app" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="100" width="60" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="3" target="9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="显示Unlock account&lt;br&gt;按钮" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="170" y="90" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" style="edgeStyle=none;html=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="5" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="激活" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="170" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="9" target="11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="9" target="13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="是否passKey登陆成功？" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="340" y="80" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="显示链信息和地址" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="320" y="196" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="13" target="11">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="540" y="190" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="210"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="13" value="创建账号&lt;div&gt;（subOrg）&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="480" y="90" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="16" target="17">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="使用账号" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="300" width="80" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="17" target="19">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="收" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="310" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="19" target="21">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="发" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="334" y="310" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="查看交易记录" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="460" y="310" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="" style="edgeStyle=none;html=1;exitX=0.731;exitY=0.872;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="16" target="24">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="24" target="28">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="切链" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="395" width="80" height="35" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="查余额" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="334" y="392.5" width="100" height="37.5" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

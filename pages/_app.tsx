@@ -26,7 +26,7 @@ const wagmiConfig = createConfig({
 
 const queryClient = new QueryClient()
 
-const APP_NAME = 'PWA Wallet'
+const APP_NAME = 'Ring Wallet'
 const APP_DESCRIPTION = 'PWA with an embedded passkey crypto wallet'
 
 export default function App({ Component, pageProps }: AppProps) {

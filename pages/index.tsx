@@ -444,7 +444,7 @@ export default function Index() {
   return (
     <>
       <Head>
-        <title>PWAWallet | Welcome</title>
+        <title>Ring Wallet | Welcome</title>
       </Head>
       {onboardingStatus === 'loading' && (
         <Page
