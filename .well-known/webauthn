@@ -1,0 +1,6 @@
+{
+  "rpId": "ring.exchange",
+  "trustedOrigins": [
+    "https://wallet.ring.exchange"
+  ]
+}
