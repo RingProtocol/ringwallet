@@ -9,7 +9,20 @@ const nextConfig = {
             }
         });
         return config;
-    }
+    },
+    async headers() {
+        return [
+            {
+                source: '/.well-known/webauthn',
+                headers: [
+                    {
+                        key: 'Content-Type',
+                        value: 'application/json'
+                    }
+                ],
+            },
+        ];
+    },
 };
 
 module.exports = nextConfig;

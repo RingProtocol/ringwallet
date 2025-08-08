@@ -53,6 +53,7 @@ export default async function createUser(
               authenticatorName: "Passkey",
               challenge: createSubOrgRequest.challenge,
               attestation: createSubOrgRequest.attestation,
+
             },
           ],
         },
