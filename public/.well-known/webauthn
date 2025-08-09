@@ -1,5 +1,5 @@
 {
-  "rpId": "wallet.ring.exchange",
+  "rpId": "ring.exchange",
   "trustedOrigins": [
     "https://wallet.ring.exchange"
   ]
