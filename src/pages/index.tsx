@@ -83,8 +83,8 @@ export default function Home() {
     const credential = await passkeyClient?.createUserPasskey({
       publicKey: {
         rp: {
-          id: "localhost",
-          name: "Turnkey Viem Passkey Demo",
+          id: process.env.NEXT_PUBLIC_RP_ID!,
+          name: "tk-viem-passkey-demo",
         },
         user: {
           name: subOrgName,
