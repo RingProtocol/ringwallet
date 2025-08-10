@@ -70,7 +70,11 @@ if (!self.define) {
 define(['./workbox-fb90b81a'], (function (workbox) { 'use strict';
 
   importScripts("/worker-development.js");
-  self.skipWaiting();
+  self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+  });
   workbox.clientsClaim();
   workbox.registerRoute("/", new workbox.NetworkFirst({
     "cacheName": "start-url",

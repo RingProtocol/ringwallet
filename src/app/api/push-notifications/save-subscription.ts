@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getAuth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'  // Adapt to your db path
-import { users } from '@/lib/db/schema'  // Adapt to your schema
+import { db } from '@shared/db/drizzle'  // Adapt to your db path
+import { users } from '@shared/db/schema'  // Adapt to your schema
 import { eq } from 'drizzle-orm'
 
 type TRequest = {
@@ -21,7 +20,7 @@ export default async function addSubscription(
   req: NextApiRequest,
   res: NextApiResponse<TResponse>,
 ) {
-  const { userId } = getAuth(req)
+  const { userId } = { userId: null } //getAuth(req)
 
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' })

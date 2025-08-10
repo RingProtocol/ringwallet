@@ -1,5 +1,5 @@
-import { db } from '@/lib/db'  // Adapt to your db path
-import { users } from '@/lib/db/schema'  // Adapt to your schema
+import { db } from '@shared/db/drizzle'
+import { users } from '@shared/db/schema'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import webPush from 'web-push'
 import { isNotNull } from 'drizzle-orm'

@@ -1,6 +1,13 @@
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
   customWorkerDir: 'worker',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  // Self register so we can push updates ourselves
+  register: false,
+  workboxOptions: {
+    skipWaiting: false,
+  },
 
   webpack: (config) => {
     config.module.rules.push({
