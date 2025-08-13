@@ -32,7 +32,10 @@ import {
   removeOtpIdFromStorage,
   setOtpIdInStorage,
   setSessionInStorage,
+  getSessionFromStorage,
+  removeSessionFromStorage,
 } from "@/lib/storage"
+import { get } from "http"
 
 export const loginResponseToUser = (
   loginResponse: {
@@ -40,6 +43,7 @@ export const loginResponseToUser = (
     organizationName: string
     userId: string
     username: string
+    email: string
     session?: string
     sessionExpiry?: string
   },
@@ -50,11 +54,11 @@ export const loginResponseToUser = (
     organizationName: loginResponse.organizationName,
   }
 
-  console.log("[shuizhu] loginResponseToUser subOrganization.organizationId=", subOrganization.organizationId)
-  console.log("[shuizhu] loginResponseToUser loginResponse.organizationName=", loginResponse.organizationName)
+  console.log("[dbg] loginResponseToUser subOrganization.organizationId=", subOrganization.organizationId)
+  console.log("[dbg] loginResponseToUser loginResponse.organizationName=", loginResponse.organizationName)
 
-  console.log("[shuizhu] loginResponseToUser loginResponse.session=", loginResponse.session)
-  console.log("[shuizhu] loginResponseToUser loginResponse.sessionExpiry=", loginResponse.sessionExpiry)
+  console.log("[dbg] loginResponseToUser loginResponse.session=", loginResponse.session)
+  console.log("[dbg] loginResponseToUser loginResponse.sessionExpiry=", loginResponse.sessionExpiry)
 
   let read: Session | undefined
   if (loginResponse.session) {
@@ -64,6 +68,8 @@ export const loginResponseToUser = (
       expiry: Number(loginResponse.sessionExpiry),
     }
   }
+
+  console.log("[dbg] loginResponseToUser loginResponse.email=", loginResponse.email)
 
   return {
     id: loginResponse.userId,
@@ -137,18 +143,18 @@ const AuthContext = createContext<{
   logout: () => Promise<void>
 }>({
   state: initialState,
-  initEmailLogin: async () => {},
-  completeEmailAuth: async () => {},
-  loginWithPasskey: async () => {},
-  loginWithWallet: async () => {},
-  loginWithOAuth: async () => {},
-  loginWithGoogle: async () => {},
-  loginWithApple: async () => {},
-  loginWithFacebook: async () => {},
-  logout: async () => {},
+  initEmailLogin: async () => { },
+  completeEmailAuth: async () => { },
+  loginWithPasskey: async () => { },
+  loginWithWallet: async () => { },
+  loginWithOAuth: async () => { },
+  loginWithGoogle: async () => { },
+  loginWithApple: async () => { },
+  loginWithFacebook: async () => { },
+  logout: async () => { },
 })
 
-const SESSION_EXPIRY = "900" // This is in seconds
+const SESSION_EXPIRY = "3600" // This is in seconds
 const WARNING_BUFFER = 30 // seconds before expiry to show warning
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -162,6 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const publicKey = await indexedDbClient?.getPublicKey()
+
       if (!publicKey) {
         throw new Error("No public key found")
       }
@@ -240,7 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         removeOtpIdFromStorage()
 
         // Schedule warning for session expiry
-        const expiryTime = Date.now() + parseInt(SESSION_EXPIRY) * 1000
+        const expiryTime = Date.now() + parseInt(SESSION_EXPIRY)
         scheduleSessionWarning(expiryTime)
 
         setSessionInStorage({
@@ -266,40 +273,86 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithPasskey = async (email?: Email) => {
     dispatch({ type: "LOADING", payload: true })
     try {
-      const subOrgId = await getSubOrgIdByEmail(email as Email)
+      // id: string: user.id: 6cb63658-4b53-4da3-996b-6cfa532b1a5d, turnkey api 返回的
+      // name: string: empty, will set publicKey
+      // email: string: user.email: publicKey@ring.exchange, 
+      const session = getSessionFromStorage();
+      console.log("[dbg] loginWithPasskey session=", session)
+      let user_email = session && session.email ? session.email : "";
+      if (!user_email.includes("@ring.exchange")) {
+        user_email = session && session.name ? session.name + "@ring.exchange" : "";
+        console.log("[dbg] loginWithPasskey user_email fixed= ", user_email)
+      }
+
+      if (!user_email.includes("@")) {
+        console.log("[dbg] loginWithPasskey user_email invalid")
+        //clear session
+        removeSessionFromStorage()
+        user_email = "";
+      }
+      //retrieve public key from email by trim @ring.exchange
+      let my_publicKey = user_email.split("@")[0];
+      console.log("[dbg] loginWithPasskey local pubKey=", my_publicKey)
+
+      //for new user
+      if (!my_publicKey || my_publicKey.length === 0) {
+        await indexedDbClient?.resetKeyPair()
+        const publicKey = await indexedDbClient!.getPublicKey()
+        console.log("subOrg: new publicKey=", publicKey)
+
+        if (!publicKey) {
+          throw new Error("No public key found")
+        }
+        my_publicKey = publicKey;
+      }
+
+      const subOrgId = await getSubOrgIdByPublicKey(my_publicKey as string)
       console.log("[getSubOrgIdByEmail] subOrgId=", subOrgId)
       if (subOrgId?.length) {
-        await indexedDbClient?.resetKeyPair()
-        console.log("subOrg 1111--1")
-        const publicKey = await indexedDbClient!.getPublicKey()
-        console.log("subOrg 1111--2")
+
+        // await indexedDbClient?.resetKeyPair()
+        // console.log("subOrg 1111--1:after reset")
+        // const publicKey = await indexedDbClient!.getPublicKey()
+        // console.log("subOrg 1111--2:publicKey=", publicKey)
+
+        // if (!publicKey) {
+        //   throw new Error("No public key found")
+        // }
+        // my_publicKey = publicKey;
         await passkeyClient?.loginWithPasskey({
           sessionType: SessionType.READ_WRITE,
-          publicKey,
+          publicKey: my_publicKey,
         })
 
-        console.log("subOrg 1111--3")
+        console.log("subOrg route to dashboard")
         router.push("/dashboard")
       } else {
+
+        user_email = my_publicKey + "@ring.exchange";
         // User either does not have an account with a sub organization
         // or does not have a passkey
         // Create a new passkey for the user
+        console.log("[createUserSubOrg] no orgId, createUserPasskey")
         const { encodedChallenge, attestation } =
           (await passkeyClient?.createUserPasskey({
+            rp: {
+              id: process.env.NEXT_PUBLIC_RP_ID || "localhost",
+              name: "Ring Wallet",
+            },
             publicKey: {
               user: {
-                name: email,
-                displayName: email,
+                name: my_publicKey,
+                displayName: my_publicKey,
               },
             },
           })) || {}
 
+        console.log("[createUserSubOrg] after createUserPasskey")
         // Create a new sub organization for the user
         if (encodedChallenge && attestation) {
-          console.log("[createUserSubOrg] encodedChallenge=", encodedChallenge)
-          console.log("[createUserSubOrg] attestation=", attestation)
+          console.log("[createUserSubOrg] encodedChallenge and attestation not null")
           const { subOrg, user } = await createUserSubOrg({
-            email: email as Email,
+            email: user_email as Email,
             passkey: {
               challenge: encodedChallenge,
               attestation,
@@ -307,33 +360,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
 
           if (subOrg && user) {
+            // Schedule warning for session expiry
+            const expiryTime = Date.now() + parseInt(SESSION_EXPIRY) * 1000
+            scheduleSessionWarning(expiryTime)
+
+            console.log("[dbg] loginWithPasskey auto login with passkey=", my_publicKey)
+            //这个是关键，下面的setSessionInStorage，没人用吧
+            await passkeyClient?.loginWithPasskey({
+              sessionType: SessionType.READ_WRITE,
+              publicKey: my_publicKey,
+            })
+            console.log("[dbg] loginWithPasskey setSessionInStorage email=", user_email)
             // Store session using browser localStorage
             setSessionInStorage(
               loginResponseToUser(
                 {
                   userId: user.userId,
                   username: user.userName,
+                  email: user_email,
                   organizationId: subOrg.subOrganizationId,
                   organizationName: "",
                   session: undefined,
-                  sessionExpiry: undefined,
+                  sessionExpiry: expiryTime.toString(),
                 },
                 AuthClient.Passkey
               )
             )
 
-            console.log("subOrg 2222")
+            console.log("subOrg route to dashboard 2")
             router.push("/dashboard")
           }
+          else {
+            console.warn("[createUserSubOrg] subOrg or user is null")
+          }
+        }
+        else {
+          console.warn("[createUserSubOrg] encodedChallenge or attestation is null")
         }
       }
     } catch (error: any) {
+      console.log("[dbg] loginWithPasskey error=", error)
       // Catch the user cancel error and force a hard reload to avoid a stalled key
       const message: string = error?.message || "";
       if (message.includes("NotAllowedError")) {
-      window.location.reload();
-      return;
-    }
+        window.location.reload();
+        return;
+      }
       dispatch({ type: "ERROR", payload: error.message })
     } finally {
       dispatch({ type: "LOADING", payload: false })
@@ -445,7 +517,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await turnkey?.logout()
     await indexedDbClient?.clear()
     googleLogout()
-    console.log("[shuizhu]logout")
+    console.log("[dbg]logout")
     router.push("/")
   }
 

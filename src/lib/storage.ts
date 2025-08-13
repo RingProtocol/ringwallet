@@ -35,7 +35,6 @@ export const writeLocalStorage = <T = unknown>(key: string, value: T): void => {
   if (typeof window === "undefined") return
 
   try {
-    console.log("[shuizhu] writeLocalStorage key=", key, "value=", value)
     window.localStorage.setItem(key, JSON.stringify(value))
   } catch (error) {
     console.error(`[storage] Failed to write key "${key}":`, error)
