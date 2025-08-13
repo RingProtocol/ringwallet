@@ -16,7 +16,7 @@ export default function SideNav() {
             href="https://turnkey.com"
             className="flex items-center gap-2 font-semibold"
           >
-            <Icons.turnkey className="h-7 w-auto  fill-white stroke-none" />
+            <Icons.ethereum className="h-7 w-auto  fill-white stroke-none" />
             <span className="sr-only">Primev</span>
           </Link>
         </div>

@@ -9,10 +9,10 @@ export default function NavMenu() {
     <div className="flex h-[5rem] items-center justify-between gap-4 bg-black p-4 sm:px-10">
       <div className="flex items-center gap-1">
         <Link href="/dashboard">
-          <Icons.turnkey className="h-6 w-auto  fill-white stroke-none sm:h-7" />
+          <Icons.ethereum className="h-6 w-auto  fill-white stroke-none sm:h-7" />
         </Link>
         <Badge variant="outline" className="bg-black/80 text-xs text-white">
-          Demo
+          Ring
         </Badge>
       </div>
       <div className="flex items-center justify-center gap-4">
