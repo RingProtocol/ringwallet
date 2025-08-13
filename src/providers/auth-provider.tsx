@@ -135,7 +135,7 @@ const AuthContext = createContext<{
     continueWith: string
     credentialBundle: string
   }) => Promise<void>
-  loginWithPasskey: (email?: Email) => Promise<void>
+  loginWithPasskey: (email?: Email | null) => Promise<void>
   loginWithWallet: () => Promise<void>
   loginWithOAuth: (credential: string, providerName: string) => Promise<void>
   loginWithGoogle: (credential: string) => Promise<void>
@@ -275,10 +275,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const loginWithPasskey = async (email?: Email) => {
+  const loginWithPasskey = async (email?: Email | null) => {
     dispatch({ type: "LOADING", payload: true })
     try {
-      let email_str: string | undefined = email;
+      let email_str: string | null | undefined = email || null;
       if (email_str == null || email_str.length == 0) {
         console.log("[dbg] loginWithPasskey email is undefined, try get from storage")
         email_str = getSessionFromStorage()?.email;
