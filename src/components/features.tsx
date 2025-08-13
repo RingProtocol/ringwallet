@@ -46,7 +46,7 @@ export default function Features() {
         <Link
           target="_blank"
           className=" text-white underline underline-offset-4"
-          href="https://github.com/tkhq/demo-embedded-wallet"
+          href="https://github.com/ringprotocol/ring-wallet"
         >
           Github
         </Link>

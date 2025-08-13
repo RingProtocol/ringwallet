@@ -111,34 +111,34 @@ export const createUserSubOrg = async ({
 }) => {
   const authenticators = passkey
     ? [
-        {
-          authenticatorName: "Passkey",
-          challenge: passkey.challenge,
-          attestation: passkey.attestation,
-        },
-      ]
+      {
+        authenticatorName: "Passkey",
+        challenge: passkey.challenge,
+        attestation: passkey.attestation,
+      },
+    ]
     : []
 
   const oauthProviders = oauth
     ? [
-        {
-          providerName: oauth.providerName,
-          oidcToken: oauth.oidcToken,
-        },
-      ]
+      {
+        providerName: oauth.providerName,
+        oidcToken: oauth.oidcToken,
+      },
+    ]
     : []
 
   const apiKeys = wallet
     ? [
-        {
-          apiKeyName: "Wallet Auth - Embedded Wallet",
-          publicKey: wallet.publicKey,
-          curveType:
-            wallet.type === WalletType.Ethereum
-              ? ("API_KEY_CURVE_SECP256K1" as const)
-              : ("API_KEY_CURVE_ED25519" as const),
-        },
-      ]
+      {
+        apiKeyName: "Wallet Auth - Embedded Wallet",
+        publicKey: wallet.publicKey,
+        curveType:
+          wallet.type === WalletType.Ethereum
+            ? ("API_KEY_CURVE_SECP256K1" as const)
+            : ("API_KEY_CURVE_ED25519" as const),
+      },
+    ]
     : []
 
   let userEmail = email

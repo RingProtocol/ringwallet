@@ -62,14 +62,14 @@ function AuthContent() {
     }
   }, [searchParams])
 
-  const handlePasskeyLogin = async (email: Email) => {
+  const handlePasskeyLogin = async (email?: Email | null) => {
     setLoadingAction("passkey")
     if (!passkeyClient) {
       setLoadingAction(null)
       return
     }
 
-    await loginWithPasskey(email)
+    await loginWithPasskey(null)
     setLoadingAction(null)
   }
 
@@ -105,7 +105,7 @@ function AuthContent() {
         <CardContent className="space-y-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(() => { })} className="space-y-4">
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -121,14 +121,14 @@ function AuthContent() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <LoadingButton
                 type="submit"
                 className="w-full font-semibold"
-                disabled={!form.formState.isValid}
+                disabled={false}
                 loading={state.loading && loadingAction === "passkey"}
                 onClick={() =>
-                  handlePasskeyLogin(form.getValues().email as Email)
+                  handlePasskeyLogin(null)//</form>form.getValues().email as Email)
                 }
               >
                 Continue with passkey
@@ -162,8 +162,8 @@ function AuthContent() {
           {/* <GoogleAuth /> */}
           {/* <AppleAuth /> */}
           {/* <FacebookAuth /> */}
-        </CardContent>
-      </Card>
+        </CardContent >
+      </Card >
       <Legal />
     </>
   )
