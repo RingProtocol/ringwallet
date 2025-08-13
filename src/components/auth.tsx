@@ -90,7 +90,7 @@ function AuthContent() {
       <Card className="mx-auto w-full max-w-[450px]">
         <CardHeader className="space-y-4">
           <div className="relative flex items-center justify-center gap-2">
-            <Icons.ethereum className="h-16 w-full stroke-0 py-2" />
+            <Icons.ringLogo className="h-16 w-full stroke-0 py-2" />
             <Badge
               variant="secondary"
               className="absolute -right-1 border-primary bg-primary/0 px-1 py-0.5 text-xs text-primary sm:right-9 sm:top-4"

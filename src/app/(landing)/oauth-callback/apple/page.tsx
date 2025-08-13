@@ -54,7 +54,7 @@ function OAuthProcessCallback() {
     <main className="flex w-full flex-col items-center justify-center">
       <Card className="mx-auto h-full w-full sm:w-1/2">
         <CardHeader className="space-y-4">
-          <Icons.ethereum className="h-12 w-full stroke-0 py-2 dark:stroke-white sm:h-14" />
+          <Icons.ringLogo className="h-12 w-full stroke-0 py-2 dark:stroke-white sm:h-14" />
           <CardTitle className="flex  items-center justify-center text-center">
             <div className="flex items-center gap-2">
               <Loader className="h-4 w-4 animate-spin text-muted-foreground" />

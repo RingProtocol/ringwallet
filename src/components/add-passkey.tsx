@@ -32,7 +32,6 @@ export default function AddPasskey({
     const credential = await passkeyClient?.createUserPasskey({
       publicKey: {
         rp: {
-          id: process.env.NEXT_PUBLIC_RP_ID || "localhost",
           name: "Ring Wallet",
         },
         user: {

@@ -61,7 +61,7 @@ export default function Assets() {
             <TableRow>
               <TableCell className="p-2 font-medium sm:p-4">
                 <div className="flex items-center space-x-2 text-xs sm:text-sm">
-                  <Icons.ethereum className="h-6 w-6" />
+                  <Icons.ringLogo className="h-6 w-6" />
                   <span>Ethereum (Sepolia)</span>
                 </div>
               </TableCell>
