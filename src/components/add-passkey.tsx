@@ -32,7 +32,7 @@ export default function AddPasskey({
     const credential = await passkeyClient?.createUserPasskey({
       publicKey: {
         rp: {
-          name: "Turnkey - Demo Embedded Wallet",
+          name: "Ring Wallet",
         },
         user: {
           name: user?.name,

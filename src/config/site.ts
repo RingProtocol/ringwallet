@@ -19,7 +19,7 @@ const baseUrl = (() => {
 })()
 
 export const siteConfig: SiteConfig = {
-  name: "Demo Embedded Wallet",
+  name: "Ring Wallet",
   author: "turnkey",
   description:
     "A comprehensive demo showcasing how to build an embedded wallet using Turnkey.",

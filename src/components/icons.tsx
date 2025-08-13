@@ -170,6 +170,25 @@ const icons = {
       />
     </svg>
   ),
+  ringLogo: (props: IconProps) => (
+    <svg {...props} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="-50 -30 180 160">
+      <defs>
+        <style>{'.cls-1{fill:url(#linear-gradient);}.cls-2{fill:url(#linear-gradient-2);}'}</style>
+        <linearGradient id="linear-gradient" x1={6.17} y1={54.34} x2={78.28} y2={54.34} gradientUnits="userSpaceOnUse">
+          <stop offset={0} stopColor="#f15266" />
+          <stop offset={0.52} stopColor="#bc74ed" />
+          <stop offset={1} stopColor="#1abee9" />
+        </linearGradient>
+        <linearGradient id="linear-gradient-2" x1={59.26} y1={20.49} x2={92.87} y2={20.49} xlinkHref="#linear-gradient" />
+      </defs>
+      <path
+        className="cls-1"
+        d="M42.27,90.41a36.07,36.07,0,1,1,36-36.21A36,36,0,0,1,42.27,90.41ZM16,54.38c-.22,14.07,11.52,26,25.82,26.2A26.25,26.25,0,1,0,16,54.38Z"
+        transform="translate(-6.17 -3.72)"
+      />
+      <path className="cls-2" d="M59.26,10.33l6.89-6.61L92.87,30.5l-7,6.75Z" transform="translate(-6.17 -3.72)" />
+    </svg>
+  ),
 }
 
 export const Icons: IconsType = icons
