@@ -18,7 +18,7 @@ export const useUser = () => {
         const token = await turnkey.getSession()
         // If the user is not found, we assume the user is not logged in
         if (!token?.expiry || token.expiry > Date.now()) {
-          console.log("[dbg]token.expiry")
+          console.log("[dbg]token.expiry, token.expiry=", token?.expiry, "Date.now()=", Date.now())
           router.push("/")
           return
         }
