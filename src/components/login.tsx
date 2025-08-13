@@ -11,7 +11,6 @@ export default function Login() {
   const [email, setEmail] = useState<string>("")
 
   const handleLogin = async () => {
-    console.log("[shuizhu] click Login btn.-> loginWithPasskey ")
     await loginWithPasskey()
   }
 

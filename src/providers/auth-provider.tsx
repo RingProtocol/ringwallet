@@ -14,6 +14,7 @@ import {
   getSubOrgId,
   getSubOrgIdByEmail,
   getSubOrgIdByPublicKey,
+  getSubOrgIdByUsername,
   initEmailAuth,
   oauth,
   otpLogin,
@@ -32,7 +33,10 @@ import {
   removeOtpIdFromStorage,
   setOtpIdInStorage,
   setSessionInStorage,
+  getSessionFromStorage,
+  removeSessionFromStorage,
 } from "@/lib/storage"
+import { get } from "http"
 
 export const loginResponseToUser = (
   loginResponse: {
@@ -40,6 +44,7 @@ export const loginResponseToUser = (
     organizationName: string
     userId: string
     username: string
+    email: string
     session?: string
     sessionExpiry?: string
   },
@@ -50,11 +55,11 @@ export const loginResponseToUser = (
     organizationName: loginResponse.organizationName,
   }
 
-  console.log("[shuizhu] loginResponseToUser subOrganization.organizationId=", subOrganization.organizationId)
-  console.log("[shuizhu] loginResponseToUser loginResponse.organizationName=", loginResponse.organizationName)
+  console.log("[dbg] loginResponseToUser subOrganization.organizationId=", subOrganization.organizationId)
+  console.log("[dbg] loginResponseToUser loginResponse.organizationName=", loginResponse.organizationName)
 
-  console.log("[shuizhu] loginResponseToUser loginResponse.session=", loginResponse.session)
-  console.log("[shuizhu] loginResponseToUser loginResponse.sessionExpiry=", loginResponse.sessionExpiry)
+  console.log("[dbg] loginResponseToUser loginResponse.session=", loginResponse.session)
+  console.log("[dbg] loginResponseToUser loginResponse.sessionExpiry=", loginResponse.sessionExpiry)
 
   let read: Session | undefined
   if (loginResponse.session) {
@@ -64,6 +69,8 @@ export const loginResponseToUser = (
       expiry: Number(loginResponse.sessionExpiry),
     }
   }
+
+  console.log("[dbg] loginResponseToUser loginResponse.email=", loginResponse.email)
 
   return {
     id: loginResponse.userId,
@@ -128,7 +135,7 @@ const AuthContext = createContext<{
     continueWith: string
     credentialBundle: string
   }) => Promise<void>
-  loginWithPasskey: (email?: Email) => Promise<void>
+  loginWithPasskey: (email?: Email | null) => Promise<void>
   loginWithWallet: () => Promise<void>
   loginWithOAuth: (credential: string, providerName: string) => Promise<void>
   loginWithGoogle: (credential: string) => Promise<void>
@@ -137,19 +144,23 @@ const AuthContext = createContext<{
   logout: () => Promise<void>
 }>({
   state: initialState,
-  initEmailLogin: async () => {},
-  completeEmailAuth: async () => {},
-  loginWithPasskey: async () => {},
-  loginWithWallet: async () => {},
-  loginWithOAuth: async () => {},
-  loginWithGoogle: async () => {},
-  loginWithApple: async () => {},
-  loginWithFacebook: async () => {},
-  logout: async () => {},
+  initEmailLogin: async () => { },
+  completeEmailAuth: async () => { },
+  loginWithPasskey: async () => { },
+  loginWithWallet: async () => { },
+  loginWithOAuth: async () => { },
+  loginWithGoogle: async () => { },
+  loginWithApple: async () => { },
+  loginWithFacebook: async () => { },
+  logout: async () => { },
 })
 
 const SESSION_EXPIRY = "900" // This is in seconds
 const WARNING_BUFFER = 30 // seconds before expiry to show warning
+
+import { Turnkey } from "@turnkey/sdk-browser";
+
+
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
@@ -162,6 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const publicKey = await indexedDbClient?.getPublicKey()
+
       if (!publicKey) {
         throw new Error("No public key found")
       }
@@ -263,22 +275,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const loginWithPasskey = async (email?: Email) => {
+  const loginWithPasskey = async (email?: Email | null) => {
     dispatch({ type: "LOADING", payload: true })
     try {
-      const subOrgId = await getSubOrgIdByEmail(email as Email)
-      console.log("[getSubOrgIdByEmail] subOrgId=", subOrgId)
+      let email_str: string | null | undefined = email || null;
+      if (email_str == null || email_str.length == 0) {
+        console.log("[dbg] loginWithPasskey email is undefined, try get from storage")
+        email_str = getSessionFromStorage()?.email;
+        if (email_str == null || email_str.length == 0) {
+          email_str = "randomId:" + Math.random().toString(36).substring(2, 9);
+        }
+      }
+      if (email_str == null || email_str.length == 0) {
+        throw new Error("No valid email found")
+      }
+      const subOrgId = await getSubOrgIdByUsername(email_str)
+      console.log("[dbg] subOrgId=", subOrgId, "email=", email_str)
       if (subOrgId?.length) {
         await indexedDbClient?.resetKeyPair()
-        console.log("subOrg 1111--1")
         const publicKey = await indexedDbClient!.getPublicKey()
-        console.log("subOrg 1111--2")
         await passkeyClient?.loginWithPasskey({
           sessionType: SessionType.READ_WRITE,
           publicKey,
         })
 
-        console.log("subOrg 1111--3")
         router.push("/dashboard")
       } else {
         // User either does not have an account with a sub organization
@@ -288,25 +308,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           (await passkeyClient?.createUserPasskey({
             publicKey: {
               user: {
-                name: email,
-                displayName: email,
+                name: email_str,
+                displayName: email_str,
               },
             },
           })) || {}
 
         // Create a new sub organization for the user
         if (encodedChallenge && attestation) {
-          console.log("[createUserSubOrg] encodedChallenge=", encodedChallenge)
-          console.log("[createUserSubOrg] attestation=", attestation)
           const { subOrg, user } = await createUserSubOrg({
-            email: email as Email,
+            email: email_str + "@ring.exchange" as Email,
             passkey: {
               challenge: encodedChallenge,
               attestation,
             },
           })
 
+          // console.log("[dbg] loginWithPasskey subOrg=", subOrg, "user=", user)
+
           if (subOrg && user) {
+            //help user to auto login
+            await indexedDbClient?.resetKeyPair()
+            const publicKey = await indexedDbClient!.getPublicKey()
+            //这个是关键，下面的setSessionInStorage，没人用吧
+            await passkeyClient?.loginWithPasskey({
+              sessionType: SessionType.READ_WRITE,
+              publicKey: publicKey as string,
+            })
             // Store session using browser localStorage
             setSessionInStorage(
               loginResponseToUser(
@@ -316,24 +344,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   organizationId: subOrg.subOrganizationId,
                   organizationName: "",
                   session: undefined,
-                  sessionExpiry: undefined,
+                  sessionExpiry: SESSION_EXPIRY,
+                  email: user.userEmail || "",
                 },
                 AuthClient.Passkey
               )
             )
 
-            console.log("subOrg 2222")
+            console.log("subOrg 2")
             router.push("/dashboard")
           }
         }
       }
     } catch (error: any) {
+      console.log("[dbg] error=", error)
       // Catch the user cancel error and force a hard reload to avoid a stalled key
       const message: string = error?.message || "";
       if (message.includes("NotAllowedError")) {
-      window.location.reload();
-      return;
-    }
+        window.location.reload();
+        return;
+      }
       dispatch({ type: "ERROR", payload: error.message })
     } finally {
       dispatch({ type: "LOADING", payload: false })
@@ -445,7 +475,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await turnkey?.logout()
     await indexedDbClient?.clear()
     googleLogout()
-    console.log("[shuizhu]logout")
+    console.log("[dbg]logout")
     router.push("/")
   }
 

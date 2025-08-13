@@ -16,10 +16,9 @@ export const useUser = () => {
         // Try and get the current user
 
         const token = await turnkey.getSession()
-        console.log("[shuizhu]token after getSession=", token)
         // If the user is not found, we assume the user is not logged in
         if (!token?.expiry || token.expiry > Date.now()) {
-          console.log("[shuizhu]token.expiry")
+          console.log("[dbg]token.expiry, token.expiry=", token?.expiry, "Date.now()=", Date.now())
           router.push("/")
           return
         }

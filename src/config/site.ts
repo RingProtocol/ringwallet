@@ -22,7 +22,7 @@ export const siteConfig: SiteConfig = {
   name: "Ring Wallet",
   author: "turnkey",
   description:
-    "A comprehensive demo showcasing how to build an embedded wallet using Turnkey.",
+    "Ring Wallet is a comprehensive tool for managing your digital assets.",
   keywords: [
     "Turnkey",
     "Web3",
@@ -37,7 +37,7 @@ export const siteConfig: SiteConfig = {
     author: "https://turnkey.io",
   },
   links: {
-    github: "https://github.com/tkhq/demo-embedded-wallet",
+    github: "https://github.com/ringprotocol/ring-wallet",
   },
   ogImage: `${baseUrl}/og.jpg`,
 }
