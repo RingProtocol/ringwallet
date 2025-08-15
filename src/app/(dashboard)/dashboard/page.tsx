@@ -8,6 +8,7 @@ import axios from "axios"
 import { TransactionsProvider } from "@/providers/transactions-provider"
 
 import Activity from "@/components/activity"
+import AppsList from "@/components/AppsList"
 import Assets from "@/components/assets"
 import WalletCard from "@/components/wallet-card"
 
@@ -80,6 +81,7 @@ export default function Dashboard() {
           <Assets />
           <Activity />
         </div>
+        <AppsList />
       </TransactionsProvider>
     </main>
   )
