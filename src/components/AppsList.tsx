@@ -1,67 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useRouter } from "next/navigation"
 import AppItem from "./AppItem"
-import IframeModal from "./IframeModal"
-
-const appsConfig = [
-    {
-        icon: "/icons/ringcorn.svg",
-        name: "Ring",
-        url: "https://ring.exchange"
-    },
-    {
-        icon: "/favicon.png",
-        name: "Baidu",
-        url: "https://baidu.com"
-    },
-    {
-        icon: "/favicon.png",
-        name: "Google",
-        url: "https://google.com"
-    },
-    {
-        icon: "/favicon.png",
-        name: "Uniswap",
-        url: "https://uniswap.org"
-    },
-    {
-        icon: "/favicon.png",
-        name: "OpenSea",
-        url: "https://opensea.io"
-    },
-    {
-        icon: "/favicon.png",
-        name: "CoinGecko",
-        url: "https://coingecko.com"
-    }
-]
+import { appsConfig } from "@/config/apps"
 
 export default function AppsList() {
-    const [iframeModal, setIframeModal] = useState<{
-        isOpen: boolean
-        url: string
-        title: string
-    }>({
-        isOpen: false,
-        url: "",
-        title: ""
-    })
+    const router = useRouter()
 
-    const openInIframeClick = (url: string, title: string) => () => {
-        setIframeModal({
-            isOpen: true,
-            url,
-            title
-        })
-    }
-
-    const closeIframe = () => {
-        setIframeModal({
-            isOpen: false,
-            url: "",
-            title: ""
-        })
+    const openInDappsPage = (index: number) => {
+        router.push(`/dapps?app=${index}`)
     }
 
     return (
@@ -74,16 +21,10 @@ export default function AppsList() {
                         icon={app.icon}
                         name={app.name}
                         url={app.url}
-                        onClick={openInIframeClick(app.url, app.name)}
+                        onClick={() => openInDappsPage(index)}
                     />
                 ))}
             </div>
-            <IframeModal
-                isOpen={iframeModal.isOpen}
-                onClose={closeIframe}
-                url={iframeModal.url}
-                title={iframeModal.title}
-            />
         </div>
     )
 }
