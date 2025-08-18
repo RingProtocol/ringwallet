@@ -155,7 +155,7 @@ const AuthContext = createContext<{
   logout: async () => { },
 })
 
-const SESSION_EXPIRY = "900" // This is in seconds
+const SESSION_EXPIRY = "9000" // This is in seconds
 const WARNING_BUFFER = 30 // seconds before expiry to show warning
 
 import { Turnkey } from "@turnkey/sdk-browser";

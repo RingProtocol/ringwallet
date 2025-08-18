@@ -42,7 +42,7 @@ export default function Dapps() {
                     >
                         <ArrowLeft strokeWidth={2.5} className="h-5 w-5" />
                     </Button>
-                    <h1 className="text-xl font-semibold">{currentApp.name}</h1>
+                    <h1 className="text-xl font-semibold">Leave {currentApp.name}</h1>
                 </div>
                 <div className="flex-1">
                     <iframe
