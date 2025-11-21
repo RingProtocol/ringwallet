@@ -2,12 +2,12 @@ export const appsConfig = [
     {
         icon: "/icons/ringcorn.svg",
         name: "Ring",
-        url: "https://ring.exchange"
+        url: "https://miniring.exchange"
     },
     {
         icon: "/favicon.png",
-        name: "Baidu",
-        url: "https://baidu.com"
+        name: "Miniring",
+        url: "https://miniring.exchange"
     },
     {
         icon: "/favicon.png",
