@@ -9,14 +9,13 @@
   },
   "packageManager": "yarn@1.22.22",
   "scripts": {
-    "dev": "vite --config apps/pwa/vite.config.ts",
-    "build": "tsc && vite build --config apps/pwa/vite.config.ts",
-    "preview": "vite preview --config apps/pwa/vite.config.ts",
-    "typecheck": "tsc --noEmit",
-    "start": "serve -s dist -l ${PORT:-3000}",
-    "next:dev": "next dev",
-    "next:build": "next build",
-    "next:start": "next start"
+    "dev": "next dev --webpack",
+    "build": "next build",
+    "start": "next start",
+    "vite:dev": "vite --config apps/pwa/vite.config.ts",
+    "vite:build": "tsc && vite build --config apps/pwa/vite.config.ts",
+    "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "latest",
