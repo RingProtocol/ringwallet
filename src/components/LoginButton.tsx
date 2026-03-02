@@ -1,14 +1,20 @@
 import React, { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/passkeyService'
 import CharUtils from '../utils/CharUtils'
 import './LoginButton.css'
 
-const LoginButton = () => {
+const LoginButton: React.FC = () => {
   const { isLoggedIn, login, logout, user, activeWallet } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [debugInfo, setDebugInfo] = useState(null)
+  const [debugInfo, setDebugInfo] = useState<{
+    isSupported: boolean;
+    isSecureContext: boolean;
+    isApiAvailable: boolean;
+    isUVPAAAvailable: boolean;
+    isConditionalMediationAvailable: boolean;
+  } | null>(null)
 
   const handlePasskeyLogin = async () => {
     setIsLoading(true)
@@ -16,10 +22,9 @@ const LoginButton = () => {
     setDebugInfo(null)
 
     try {
-      // 检查Passkey支持情况
       const availability = await PasskeyService.checkAvailability()
       setDebugInfo(availability)
-      
+
       console.log("availability:", availability);
       if (!availability.isSecureContext) {
         setError('Passkey 需要在安全环境(HTTPS)下运行')
@@ -36,19 +41,14 @@ const LoginButton = () => {
         return
       }
 
-      // 执行Passkey登录
       const result = await PasskeyService.login()
-      
-      if (result.success) {
-        // 优先使用从 Passkey 凭证中直接读取的用户名（实现了跨设备同步显示）
-        // 如果读取失败，再回退到 localStorage 或默认值
+
+      if (result.success && result.credential) {
         const storedUser = localStorage.getItem('last_registered_username')
         const displayUser = result.credential.userHandle || storedUser || 'Passkey用户'
 
         console.log("result.credential:", result.credential);
         console.log("result.credential.publicKey:", result.credential.publicKey);
-        // 如果存在 publicKey，说明是 EIP-7951 账户，强制设置 accountType
-        // 否则从 localStorage 读取或使用默认值
         let accountType = localStorage.getItem('preferred_account_type') || 'eip-7951'
         if (result.credential.publicKey) {
           accountType = 'eip-7951'
@@ -56,29 +56,29 @@ const LoginButton = () => {
           console.log('📊 Public Key 详情:', {
             hasPublicKey: !!result.credential.publicKey,
             isMap: result.credential.publicKey instanceof Map,
-            hasX: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-2) : !!result.credential.publicKey[-2],
-            hasY: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-3) : !!result.credential.publicKey[-3]
+            hasX: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-2) : !!(result.credential.publicKey as Record<number, unknown>)[-2],
+            hasY: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-3) : !!(result.credential.publicKey as Record<number, unknown>)[-3]
           })
         } else {
           console.warn('⚠️ 未找到 EIP-7951 Public Key，将使用传统账户模式')
         }
 
-        const userData = {
+        const userData: UserData = {
           id: result.credential.id,
           name: displayUser,
           loginTime: new Date().toLocaleString('zh-CN'),
-          masterSeed: result.credential.masterSeed, // 传递 Master Seed 到 Auth Context
-          publicKey: result.credential.publicKey, // 传递 EIP-7951 Public Key 到 Auth Context
+          masterSeed: result.credential.masterSeed ?? undefined,
+          publicKey: result.credential.publicKey,
           accountType
         }
-        
+
         login(userData)
       } else {
         setError(result.error || '登录失败，请重试')
       }
-    } catch (error) {
-      console.error('Login error:', error)
-      setError('登录过程中发生错误：' + error.message)
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('登录过程中发生错误：' + (err as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -97,7 +97,7 @@ const LoginButton = () => {
       }
 
       const result = await PasskeyService.register(username)
-      
+
       if (result.success) {
         localStorage.setItem('last_registered_username', username);
         localStorage.setItem('preferred_account_type', 'eip-7951');
@@ -105,8 +105,8 @@ const LoginButton = () => {
       } else {
         setError('注册失败: ' + result.error)
       }
-    } catch (error) {
-      setError('注册错误: ' + error.message)
+    } catch (err) {
+      setError('注册错误: ' + (err as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -133,8 +133,8 @@ const LoginButton = () => {
       } else {
         setError('注册失败: ' + result.error)
       }
-    } catch (error) {
-      setError('注册错误: ' + error.message)
+    } catch (err) {
+      setError('注册错误: ' + (err as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -146,38 +146,35 @@ const LoginButton = () => {
 
   const handleSyncToDevice = async () => {
     if (!user || !user.masterSeed || !user.name) return
-    
+
     setIsLoading(true)
     setError('')
     try {
-      // 确保 masterSeed 是 Uint8Array 格式
-      // 从 localStorage 恢复时，Uint8Array 会被序列化为普通数组
-      let masterSeed = user.masterSeed
-      if (Array.isArray(masterSeed)) {
-        masterSeed = new Uint8Array(masterSeed)
-      } else if (!(masterSeed instanceof Uint8Array)) {
-        masterSeed = new Uint8Array(Object.values(masterSeed))
+      let masterSeed: Uint8Array
+      if (Array.isArray(user.masterSeed)) {
+        masterSeed = new Uint8Array(user.masterSeed)
+      } else if (!(user.masterSeed instanceof Uint8Array)) {
+        masterSeed = new Uint8Array(Object.values(user.masterSeed as Record<string, number>))
+      } else {
+        masterSeed = user.masterSeed
       }
 
-      // 使用现有的 Seed 和 Username 在本设备注册一个新的 Passkey
       const result = await PasskeyService.register(user.name, masterSeed)
-      
-      if (result.success) {
+
+      if (result.success && result.credential) {
         alert('✅ 账号同步成功！\n\n已在此设备上创建了包含相同钱包密钥的 Passkey。\n下次您可以直接在此设备上使用生物识别登录，无需扫码。')
         try {
-          // 将 credential.id 转换为 base64 字符串
           const credentialIdBase64 = btoa(String.fromCharCode(...new Uint8Array(result.credential.rawId)))
           const storedKey = localStorage.getItem(`new_wallet_pk_${credentialIdBase64}`)
           if (storedKey) {
             const keyData = JSON.parse(storedKey)
-            // 转换为 Map 格式，使用数字键 -2 和 -3
             const xBytes = new Uint8Array(keyData.x)
             const yBytes = new Uint8Array(keyData.y)
-            const newPublicKey = new Map()
+            const newPublicKey = new Map<number, Uint8Array>()
             newPublicKey.set(-2, xBytes)
             newPublicKey.set(-3, yBytes)
 
-            const updatedUser = {
+            const updatedUser: UserData = {
               id: result.credential.id,
               name: user.name,
               loginTime: new Date().toLocaleString('zh-CN'),
@@ -193,8 +190,8 @@ const LoginButton = () => {
       } else {
         setError('同步失败: ' + result.error)
       }
-    } catch (error) {
-      setError('同步错误: ' + error.message)
+    } catch (err) {
+      setError('同步错误: ' + (err as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -251,17 +248,17 @@ const LoginButton = () => {
       console.log('📝 使用现有用户名和 Master Seed 注册新的 7951 Passkey...')
       console.log('   用户名:', user.name)
       console.log('   Master Seed 原始类型:', Array.isArray(user.masterSeed) ? 'Array' : user.masterSeed instanceof Uint8Array ? 'Uint8Array' : typeof user.masterSeed)
-      console.log('   Master Seed 原始长度:', user.masterSeed?.length || 0)
+      console.log('   Master Seed 原始长度:', (user.masterSeed as Uint8Array)?.length || 0)
 
-      // 确保 masterSeed 是 Uint8Array 格式
-      // 从 localStorage 恢复时，Uint8Array 会被序列化为普通数组
-      let masterSeed = user.masterSeed
-      if (Array.isArray(masterSeed)) {
+      let masterSeed: Uint8Array
+      if (Array.isArray(user.masterSeed)) {
         console.log('🔄 检测到 masterSeed 是数组格式，转换为 Uint8Array...')
-        masterSeed = new Uint8Array(masterSeed)
-      } else if (!(masterSeed instanceof Uint8Array)) {
+        masterSeed = new Uint8Array(user.masterSeed)
+      } else if (!(user.masterSeed instanceof Uint8Array)) {
         console.log('🔄 检测到 masterSeed 不是 Uint8Array，尝试转换...')
-        masterSeed = new Uint8Array(Object.values(masterSeed))
+        masterSeed = new Uint8Array(Object.values(user.masterSeed as Record<string, number>))
+      } else {
+        masterSeed = user.masterSeed
       }
 
       console.log('   Master Seed 转换后类型:', masterSeed instanceof Uint8Array ? 'Uint8Array' : typeof masterSeed)
@@ -275,10 +272,9 @@ const LoginButton = () => {
         return
       }
 
-      // 使用现有的 Seed 和 Username 注册一个新的 Passkey（包含 Public Key）
       const result = await PasskeyService.register(user.name, masterSeed)
 
-      if (result.success) {
+      if (result.success && result.credential) {
         console.log('✅ Passkey 注册成功!')
         console.log('📊 注册结果:', {
           credentialId: result.credential.id,
@@ -287,7 +283,6 @@ const LoginButton = () => {
         })
 
         try {
-          // 使用 CharUtils 将 credential.id 转换为 base64 字符串
           const credentialIdBase64 = CharUtils.uint8ArrayToBase64(new Uint8Array(result.credential.rawId))
           console.log('🔑 Credential ID (Base64):', credentialIdBase64)
 
@@ -304,7 +299,6 @@ const LoginButton = () => {
                 yLength: keyData.y?.length || 0
               })
 
-              // 使用 CharUtils 从存储格式恢复为 Map
               const newPublicKey = CharUtils.coseKeyFromStorage(keyData)
 
               if (newPublicKey) {
@@ -316,7 +310,7 @@ const LoginButton = () => {
                   yLength: newPublicKey.get(-3)?.length || 0
                 })
 
-                const updatedUser = {
+                const updatedUser: UserData = {
                   id: result.credential.id,
                   name: user.name,
                   loginTime: new Date().toLocaleString('zh-CN'),
@@ -351,15 +345,15 @@ const LoginButton = () => {
           }
         } catch (e) {
           console.error('❌ 升级到 EIP-7951 时发生错误:', e)
-          setError('升级失败: ' + e.message)
+          setError('升级失败: ' + (e as Error).message)
         }
       } else {
         console.error('❌ Passkey 注册失败:', result.error)
         setError('注册失败: ' + result.error)
       }
-    } catch (error) {
-      console.error('❌ 升级过程中发生错误:', error)
-      setError('升级错误: ' + error.message)
+    } catch (err) {
+      console.error('❌ 升级过程中发生错误:', err)
+      setError('升级错误: ' + (err as Error).message)
     } finally {
       setIsLoading(false)
       console.log('🏁 升级流程结束')
@@ -377,9 +371,6 @@ const LoginButton = () => {
           </span>
         </div>
 
-        {/* 钱包列表已移除，通过顶部切换器选择 */}
-        
-        {/* 升级到 7951 功能入口 - 仅对普通账户显示 */}
         {isLoggedIn && (!user?.publicKey || user?.accountType !== 'eip-7951') && (
           <div className="upgrade-to-7951" style={{ marginTop: '20px', padding: '10px', background: '#fff3cd', borderRadius: '5px', textAlign: 'left', border: '1px solid #ffc107' }}>
             <h4 style={{ margin: '0 0 10px 0', color: '#856404' }}>🚀 升级到 EIP-7951 智能账户</h4>
@@ -403,7 +394,7 @@ const LoginButton = () => {
                 请点击下方按钮将账号保存到此设备。
                 这样下次您就可以直接使用此设备的指纹/面容登录了。
               </p>
-              <button 
+              <button
                 onClick={handleSyncToDevice}
                 disabled={isLoading}
                 style={{ width: '100%', backgroundColor: '#2e7d32', fontSize: '14px' }}
@@ -419,8 +410,8 @@ const LoginButton = () => {
 
   return (
     <div className="login-container">
-      <button 
-        className="login-button" 
+      <button
+        className="login-button"
         onClick={handlePasskeyLogin}
         disabled={isLoading}
       >
@@ -429,7 +420,7 @@ const LoginButton = () => {
 
       <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
         <button
-          className="login-button" 
+          className="login-button"
           onClick={handleRegister7951}
           disabled={isLoading}
           style={{ backgroundColor: '#646cff' }}
@@ -447,7 +438,7 @@ const LoginButton = () => {
       </div>
 
       {error && <div className="error-message">{error}</div>}
-      
+
       {debugInfo && !debugInfo.isSupported && (
         <div className="debug-info" style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', textAlign: 'left' }}>
           <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>环境检测详情:</p>

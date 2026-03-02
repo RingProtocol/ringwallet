@@ -1,14 +1,19 @@
-/**
- * CharUtils - 字符和数组转换工具类
- * 用于处理各种数据格式之间的转换，特别是 WebAuthn/COSE 相关的数据格式
- */
+type ByteLike = Uint8Array | ArrayBuffer | DataView | Array<number>;
+type CoseKey = Map<number, Uint8Array> | Record<string | number, unknown>;
+
+interface CoseStorageFormat {
+  _type: 'Map';
+  x: number[];
+  y: number[];
+}
+
+interface CoseCoordinates {
+  x: Uint8Array;
+  y: Uint8Array;
+}
+
 class CharUtils {
-  /**
-   * 将 Uint8Array 转换为普通数组
-   * @param {Uint8Array|ArrayBuffer|Array} data - 输入数据
-   * @returns {Array<number>} 数字数组
-   */
-  static uint8ArrayToArray(data) {
+  static uint8ArrayToArray(data: ByteLike | null | undefined): number[] | null {
     if (!data) return null;
     if (Array.isArray(data)) return data;
     if (data instanceof Uint8Array) return Array.from(data);
@@ -17,44 +22,35 @@ class CharUtils {
       const arr = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
       return Array.from(arr);
     }
-    // 尝试直接转换
     try {
-      return Array.from(new Uint8Array(data));
+      return Array.from(new Uint8Array(data as ArrayBuffer));
     } catch (e) {
       console.warn('CharUtils.uint8ArrayToArray: 无法转换数据', e);
       return null;
     }
   }
 
-  /**
-   * 将数组转换为 Uint8Array
-   * @param {Array<number>|Uint8Array|ArrayBuffer|Object} data - 输入数据
-   * @returns {Uint8Array} Uint8Array
-   */
-  static arrayToUint8Array(data) {
+  static arrayToUint8Array(data: ByteLike | Record<string, unknown> | null | undefined): Uint8Array | null {
     if (!data) return null;
     if (data instanceof Uint8Array) return data;
     if (data instanceof ArrayBuffer) return new Uint8Array(data);
     if (Array.isArray(data)) {
-      // 确保数组中的所有元素都是数字
       const numbers = data.map(v => typeof v === 'number' ? v : Number(v));
       return new Uint8Array(numbers);
     }
-    // 尝试从对象值创建（兼容从 JSON 恢复的情况，如 {0: 1, 1: 2, ...}）
-    if (typeof data === 'object' && data.constructor === Object) {
+    if (typeof data === 'object' && (data as object).constructor === Object) {
       try {
-        // 如果对象的键是数字索引，转换为数组
-        const keys = Object.keys(data).map(k => parseInt(k, 10)).filter(k => !isNaN(k));
+        const obj = data as Record<string, unknown>;
+        const keys = Object.keys(obj).map(k => parseInt(k, 10)).filter(k => !isNaN(k));
         if (keys.length > 0) {
           const maxKey = Math.max(...keys);
           const arr = new Array(maxKey + 1);
           for (const key of keys) {
-            arr[key] = typeof data[key] === 'number' ? data[key] : Number(data[key]);
+            arr[key] = typeof obj[key] === 'number' ? obj[key] : Number(obj[key]);
           }
           return new Uint8Array(arr);
         }
-        // 否则尝试直接使用 Object.values
-        return new Uint8Array(Object.values(data).map(v => typeof v === 'number' ? v : Number(v)));
+        return new Uint8Array(Object.values(obj).map(v => typeof v === 'number' ? v : Number(v)));
       } catch (e) {
         console.warn('CharUtils.arrayToUint8Array: 无法从对象创建', e, data);
         return null;
@@ -63,26 +59,15 @@ class CharUtils {
     return null;
   }
 
-  /**
-   * 将 Uint8Array 转换为 Base64 字符串
-   * @param {Uint8Array|ArrayBuffer|Array<number>} data - 输入数据
-   * @returns {string} Base64 字符串
-   */
-  static uint8ArrayToBase64(data) {
+  static uint8ArrayToBase64(data: ByteLike | null | undefined): string | null {
     if (!data) return null;
     const arr = this.arrayToUint8Array(data);
     if (!arr) return null;
-    // 使用 btoa
     const binary = String.fromCharCode(...arr);
     return btoa(binary);
   }
 
-  /**
-   * 将 Base64 字符串转换为 Uint8Array
-   * @param {string} base64 - Base64 字符串
-   * @returns {Uint8Array} Uint8Array
-   */
-  static base64ToUint8Array(base64) {
+  static base64ToUint8Array(base64: string | null | undefined): Uint8Array | null {
     if (!base64 || typeof base64 !== 'string') return null;
     try {
       const binary = atob(base64);
@@ -97,28 +82,16 @@ class CharUtils {
     }
   }
 
-  /**
-   * 将 Uint8Array 转换为 Base64URL 字符串（用于 WebAuthn）
-   * @param {Uint8Array|ArrayBuffer|Array<number>} data - 输入数据
-   * @returns {string} Base64URL 字符串
-   */
-  static uint8ArrayToBase64URL(data) {
+  static uint8ArrayToBase64URL(data: ByteLike | null | undefined): string | null {
     const base64 = this.uint8ArrayToBase64(data);
     if (!base64) return null;
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
-  /**
-   * 将 Base64URL 字符串转换为 Uint8Array
-   * @param {string} base64url - Base64URL 字符串
-   * @returns {Uint8Array} Uint8Array
-   */
-  static base64URLToUint8Array(base64url) {
+  static base64URLToUint8Array(base64url: string | null | undefined): Uint8Array | null {
     if (!base64url || typeof base64url !== 'string') return null;
     try {
-      // 转换为标准 Base64
       let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-      // 添加填充
       while (base64.length % 4) {
         base64 += '=';
       }
@@ -129,13 +102,7 @@ class CharUtils {
     }
   }
 
-  /**
-   * 将 Uint8Array 转换为十六进制字符串（带 0x 前缀）
-   * @param {Uint8Array|ArrayBuffer|Array<number>} data - 输入数据
-   * @param {boolean} prefix - 是否添加 0x 前缀，默认为 true
-   * @returns {string} 十六进制字符串
-   */
-  static uint8ArrayToHex(data, prefix = true) {
+  static uint8ArrayToHex(data: ByteLike | null | undefined, prefix = true): string | null {
     const arr = this.arrayToUint8Array(data);
     if (!arr) return null;
     const hex = Array.from(arr)
@@ -144,14 +111,8 @@ class CharUtils {
     return prefix ? '0x' + hex : hex;
   }
 
-  /**
-   * 将十六进制字符串转换为 Uint8Array
-   * @param {string} hex - 十六进制字符串（可带或不带 0x 前缀）
-   * @returns {Uint8Array} Uint8Array
-   */
-  static hexToUint8Array(hex) {
+  static hexToUint8Array(hex: string | null | undefined): Uint8Array | null {
     if (!hex || typeof hex !== 'string') return null;
-    // 移除 0x 前缀
     const cleanHex = hex.startsWith('0x') || hex.startsWith('0X') ? hex.slice(2) : hex;
     if (cleanHex.length % 2 !== 0) {
       console.warn('CharUtils.hexToUint8Array: 十六进制字符串长度必须是偶数');
@@ -164,43 +125,27 @@ class CharUtils {
     return bytes;
   }
 
-  /**
-   * 将字符串转换为 Uint8Array（UTF-8 编码）
-   * @param {string} str - 输入字符串
-   * @returns {Uint8Array} Uint8Array
-   */
-  static stringToUint8Array(str) {
+  static stringToUint8Array(str: string | null | undefined): Uint8Array | null {
     if (!str || typeof str !== 'string') return null;
     const encoder = new TextEncoder();
     return encoder.encode(str);
   }
 
-  /**
-   * 将 Uint8Array 转换为字符串（UTF-8 解码）
-   * @param {Uint8Array|ArrayBuffer|Array<number>} data - 输入数据
-   * @returns {string} 字符串
-   */
-  static uint8ArrayToString(data) {
+  static uint8ArrayToString(data: ByteLike | null | undefined): string | null {
     const arr = this.arrayToUint8Array(data);
     if (!arr) return null;
     const decoder = new TextDecoder('utf-8');
     return decoder.decode(arr);
   }
 
-  /**
-   * COSE 公钥：从 Map 格式转换为可序列化的对象格式（用于存储）
-   * @param {Map|Object} coseKey - COSE 公钥（Map 或对象，键为 -2, -3）
-   * @returns {Object|null} 可序列化的对象 {_type: 'Map', x: Array, y: Array}
-   */
-  static coseKeyToStorage(coseKey) {
+  static coseKeyToStorage(coseKey: CoseKey | null | undefined): CoseStorageFormat | null {
     if (!coseKey) {
       console.warn('CharUtils.coseKeyToStorage: coseKey 为空');
       return null;
     }
 
-    let x, y;
-    
-    // 从 Map 或对象中提取 x 和 y
+    let x: unknown, y: unknown;
+
     if (coseKey instanceof Map) {
       x = coseKey.get(-2);
       y = coseKey.get(-3);
@@ -211,16 +156,16 @@ class CharUtils {
         });
       }
     } else if (typeof coseKey === 'object' && coseKey !== null) {
-      // 尝试多种方式获取
-      x = coseKey[-2] !== undefined ? coseKey[-2] : (coseKey.get?.(-2));
-      y = coseKey[-3] !== undefined ? coseKey[-3] : (coseKey.get?.(-3));
-      
+      const obj = coseKey as Record<string | number, unknown>;
+      x = obj[-2] !== undefined ? obj[-2] : ((obj as { get?: (k: number) => unknown }).get?.(-2));
+      y = obj[-3] !== undefined ? obj[-3] : ((obj as { get?: (k: number) => unknown }).get?.(-3));
+
       if (!x || !y) {
         console.warn('CharUtils.coseKeyToStorage: 对象中缺少 -2 或 -3 键', {
-          hasMinus2: -2 in coseKey,
-          hasMinus3: -3 in coseKey,
-          hasGet: typeof coseKey.get === 'function',
-          keys: Object.keys(coseKey)
+          hasMinus2: -2 in obj,
+          hasMinus3: -3 in obj,
+          hasGet: typeof (obj as { get?: unknown }).get === 'function',
+          keys: Object.keys(obj)
         });
       }
     } else {
@@ -238,9 +183,8 @@ class CharUtils {
       return null;
     }
 
-    // 转换为数组格式以便 JSON 序列化
-    const xArray = this.uint8ArrayToArray(x);
-    const yArray = this.uint8ArrayToArray(y);
+    const xArray = this.uint8ArrayToArray(x as ByteLike);
+    const yArray = this.uint8ArrayToArray(y as ByteLike);
 
     if (!xArray || !yArray) {
       console.warn('CharUtils.coseKeyToStorage: 无法转换 x 或 y 坐标为数组', {
@@ -252,8 +196,7 @@ class CharUtils {
       return null;
     }
 
-    // 确保是普通数组（不是类数组对象）
-    const result = {
+    const result: CoseStorageFormat = {
       _type: 'Map',
       x: Array.isArray(xArray) ? xArray : Array.from(xArray),
       y: Array.isArray(yArray) ? yArray : Array.from(yArray)
@@ -267,29 +210,21 @@ class CharUtils {
     return result;
   }
 
-  /**
-   * COSE 公钥：从存储格式恢复为 Map 格式（用于运行时）
-   * @param {Object|Map} storageData - 存储的数据（对象格式 {_type: 'Map', x: Array, y: Array} 或 Map）
-   * @returns {Map|null} COSE 公钥 Map
-   */
-  static coseKeyFromStorage(storageData) {
+  static coseKeyFromStorage(storageData: CoseStorageFormat | CoseKey | null | undefined): Map<number, Uint8Array> | null {
     if (!storageData) {
       console.warn('CharUtils.coseKeyFromStorage: storageData 为空');
       return null;
     }
 
-    // 如果已经是 Map，直接返回
     if (storageData instanceof Map) {
-      // 验证格式
       if (storageData.has(-2) && storageData.has(-3)) {
-        return storageData;
+        return storageData as Map<number, Uint8Array>;
       } else {
         console.warn('CharUtils.coseKeyFromStorage: Map 格式无效，缺少 -2 或 -3 键');
         return null;
       }
     }
 
-    // 检查是否是空对象
     if (typeof storageData === 'object' && storageData !== null) {
       const keys = Object.keys(storageData);
       if (keys.length === 0) {
@@ -298,58 +233,52 @@ class CharUtils {
       }
     }
 
-    // 从对象格式恢复
-    let xArray, yArray;
+    let xArray: unknown, yArray: unknown;
+    const obj = storageData as Record<string | number, unknown>;
 
     if (typeof storageData === 'object' && storageData !== null) {
-      // 支持新格式 {_type: 'Map', x: Array, y: Array}
-      if (storageData._type === 'Map') {
-        if (storageData.x && storageData.y) {
-          xArray = storageData.x;
-          yArray = storageData.y;
+      if ((obj as unknown as CoseStorageFormat)._type === 'Map') {
+        const typed = obj as unknown as CoseStorageFormat;
+        if (typed.x && typed.y) {
+          xArray = typed.x;
+          yArray = typed.y;
           console.log('CharUtils.coseKeyFromStorage: 使用新格式 {_type: "Map", x, y}');
         } else {
           console.warn('CharUtils.coseKeyFromStorage: _type="Map" 但缺少 x 或 y', {
-            hasX: !!storageData.x,
-            hasY: !!storageData.y,
-            xType: typeof storageData.x,
-            yType: typeof storageData.y
+            hasX: !!typed.x,
+            hasY: !!typed.y,
+            xType: typeof typed.x,
+            yType: typeof typed.y
           });
         }
-      }
-      // 支持旧格式 {x: Array, y: Array}（没有 _type）
-      else if (storageData.x !== undefined && storageData.y !== undefined) {
-        xArray = storageData.x;
-        yArray = storageData.y;
+      } else if ((obj as { x?: unknown; y?: unknown }).x !== undefined && (obj as { x?: unknown; y?: unknown }).y !== undefined) {
+        xArray = (obj as { x: unknown }).x;
+        yArray = (obj as { y: unknown }).y;
         console.log('CharUtils.coseKeyFromStorage: 使用旧格式 {x, y}');
-      }
-      // 支持直接使用数字键的对象 {[-2]: Uint8Array, [-3]: Uint8Array}
-      else if (storageData[-2] !== undefined && storageData[-3] !== undefined) {
-        xArray = this.uint8ArrayToArray(storageData[-2]);
-        yArray = this.uint8ArrayToArray(storageData[-3]);
+      } else if (obj[-2] !== undefined && obj[-3] !== undefined) {
+        xArray = this.uint8ArrayToArray(obj[-2] as ByteLike);
+        yArray = this.uint8ArrayToArray(obj[-3] as ByteLike);
         console.log('CharUtils.coseKeyFromStorage: 使用数字键格式 {-2, -3}');
-      }
-      // 尝试使用 get 方法（兼容某些代理对象）
-      else if (typeof storageData.get === 'function') {
-        const xVal = storageData.get(-2);
-        const yVal = storageData.get(-3);
+      } else if (typeof (obj as { get?: unknown }).get === 'function') {
+        const getter = obj as { get: (k: number) => unknown };
+        const xVal = getter.get(-2);
+        const yVal = getter.get(-3);
         if (xVal !== undefined && yVal !== undefined) {
-          xArray = this.uint8ArrayToArray(xVal);
-          yArray = this.uint8ArrayToArray(yVal);
+          xArray = this.uint8ArrayToArray(xVal as ByteLike);
+          yArray = this.uint8ArrayToArray(yVal as ByteLike);
           console.log('CharUtils.coseKeyFromStorage: 使用 get 方法');
         }
       }
 
-      // 如果还没有找到，尝试检查所有可能的键
       if (!xArray || !yArray) {
         const keys = Object.keys(storageData);
         console.warn('CharUtils.coseKeyFromStorage: 尝试所有键:', keys);
         console.warn('CharUtils.coseKeyFromStorage: 存储数据详情:', {
-          keys: keys,
-          xExists: 'x' in storageData || -2 in storageData,
-          yExists: 'y' in storageData || -3 in storageData,
-          hasType: '_type' in storageData,
-          type: storageData._type
+          keys,
+          xExists: 'x' in obj || -2 in obj,
+          yExists: 'y' in obj || -3 in obj,
+          hasType: '_type' in obj,
+          type: (obj as { _type?: string })._type
         });
       }
     } else {
@@ -362,10 +291,8 @@ class CharUtils {
       return null;
     }
 
-    // 确保 xArray 和 yArray 是数组格式
     if (!Array.isArray(xArray)) {
-      // 尝试转换
-      const converted = this.uint8ArrayToArray(xArray);
+      const converted = this.uint8ArrayToArray(xArray as ByteLike);
       if (converted) {
         xArray = converted;
       } else {
@@ -375,8 +302,7 @@ class CharUtils {
     }
 
     if (!Array.isArray(yArray)) {
-      // 尝试转换
-      const converted = this.uint8ArrayToArray(yArray);
+      const converted = this.uint8ArrayToArray(yArray as ByteLike);
       if (converted) {
         yArray = converted;
       } else {
@@ -385,9 +311,8 @@ class CharUtils {
       }
     }
 
-    // 转换为 Uint8Array
-    const xBytes = this.arrayToUint8Array(xArray);
-    const yBytes = this.arrayToUint8Array(yArray);
+    const xBytes = this.arrayToUint8Array(xArray as number[]);
+    const yBytes = this.arrayToUint8Array(yArray as number[]);
 
     if (!xBytes || !yBytes) {
       console.warn('CharUtils.coseKeyFromStorage: 无法将数组转换为 Uint8Array', {
@@ -401,17 +326,14 @@ class CharUtils {
       return null;
     }
 
-    // 验证长度（P-256 曲线的坐标应该是 32 字节）
     if (xBytes.length !== 32 || yBytes.length !== 32) {
       console.warn('CharUtils.coseKeyFromStorage: 坐标长度不正确，期望 32 字节', {
         xLength: xBytes.length,
         yLength: yBytes.length
       });
-      // 不返回 null，仍然尝试创建，因为某些情况下长度可能不同
     }
 
-    // 创建 Map
-    const coseKey = new Map();
+    const coseKey = new Map<number, Uint8Array>();
     coseKey.set(-2, xBytes);
     coseKey.set(-3, yBytes);
 
@@ -423,33 +345,27 @@ class CharUtils {
     return coseKey;
   }
 
-  /**
-   * 验证 COSE 公钥格式是否有效
-   * @param {Map|Object} coseKey - COSE 公钥
-   * @returns {boolean} 是否有效
-   */
-  static isValidCoseKey(coseKey) {
+  static isValidCoseKey(coseKey: CoseKey | null | undefined): boolean {
     if (!coseKey) return false;
 
-    let x, y;
+    let x: unknown, y: unknown;
 
     if (coseKey instanceof Map) {
       x = coseKey.get(-2);
       y = coseKey.get(-3);
     } else if (typeof coseKey === 'object') {
-      x = coseKey[-2] || coseKey.get?.(-2);
-      y = coseKey[-3] || coseKey.get?.(-3);
+      const obj = coseKey as Record<string | number, unknown>;
+      x = obj[-2] || (obj as { get?: (k: number) => unknown }).get?.(-2);
+      y = obj[-3] || (obj as { get?: (k: number) => unknown }).get?.(-3);
     } else {
       return false;
     }
 
-    // 检查 x 和 y 是否存在且为有效的字节数组
     if (!x || !y) return false;
 
-    const xBytes = this.arrayToUint8Array(x);
-    const yBytes = this.arrayToUint8Array(y);
+    const xBytes = this.arrayToUint8Array(x as ByteLike);
+    const yBytes = this.arrayToUint8Array(y as ByteLike);
 
-    // P-256 曲线的坐标应该是 32 字节
     if (!xBytes || !yBytes || xBytes.length !== 32 || yBytes.length !== 32) {
       return false;
     }
@@ -457,29 +373,21 @@ class CharUtils {
     return true;
   }
 
-  /**
-   * 从各种可能的格式中提取 COSE 公钥的 x 和 y 坐标
-   * @param {Map|Object|any} coseKey - COSE 公钥（任意格式）
-   * @returns {{x: Uint8Array, y: Uint8Array}|null} x 和 y 坐标
-   */
-  static extractCoseKeyCoordinates(coseKey) {
+  static extractCoseKeyCoordinates(coseKey: CoseKey | null | undefined): CoseCoordinates | null {
     if (!coseKey) return null;
 
-    let x, y;
+    let x: unknown, y: unknown;
 
-    // 尝试从 Map 提取
     if (coseKey instanceof Map) {
       x = coseKey.get(-2);
       y = coseKey.get(-3);
-    }
-    // 尝试从对象提取（数字键或字符串键）
-    else if (typeof coseKey === 'object' && coseKey !== null) {
-      x = coseKey[-2] !== undefined ? coseKey[-2] : (coseKey.get?.(-2));
-      y = coseKey[-3] !== undefined ? coseKey[-3] : (coseKey.get?.(-3));
+    } else if (typeof coseKey === 'object' && coseKey !== null) {
+      const obj = coseKey as Record<string | number, unknown>;
+      x = obj[-2] !== undefined ? obj[-2] : (obj as { get?: (k: number) => unknown }).get?.(-2);
+      y = obj[-3] !== undefined ? obj[-3] : (obj as { get?: (k: number) => unknown }).get?.(-3);
     }
 
     if (!x || !y) {
-      // 如果直接提取失败，尝试从存储格式恢复
       const restored = this.coseKeyFromStorage(coseKey);
       if (restored) {
         x = restored.get(-2);
@@ -489,49 +397,38 @@ class CharUtils {
       }
     }
 
-    // 转换为 Uint8Array
-    const xBytes = this.arrayToUint8Array(x);
-    const yBytes = this.arrayToUint8Array(y);
+    const xBytes = this.arrayToUint8Array(x as ByteLike);
+    const yBytes = this.arrayToUint8Array(y as ByteLike);
 
     if (!xBytes || !yBytes) return null;
 
     return { x: xBytes, y: yBytes };
   }
 
-  /**
-   * 规范化 COSE 公钥格式：将各种可能的格式统一转换为 Map 格式
-   * 这个方法会尝试多种方式转换，确保兼容性
-   * @param {Map|Object|any} publicKey - 任意格式的公钥
-   * @returns {Map|null} 规范化的 Map 格式公钥
-   */
-  static normalizeCoseKey(publicKey) {
+  static normalizeCoseKey(publicKey: CoseKey | null | undefined): Map<number, Uint8Array> | null {
     if (!publicKey) return null;
 
-    // 检查是否是空对象
-    if (typeof publicKey === 'object' && publicKey !== null && 
-        !(publicKey instanceof Map) && 
+    if (typeof publicKey === 'object' && publicKey !== null &&
+        !(publicKey instanceof Map) &&
         Object.keys(publicKey).length === 0) {
       console.warn('CharUtils.normalizeCoseKey: publicKey 是空对象');
       return null;
     }
 
-    // 如果已经是 Map 格式且有效，直接返回
     if (publicKey instanceof Map) {
       if (publicKey.has(-2) && publicKey.has(-3)) {
-        return publicKey;
+        return publicKey as Map<number, Uint8Array>;
       }
     }
 
-    // 尝试从存储格式恢复
     const restored = this.coseKeyFromStorage(publicKey);
     if (restored) {
       return restored;
     }
 
-    // 尝试直接提取坐标并创建 Map
     const coords = this.extractCoseKeyCoordinates(publicKey);
     if (coords && coords.x && coords.y) {
-      const map = new Map();
+      const map = new Map<number, Uint8Array>();
       map.set(-2, coords.x);
       map.set(-3, coords.y);
       return map;
@@ -541,31 +438,20 @@ class CharUtils {
     return null;
   }
 
-  /**
-   * 从 localStorage 中查找 publicKey
-   * 尝试多种方式匹配 credential ID
-   * @param {string|Array|Uint8Array|ArrayBuffer} credentialId - Credential ID（可能是多种格式）
-   * @param {string} prefix - localStorage 键前缀，默认为 'new_wallet_pk_'
-   * @returns {Map|null} 恢复的 COSE 密钥 Map，如果找不到则返回 null
-   */
-  static findPublicKeyFromStorage(credentialId, prefix = 'new_wallet_pk_') {
+  static findPublicKeyFromStorage(credentialId: string | ByteLike | null | undefined, prefix = 'new_wallet_pk_'): Map<number, Uint8Array> | null {
     if (!credentialId) return null;
 
-    // 尝试多种格式转换 credential ID
-    const candidates = [];
-    
+    const candidates: string[] = [];
+
     if (typeof credentialId === 'string') {
-      // 字符串格式：可能是 base64url，转换为 base64
       candidates.push(credentialId.replace(/-/g, '+').replace(/_/g, '/'));
     } else {
-      // 数组或 Uint8Array 格式：转换为 base64
       const base64 = this.uint8ArrayToBase64(credentialId);
       if (base64) {
         candidates.push(base64);
       }
     }
 
-    // 尝试每个候选值
     for (const candidate of candidates) {
       const key = `${prefix}${candidate}`;
       const stored = localStorage.getItem(key);
@@ -583,10 +469,9 @@ class CharUtils {
       }
     }
 
-    // 如果精确匹配失败，尝试查找所有相关的键
     const allKeys = Object.keys(localStorage);
     const relatedKeys = allKeys.filter(key => key.startsWith(prefix));
-    
+
     if (relatedKeys.length > 0) {
       console.log(`📋 找到 ${relatedKeys.length} 个相关的 localStorage 键，尝试第一个`);
       const firstKey = relatedKeys[0];
@@ -608,27 +493,16 @@ class CharUtils {
     return null;
   }
 
-  /**
-   * 将 ArrayBuffer 转换为 Uint8Array
-   * @param {ArrayBuffer} buffer - ArrayBuffer
-   * @returns {Uint8Array} Uint8Array
-   */
-  static arrayBufferToUint8Array(buffer) {
+  static arrayBufferToUint8Array(buffer: ArrayBuffer | null | undefined): Uint8Array | null {
     if (!buffer || !(buffer instanceof ArrayBuffer)) return null;
     return new Uint8Array(buffer);
   }
 
-  /**
-   * 将 Uint8Array 转换为 ArrayBuffer
-   * @param {Uint8Array|Array<number>} data - 输入数据
-   * @returns {ArrayBuffer} ArrayBuffer
-   */
-  static uint8ArrayToArrayBuffer(data) {
+  static uint8ArrayToArrayBuffer(data: ByteLike | null | undefined): ArrayBuffer | null {
     const arr = this.arrayToUint8Array(data);
     if (!arr) return null;
-    return arr.buffer.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
+    return (arr.buffer as ArrayBuffer).slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
   }
 }
 
 export default CharUtils;
-

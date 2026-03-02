@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import './ChainSwitcher.css'
 
-const ChainSwitcher = () => {
+const ChainSwitcher: React.FC = () => {
   const { activeChain, switchChain, CHAINS } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -10,7 +10,7 @@ const ChainSwitcher = () => {
     setIsOpen(!isOpen)
   }
 
-  const handleSelect = (chainId) => {
+  const handleSelect = (chainId: number) => {
     switchChain(chainId)
     setIsOpen(false)
   }
@@ -30,8 +30,8 @@ const ChainSwitcher = () => {
           <div className="dropdown-header">Select Network</div>
           <div className="chain-list-scroll">
             {CHAINS.map((chain) => (
-              <div 
-                key={chain.id} 
+              <div
+                key={chain.id}
                 className={`chain-option ${chain.id === activeChain.id ? 'active' : ''}`}
                 onClick={() => handleSelect(chain.id)}
               >

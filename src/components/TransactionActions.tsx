@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { ethers } from 'ethers';
 import { useAuth } from '../contexts/AuthContext';
-import WalletService from '../services/walletService';
+import WalletService, { type EIP7951Result } from '../services/walletService';
 import './TransactionActions.css';
 
-const TransactionActions = () => {
+type SignedTx = string | EIP7951Result;
+
+const TransactionActions: React.FC = () => {
   const { isLoggedIn, activeWallet, activeChainId, activeChain, user } = useAuth();
   const [showSend, setShowSend] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
-  
-  // Send state
+
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
-  const [signedTx, setSignedTx] = useState('');
+  const [signedTx, setSignedTx] = useState<SignedTx | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [broadcastHash, setBroadcastHash] = useState('');
@@ -22,7 +22,7 @@ const TransactionActions = () => {
 
   const handleSign = async () => {
     setError('');
-    setSignedTx('');
+    setSignedTx(null);
     setBroadcastHash('');
     setIsLoading(true);
     try {
@@ -32,30 +32,29 @@ const TransactionActions = () => {
       console.log("activeChain:", activeChain);
       console.log("amount:", amount);
       if (activeWallet.credentialId || activeWallet.type === 'eip-7951') {
-        // Get publicKey and salt for initCode generation if needed
         const publicKey = user?.publicKey || null;
         const salt = activeWallet.index || 0;
         const factoryAddress = activeChain?.factoryAddress || null;
 
         const tx = await WalletService.signEIP7951Transaction(
-          activeWallet.credentialId,
+          activeWallet.credentialId!,
           toAddress,
           amount,
           activeChainId,
           activeChain?.rpcUrl,
           activeWallet.address,
           factoryAddress,
-          publicKey,
+          publicKey as Map<number, Uint8Array>,
           salt
         );
         setSignedTx(tx);
       } else {
-        const tx = await WalletService.signTransaction(activeWallet.privateKey, toAddress, amount, activeChainId, activeChain?.rpcUrl);
+        const tx = await WalletService.signTransaction(activeWallet.privateKey!, toAddress, amount, activeChainId, activeChain?.rpcUrl);
         setSignedTx(tx);
       }
     } catch (e) {
       console.error(e);
-      setError(e.message);
+      setError((e as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -63,23 +62,24 @@ const TransactionActions = () => {
 
   const handleBroadcast = async () => {
     if (!signedTx) return;
-    
+
     setError('');
     setIsBroadcasting(true);
     try {
-      const hash = typeof signedTx === 'object' && signedTx.type === 'eip-7951'
+      const isEIP7951 = typeof signedTx === 'object' && signedTx.type === 'eip-7951';
+      const hash = isEIP7951
         ? await WalletService.broadcastTransaction(signedTx, activeChain?.rpcUrl, activeChain?.bundlerUrl, activeChain?.entryPoint)
-        : await WalletService.broadcastTransaction(signedTx, activeChain?.rpcUrl);
+        : await WalletService.broadcastTransaction(signedTx as string, activeChain?.rpcUrl);
       setBroadcastHash(hash);
     } catch (e) {
       console.error(e);
-      setError('Broadcast failed: ' + e.message);
+      setError('Broadcast failed: ' + (e as Error).message);
     } finally {
       setIsBroadcasting(false);
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert('已复制到剪贴板');
   };
@@ -87,11 +87,14 @@ const TransactionActions = () => {
   const resetSendForm = () => {
     setToAddress('');
     setAmount('');
-    setSignedTx('');
+    setSignedTx(null);
     setBroadcastHash('');
     setError('');
     setShowSend(false);
   };
+
+  const isEIP7951Tx = (tx: SignedTx): tx is EIP7951Result =>
+    typeof tx === 'object' && tx.type === 'eip-7951';
 
   return (
     <div className="transaction-actions-container">
@@ -104,7 +107,6 @@ const TransactionActions = () => {
         </button>
       </div>
 
-      {/* Send Modal */}
       {showSend && (
         <div className="modal-overlay" onClick={resetSendForm}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -112,33 +114,33 @@ const TransactionActions = () => {
             <div className="current-wallet-hint">
               From: Wallet #{activeWallet.index + 1} ({activeWallet.address.substring(0, 6)}...{activeWallet.address.substring(activeWallet.address.length - 4)})
             </div>
-            
+
             <div className="form-group">
               <label>To Address:</label>
-              <input 
-                type="text" 
-                value={toAddress} 
-                onChange={e => setToAddress(e.target.value)} 
-                placeholder="0x..." 
+              <input
+                type="text"
+                value={toAddress}
+                onChange={e => setToAddress(e.target.value)}
+                placeholder="0x..."
                 className="input-field"
               />
             </div>
             <div className="form-group">
               <label>Amount (ETH):</label>
-              <input 
-                type="number" 
-                value={amount} 
-                onChange={e => setAmount(e.target.value)} 
-                placeholder="0.0" 
+              <input
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="0.0"
                 className="input-field"
               />
             </div>
-            
+
             {error && <div className="error-text">{error}</div>}
-            
+
             <div className="modal-actions">
-               <button 
-                 onClick={handleSign} 
+               <button
+                 onClick={handleSign}
                  disabled={isLoading || !toAddress}
                  className="primary-btn"
                >
@@ -150,9 +152,8 @@ const TransactionActions = () => {
             {signedTx && (
               <div className="signed-result">
                 <h4>✅ Signed Successfully</h4>
-                
-                {/* EIP-7951 展示优化 */}
-                {typeof signedTx === 'object' && signedTx.type === 'eip-7951' ? (
+
+                {isEIP7951Tx(signedTx) ? (
                    <>
                     {!signedTx.isDeployed && (
                       <div className="warning-banner" style={{ backgroundColor: '#fff3cd', padding: '10px', borderRadius: '4px', marginBottom: '10px', fontSize: '12px' }}>
@@ -167,8 +168,8 @@ const TransactionActions = () => {
                          Copy JSON
                        </button>
                        {!broadcastHash && (
-                         <button 
-                           onClick={handleBroadcast} 
+                         <button
+                           onClick={handleBroadcast}
                            className="primary-btn broadcast-btn"
                           disabled={isBroadcasting || (!signedTx.isDeployed && (!signedTx.userOp?.initCode || signedTx.userOp.initCode === '0x'))}
                          >
@@ -178,16 +179,15 @@ const TransactionActions = () => {
                      </div>
                    </>
                 ) : (
-                   /* 传统 EOA 展示 */
                    <>
-                     <textarea readOnly value={signedTx} rows={3} className="result-area" />
+                     <textarea readOnly value={signedTx as string} rows={3} className="result-area" />
                      <div className="button-group">
-                       <button onClick={() => copyToClipboard(signedTx)} className="copy-btn">
+                       <button onClick={() => copyToClipboard(signedTx as string)} className="copy-btn">
                          Copy Hex
                        </button>
                        {!broadcastHash && (
-                         <button 
-                           onClick={handleBroadcast} 
+                         <button
+                           onClick={handleBroadcast}
                            className="primary-btn broadcast-btn"
                            disabled={isBroadcasting}
                          >
@@ -198,14 +198,13 @@ const TransactionActions = () => {
                    </>
                 )}
 
-                {/* 广播结果展示 */}
                 {broadcastHash && (
                   <div className="broadcast-success">
                     <h4>🎉 Transaction Submitted!</h4>
                     <p>Tx Hash: <span className="hash-text">{broadcastHash.substring(0, 10)}...{broadcastHash.substring(broadcastHash.length - 8)}</span></p>
-                    <a 
-                      href={`${(activeChain && activeChain.explorer) ? activeChain.explorer : 'https://etherscan.io'}/tx/${broadcastHash}`} 
-                      target="_blank" 
+                    <a
+                      href={`${(activeChain && activeChain.explorer) ? activeChain.explorer : 'https://etherscan.io'}/tx/${broadcastHash}`}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="view-link"
                     >
@@ -219,16 +218,14 @@ const TransactionActions = () => {
         </div>
       )}
 
-      {/* Receive Modal */}
       {showReceive && (
         <div className="modal-overlay" onClick={() => setShowReceive(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3>Receive Address</h3>
             <div className="qr-placeholder">
-              {/* 简单模拟 QR Code 区域 */}
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${activeWallet.address}`} 
-                alt="Wallet Address QR" 
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${activeWallet.address}`}
+                alt="Wallet Address QR"
                 style={{ borderRadius: '8px' }}
               />
             </div>

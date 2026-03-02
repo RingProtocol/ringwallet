@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import './BalanceDisplay.css'
 
-const BalanceDisplay = () => {
+const BalanceDisplay: React.FC = () => {
   const { activeWallet, activeChain } = useAuth()
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
@@ -11,13 +11,12 @@ const BalanceDisplay = () => {
   useEffect(() => {
     const fetchBalance = async () => {
       if (!activeWallet || !activeChain || !activeChain.rpcUrl) return
-      
+
       setIsLoading(true)
       try {
         const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
         const balanceWei = await provider.getBalance(activeWallet.address)
         const balanceEth = ethers.formatEther(balanceWei)
-        // Format to 4 decimal places
         const formatted = parseFloat(balanceEth).toFixed(4)
         setBalance(formatted)
       } catch (error) {
@@ -29,7 +28,6 @@ const BalanceDisplay = () => {
     }
 
     fetchBalance()
-    // Poll every 15 seconds
     const interval = setInterval(fetchBalance, 15000)
     return () => clearInterval(interval)
   }, [activeWallet, activeChain])

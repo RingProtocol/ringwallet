@@ -27,7 +27,7 @@ This document defines the repository layout and conventions. Follow it when addi
   - `apps/pwa/` — PWA / Web app (Vite/React SPA, includes PWA config and entrypoints).
   - `apps/extension/` — Browser extension (if added later).
   - `apps/electron/` — Desktop app (if added later).
-- **Per-app contents:** Entrypoint (e.g. `main.jsx`, `index.html`), app-specific pages/routes, and any platform-specific config (e.g. `vite.config.js` for that app). Shared logic must live in `src/` and be imported from there.
+- **Per-app contents:** Entrypoint (e.g. `main.tsx`, `index.html`), app-specific pages/routes, and any platform-specific config (e.g. `vite.config.ts` for that app). Shared logic must live in `src/` and be imported from there.
 - **Naming:** Use short, platform-obvious names (e.g. `pwa`, `extension`, `electron`).
 
 ---

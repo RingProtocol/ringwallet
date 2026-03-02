@@ -1,10 +1,54 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import WalletService from '../services/walletService'
 import CharUtils from '../utils/CharUtils'
 
-const AuthContext = createContext(undefined)
+export interface Chain {
+  id: number;
+  name: string;
+  symbol: string;
+  rpcUrl: string;
+  explorer: string;
+  bundlerUrl: string;
+  entryPoint: string;
+  factoryAddress: string;
+}
 
-export const useAuth = () => {
+export interface Wallet {
+  index: number;
+  address: string;
+  privateKey: string | null;
+  type?: string;
+  credentialId?: string;
+  path?: string;
+}
+
+export interface UserData {
+  id: string;
+  name: string;
+  loginTime: string;
+  masterSeed?: Uint8Array | number[];
+  publicKey?: Map<number, Uint8Array> | Record<string | number, unknown> | null;
+  accountType?: string;
+}
+
+interface AuthContextValue {
+  isLoggedIn: boolean;
+  user: UserData | null;
+  wallets: Wallet[];
+  activeWallet: Wallet | null;
+  activeWalletIndex: number;
+  switchWallet: (index: number) => void;
+  login: (userData: UserData) => Promise<void>;
+  logout: () => void;
+  CHAINS: Chain[];
+  activeChainId: number;
+  activeChain: Chain;
+  switchChain: (chainId: number) => void;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext)
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider')
@@ -12,14 +56,13 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
-  const [wallets, setWallets] = useState([])
+  const [user, setUser] = useState<UserData | null>(null)
+  const [wallets, setWallets] = useState<Wallet[]>([])
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
-  
-  // 默认链配置
-  const CHAINS = [
+
+  const CHAINS: Chain[] = [
     { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ETH_MAINNET, explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
     { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: import.meta.env.VITE_RPC_SEPOLIA, explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
     { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_OPTIMISM, explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
@@ -28,11 +71,9 @@ export const AuthProvider = ({ children }) => {
   ];
   const [activeChainId, setActiveChainId] = useState(1);
 
-  // 检查本地存储的登录状态
   useEffect(() => {
     const savedLoginState = localStorage.getItem('wallet_login_state')
-    
-    // 恢复链状态
+
     const savedChainId = localStorage.getItem('active_chain_id');
     if (savedChainId) {
       setActiveChainId(parseInt(savedChainId, 10));
@@ -40,39 +81,33 @@ export const AuthProvider = ({ children }) => {
 
     if (savedLoginState) {
       try {
-        const loginData = JSON.parse(savedLoginState)
+        const loginData = JSON.parse(savedLoginState) as { isLoggedIn: boolean; user: UserData; timestamp: number }
         if (loginData.isLoggedIn && loginData.timestamp) {
-          // 检查登录状态是否过期（24小时）
           const isExpired = Date.now() - loginData.timestamp > 24 * 60 * 60 * 1000
           if (!isExpired) {
-            // 恢复 publicKey 格式（如果存在）
             if (loginData.user && loginData.user.publicKey) {
               const publicKey = loginData.user.publicKey;
 
-              // 检查是否是空对象（JSON.stringify Map 的结果）
               const isEmptyObject = typeof publicKey === 'object' && publicKey !== null &&
                 !(publicKey instanceof Map) &&
                 Object.keys(publicKey).length === 0;
 
               if (isEmptyObject) {
                 console.warn('⚠️ Public Key 是空对象，尝试从 localStorage 重新获取');
-                loginData.user.publicKey = null; // 清除空对象
+                loginData.user.publicKey = null;
               } else {
-                // 使用 CharUtils 规范化 COSE 密钥格式（支持多种格式）
-                const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey);
+                const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey as Map<number, Uint8Array>);
                 if (normalizedPublicKey) {
                   loginData.user.publicKey = normalizedPublicKey;
                   console.log('✅ Public Key 已规范化并恢复为 Map 格式');
                 } else {
                   console.warn('⚠️ Public Key 格式无效，无法恢复:', publicKey);
-                  loginData.user.publicKey = null; // 清除无效数据
+                  loginData.user.publicKey = null;
                 }
               }
 
-              // 如果 publicKey 被清除或无效，尝试从 localStorage 重新获取
               if (!loginData.user.publicKey && loginData.user.id) {
                 try {
-                  // 使用 CharUtils 的辅助方法查找 publicKey
                   const restored = CharUtils.findPublicKeyFromStorage(loginData.user.id);
                   if (restored) {
                     loginData.user.publicKey = restored;
@@ -88,16 +123,14 @@ export const AuthProvider = ({ children }) => {
 
             setIsLoggedIn(true)
             setUser(loginData.user)
-            
-            // 恢复钱包状态
+
             if (loginData.user) {
               if (loginData.user.publicKey) {
-                 // EIP-7951 模式
-                 const wallets = [];
+                 const derivedWallets: Wallet[] = [];
                  for (let i = 0; i < 5; i++) {
-                   const address = WalletService.deriveSmartAccount(loginData.user.publicKey, i);
+                   const address = WalletService.deriveSmartAccount(loginData.user.publicKey as Map<number, Uint8Array>, i);
                    if (address) {
-                     wallets.push({
+                     derivedWallets.push({
                        index: i,
                        address: address,
                        privateKey: null,
@@ -106,23 +139,19 @@ export const AuthProvider = ({ children }) => {
                      });
                    }
                  }
-                 setWallets(wallets);
+                 setWallets(derivedWallets);
               } else if (loginData.user.masterSeed) {
-                 // 传统模式
-                 // 注意：从 JSON 恢复的 masterSeed 可能是普通数组，需要转回 Uint8Array
-                 const seed = new Uint8Array(Object.values(loginData.user.masterSeed));
+                 const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
                  const derivedWallets = WalletService.deriveWallets(seed, 5)
                  setWallets(derivedWallets)
               }
-              
-              // 恢复选中的钱包索引
+
               const savedIndex = localStorage.getItem('active_wallet_index')
               if (savedIndex !== null) {
                 setActiveWalletIndex(parseInt(savedIndex, 10))
               }
             }
           } else {
-            // 清除过期的登录状态
             localStorage.removeItem('wallet_login_state')
             localStorage.removeItem('active_wallet_index')
           }
@@ -135,19 +164,17 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const login = async (userData) => {
+  const login = async (userData: UserData) => {
     setIsLoggedIn(true)
     setUser(userData)
-    
-    // 生成钱包
+
     if (userData.publicKey) {
-      // EIP-7951 模式
       try {
-        const wallets = [];
+        const derivedWallets: Wallet[] = [];
         for (let i = 0; i < 5; i++) {
-          const address = WalletService.deriveSmartAccount(userData.publicKey, i);
+          const address = WalletService.deriveSmartAccount(userData.publicKey as Map<number, Uint8Array>, i);
           if (address) {
-            wallets.push({
+            derivedWallets.push({
               index: i,
               address: address,
               privateKey: null,
@@ -156,42 +183,37 @@ export const AuthProvider = ({ children }) => {
             });
           }
         }
-        setWallets(wallets)
+        setWallets(derivedWallets)
         setActiveWalletIndex(0)
       } catch (e) {
         console.error('Failed to derive smart accounts:', e)
       }
     } else if (userData.masterSeed) {
       try {
-        const derivedWallets = WalletService.deriveWallets(userData.masterSeed, 5)
+        const derivedWallets = WalletService.deriveWallets(userData.masterSeed as Uint8Array, 5)
         setWallets(derivedWallets)
-        setActiveWalletIndex(0) // 默认选中第一个
+        setActiveWalletIndex(0)
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
       }
     }
 
-    // 保存登录状态到本地存储
-    // 使用 CharUtils 将 Map 对象转换为可序列化的格式
-    const userDataForStorage = { ...userData };
+    const userDataForStorage: Record<string, unknown> = { ...userData };
     if (userDataForStorage.publicKey) {
-      // 如果 publicKey 是 Map 或对象，需要转换为存储格式
-      // 如果已经是存储格式（有 _type: 'Map'），可以直接使用
-      if (userDataForStorage.publicKey instanceof Map ||
-        (typeof userDataForStorage.publicKey === 'object' &&
-          userDataForStorage.publicKey !== null &&
-          !userDataForStorage.publicKey._type)) {
-        const storageFormat = CharUtils.coseKeyToStorage(userDataForStorage.publicKey);
+      const pk = userDataForStorage.publicKey;
+      if (pk instanceof Map ||
+        (typeof pk === 'object' &&
+          pk !== null &&
+          !(pk as { _type?: string })._type)) {
+        const storageFormat = CharUtils.coseKeyToStorage(pk as Map<number, Uint8Array>);
         if (storageFormat) {
           userDataForStorage.publicKey = storageFormat;
           console.log('✅ Public Key 已转换为存储格式');
         } else {
-          // 如果转换失败，移除 publicKey 避免序列化错误（Map 序列化为 {}）
           console.warn('⚠️ 无法转换 publicKey 为存储格式，将跳过保存以避免序列化错误');
           delete userDataForStorage.publicKey;
         }
       } else {
-        // 已经是存储格式，可以直接保存
         console.log('✅ Public Key 已经是存储格式');
       }
     }
@@ -213,14 +235,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('active_wallet_index')
   }
 
-  const switchWallet = (index) => {
+  const switchWallet = (index: number) => {
     if (index >= 0 && index < wallets.length) {
       setActiveWalletIndex(index)
       localStorage.setItem('active_wallet_index', index.toString())
     }
   }
 
-  const switchChain = (chainId) => {
+  const switchChain = (chainId: number) => {
     const chain = CHAINS.find(c => c.id === chainId);
     if (chain) {
       setActiveChainId(chainId);
@@ -231,7 +253,7 @@ export const AuthProvider = ({ children }) => {
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
   const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0];
 
-  const value = {
+  const value: AuthContextValue = {
     isLoggedIn,
     user,
     wallets,

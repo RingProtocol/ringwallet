@@ -2,46 +2,53 @@ import { ethers } from 'ethers';
 import PasskeyService from './passkeyService';
 import CharUtils from '../utils/CharUtils';
 
+interface DerivedWallet {
+  index: number;
+  address: string;
+  privateKey: string;
+  path: string;
+}
+
+interface SmartAccountWallet {
+  index: number;
+  address: string;
+  privateKey: null;
+  type: string;
+  credentialId: string;
+}
+
+export interface EIP7951Result {
+  type: 'eip-7951';
+  userOp: Record<string, string>;
+  hash: string;
+  signature: string;
+  authData: string;
+  isDeployed: boolean;
+  display: string;
+}
+
 class WalletService {
-  /**
-   * 从 Master Seed 派生钱包
-   * @param {Uint8Array} masterSeed - 32字节的种子
-   * @param {number} count - 生成钱包的数量
-   * @param {string} accountName - 账户名称 (用于区分不同派生路径，暂未实现复杂路径)
-   * @returns {Array} 钱包列表 [{ index, address, privateKey }]
-   */
-  static deriveWallets(masterSeed, count = 1, accountName = 'default') {
+  static deriveWallets(masterSeed: Uint8Array, count = 1, _accountName = 'default'): DerivedWallet[] {
     if (!masterSeed || masterSeed.length !== 32) {
       console.error('Invalid master seed provided to WalletService');
       return [];
     }
 
     try {
-      // 1. 将 Uint8Array 转换为 hex 字符串，作为 Mnemonic 的 entropy
-      // 注意：这里我们直接用 Seed 生成 HDNodeWallet，而不是通过助记词
-      // 因为我们生成的已经是随机种子了
-      
-      // 使用 ethers.HDNodeWallet.fromSeed 
-      // seed 必须是 hex string (with 0x)
       const seedHex = ethers.hexlify(masterSeed);
-      
-      // 创建 Master Node
-      // 注意：ethers v6 的用法
       const rootNode = ethers.HDNodeWallet.fromSeed(seedHex);
-      
-      const wallets = [];
-      
-      // BIP-44 path for Ethereum: m/44'/60'/0'/0/x
+
+      const wallets: DerivedWallet[] = [];
       const basePath = "m/44'/60'/0'/0";
 
       for (let i = 0; i < count; i++) {
         const path = `${basePath}/${i}`;
         const childNode = rootNode.derivePath(path);
-        
+
         wallets.push({
           index: i,
           address: childNode.address,
-          privateKey: childNode.privateKey, // 仅供演示，真实环境不要暴露私钥
+          privateKey: childNode.privateKey,
           path: path
         });
       }
@@ -53,19 +60,12 @@ class WalletService {
     }
   }
 
-  /**
-   * EIP-7951: 从 Passkey Public Key 派生 Smart Account 地址
-   * @param {Map} publicKey - COSE Public Key
-   * @param {number} salt - 盐值 (用于区分不同钱包)
-   * @returns {string} 0x 地址
-   */
-  static deriveSmartAccount(publicKey, salt = 0) {
+  static deriveSmartAccount(publicKey: Map<number, Uint8Array> | Record<string | number, unknown>, salt = 0): string | null {
     try {
       if (!publicKey) return null;
 
-      // 使用 CharUtils 提取 COSE 密钥坐标，支持多种格式
       const coordinates = CharUtils.extractCoseKeyCoordinates(publicKey);
-      
+
       if (!coordinates || !coordinates.x || !coordinates.y) {
           console.warn('Invalid COSE key structure:', publicKey);
         console.warn('尝试使用 CharUtils 验证:', CharUtils.isValidCoseKey(publicKey));
@@ -75,17 +75,12 @@ class WalletService {
       const xBytes = coordinates.x;
       const yBytes = coordinates.y;
 
-      // 简单模拟: Address = keccak256(x || y || salt)[12:]
-      // 真实场景：应该用 CREATE2(factory, salt, initCode)
-      // 这里为了演示确定性地址，我们用公钥+salt的哈希
       const concat = new Uint8Array(xBytes.length + yBytes.length + 4);
       concat.set(xBytes, 0);
       concat.set(yBytes, xBytes.length);
-      // Add salt as 4 bytes (Big Endian)
       new DataView(concat.buffer).setUint32(xBytes.length + yBytes.length, salt);
 
       const hash = ethers.keccak256(concat);
-      // 取最后 20 字节作为地址
       return ethers.getAddress(ethers.dataSlice(hash, 12));
     } catch (e) {
       console.error('Failed to derive smart account:', e);
@@ -93,15 +88,7 @@ class WalletService {
     }
   }
 
-  /**
-   * 签名交易
-   * @param {string} privateKey - 钱包私钥
-   * @param {string} to - 接收地址
-   * @param {string} amount - 发送金额 (ETH)
-   * @param {number} chainId - 链ID
-   * @returns {Promise<string>} 签名后的交易 Hex
-   */
-  static async signTransaction(privateKey, to, amount, chainId, rpcUrl = null) {
+  static async signTransaction(privateKey: string, to: string, amount: string, chainId: number, rpcUrl: string | null = null): Promise<string> {
     try {
       if (!privateKey) throw new Error('Private key is required');
       if (!to) throw new Error('Recipient address is required');
@@ -109,7 +96,7 @@ class WalletService {
       if (!chainId) throw new Error('Chain ID is required');
       const wallet = new ethers.Wallet(privateKey);
       const value = ethers.parseEther(amount || '0');
-      
+
       if (rpcUrl) {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
         const nonce = await provider.getTransactionCount(wallet.address);
@@ -119,7 +106,7 @@ class WalletService {
           to,
           value
         });
-        const gasLimit = estimated + (estimated / 10n); // +10% buffer
+        const gasLimit = estimated + (estimated / 10n);
         const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('1.5', 'gwei');
         const maxFeePerGas = feeData.maxFeePerGas || (maxPriorityFeePerGas + ethers.parseUnits('30', 'gwei'));
         const tx = {
@@ -154,61 +141,38 @@ class WalletService {
     }
   }
 
-  /**
-   * 检查智能账户是否已部署
-   * @param {string} address - 账户地址
-   * @param {string} rpcUrl - RPC URL
-   * @returns {Promise<boolean>} 是否已部署
-   */
-  static async isAccountDeployed(address, rpcUrl) {
+  static async isAccountDeployed(address: string, rpcUrl: string): Promise<boolean> {
     try {
       if (!rpcUrl || !address) return false;
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const code = await provider.getCode(address);
-      // 如果账户有代码且不是空字符串，说明已部署
-      return code && code !== '0x';
+      return code !== null && code !== '0x';
     } catch (error) {
       console.error('Failed to check if account is deployed:', error);
       return false;
     }
   }
 
-  /**
-   * 构建 initCode（用于部署智能账户）
-   * @param {string} factoryAddress - Factory 合约地址
-   * @param {string} publicKey - Passkey 公钥（COSE格式）
-   * @param {number} salt - 盐值
-   * @returns {string} initCode (factoryAddress + encodedCalldata)
-   */
-  static buildInitCode(factoryAddress, publicKey, salt = 0) {
+  static buildInitCode(factoryAddress: string, _publicKey: Map<number, Uint8Array> | Record<string | number, unknown>, salt = 0): string {
     if (!factoryAddress || factoryAddress === ethers.ZeroAddress) {
       return '0x';
     }
 
     try {
-      // 标准 Factory 接口：createAccount(bytes32 salt) 或 createAccount(address owner, bytes32 salt)
-      // 这里假设使用 createAccount(bytes32 salt) 或类似的接口
-      // 实际接口可能因工厂实现而异
       const factoryIface = new ethers.Interface([
         'function createAccount(bytes32 salt) returns (address)',
         'function createAccount(address owner, bytes32 salt) returns (address)'
       ]);
 
-      // 将 salt 转换为 bytes32
       const saltBytes32 = ethers.zeroPadValue(ethers.toBeHex(salt), 32);
 
-      // 尝试使用 createAccount(bytes32 salt)
-      let encodedCall;
+      let encodedCall: string;
       try {
         encodedCall = factoryIface.encodeFunctionData('createAccount', [saltBytes32]);
       } catch {
-        // 如果失败，可能需要 owner 参数，这里使用 senderAddress 或 ZeroAddress
-        // 注意：实际使用时需要根据具体工厂接口调整
         encodedCall = factoryIface.encodeFunctionData('createAccount', [ethers.ZeroAddress, saltBytes32]);
       }
 
-      // initCode = factoryAddress (20 bytes) + encodedCalldata
-      // 移除 factoryAddress 的 0x 前缀，拼接
       const factoryAddrBytes = ethers.getBytes(factoryAddress);
       const callDataBytes = ethers.getBytes(encodedCall);
       const initCode = ethers.hexlify(ethers.concat([factoryAddrBytes, callDataBytes]));
@@ -220,20 +184,17 @@ class WalletService {
     }
   }
 
-  /**
-   * 签名 EIP-7951 交易 (通过 Passkey)
-   * @param {string} credentialId - Passkey Credential ID
-   * @param {string} to - 接收地址
-   * @param {string} amount - 发送金额 (ETH)
-   * @param {number} chainId - 链ID
-   * @param {string} rpcUrl - RPC URL
-   * @param {string} senderAddress - 发送者地址（智能账户地址）
-   * @param {string} factoryAddress - Factory 合约地址（可选，用于部署新账户）
-   * @param {Map} publicKey - Passkey 公钥（可选，用于构建 initCode）
-   * @param {number} salt - 盐值（可选，用于构建 initCode）
-   * @returns {Promise<string>} 签名结果详情
-   */
-  static async signEIP7951Transaction(credentialId, to, amount, chainId, rpcUrl, senderAddress, factoryAddress = null, publicKey = null, salt = 0) {
+  static async signEIP7951Transaction(
+    credentialId: string,
+    to: string,
+    amount: string,
+    chainId: number,
+    rpcUrl: string | undefined,
+    senderAddress: string,
+    factoryAddress: string | null = null,
+    publicKey: Map<number, Uint8Array> | Record<string | number, unknown> | null = null,
+    salt = 0
+  ): Promise<EIP7951Result> {
     try {
       if (!credentialId) throw new Error('Credential ID is required');
       if (!to) throw new Error('Recipient address is required');
@@ -245,7 +206,6 @@ class WalletService {
       const value = ethers.parseEther(amount || '0');
       const provider = rpcUrl ? new ethers.JsonRpcProvider(rpcUrl) : null;
 
-      // 检查账户是否已部署
       let isDeployed = false;
       let initCode = '0x';
 
@@ -253,7 +213,6 @@ class WalletService {
         isDeployed = await this.isAccountDeployed(senderAddress, rpcUrl);
 
         if (!isDeployed) {
-          // 如果账户未部署，尝试构建 initCode
           if (factoryAddress && publicKey) {
             initCode = WalletService.buildInitCode(factoryAddress, publicKey, salt);
             console.log('Account not deployed, using initCode:', initCode);
@@ -264,32 +223,20 @@ class WalletService {
         }
       }
 
-      const feeData = provider ? await provider.getFeeData() : {};
+      const feeData = provider ? await provider.getFeeData() : { maxPriorityFeePerGas: null, maxFeePerGas: null };
       const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('1.5', 'gwei');
       const maxFeePerGas = feeData.maxFeePerGas || (maxPriorityFeePerGas + ethers.parseUnits('30', 'gwei'));
 
-      // 如果使用 initCode，需要增加 gas limits
       const callGasLimit = initCode !== '0x' ? 200000n : 150000n;
       const verificationGasLimit = initCode !== '0x' ? 150000n : 120000n;
       const preVerificationGas = initCode !== '0x' ? 100000n : 50000n;
 
-      // 获取 nonce（如果账户未部署，nonce 应该是 0）
-      let nonce = '0x0';
-      if (provider && isDeployed) {
-        try {
-          // 尝试从 EntryPoint 获取 nonce（需要 EntryPoint 地址）
-          // 如果无法获取，使用 0
-          // 注意：实际实现中，应该从 EntryPoint.getNonce() 获取
-          nonce = '0x0';
-        } catch (e) {
-          console.warn('Could not fetch nonce, using 0:', e);
-        }
-      }
+      const nonce = '0x0';
 
       const iface = new ethers.Interface(['function execute(address to,uint256 value,bytes data)']);
       const callData = iface.encodeFunctionData('execute', [to, value, '0x']);
 
-      const baseUserOp = {
+      const baseUserOp: Record<string, string> = {
         sender: senderAddress || ethers.ZeroAddress,
         nonce,
         initCode,
@@ -303,9 +250,6 @@ class WalletService {
         signature: '0x'
       };
 
-      // 使用 EIP-4337 标准的 UserOperation hash 计算方式
-      // 注意：这里简化了，实际应该使用 EntryPoint.getUserOpHash()
-      // 但为了演示，我们使用简化的哈希计算
       const messageBytes = ethers.toUtf8Bytes(JSON.stringify(baseUserOp));
       const hash = ethers.sha256(messageBytes);
       const hashBytes = ethers.getBytes(hash);
@@ -340,21 +284,21 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
     }
   }
 
-  /**
-   * 广播交易到区块链
-   * @param {Object|string} signedData - 签名后的数据
-   * @returns {Promise<string>} 交易哈希
-   */
-  static async broadcastTransaction(signedData, rpcUrl, bundlerUrl, entryPoint) {
+  static async broadcastTransaction(
+    signedData: string | EIP7951Result,
+    rpcUrl?: string,
+    bundlerUrl?: string,
+    entryPoint?: string
+  ): Promise<string> {
     if (!rpcUrl) throw new Error('RPC URL is required');
     if (!bundlerUrl) throw new Error('Bundler URL is required');
     if (!entryPoint) throw new Error('Entry point is required');
     if (!signedData) throw new Error('Signed data is required');
-    // 模拟网络延迟
+
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    let txHash;
-    
+    let txHash: string;
+
     if (typeof signedData === 'string' && signedData.startsWith('0x')) {
       if (rpcUrl) {
         try {
@@ -368,8 +312,8 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
       } else {
         txHash = ethers.keccak256(signedData);
       }
-      
-    } else if (signedData && signedData.type === 'eip-7951') {
+
+    } else if (signedData && typeof signedData === 'object' && signedData.type === 'eip-7951') {
       console.log("broadcast eip-7951 transaction");
       if (bundlerUrl && entryPoint && signedData.userOp) {
         try {
@@ -395,7 +339,7 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
       } else {
         txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
       }
-      
+
     } else {
       throw new Error('Invalid transaction data format');
     }

@@ -9,9 +9,10 @@
   },
   "packageManager": "yarn@1.22.22",
   "scripts": {
-    "dev": "vite --config apps/pwa/vite.config.js",
-    "build": "vite build --config apps/pwa/vite.config.js",
-    "preview": "vite preview --config apps/pwa/vite.config.js",
+    "dev": "vite --config apps/pwa/vite.config.ts",
+    "build": "tsc && vite build --config apps/pwa/vite.config.ts",
+    "preview": "vite preview --config apps/pwa/vite.config.ts",
+    "typecheck": "tsc --noEmit",
     "start": "serve -s dist -l ${PORT:-3000}"
   },
   "dependencies": {
@@ -25,6 +26,7 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
+    "typescript": "^5.3.3",
     "vite": "^4.4.5",
     "vite-plugin-pwa": "^1.2.0"
   }
