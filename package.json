@@ -10,7 +10,7 @@
   "packageManager": "yarn@1.22.22",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "vite:dev": "vite --config apps/pwa/vite.config.ts",
     "vite:build": "tsc && vite build --config apps/pwa/vite.config.ts",

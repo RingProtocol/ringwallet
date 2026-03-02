@@ -22,13 +22,6 @@ function AppContent() {
         {isLoggedIn && <BalanceDisplay />}
         {isLoggedIn && <TransactionActions />}
 
-        {isLoggedIn && (
-          <div className="welcome-message">
-            <h2>🎉 登录成功！</h2>
-            <p>您现在可以享受完整的钱包功能</p>
-          </div>
-        )}
-
         {!isLoggedIn && (
           <div className="card--guest-logo-wrap">
             <RingWalletLogo />

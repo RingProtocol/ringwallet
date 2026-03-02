@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['cbor-x'],
   allowedDevOrigins: ['bridget-tritheistical-talia.ngrok-free.dev'],
+  turbopack: {},
   webpack: (config, { webpack }) => {
     // Build a single import.meta.env object so that accessing any VITE_*
     // key returns the value (or undefined for missing keys) instead of
