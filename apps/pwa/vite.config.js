@@ -1,15 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-// import basicSsl from '@vitejs/plugin-basic-ssl'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const root = __dirname
+const projectRoot = path.resolve(__dirname, '../..')
 
 export default defineConfig({
+  root,
+  publicDir: path.resolve(projectRoot, 'public'),
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-      manifestFilename: 'manifest.json', // 强制使用标准文件名
+      manifestFilename: 'manifest.json',
       manifest: {
         name: 'Ring Wallet',
         short_name: 'Ring Wallet',
@@ -28,7 +35,16 @@ export default defineConfig({
         ]
       }
     })
-  ], // 暂时移除 basicSsl
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(projectRoot, 'src')
+    }
+  },
+  build: {
+    outDir: path.resolve(projectRoot, 'dist'),
+    emptyOutDir: true
+  },
   server: {
     port: 3000,
     host: '0.0.0.0',

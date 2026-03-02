@@ -1,10 +1,10 @@
 import React from 'react'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import LoginButton from './components/LoginButton'
-import WalletSwitcher from './components/WalletSwitcher'
-import ChainSwitcher from './components/ChainSwitcher'
-import BalanceDisplay from './components/BalanceDisplay'
-import TransactionActions from './components/TransactionActions'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import LoginButton from '@/components/LoginButton'
+import WalletSwitcher from '@/components/WalletSwitcher'
+import ChainSwitcher from '@/components/ChainSwitcher'
+import BalanceDisplay from '@/components/BalanceDisplay'
+import TransactionActions from '@/components/TransactionActions'
 import './App.css'
 
 function AppContent() {
