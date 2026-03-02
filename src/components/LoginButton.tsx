@@ -147,8 +147,6 @@ const LoginButton: React.FC = () => {
     return (
       <div className="login-status">
         <div className="user-info">
-          <span className="welcome">欢迎，{user?.name || '用户'}！</span>
-          <span className="login-time">登录时间: {user?.loginTime}</span>
           <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: '#eef2ff', color: '#334155', fontSize: '12px' }}>
             {activeWallet?.type === 'eip-7951' ? '钱包类型: 7951' : activeWallet?.type === '4337' ? '钱包类型: 4337' : '钱包类型: 普通账户'}
           </span>

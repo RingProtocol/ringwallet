@@ -8,6 +8,7 @@ import ChainSwitcher from '@/components/ChainSwitcher'
 import BalanceDisplay from '@/components/BalanceDisplay'
 import TransactionActions from '@/components/TransactionActions'
 import AccountDrawer from '@/components/AccountDrawer'
+import MultiTabs from '@/components/MultiTabs'
 import './App.css'
 
 function AppContent() {
@@ -24,6 +25,7 @@ function AppContent() {
       <div className={`card ${!isLoggedIn ? 'card--guest' : ''}`}>
         {isLoggedIn && <BalanceDisplay />}
         {isLoggedIn && <TransactionActions />}
+        {isLoggedIn && <MultiTabs />}
 
         {!isLoggedIn && (
           <div className="card--guest-logo-wrap">
