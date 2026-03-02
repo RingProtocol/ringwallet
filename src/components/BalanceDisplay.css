@@ -1,0 +1,41 @@
+.balance-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+.balance-amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.currency-symbol {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 500;
+  margin-left: 5px;
+}
+
+.balance-label {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.loading-text {
+  color: #ccc;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}

@@ -1,0 +1,30 @@
+已经完成了 EIP-7951 的支持功能的开发。现在您的钱包支持两种模式：传统的基于 Seed 的 EOA 钱包，以及基于 Passkey Public Key 的 EIP-7951 智能账户。
+
+### 主要更新内容
+
+1.  **核心服务升级 (`passkeyService.js`)**
+    *   **注册流程**：现在会从 WebAuthn 的 Attestation 中解析出 `secp256r1` 公钥，并将其存储在本地（模拟后端数据库）。
+    *   **登录流程**：登录成功后，会自动检索关联的公钥。
+    *   **签名功能**：新增 `signChallenge` 方法，支持直接调用 Passkey 对交易哈希进行签名，返回 `r`, `s` 签名值和 `authenticatorData`。
+
+2.  **智能账户派生 (`walletService.js`)**
+    *   新增 `deriveSmartAccount` 方法，实现了从 P-256 公钥计算智能账户地址的逻辑。
+    *   逻辑：`Address = keccak256(PublicKey_X || PublicKey_Y || Salt)[12:]`。
+
+3.  **状态管理 (`AuthContext.jsx`)**
+    *   实现了**双模式钱包**支持：
+        *   如果检测到 Master Seed，生成传统 EOA 地址。
+        *   如果检测到 Public Key，生成 EIP-7951 智能账户地址。
+    *   用户可以在生成的钱包列表中看到标记为 `eip-7951` 类型的钱包。
+
+4.  **交易与签名 (`TransactionActions.jsx`)**
+    *   更新了发送（Send）流程。
+    *   当选中 EIP-7951 钱包时，点击“签名并发送”会唤起系统 Passkey 验证（指纹/面容）。
+    *   生成的签名数据包含验证所需的完整信息：`Message Hash`、`Signature (r, s)` 和 `Authenticator Data`，可用于链上 `P256VERIFY` 预编译合约验证。
+
+### ⚠️ 注意事项
+
+由于这是一个纯前端演示项目，没有真正的后端数据库：
+*   **EIP-7951 地址的跨设备限制**：公钥目前存储在浏览器的 `localStorage` 中。如果您清除缓存或更换设备登录，虽然可以通过 Passkey 登录（恢复传统地址），但可能无法立即看到之前的 EIP-7951 地址，需要重新注册或手动同步数据。
+
+现在您可以尝试注册一个新的账号（或重新登录），您应该能看到生成的 EIP-7951 钱包地址，并尝试进行签名操作。

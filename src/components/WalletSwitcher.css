@@ -1,0 +1,191 @@
+.wallet-switcher-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  position: relative;
+}
+
+.wallet-switcher-trigger {
+  background: white;
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.wallet-switcher-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.wallet-icon {
+  font-size: 1.2rem;
+}
+
+.wallet-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-align: left;
+}
+
+.wallet-label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.wallet-address {
+  font-size: 0.9rem;
+  font-family: monospace;
+  color: #333;
+}
+
+.arrow {
+  font-size: 0.7rem;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.wallet-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: 240px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 10px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+  text-align: left;
+}
+
+.wallet-list-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.wallet-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f5f5f5;
+  text-align: left;
+}
+
+.wallet-option:last-child {
+  border-bottom: none;
+}
+
+.wallet-option:hover {
+  background: #f8f9fa;
+}
+
+.wallet-option.active {
+  background: #eef2ff;
+}
+
+.option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.option-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.check-mark {
+  color: #4f46e5;
+  font-weight: bold;
+}
+
+.option-address-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.option-address {
+  font-size: 0.8rem;
+  color: #666;
+  font-family: monospace;
+}
+
+.copy-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.copy-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .wallet-switcher-container {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .wallet-switcher-trigger {
+    padding: 6px 12px;
+    min-width: auto;
+  }
+  
+  .wallet-info {
+    display: none; /* 在小屏幕上只显示图标，或者简化显示 */
+  }
+
+  /* 或者我们可以保留显示，但缩小尺寸 */
+  .wallet-info {
+    display: flex;
+  }
+  
+  .wallet-address {
+    font-size: 0.8rem;
+  }
+}
