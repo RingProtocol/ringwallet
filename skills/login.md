@@ -7,6 +7,7 @@ This document defines the login flow and UI behavior. Use it when implementing o
 ## 1. When to Show Login
 
 - **First open:** When the user opens the PWA for the first time, show the login screen (at minimum, show the login button).
+- **Product introduction:** Before login, show a product introduction so the user understands what Ring Wallet is. Render the **Introduce.tsx** component below the login button on the login screen. Content should align with the project README (vision, principles, open source, tagline).
 - **Return from background:** When the user brings the app back from background (e.g. tab switch, app switch, lock screen), treat it like a fresh session: show the login screen again (show the login button). Do not assume the user is still logged in until they complete login.
 
 ---
@@ -36,7 +37,7 @@ This document defines the login flow and UI behavior. Use it when implementing o
 
 | Scenario                    | Behavior                                                                 |
 |----------------------------|--------------------------------------------------------------------------|
-| First open / return to app | Show login screen; at least show the login button.                      |
+| First open / return to app | Show login screen; at least show the login button. Show **Introduce.tsx** (product intro) below the login button. |
 | User taps Login            | Automatically trigger face recognition (no extra step).                 |
 | Login succeeds             | Navigate to home and show **Home.tsx**.                                 |
 | Login fails                | Show “Login failed”; show failure reason in **red** below button in **App.tsx**. |

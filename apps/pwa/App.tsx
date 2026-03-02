@@ -1,6 +1,7 @@
 import React from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LoginButton from '@/components/LoginButton'
+import Introduce from '@/components/Introduce'
 import WalletSwitcher from '@/components/WalletSwitcher'
 import ChainSwitcher from '@/components/ChainSwitcher'
 import BalanceDisplay from '@/components/BalanceDisplay'
@@ -34,6 +35,7 @@ function AppContent() {
         )}
         
         <LoginButton />
+        {!isLoggedIn && <Introduce />}
       </div>
     </div>
   )

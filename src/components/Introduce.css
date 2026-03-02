@@ -1,0 +1,87 @@
+.introduce {
+  text-align: left;
+  margin-top: 28px;
+  padding: 20px 0 0;
+  border-top: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.introduce-vision,
+.introduce-belief,
+.introduce-open,
+.introduce-tagline {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #444;
+}
+
+.introduce-vision strong,
+.introduce-open strong {
+  color: #334155;
+}
+
+.introduce-principles {
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.introduce-principle {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(102, 126, 234, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid rgba(102, 126, 234, 0.4);
+}
+
+.introduce-principle dt {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #667eea;
+  margin: 0 0 4px;
+}
+
+.introduce-principle dd {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.introduce-open a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.introduce-open a:hover {
+  text-decoration: underline;
+}
+
+.introduce-tagline {
+  font-weight: 600;
+  color: #667eea;
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .introduce {
+    margin-top: 20px;
+    padding-top: 16px;
+  }
+
+  .introduce-vision,
+  .introduce-belief,
+  .introduce-open,
+  .introduce-tagline {
+    font-size: 0.9rem;
+  }
+
+  .introduce-principle dt {
+    font-size: 0.85rem;
+  }
+
+  .introduce-principle dd {
+    font-size: 0.8rem;
+  }
+}
