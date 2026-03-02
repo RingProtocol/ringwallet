@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { upgradeTo7951 } from '../features/upgrade7951'
+import { syncToDevice } from '../features/syncToDevice'
 import './AccountDrawer.css'
 
 interface AccountDrawerProps {
@@ -8,8 +10,10 @@ interface AccountDrawerProps {
 }
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
-  const { wallets, activeWallet, activeWalletIndex, switchWallet } = useAuth()
+  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login } = useAuth()
   const [showWalletList, setShowWalletList] = useState(false)
+  const [featureLoading, setFeatureLoading] = useState<string | null>(null)
+  const [featureError, setFeatureError] = useState('')
 
   const formatAddress = (address: string) => {
     if (!address) return ''
@@ -33,14 +37,55 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
 
   const handleClose = () => {
     setShowWalletList(false)
+    setFeatureError('')
     onClose()
   }
+
+  const handleUpgrade = async () => {
+    if (!user) return
+    setFeatureLoading('upgrade7702')
+    setFeatureError('')
+    try {
+      const result = await upgradeTo7951({ user, login })
+      if (result.success) {
+        alert('✅ 升级成功！\n\n您的账户已成功升级为 EIP-7951 智能账户。')
+        handleClose()
+      } else {
+        setFeatureError(result.error || '升级失败')
+      }
+    } catch (err) {
+      setFeatureError('升级错误: ' + (err as Error).message)
+    } finally {
+      setFeatureLoading(null)
+    }
+  }
+
+  const handleMigrate = async () => {
+    if (!user) return
+    setFeatureLoading('migrate')
+    setFeatureError('')
+    try {
+      const result = await syncToDevice({ user, login })
+      if (result.success) {
+        alert('✅ 账号同步成功！\n\n已在此设备上创建了包含相同钱包密钥的 Passkey。\n下次您可以直接在此设备上使用生物识别登录，无需扫码。')
+        handleClose()
+      } else {
+        setFeatureError(result.error || '同步失败')
+      }
+    } catch (err) {
+      setFeatureError('同步错误: ' + (err as Error).message)
+    } finally {
+      setFeatureLoading(null)
+    }
+  }
+
+  const showUpgradeOption = !user?.publicKey || user?.accountType !== 'eip-7951'
 
   const menuItems = [
     { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
     { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {} },
-    { key: 'upgrade7702', icon: '⬆️', label: '升级 7702', action: () => {} },
-    { key: 'migrate', icon: '📱', label: '从 Android 迁移', action: () => {} },
+    { key: 'upgrade7702', icon: '⬆️', label: featureLoading === 'upgrade7702' ? '升级中...' : '升级 7702', action: handleUpgrade, hidden: !showUpgradeOption, disabled: featureLoading === 'upgrade7702' },
+    { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
     { key: 'security', icon: '🛡️', label: '安全检查', action: () => {} },
   ]
 
@@ -63,12 +108,16 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+        {featureError && (
+          <div className="drawer-error">{featureError}</div>
+        )}
+
         <div className="drawer-menu-list">
-          {menuItems.map((item) => (
+          {menuItems.filter(i => !('hidden' in i && i.hidden)).map((item) => (
             <React.Fragment key={item.key}>
               <div
-                className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''}`}
-                onClick={item.action}
+                className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${'disabled' in item && item.disabled ? 'disabled' : ''}`}
+                onClick={'disabled' in item && item.disabled ? undefined : item.action}
               >
                 <span className="drawer-menu-icon">{item.icon}</span>
                 <span className="drawer-menu-label">{item.label}</span>
