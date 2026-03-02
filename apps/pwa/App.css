@@ -16,6 +16,10 @@
   z-index: 1000;
 }
 
+.app:has(.card--guest) {
+  align-items: flex-start;
+}
+
 .card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -26,6 +30,23 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   max-width: 500px;
   width: 100%;
+}
+
+.card--guest {
+  padding-top: 0;
+}
+
+/* Top third: flex container so logo is centered between top and login button */
+.card--guest-logo-wrap {
+  height: calc(33vh - 20px);
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card--guest .login-container {
+  margin-top: 0;
 }
 
 .title {

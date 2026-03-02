@@ -415,27 +415,8 @@ const LoginButton: React.FC = () => {
         onClick={handlePasskeyLogin}
         disabled={isLoading}
       >
-        {isLoading ? '登录中...' : '使用 Passkey 登录'}
+        {isLoading ? '登录中...' : '登录'}
       </button>
-
-      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-        <button
-          className="login-button"
-          onClick={handleRegister7951}
-          disabled={isLoading}
-          style={{ backgroundColor: '#646cff' }}
-        >
-          {isLoading ? '处理中...' : '注册 7951 钱包'}
-        </button>
-        <button
-          className="login-button"
-          onClick={handleRegister4337}
-          disabled={isLoading}
-          style={{ backgroundColor: '#2e7d32' }}
-        >
-          {isLoading ? '处理中...' : '注册 4337 钱包'}
-        </button>
-      </div>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -452,7 +433,7 @@ const LoginButton: React.FC = () => {
       )}
 
       <div className="passkey-info">
-        <p>使用Passkey登录，支持指纹、面容等生物识别</p>
+        <p>使用指纹或面容等登录</p>
       </div>
     </div>
   )

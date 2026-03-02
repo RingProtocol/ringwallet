@@ -6,7 +6,6 @@
 }
 
 .introduce-vision,
-.introduce-belief,
 .introduce-open,
 .introduce-tagline {
   margin: 0 0 12px;
@@ -71,7 +70,6 @@
   }
 
   .introduce-vision,
-  .introduce-belief,
   .introduce-open,
   .introduce-tagline {
     font-size: 0.9rem;

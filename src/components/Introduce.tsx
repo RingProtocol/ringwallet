@@ -9,7 +9,7 @@ const Introduce: React.FC = () => {
   const principles = [
     { title: 'No password, no mnemonic', desc: 'Log in with your fingerprint. No seed phrases to write down or lose.' },
     { title: 'Self-custody', desc: 'Your keys, your assets. We don’t hold them for you.' },
-    { title: 'No extra fee', desc: 'We don’t add transaction fees on top of network costs.' },
+    { title: 'No platform fee', desc: 'We don’t add platform fees on top of network costs.' },
     { title: 'AI Agent friendly', desc: 'Built so agents and automation can interact with your wallet in a secure, programmable way.' },
     { title: 'Listener to your voice', desc: 'Designed to respond to how you want to use crypto—simple when you want simple, powerful when you need it.' },
   ]
@@ -17,10 +17,7 @@ const Introduce: React.FC = () => {
   return (
     <section className="introduce" aria-label="Product introduction">
       <p className="introduce-vision">
-        Ring Wallet is a new kind of crypto wallet: <strong>no passwords, no mnemonics, no friction.</strong> You sign in with your fingerprint. You keep full control of your keys. You pay no extra fees on transactions.
-      </p>
-      <p className="introduce-belief">
-        We believe ownership should feel natural, safe, and open. Ring Wallet is our step toward that future.
+        Sign in with your fingerprint, keep your keys, no platform fees. We believe ownership should feel natural, safe, and open.
       </p>
       <dl className="introduce-principles">
         {principles.map(({ title, desc }) => (
