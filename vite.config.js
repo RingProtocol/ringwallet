@@ -11,8 +11,8 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifestFilename: 'manifest.json', // 强制使用标准文件名
       manifest: {
-        name: 'New Wallet',
-        short_name: 'Wallet',
+        name: 'Ring Wallet',
+        short_name: 'Ring Wallet',
         description: 'Secure Passkey Wallet',
         theme_color: '#ffffff',
         display: 'standalone',
@@ -21,14 +21,9 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            src: 'icons/ringcorn.svg',
+            sizes: 'any',
+            type: 'image/svg+xml'
           }
         ]
       }
