@@ -1,11 +1,11 @@
 # UI结构：分上中下两部分：
 ## 上半部分
  - 左边：链的切换
- - 右边：账号详情
+ - 右边：账号详情：account_drawer.md
 ## 中间
  - 第一部分：显示余额（下面跟着小字当前的账号地址的部分前缀和后缀）
  - 第二部分：主要功能按钮：发送、接收、Swap
 ## 下半部分
- - 多tab页，每个多tab跟着如下内容：
- - 第一个tab是token list和余额；
- - 第二个tab：交易活动（历史记录）；
+ - 多tab页，每个多tab跟着如下内容：Component: MultiTabs
+ - 第一个tab是token list和余额；component: TokenBalance
+ - 第二个tab：交易活动（历史记录）; component: TransactionHistory
