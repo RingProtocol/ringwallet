@@ -8,3 +8,4 @@ Account menu items
 - 5. Security check
 - 6. Developer tools
 - 7. About Ring
+- 8. Feedback

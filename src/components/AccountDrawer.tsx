@@ -16,6 +16,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
 
   const formatAddress = (address: string) => {
     if (!address) return ''
@@ -90,11 +91,27 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
     { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
     { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
+    { key: 'feedback', icon: '💬', label: 'Feedback', action: () => setShowFeedback(true) },
     { key: 'about', icon: 'ℹ️', label: 'About Ring', action: () => setShowAbout(true) },
   ]
 
   return (
     <>
+      {showFeedback && (
+        <div className="about-overlay visible" onClick={() => setShowFeedback(false)}>
+          <div className="feedback-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="about-header">
+              <h3>Feedback</h3>
+              <button className="about-close-btn" onClick={() => setShowFeedback(false)}>✕</button>
+            </div>
+            <iframe
+              src="https://tally.so/r/Gxry7o"
+              title="Feedback Form"
+              className="feedback-iframe"
+            />
+          </div>
+        </div>
+      )}
       {showAbout && (
         <div className="about-overlay visible" onClick={() => setShowAbout(false)}>
           <div className="about-modal" onClick={(e) => e.stopPropagation()}>

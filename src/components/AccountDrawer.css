@@ -340,3 +340,24 @@
   padding-top: 0;
   overflow-y: auto;
 }
+
+/* Feedback Modal */
+.feedback-modal {
+  background: white;
+  width: 95%;
+  max-width: 480px;
+  height: 85vh;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.feedback-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+}
