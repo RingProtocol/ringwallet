@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/passkeyService'
+import { WalletType } from '../models/WalletType'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
@@ -47,32 +48,19 @@ const LoginButton: React.FC = () => {
     const storedUser = localStorage.getItem('last_registered_username')
     const displayUser = credential.userHandle || storedUser || 'Passkey用户'
 
-    console.log("credential:", credential);
-    console.log("credential.publicKey:", credential.publicKey);
-    let accountType = localStorage.getItem('preferred_account_type') || 'eoa'
-    if (credential.publicKey) {
-      accountType = 'eip-7951'
-      console.log('✅ 检测到 EIP-7951 Public Key，账户类型设置为 eip-7951')
-    } else {
-      accountType = 'eoa'
-      console.log('ℹ️ 未找到 EIP-7951 Public Key，使用 EOA 模式')
-    }
-
     let finalMasterSeed = credential.masterSeed
-    if (!finalMasterSeed && accountType === 'eoa') {
+    if (!finalMasterSeed) {
       const seedKey = `eoa_seed_${credential.id}`
       const storedSeed = localStorage.getItem(seedKey)
       if (storedSeed) {
         try {
           finalMasterSeed = new Uint8Array(JSON.parse(storedSeed))
-          console.log('✅ 从 localStorage 恢复 EOA Seed')
         } catch { /* ignore parse error */ }
       }
       if (!finalMasterSeed) {
         finalMasterSeed = new Uint8Array(32)
         crypto.getRandomValues(finalMasterSeed)
         localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))
-        console.log('🔑 生成新的 EOA Seed 并保存到 localStorage')
       }
     }
 
@@ -82,7 +70,7 @@ const LoginButton: React.FC = () => {
       loginTime: new Date().toLocaleString('zh-CN'),
       masterSeed: finalMasterSeed ?? undefined,
       publicKey: credential.publicKey,
-      accountType
+      accountType: WalletType.EOA
     }
 
     login(userData)
@@ -133,7 +121,6 @@ const LoginButton: React.FC = () => {
 
       if (registerResult.success && registerResult.credential) {
         localStorage.setItem('last_registered_username', fallbackUsername)
-        localStorage.setItem('preferred_account_type', 'eip-7951')
         loginWithCredential({
           id: registerResult.credential.id,
           rawId: registerResult.credential.rawId,
@@ -153,62 +140,6 @@ const LoginButton: React.FC = () => {
     }
   }
 
-  const handleRegister7951 = async () => {
-    setIsLoading(true)
-    setError('')
-    setDebugInfo(null)
-
-    try {
-      const username = prompt('请输入用户名:')
-      if (!username) {
-        setIsLoading(false)
-        return
-      }
-
-      const result = await PasskeyService.register(username)
-
-      if (result.success) {
-        localStorage.setItem('last_registered_username', username);
-        localStorage.setItem('preferred_account_type', 'eip-7951');
-        alert(`Passkey 注册成功！用户 [${username}] 已创建。\n现在可以使用它登录了。`)
-      } else {
-        setError('注册失败: ' + result.error)
-      }
-    } catch (err) {
-      setError('注册错误: ' + (err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleRegister4337 = async () => {
-    setIsLoading(true)
-    setError('')
-    setDebugInfo(null)
-
-    try {
-      const username = prompt('请输入用户名:')
-      if (!username) {
-        setIsLoading(false)
-        return
-      }
-
-      const result = await PasskeyService.register(username)
-
-      if (result.success) {
-        localStorage.setItem('last_registered_username', username);
-        localStorage.setItem('preferred_account_type', '4337');
-        alert(`Passkey 注册成功！用户 [${username}] 已创建。\n现在可以使用它登录了。`)
-      } else {
-        setError('注册失败: ' + result.error)
-      }
-    } catch (err) {
-      setError('注册错误: ' + (err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleLogout = () => {
     logout()
   }
@@ -218,7 +149,7 @@ const LoginButton: React.FC = () => {
       <div className="login-status">
         <div className="user-info">
           <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: '#eef2ff', color: '#334155', fontSize: '12px' }}>
-            {activeWallet?.type === 'eip-7951' ? '钱包类型: 7951' : activeWallet?.type === '4337' ? '钱包类型: 4337' : '钱包类型: 普通账户'}
+            {activeWallet?.type === WalletType.SmartContract ? '钱包类型: 智能合约' : '钱包类型: EOA'}
           </span>
         </div>
 

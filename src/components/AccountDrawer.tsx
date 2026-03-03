@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { upgradeTo7951 } from '../features/upgrade7951'
 import { syncToDevice } from '../features/syncToDevice'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
@@ -44,25 +43,6 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     onClose()
   }
 
-  const handleUpgrade = async () => {
-    if (!user) return
-    setFeatureLoading('upgrade7702')
-    setFeatureError('')
-    try {
-      const result = await upgradeTo7951({ user, login })
-      if (result.success) {
-        alert('✅ 升级成功！\n\n您的账户已成功升级为 EIP-7951 智能账户。')
-        handleClose()
-      } else {
-        setFeatureError(result.error || '升级失败')
-      }
-    } catch (err) {
-      setFeatureError('升级错误: ' + (err as Error).message)
-    } finally {
-      setFeatureLoading(null)
-    }
-  }
-
   const handleMigrate = async () => {
     if (!user) return
     setFeatureLoading('migrate')
@@ -82,12 +62,11 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     }
   }
 
-  const showUpgradeOption = !user?.publicKey || user?.accountType !== 'eip-7951'
-
   const menuItems = [
     { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
     { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {}, disabled: true },
-    { key: 'upgrade7702', icon: '⬆️', label: featureLoading === 'upgrade7702' ? '升级中...' : '升级 7702', action: handleUpgrade, hidden: !showUpgradeOption, disabled: featureLoading === 'upgrade7702' },
+    { key: 'upgrade-sc', icon: '⬆️', label: '升级到智能合约钱包', sublabel: '即将推出', action: () => {}, disabled: true },
+    { key: 'signing-scheme', icon: '🔏', label: 'Passkey 原生签名 (secp256r1)', sublabel: '即将推出', action: () => {}, disabled: true },
     { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
     { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
     { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
@@ -152,7 +131,14 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                 onClick={'disabled' in item && item.disabled ? undefined : item.action}
               >
                 <span className="drawer-menu-icon">{item.icon}</span>
-                <span className="drawer-menu-label">{item.label}</span>
+                <span className="drawer-menu-label">
+                  {item.label}
+                  {'sublabel' in item && item.sublabel && (
+                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', padding: '1px 6px', borderRadius: '8px' }}>
+                      {item.sublabel}
+                    </span>
+                  )}
+                </span>
                 {item.key === 'switch' && (
                   <span className={`drawer-menu-arrow ${showWalletList ? 'expanded' : ''}`}>›</span>
                 )}

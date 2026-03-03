@@ -1,5 +1,6 @@
 import React from 'react';
 import WalletService from '../../services/walletService';
+import PasskeyService from '../../services/passkeyService';
 import { useSendForm } from './useSendForm';
 import SendFormFields from './SendFormFields';
 import '../TransactionActions.css';
@@ -13,6 +14,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
     activeWallet,
     activeChainId,
     activeChain,
+    user,
     toAddress,
     setToAddress,
     amount,
@@ -49,6 +51,14 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
     setBroadcastHash('');
     setIsLoading(true);
     try {
+      if (user?.id) {
+        const verified = await PasskeyService.verifyIdentity(user.id);
+        if (!verified) {
+          setError('生物识别验证失败，交易已取消');
+          return;
+        }
+      }
+
       const tx = await WalletService.signTransaction(
         activeWallet.privateKey!,
         toAddress,

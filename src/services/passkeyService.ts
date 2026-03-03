@@ -123,6 +123,43 @@ class PasskeyService {
     }
   }
 
+  /**
+   * Triggers a biometric (Face ID / fingerprint) verification via WebAuthn
+   * without using the result for signing. Used as a security gate before
+   * EOA transactions.
+   */
+  static async verifyIdentity(credentialId: string): Promise<boolean> {
+    try {
+      const challenge = new Uint8Array(32)
+      crypto.getRandomValues(challenge)
+
+      let credentialIdBuffer: ArrayBuffer
+      let base64 = credentialId.replace(/-/g, '+').replace(/_/g, '/')
+      while (base64.length % 4) base64 += '='
+      const binaryString = atob(base64)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      credentialIdBuffer = bytes.buffer as ArrayBuffer
+
+      await navigator.credentials.get({
+        publicKey: {
+          challenge: challenge.buffer as ArrayBuffer,
+          timeout: 60000,
+          userVerification: 'required',
+          rpId: window.location.hostname,
+          allowCredentials: [{ id: credentialIdBuffer, type: 'public-key' }]
+        }
+      })
+
+      return true
+    } catch (error) {
+      console.error('Biometric verification failed:', error)
+      return false
+    }
+  }
+
   static async signChallenge(credentialId: string | number[] | ArrayBuffer | Uint8Array | DataView, challengeHash: Uint8Array): Promise<SignResult> {
     try {
       let credentialIdBuffer: ArrayBuffer;

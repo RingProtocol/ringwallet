@@ -1,4 +1,5 @@
 import type { UserData } from '../contexts/AuthContext'
+import { WalletType } from '../models/WalletType'
 import PasskeyService from '../services/passkeyService'
 import CharUtils from '../utils/CharUtils'
 
@@ -63,7 +64,7 @@ export async function upgradeTo7951({ user, login }: UpgradeParams): Promise<Upg
     loginTime: new Date().toLocaleString('zh-CN'),
     masterSeed: user.masterSeed,
     publicKey: newPublicKey,
-    accountType: 'eip-7951'
+    accountType: WalletType.EOA
   }
   await login(updatedUser)
 

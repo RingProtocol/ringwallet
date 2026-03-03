@@ -1,11 +1,13 @@
 import { ethers } from 'ethers';
 import PasskeyService from './passkeyService';
 import CharUtils from '../utils/CharUtils';
+import { WalletType } from '../models/WalletType';
 
 interface DerivedWallet {
   index: number;
   address: string;
   privateKey: string;
+  type: WalletType;
   path: string;
 }
 
@@ -13,7 +15,7 @@ interface SmartAccountWallet {
   index: number;
   address: string;
   privateKey: null;
-  type: string;
+  type: WalletType;
   credentialId: string;
 }
 
@@ -49,6 +51,7 @@ class WalletService {
           index: i,
           address: childNode.address,
           privateKey: childNode.privateKey,
+          type: WalletType.EOA,
           path: path
         });
       }

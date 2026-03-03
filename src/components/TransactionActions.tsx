@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { WalletType } from '../models/WalletType';
 import { EOASendForm, SmartAccountSendForm, ReceiveDialog } from './transaction';
 import './TransactionActions.css';
 
@@ -10,7 +11,7 @@ const TransactionActions: React.FC = () => {
 
   if (!isLoggedIn || !activeWallet) return null;
 
-  const isSmartAccount = !!(activeWallet.credentialId || activeWallet.type === 'eip-7951');
+  const isSmartAccount = activeWallet.type === WalletType.SmartContract;
 
   return (
     <div className="transaction-actions-container">

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import WalletService from '../services/walletService'
 import CharUtils from '../utils/CharUtils'
+import { WalletType } from '../models/WalletType'
 
 export interface Chain {
   id: number;
@@ -17,7 +18,7 @@ export interface Wallet {
   index: number;
   address: string;
   privateKey: string | null;
-  type?: string;
+  type: WalletType;
   credentialId?: string;
   path?: string;
 }
@@ -28,7 +29,7 @@ export interface UserData {
   loginTime: string;
   masterSeed?: Uint8Array | number[];
   publicKey?: Map<number, Uint8Array> | Record<string | number, unknown> | null;
-  accountType?: string;
+  accountType: WalletType;
 }
 
 interface AuthContextValue {
@@ -152,30 +153,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               }
             }
 
+            loginData.user.accountType = WalletType.EOA
+
             setIsLoggedIn(true)
             setUser(loginData.user)
 
-            if (loginData.user) {
-              if (loginData.user.publicKey) {
-                 const derivedWallets: Wallet[] = [];
-                 for (let i = 0; i < 5; i++) {
-                   const address = WalletService.deriveSmartAccount(loginData.user.publicKey as Map<number, Uint8Array>, i);
-                   if (address) {
-                     derivedWallets.push({
-                       index: i,
-                       address: address,
-                       privateKey: null,
-                       type: loginData.user.accountType === '4337' ? '4337' : 'eip-7951',
-                       credentialId: loginData.user.id
-                     });
-                   }
-                 }
-                 setWallets(derivedWallets);
-              } else if (loginData.user.masterSeed) {
-                 const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
-                 const derivedWallets = WalletService.deriveWallets(seed, 5)
-                 setWallets(derivedWallets)
-              }
+            if (loginData.user?.masterSeed) {
+              const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
+              const derivedWallets = WalletService.deriveWallets(seed, 5)
+              setWallets(derivedWallets)
 
               const savedIndex = localStorage.getItem('active_wallet_index')
               if (savedIndex !== null) {
@@ -196,30 +182,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [])
 
   const login = async (userData: UserData) => {
+    userData.accountType = WalletType.EOA
+
     setIsLoggedIn(true)
     setUser(userData)
 
-    if (userData.publicKey) {
-      try {
-        const derivedWallets: Wallet[] = [];
-        for (let i = 0; i < 5; i++) {
-          const address = WalletService.deriveSmartAccount(userData.publicKey as Map<number, Uint8Array>, i);
-          if (address) {
-            derivedWallets.push({
-              index: i,
-              address: address,
-              privateKey: null,
-              type: userData.accountType === '4337' ? '4337' : 'eip-7951',
-              credentialId: userData.id
-            });
-          }
-        }
-        setWallets(derivedWallets)
-        setActiveWalletIndex(0)
-      } catch (e) {
-        console.error('Failed to derive smart accounts:', e)
-      }
-    } else if (userData.masterSeed) {
+    if (userData.masterSeed) {
       try {
         const derivedWallets = WalletService.deriveWallets(userData.masterSeed as Uint8Array, 5)
         setWallets(derivedWallets)

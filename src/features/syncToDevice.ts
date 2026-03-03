@@ -1,4 +1,5 @@
 import type { UserData } from '../contexts/AuthContext'
+import { WalletType } from '../models/WalletType'
 import PasskeyService from '../services/passkeyService'
 
 interface SyncParams {
@@ -48,7 +49,7 @@ export async function syncToDevice({ user, login }: SyncParams): Promise<SyncRes
         loginTime: new Date().toLocaleString('zh-CN'),
         masterSeed: user.masterSeed,
         publicKey: newPublicKey,
-        accountType: 'eip-7951'
+        accountType: WalletType.EOA
       }
       await login(updatedUser)
     }
