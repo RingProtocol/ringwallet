@@ -1,0 +1,103 @@
+.import-token-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.import-token-dialog {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  animation: scaleIn 0.2s ease;
+}
+
+.import-token-dialog h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.import-token-dialog .form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.import-token-dialog .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.import-token-dialog .input-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.import-token-dialog .input-field:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.import-token-error {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.import-token-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.import-token-actions .primary-btn,
+.import-token-actions .secondary-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.import-token-actions .primary-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.import-token-actions .primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.import-token-actions .secondary-btn {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.import-token-actions .secondary-btn:hover {
+  background: #e5e5e5;
+}
