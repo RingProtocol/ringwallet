@@ -28,9 +28,14 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'icons/ringcorn.svg',
-            sizes: 'any',
-            type: 'image/svg+xml'
+            src: 'icons/logo.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'icons/logo.png',
+            sizes: '512x512',
+            type: 'image/png'
           }
         ]
       }
