@@ -6,3 +6,5 @@ Account menu items
 - 3. Upgrade to 7702
 - 4. Migrate from Android
 - 5. Security check
+- 6. Developer tools
+- 7. About Ring

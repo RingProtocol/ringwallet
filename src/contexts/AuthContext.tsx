@@ -8,9 +8,9 @@ export interface Chain {
   symbol: string;
   rpcUrl: string;
   explorer: string;
-  bundlerUrl: string;
-  entryPoint: string;
-  factoryAddress: string;
+  bundlerUrl?: string;
+  entryPoint?: string;
+  factoryAddress?: string;
 }
 
 export interface Wallet {
@@ -62,14 +62,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
-  const CHAINS: Chain[] = [
+  const DEFAULT_CHAINS: Chain[] = [
     { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ETH_MAINNET, explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
     { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: import.meta.env.VITE_RPC_SEPOLIA, explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
     { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_OPTIMISM, explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
     { id: 42161, name: 'Arbitrum One', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ARBITRUM, explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
     { id: 137, name: 'Polygon', symbol: 'POL', rpcUrl: import.meta.env.VITE_RPC_POLYGON, explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON }
   ];
+
+  const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
   const [activeChainId, setActiveChainId] = useState(1);
+
+  useEffect(() => {
+    const fetchChains = async () => {
+      try {
+        const response = await fetch('/chainid.json');
+        if (!response.ok) throw new Error('Failed to fetch chain data');
+        const data = await response.json();
+        
+        // Map external chain data to our Chain interface
+        const extraChains: Chain[] = data.map((c: any) => ({
+          id: c.chainId,
+          name: c.name,
+          symbol: c.nativeCurrency?.symbol || 'ETH',
+          rpcUrl: c.rpc && c.rpc.length > 0 ? c.rpc[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '') : '',
+          explorer: c.explorers && c.explorers.length > 0 ? c.explorers[0].url : '',
+          // Bundler and other AA fields are undefined for these extra chains
+        })).filter((c: Chain) => 
+          c.rpcUrl && !c.rpcUrl.includes('${') && // Filter out RPCs that still have unreplaced variables
+          !DEFAULT_CHAINS.some(dc => dc.id === c.id) // Filter out duplicates
+        );
+
+        setChains([...DEFAULT_CHAINS, ...extraChains]);
+      } catch (error) {
+        console.error('Error loading chains:', error);
+      }
+    };
+
+    fetchChains();
+  }, []);
 
   useEffect(() => {
     const savedLoginState = localStorage.getItem('wallet_login_state')

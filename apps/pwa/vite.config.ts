@@ -15,7 +15,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['icons/favicon.png', 'icons/logo.png'],
       manifestFilename: 'manifest.json',
       manifest: {
         name: 'Ring Wallet',

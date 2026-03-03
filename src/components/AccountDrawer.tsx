@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { upgradeTo7951 } from '../features/upgrade7951'
 import { syncToDevice } from '../features/syncToDevice'
+import Introduce from './Introduce'
 import './AccountDrawer.css'
 
 interface AccountDrawerProps {
@@ -14,6 +15,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const [showWalletList, setShowWalletList] = useState(false)
   const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
+  const [showAbout, setShowAbout] = useState(false)
 
   const formatAddress = (address: string) => {
     if (!address) return ''
@@ -83,14 +85,27 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
 
   const menuItems = [
     { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
-    { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {} },
+    { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {}, disabled: true },
     { key: 'upgrade7702', icon: '⬆️', label: featureLoading === 'upgrade7702' ? '升级中...' : '升级 7702', action: handleUpgrade, hidden: !showUpgradeOption, disabled: featureLoading === 'upgrade7702' },
     { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
-    { key: 'security', icon: '🛡️', label: '安全检查', action: () => {} },
+    { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
+    { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
+    { key: 'about', icon: 'ℹ️', label: 'About Ring', action: () => setShowAbout(true) },
   ]
 
   return (
     <>
+      {showAbout && (
+        <div className="about-overlay visible" onClick={() => setShowAbout(false)}>
+          <div className="about-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="about-header">
+              <h3>About Ring</h3>
+              <button className="about-close-btn" onClick={() => setShowAbout(false)}>✕</button>
+            </div>
+            <Introduce />
+          </div>
+        </div>
+      )}
       <div className={`drawer-overlay ${isOpen ? 'visible' : ''}`} onClick={handleClose} />
       <div className={`account-drawer ${isOpen ? 'open' : ''}`}>
         <div className="drawer-header">

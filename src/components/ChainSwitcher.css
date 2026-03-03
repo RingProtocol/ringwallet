@@ -58,7 +58,7 @@
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  width: 200px;
+  width: 280px;
   overflow: hidden;
   animation: slideDown 0.2s ease-out;
   z-index: 1000;
@@ -73,6 +73,87 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.dropdown-top-section {
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 6px 12px;
+}
+
+.chain-search-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.chain-search-input:focus {
+  border-color: #007bff;
+}
+
+.add-network-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #666;
+  font-size: 1.2rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.add-network-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.tabs-row {
+  display: flex;
+  padding: 0 12px;
+  margin-top: 6px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.85rem;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.tab-btn:hover {
+  color: #555;
+}
+
+.tab-btn.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.no-chains-found {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
 }
 
 .dropdown-header {
