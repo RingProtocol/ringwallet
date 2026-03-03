@@ -88,14 +88,36 @@ class WalletService {
     }
   }
 
-  static async signTransaction(privateKey: string, to: string, amount: string, chainId: number, rpcUrl: string | null = null): Promise<string> {
+  static async signTransaction(
+    privateKey: string,
+    to: string,
+    amount: string,
+    chainId: number,
+    rpcUrl: string | null = null,
+    tokenOpts?: { address: string; decimals: number }
+  ): Promise<string> {
     try {
       if (!privateKey) throw new Error('Private key is required');
       if (!to) throw new Error('Recipient address is required');
       if (!amount) throw new Error('Amount is required');
       if (!chainId) throw new Error('Chain ID is required');
       const wallet = new ethers.Wallet(privateKey);
-      const value = ethers.parseEther(amount || '0');
+
+      let txTo: string;
+      let txValue: bigint;
+      let txData: string;
+
+      if (tokenOpts) {
+        const iface = new ethers.Interface(['function transfer(address to, uint256 amount) returns (bool)']);
+        const amountWei = ethers.parseUnits(amount || '0', tokenOpts.decimals);
+        txData = iface.encodeFunctionData('transfer', [to, amountWei]);
+        txTo = tokenOpts.address;
+        txValue = 0n;
+      } else {
+        txData = '0x';
+        txTo = to;
+        txValue = ethers.parseEther(amount || '0');
+      }
 
       if (rpcUrl) {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -103,15 +125,17 @@ class WalletService {
         const feeData = await provider.getFeeData();
         const estimated = await provider.estimateGas({
           from: wallet.address,
-          to,
-          value
+          to: txTo,
+          value: txValue,
+          data: txData
         });
         const gasLimit = estimated + (estimated / 10n);
         const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('1.5', 'gwei');
         const maxFeePerGas = feeData.maxFeePerGas || (maxPriorityFeePerGas + ethers.parseUnits('30', 'gwei'));
         const tx = {
-          to,
-          value,
+          to: txTo,
+          value: txValue,
+          data: txData,
           nonce,
           chainId,
           type: 2,
@@ -123,10 +147,11 @@ class WalletService {
         return signedTx;
       } else {
         const tx = {
-          to,
-          value,
+          to: txTo,
+          value: txValue,
+          data: txData,
           nonce: 0,
-          gasLimit: 31500,
+          gasLimit: 65000,
           gasPrice: ethers.parseUnits('20', 'gwei'),
           chainId,
           type: 0
@@ -193,7 +218,8 @@ class WalletService {
     senderAddress: string,
     factoryAddress: string | null = null,
     publicKey: Map<number, Uint8Array> | Record<string | number, unknown> | null = null,
-    salt = 0
+    salt = 0,
+    tokenOpts?: { address: string; decimals: number }
   ): Promise<EIP7951Result> {
     try {
       if (!credentialId) throw new Error('Credential ID is required');
@@ -203,7 +229,22 @@ class WalletService {
       if (!amount) throw new Error('Amount is required');
       if (!chainId) throw new Error('Chain ID is required');
 
-      const value = ethers.parseEther(amount || '0');
+      let execTo: string;
+      let execValue: bigint;
+      let execData: string;
+
+      if (tokenOpts) {
+        const transferIface = new ethers.Interface(['function transfer(address to, uint256 amount) returns (bool)']);
+        const amountWei = ethers.parseUnits(amount || '0', tokenOpts.decimals);
+        execData = transferIface.encodeFunctionData('transfer', [to, amountWei]);
+        execTo = tokenOpts.address;
+        execValue = 0n;
+      } else {
+        execTo = to;
+        execValue = ethers.parseEther(amount || '0');
+        execData = '0x';
+      }
+
       const provider = rpcUrl ? new ethers.JsonRpcProvider(rpcUrl) : null;
 
       let isDeployed = false;
@@ -234,7 +275,7 @@ class WalletService {
       const nonce = '0x0';
 
       const iface = new ethers.Interface(['function execute(address to,uint256 value,bytes data)']);
-      const callData = iface.encodeFunctionData('execute', [to, value, '0x']);
+      const callData = iface.encodeFunctionData('execute', [execTo, execValue, execData]);
 
       const baseUserOp: Record<string, string> = {
         sender: senderAddress || ethers.ZeroAddress,

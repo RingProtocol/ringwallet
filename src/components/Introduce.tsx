@@ -12,6 +12,7 @@ const Introduce: React.FC = () => {
     { title: 'No platform fee', desc: 'We don’t add platform fees on top of network costs.' },
     { title: 'AI Agent friendly', desc: 'Built so agents and automation can interact with your wallet in a secure, programmable way.' },
     { title: 'Listener to your voice', desc: 'Designed to respond to how you want to use crypto—simple when you want simple, powerful when you need it.' },
+    { title: 'Developer friendly', desc: 'Built-in dev tools and 1000+ chains.' },
   ]
 
   return (

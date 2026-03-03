@@ -4,4 +4,4 @@
 3. show new token to token list;
 
 # entrance
-入口 在@src/components/TokenBalance.tsx 列表的第一行，找个位置显示“导入”，点击可以
+In @src/components/TokenBalance.tsx, on the first row of the list, show an "Import" button. Click to open the address input dialog.

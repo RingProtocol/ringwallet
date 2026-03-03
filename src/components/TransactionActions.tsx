@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import WalletService, { type EIP7951Result } from '../services/walletService';
+import { getTokenList, type TokenInfo } from '../utils/tokenStorage';
 import './TransactionActions.css';
 
 type SignedTx = string | EIP7951Result;
+
+type SendTokenOption = { type: 'native'; symbol: string } | { type: 'erc20'; token: TokenInfo };
 
 const TransactionActions: React.FC = () => {
   const { isLoggedIn, activeWallet, activeChainId, activeChain, user } = useAuth();
@@ -12,6 +15,29 @@ const TransactionActions: React.FC = () => {
 
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
+  const [selectedToken, setSelectedToken] = useState<SendTokenOption>({ type: 'native', symbol: 'ETH' });
+
+  const tokenOptions: SendTokenOption[] = useMemo(() => {
+    const native: SendTokenOption = { type: 'native', symbol: activeChain?.symbol || 'ETH' };
+    const imported = activeWallet && activeChain
+      ? getTokenList(activeWallet.address, activeChain.id).map((t) => ({ type: 'erc20' as const, token: t }))
+      : [];
+    return [native, ...imported];
+  }, [activeWallet?.address, activeChain?.id, activeChain?.symbol]);
+
+  const amountLabel = selectedToken.type === 'native'
+    ? `Amount (${selectedToken.symbol})`
+    : `Amount (${selectedToken.token.symbol})`;
+
+  useEffect(() => {
+    if (selectedToken.type === 'erc20') {
+      const found = tokenOptions.some(
+        (o) => o.type === 'erc20' && o.token.address === selectedToken.token.address
+      );
+      if (!found) setSelectedToken({ type: 'native', symbol: activeChain?.symbol || 'ETH' });
+    }
+  }, [tokenOptions, activeChain?.symbol, selectedToken]);
+
   const [signedTx, setSignedTx] = useState<SignedTx | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,17 +46,16 @@ const TransactionActions: React.FC = () => {
 
   if (!isLoggedIn || !activeWallet) return null;
 
+  const tokenOpts = selectedToken.type === 'erc20'
+    ? { address: selectedToken.token.address, decimals: selectedToken.token.decimals }
+    : undefined;
+
   const handleSign = async () => {
     setError('');
     setSignedTx(null);
     setBroadcastHash('');
     setIsLoading(true);
     try {
-      console.log("before sign:", activeWallet.credentialId);
-      console.log("activeWallet.type:", activeWallet.type);
-      console.log("activeChainId:", activeChainId);
-      console.log("activeChain:", activeChain);
-      console.log("amount:", amount);
       if (activeWallet.credentialId || activeWallet.type === 'eip-7951') {
         const publicKey = user?.publicKey || null;
         const salt = activeWallet.index || 0;
@@ -45,11 +70,19 @@ const TransactionActions: React.FC = () => {
           activeWallet.address,
           factoryAddress,
           publicKey as Map<number, Uint8Array>,
-          salt
+          salt,
+          tokenOpts
         );
         setSignedTx(tx);
       } else {
-        const tx = await WalletService.signTransaction(activeWallet.privateKey!, toAddress, amount, activeChainId, activeChain?.rpcUrl);
+        const tx = await WalletService.signTransaction(
+          activeWallet.privateKey!,
+          toAddress,
+          amount,
+          activeChainId,
+          activeChain?.rpcUrl,
+          tokenOpts
+        );
         setSignedTx(tx);
       }
     } catch (e) {
@@ -87,6 +120,7 @@ const TransactionActions: React.FC = () => {
   const resetSendForm = () => {
     setToAddress('');
     setAmount('');
+    setSelectedToken({ type: 'native', symbol: activeChain?.symbol || 'ETH' });
     setSignedTx(null);
     setBroadcastHash('');
     setError('');
@@ -126,7 +160,30 @@ const TransactionActions: React.FC = () => {
               />
             </div>
             <div className="form-group">
-              <label>Amount (ETH):</label>
+              <label>Token:</label>
+              <select
+                value={selectedToken.type === 'native' ? 'native' : selectedToken.token.address}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === 'native') {
+                    setSelectedToken({ type: 'native', symbol: activeChain?.symbol || 'ETH' });
+                  } else {
+                    const t = tokenOptions.find((o) => o.type === 'erc20' && o.token.address === v);
+                    if (t && t.type === 'erc20') setSelectedToken(t);
+                  }
+                }}
+                className="input-field token-select"
+              >
+                <option value="native">{activeChain?.symbol || 'ETH'} (Native)</option>
+                {tokenOptions.filter((o) => o.type === 'erc20').map((o) => (
+                  <option key={o.token.address} value={o.token.address}>
+                    {o.token.symbol}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>{amountLabel}:</label>
               <input
                 type="number"
                 value={amount}

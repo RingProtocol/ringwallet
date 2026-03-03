@@ -1,8 +1,8 @@
-# 页面功能
-账号的菜单项
+# Page Features
+Account menu items
 
-- 1. 切换Wallet；
-- 2. 通知设置；
-- 3. 升级7702
-- 4. 从Android迁移
-- 5. 安全检查
+- 1. Switch Wallet
+- 2. Notification settings
+- 3. Upgrade to 7702
+- 4. Migrate from Android
+- 5. Security check

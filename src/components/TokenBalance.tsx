@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
-import ImportTokenDialog, { type ImportedTokenInfo } from './ImportTokenDialog'
+import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
+import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
 
 const ERC20_ABI = [
   'function balanceOf(address) view returns (uint256)',
 ] as const
 
-const IMPORTED_TOKENS_KEY = 'imported_tokens'
-
-interface TokenInfo {
+interface DisplayTokenInfo {
   symbol: string
   name: string
   balance: string
@@ -19,47 +18,31 @@ interface TokenInfo {
   decimals?: number
 }
 
-function getImportedTokensStorageKey(chainId: number): string {
-  return `${IMPORTED_TOKENS_KEY}_${chainId}`
-}
-
-function loadImportedTokens(chainId: number): ImportedTokenInfo[] {
-  try {
-    const raw = localStorage.getItem(getImportedTokensStorageKey(chainId))
-    if (!raw) return []
-    return JSON.parse(raw) as ImportedTokenInfo[]
-  } catch {
-    return []
-  }
-}
-
-function saveImportedTokens(chainId: number, tokens: ImportedTokenInfo[]) {
-  localStorage.setItem(getImportedTokensStorageKey(chainId), JSON.stringify(tokens))
-}
-
 const TokenBalance: React.FC = () => {
   const { activeWallet, activeChain } = useAuth()
-  const [tokens, setTokens] = useState<TokenInfo[]>([])
+  const [tokens, setTokens] = useState<DisplayTokenInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [importedTokens, setImportedTokens] = useState<ImportedTokenInfo[]>(() =>
-    activeChain ? loadImportedTokens(activeChain.id) : []
+  const [importedTokens, setImportedTokens] = useState<StoredTokenInfo[]>(() =>
+    activeWallet && activeChain
+      ? getTokenList(activeWallet.address, activeChain.id)
+      : []
   )
 
   useEffect(() => {
-    if (activeChain) {
-      setImportedTokens(loadImportedTokens(activeChain.id))
+    if (activeWallet && activeChain) {
+      setImportedTokens(getTokenList(activeWallet.address, activeChain.id))
     }
-  }, [activeChain?.id])
+  }, [activeWallet?.address, activeChain?.id])
 
-  const handleImportToken = useCallback((token: ImportedTokenInfo) => {
-    if (!activeChain) return
-    const list = loadImportedTokens(activeChain.id)
-    if (list.some((t) => t.address.toLowerCase() === token.address.toLowerCase())) return
-    const next = [...list, token]
-    saveImportedTokens(activeChain.id, next)
-    setImportedTokens(next)
-  }, [activeChain])
+  const handleImportToken = useCallback(
+    (token: { address: string; symbol: string; name: string; decimals: number }) => {
+      if (!activeWallet || !activeChain) return
+      addToken(activeWallet.address, activeChain.id, token)
+      setImportedTokens(getTokenList(activeWallet.address, activeChain.id))
+    },
+    [activeWallet, activeChain]
+  )
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -71,14 +54,14 @@ const TokenBalance: React.FC = () => {
         const balanceWei = await provider.getBalance(activeWallet.address)
         const balanceEth = ethers.formatEther(balanceWei)
 
-        const nativeToken: TokenInfo = {
+        const nativeToken: DisplayTokenInfo = {
           symbol: activeChain.symbol || 'ETH',
           name: activeChain.name,
           balance: parseFloat(balanceEth).toFixed(4),
           isNative: true,
         }
 
-        const erc20Tokens: TokenInfo[] = await Promise.all(
+        const erc20Tokens: DisplayTokenInfo[] = await Promise.all(
           importedTokens.map(async (t) => {
             try {
               const contract = new ethers.Contract(t.address, ERC20_ABI, provider)
