@@ -325,67 +325,70 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
     }
   }
 
-  static async broadcastTransaction(
-    signedData: string | EIP7951Result,
+  static async broadcastEOATransaction(
+    signedTx: string,
     rpcUrl?: string,
-    bundlerUrl?: string,
-    entryPoint?: string
   ): Promise<string> {
-    if (!rpcUrl) throw new Error('RPC URL is required');
-    if (!bundlerUrl) throw new Error('Bundler URL is required');
-    if (!entryPoint) throw new Error('Entry point is required');
-    if (!signedData) throw new Error('Signed data is required');
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!signedTx || !signedTx.startsWith('0x')) {
+      throw new Error('Invalid signed transaction hex');
+    }
 
     let txHash: string;
 
-    if (typeof signedData === 'string' && signedData.startsWith('0x')) {
-      if (rpcUrl) {
-        try {
-          const provider = new ethers.JsonRpcProvider(rpcUrl);
-          const response = await provider.broadcastTransaction(signedData);
-          txHash = response.hash;
-        } catch (e) {
-          console.error('Broadcast via RPC failed, falling back to simulated hash:', e);
-          txHash = ethers.keccak256(signedData);
-        }
-      } else {
-        txHash = ethers.keccak256(signedData);
+    if (rpcUrl) {
+      try {
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const response = await provider.broadcastTransaction(signedTx);
+        txHash = response.hash;
+      } catch (e) {
+        console.error('Broadcast via RPC failed, falling back to simulated hash:', e);
+        txHash = ethers.keccak256(signedTx);
       }
-
-    } else if (signedData && typeof signedData === 'object' && signedData.type === 'eip-7951') {
-      console.log("broadcast eip-7951 transaction");
-      if (bundlerUrl && entryPoint && signedData.userOp) {
-        try {
-          const res = await fetch(bundlerUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 1,
-              method: 'eth_sendUserOperation',
-              params: [signedData.userOp, entryPoint]
-            })
-          });
-          const json = await res.json();
-          if (json.error) {
-            throw new Error(json.error.message || 'Bundler error');
-          }
-          txHash = json.result;
-        } catch (e) {
-          console.error('Sending UserOperation failed, falling back to simulated hash:', e);
-          txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
-        }
-      } else {
-        txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
-      }
-
     } else {
-      throw new Error('Invalid transaction data format');
+      txHash = ethers.keccak256(signedTx);
     }
 
-    console.log('Transaction Broadcast Success! Hash:', txHash);
+    console.log('EOA Transaction Broadcast Success! Hash:', txHash);
+    return txHash;
+  }
+
+  static async broadcastSmartAccountTransaction(
+    signedData: EIP7951Result,
+    rpcUrl?: string,
+    bundlerUrl?: string,
+    entryPoint?: string,
+  ): Promise<string> {
+    if (!bundlerUrl) throw new Error('Bundler URL is required');
+    if (!entryPoint) throw new Error('Entry point is required');
+
+    let txHash: string;
+
+    if (bundlerUrl && entryPoint && signedData.userOp) {
+      try {
+        const res = await fetch(bundlerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_sendUserOperation',
+            params: [signedData.userOp, entryPoint],
+          }),
+        });
+        const json = await res.json();
+        if (json.error) {
+          throw new Error(json.error.message || 'Bundler error');
+        }
+        txHash = json.result;
+      } catch (e) {
+        console.error('Sending UserOperation failed, falling back to simulated hash:', e);
+        txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
+      }
+    } else {
+      txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
+    }
+
+    console.log('Smart Account Transaction Broadcast Success! Hash:', txHash);
     return txHash;
   }
 }
