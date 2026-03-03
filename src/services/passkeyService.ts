@@ -475,23 +475,25 @@ class PasskeyService {
         try {
           const userHandle = new Uint8Array(response.userHandle)
 
-          if (userHandle.length > 32) {
+          if (userHandle.length >= 32) {
             masterSeed = userHandle.slice(0, 32)
 
-            const usernameBytes = userHandle.slice(32)
-            const decoder = new TextDecoder('utf-8')
-            username = decoder.decode(usernameBytes)
+            if (userHandle.length > 32) {
+              const usernameBytes = userHandle.slice(32)
+              const decoder = new TextDecoder('utf-8')
+              username = decoder.decode(usernameBytes)
 
-            console.log('🔓 解析成功:', {
-              hasSeed: true,
-              username: username
-            })
+              console.log('🔓 解析成功:', {
+                hasSeed: true,
+                username: username
+              })
+            }
           } else {
             const decoder = new TextDecoder('utf-8')
             username = decoder.decode(userHandle)
           }
 
-          if (/[\x00-\x08\x0E-\x1F\x7F]/.test(username!)) {
+          if (username && /[\x00-\x08\x0E-\x1F\x7F]/.test(username)) {
              console.warn('UserHandle contains control characters, ignoring:', username)
              username = null
           }

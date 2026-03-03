@@ -48,25 +48,38 @@ const LoginButton: React.FC = () => {
 
         console.log("result.credential:", result.credential);
         console.log("result.credential.publicKey:", result.credential.publicKey);
-        let accountType = localStorage.getItem('preferred_account_type') || 'eip-7951'
+        let accountType = localStorage.getItem('preferred_account_type') || 'eoa'
         if (result.credential.publicKey) {
           accountType = 'eip-7951'
           console.log('✅ 检测到 EIP-7951 Public Key，账户类型设置为 eip-7951')
-          console.log('📊 Public Key 详情:', {
-            hasPublicKey: !!result.credential.publicKey,
-            isMap: result.credential.publicKey instanceof Map,
-            hasX: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-2) : !!(result.credential.publicKey as Record<number, unknown>)[-2],
-            hasY: result.credential.publicKey instanceof Map ? result.credential.publicKey.has(-3) : !!(result.credential.publicKey as Record<number, unknown>)[-3]
-          })
         } else {
-          console.warn('⚠️ 未找到 EIP-7951 Public Key，将使用传统账户模式')
+          accountType = 'eoa'
+          console.log('ℹ️ 未找到 EIP-7951 Public Key，使用 EOA 模式')
+        }
+
+        let finalMasterSeed = result.credential.masterSeed
+        if (!finalMasterSeed && accountType === 'eoa') {
+          const seedKey = `eoa_seed_${result.credential.id}`
+          const storedSeed = localStorage.getItem(seedKey)
+          if (storedSeed) {
+            try {
+              finalMasterSeed = new Uint8Array(JSON.parse(storedSeed))
+              console.log('✅ 从 localStorage 恢复 EOA Seed')
+            } catch { /* ignore parse error */ }
+          }
+          if (!finalMasterSeed) {
+            finalMasterSeed = new Uint8Array(32)
+            crypto.getRandomValues(finalMasterSeed)
+            localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))
+            console.log('🔑 生成新的 EOA Seed 并保存到 localStorage')
+          }
         }
 
         const userData: UserData = {
           id: result.credential.id,
           name: displayUser,
           loginTime: new Date().toLocaleString('zh-CN'),
-          masterSeed: result.credential.masterSeed ?? undefined,
+          masterSeed: finalMasterSeed ?? undefined,
           publicKey: result.credential.publicKey,
           accountType
         }
