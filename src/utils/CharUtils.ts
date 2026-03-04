@@ -1,3 +1,5 @@
+import * as DbgLog from './DbgLog';
+
 type ByteLike = Uint8Array | ArrayBuffer | DataView | Array<number>;
 type CoseKey = Map<number, Uint8Array> | Record<string | number, unknown>;
 
@@ -202,7 +204,7 @@ class CharUtils {
       y: Array.isArray(yArray) ? yArray : Array.from(yArray)
     };
 
-    console.log('CharUtils.coseKeyToStorage: 成功转换 COSE 密钥', {
+    DbgLog.log('CharUtils.coseKeyToStorage: 成功转换 COSE 密钥', {
       xLength: result.x.length,
       yLength: result.y.length
     });
@@ -242,7 +244,7 @@ class CharUtils {
         if (typed.x && typed.y) {
           xArray = typed.x;
           yArray = typed.y;
-          console.log('CharUtils.coseKeyFromStorage: 使用新格式 {_type: "Map", x, y}');
+          DbgLog.log('CharUtils.coseKeyFromStorage: 使用新格式 {_type: "Map", x, y}');
         } else {
           console.warn('CharUtils.coseKeyFromStorage: _type="Map" 但缺少 x 或 y', {
             hasX: !!typed.x,
@@ -254,11 +256,11 @@ class CharUtils {
       } else if ((obj as { x?: unknown; y?: unknown }).x !== undefined && (obj as { x?: unknown; y?: unknown }).y !== undefined) {
         xArray = (obj as { x: unknown }).x;
         yArray = (obj as { y: unknown }).y;
-        console.log('CharUtils.coseKeyFromStorage: 使用旧格式 {x, y}');
+        DbgLog.log('CharUtils.coseKeyFromStorage: 使用旧格式 {x, y}');
       } else if (obj[-2] !== undefined && obj[-3] !== undefined) {
         xArray = this.uint8ArrayToArray(obj[-2] as ByteLike);
         yArray = this.uint8ArrayToArray(obj[-3] as ByteLike);
-        console.log('CharUtils.coseKeyFromStorage: 使用数字键格式 {-2, -3}');
+        DbgLog.log('CharUtils.coseKeyFromStorage: 使用数字键格式 {-2, -3}');
       } else if (typeof (obj as { get?: unknown }).get === 'function') {
         const getter = obj as { get: (k: number) => unknown };
         const xVal = getter.get(-2);
@@ -266,7 +268,7 @@ class CharUtils {
         if (xVal !== undefined && yVal !== undefined) {
           xArray = this.uint8ArrayToArray(xVal as ByteLike);
           yArray = this.uint8ArrayToArray(yVal as ByteLike);
-          console.log('CharUtils.coseKeyFromStorage: 使用 get 方法');
+          DbgLog.log('CharUtils.coseKeyFromStorage: 使用 get 方法');
         }
       }
 
@@ -337,7 +339,7 @@ class CharUtils {
     coseKey.set(-2, xBytes);
     coseKey.set(-3, yBytes);
 
-    console.log('CharUtils.coseKeyFromStorage: 成功恢复 COSE 密钥', {
+    DbgLog.log('CharUtils.coseKeyFromStorage: 成功恢复 COSE 密钥', {
       xLength: xBytes.length,
       yLength: yBytes.length
     });
@@ -460,7 +462,7 @@ class CharUtils {
           const keyData = JSON.parse(stored);
           const restored = this.coseKeyFromStorage(keyData);
           if (restored) {
-            console.log(`✅ 从 localStorage 找到 Public Key (key: ${key.substring(0, 20)}...)`);
+            DbgLog.log(`✅ 从 localStorage 找到 Public Key (key: ${key.substring(0, 20)}...)`);
             return restored;
           }
         } catch (e) {
@@ -473,7 +475,7 @@ class CharUtils {
     const relatedKeys = allKeys.filter(key => key.startsWith(prefix));
 
     if (relatedKeys.length > 0) {
-      console.log(`📋 找到 ${relatedKeys.length} 个相关的 localStorage 键，尝试第一个`);
+      DbgLog.log(`📋 找到 ${relatedKeys.length} 个相关的 localStorage 键，尝试第一个`);
       const firstKey = relatedKeys[0];
       const stored = localStorage.getItem(firstKey);
       if (stored) {
@@ -481,7 +483,7 @@ class CharUtils {
           const keyData = JSON.parse(stored);
           const restored = this.coseKeyFromStorage(keyData);
           if (restored) {
-            console.log(`✅ 从 localStorage 找到 Public Key (使用第一个相关键: ${firstKey.substring(0, 20)}...)`);
+            DbgLog.log(`✅ 从 localStorage 找到 Public Key (使用第一个相关键: ${firstKey.substring(0, 20)}...)`);
             return restored;
           }
         } catch (e) {

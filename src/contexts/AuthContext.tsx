@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import WalletService from '../services/walletService'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
+import * as DbgLog from '../utils/DbgLog'
 
 export interface Chain {
   id: number;
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey as Map<number, Uint8Array>);
                 if (normalizedPublicKey) {
                   loginData.user.publicKey = normalizedPublicKey;
-                  console.log('✅ Public Key 已规范化并恢复为 Map 格式');
+                  DbgLog.log('✅ Public Key 已规范化并恢复为 Map 格式');
                 } else {
                   console.warn('⚠️ Public Key 格式无效，无法恢复:', publicKey);
                   loginData.user.publicKey = null;
@@ -143,7 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   const restored = CharUtils.findPublicKeyFromStorage(loginData.user.id);
                   if (restored) {
                     loginData.user.publicKey = restored;
-                    console.log('✅ Public Key 从 localStorage 重新恢复成功');
+                    DbgLog.log('✅ Public Key 从 localStorage 重新恢复成功');
                   } else {
                     console.warn('⚠️ 未在 localStorage 中找到 Public Key');
                   }
@@ -207,13 +208,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const storageFormat = CharUtils.coseKeyToStorage(pk as Map<number, Uint8Array>);
         if (storageFormat) {
           userDataForStorage.publicKey = storageFormat;
-          console.log('✅ Public Key 已转换为存储格式');
+          DbgLog.log('✅ Public Key 已转换为存储格式');
         } else {
           console.warn('⚠️ 无法转换 publicKey 为存储格式，将跳过保存以避免序列化错误');
           delete userDataForStorage.publicKey;
         }
       } else {
-        console.log('✅ Public Key 已经是存储格式');
+        DbgLog.log('✅ Public Key 已经是存储格式');
       }
     }
 

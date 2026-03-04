@@ -1,5 +1,6 @@
 import { decode } from 'cbor-x';
 import CharUtils from '../utils/CharUtils';
+import * as DbgLog from '../utils/DbgLog';
 
 interface AvailabilityResult {
   isSupported: boolean;
@@ -57,14 +58,14 @@ class PasskeyService {
 
   static _parseAuthData(authData: Uint8Array): ParsedAuthData | null {
     try {
-      console.log('🔍 开始解析 authData, 总长度:', authData.length, 'bytes');
+      DbgLog.log('🔍 开始解析 authData, 总长度:', authData.length, 'bytes');
 
       if (!(authData instanceof Uint8Array)) {
         authData = new Uint8Array(authData);
       }
 
       let offset = 37; // rpIdHash (32) + flags (1) + signCount (4)
-      console.log('📍 初始 offset:', offset);
+      DbgLog.log('📍 初始 offset:', offset);
 
       if (authData.length < offset) {
         console.error('❌ authData 长度不足，无法解析 AAGUID');
@@ -73,7 +74,7 @@ class PasskeyService {
 
       const aaguid = authData.slice(offset, offset + 16);
       offset += 16;
-      console.log('📍 AAGUID 解析完成, offset:', offset);
+      DbgLog.log('📍 AAGUID 解析完成, offset:', offset);
 
       if (authData.length < offset + 2) {
         console.error('❌ authData 长度不足，无法读取 credentialIdLength');
@@ -82,7 +83,7 @@ class PasskeyService {
 
       const credentialIdLength = (new DataView(authData.buffer, authData.byteOffset, authData.byteLength)).getUint16(offset, false);
       offset += 2;
-      console.log('📍 Credential ID 长度:', credentialIdLength, ', offset:', offset);
+      DbgLog.log('📍 Credential ID 长度:', credentialIdLength, ', offset:', offset);
 
       if (credentialIdLength < 0 || credentialIdLength > 1024) {
         console.error('❌ Credential ID 长度异常:', credentialIdLength);
@@ -97,7 +98,7 @@ class PasskeyService {
 
       const credentialId = authData.slice(offset, offset + credentialIdLength);
       offset += credentialIdLength;
-      console.log('📍 Credential ID 解析完成, offset:', offset);
+      DbgLog.log('📍 Credential ID 解析完成, offset:', offset);
 
       if (authData.length <= offset) {
         console.error('❌ authData 没有剩余数据用于解析 Public Key');
@@ -106,8 +107,8 @@ class PasskeyService {
       }
 
       const publicKeyBytes = authData.slice(offset);
-      console.log('📍 Public Key CBOR 数据长度:', publicKeyBytes.length, 'bytes');
-      console.log('📍 Public Key CBOR 数据前 20 字节:', Array.from(publicKeyBytes.slice(0, 20)));
+      DbgLog.log('📍 Public Key CBOR 数据长度:', publicKeyBytes.length, 'bytes');
+      DbgLog.log('📍 Public Key CBOR 数据前 20 字节:', Array.from(publicKeyBytes.slice(0, 20)));
 
       if (publicKeyBytes.length === 0) {
         console.error('❌ Public Key CBOR 数据为空');
@@ -115,8 +116,8 @@ class PasskeyService {
       }
 
       const publicKey = decode(new Uint8Array(publicKeyBytes));
-      console.log('✅ Public Key 解析成功');
-      console.log('📊 Public Key 类型:', publicKey instanceof Map ? 'Map' : typeof publicKey);
+      DbgLog.log('✅ Public Key 解析成功');
+      DbgLog.log('📊 Public Key 类型:', publicKey instanceof Map ? 'Map' : typeof publicKey);
 
       return { aaguid, credentialId, publicKey };
     } catch (e) {
@@ -237,14 +238,14 @@ class PasskeyService {
   }
 
   static async isSupported(): Promise<boolean> {
-    console.log('🔍 开始检查Passkey支持...')
+    DbgLog.log('🔍 开始检查Passkey支持...')
 
     if (this.#supportCache !== null) {
-      console.log('📦 使用缓存结果:', this.#supportCache)
+      DbgLog.log('📦 使用缓存结果:', this.#supportCache)
       return this.#supportCache
     }
 
-    console.log('🔎 检查基本API是否存在...')
+    DbgLog.log('🔎 检查基本API是否存在...')
     if (!window.PublicKeyCredential) {
       console.warn('❌ PublicKeyCredential API不存在')
       this.#supportCache = false
@@ -259,8 +260,8 @@ class PasskeyService {
 
     const PKC = PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> }
 
-    console.log('✅ 基本API存在，开始实际功能检测...')
-    console.log('📡 调用API检测功能可用性...')
+    DbgLog.log('✅ 基本API存在，开始实际功能检测...')
+    DbgLog.log('📡 调用API检测功能可用性...')
 
     const checks: Promise<boolean>[] = [PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()]
     if (PKC.isConditionalMediationAvailable) {
@@ -275,13 +276,13 @@ class PasskeyService {
       console.error('💥 UVPAA check failed:', results[0].reason)
     }
 
-    console.log('📊 检测结果:', {
+    DbgLog.log('📊 检测结果:', {
       isUVPAAAvailable,
       isConditionalMediationAvailable: canConditionalMediate
     })
 
     this.#supportCache = isUVPAAAvailable
-    console.log('🎯 最终支持结果:', this.#supportCache)
+    DbgLog.log('🎯 最终支持结果:', this.#supportCache)
     return this.#supportCache
   }
 
@@ -318,7 +319,7 @@ class PasskeyService {
       const challenge = new Uint8Array(32)
       crypto.getRandomValues(challenge)
 
-      console.log("existingSeed:", existingSeed);
+      DbgLog.log("existingSeed:", existingSeed);
       let masterSeed: Uint8Array;
       if (existingSeed) {
         if (existingSeed.length !== 32) {
@@ -328,6 +329,7 @@ class PasskeyService {
       } else {
         masterSeed = new Uint8Array(32)
         crypto.getRandomValues(masterSeed)
+        DbgLog.log("masterSeed:", masterSeed);
       }
 
       const encoder = new TextEncoder()
@@ -341,27 +343,33 @@ class PasskeyService {
       userId.set(masterSeed, 0)
       userId.set(usernameBytes, 32)
 
+      // Configure options for creating a new Passkey credential
+      // This includes the challenge, relying party info, user info, and authenticator requirements
       const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
         challenge,
+        // Relying Party: The application creating the credential
         rp: {
-          name: "New Wallet",
+          name: "Ring Wallet",
           id: window.location.hostname
         },
+        // User: The user account associated with the credential
         user: {
           id: userId,
           name: username,
           displayName: username
         },
+        // Parameters: Supported cryptographic algorithms
         pubKeyCredParams: [
-          { alg: -7, type: "public-key" },
-          { alg: -257, type: "public-key" }
+          { alg: -7, type: "public-key" }, // ES256
+          { alg: -257, type: "public-key" } // RS256
         ],
         timeout: 60000,
         attestation: "direct",
+        // Authenticator Selection: Criteria for the authenticator
         authenticatorSelection: {
-          authenticatorAttachment: "platform",
-          requireResidentKey: true,
-          userVerification: "required"
+          authenticatorAttachment: "platform", // Restrict to platform authenticators (e.g., FaceID, TouchID)
+          requireResidentKey: true, // Require a client-side discoverable credential (resident key)
+          userVerification: "required" // Require user verification (biometrics or PIN) for every operation
         }
       }
 
@@ -371,18 +379,18 @@ class PasskeyService {
 
       let publicKey: Map<number, unknown> | null = null;
       try {
-        console.log('🔍 开始解析 attestationObject...');
+        DbgLog.log('🔍 开始解析 attestationObject...');
         const response = credential.response as AuthenticatorAttestationResponse;
         const attestationObject = new Uint8Array(response.attestationObject);
-        console.log('📊 attestationObject 长度:', attestationObject.length, 'bytes');
+        DbgLog.log('📊 attestationObject 长度:', attestationObject.length, 'bytes');
 
         const decodedAttestation = decode(attestationObject) as { authData: Uint8Array | ArrayBuffer };
-        console.log('✅ attestationObject 解码成功');
-        console.log('📊 decodedAttestation keys:', Object.keys(decodedAttestation));
+        DbgLog.log('✅ attestationObject 解码成功');
+        DbgLog.log('📊 decodedAttestation keys:', Object.keys(decodedAttestation));
 
         const authData = decodedAttestation.authData;
-        console.log('📊 authData 类型:', authData instanceof Uint8Array ? 'Uint8Array' : authData instanceof ArrayBuffer ? 'ArrayBuffer' : typeof authData);
-        console.log('📊 authData 长度:', (authData as Uint8Array)?.length || (authData as ArrayBuffer)?.byteLength || 'unknown');
+        DbgLog.log('📊 authData 类型:', authData instanceof Uint8Array ? 'Uint8Array' : authData instanceof ArrayBuffer ? 'ArrayBuffer' : typeof authData);
+        DbgLog.log('📊 authData 长度:', (authData as Uint8Array)?.length || (authData as ArrayBuffer)?.byteLength || 'unknown');
 
         let authDataArray: Uint8Array;
         if (authData instanceof ArrayBuffer) {
@@ -402,7 +410,7 @@ class PasskeyService {
             const credentialIdBase64 = CharUtils.uint8ArrayToBase64(new Uint8Array(credential.rawId));
             if (credentialIdBase64) {
               localStorage.setItem(`new_wallet_pk_${credentialIdBase64}`, JSON.stringify(keyData));
-              console.log('💾 EIP-7951 Public Key saved to localStorage with key:', `new_wallet_pk_${credentialIdBase64}`);
+              DbgLog.log('💾 EIP-7951 Public Key saved to localStorage with key:', `new_wallet_pk_${credentialIdBase64}`);
             } else {
               console.warn('⚠️ 无法将 credential.rawId 转换为 base64');
             }
@@ -414,9 +422,9 @@ class PasskeyService {
         console.warn('Failed to extract public key:', e);
       }
 
-      console.log("publicKey:", publicKey);
-      console.log("credential.id:", credential.id);
-      console.log("masterSeed:", masterSeed);
+      DbgLog.log("publicKey:", publicKey);
+      DbgLog.log("credential.id:", credential.id);
+      DbgLog.log("masterSeed:", masterSeed);
       return {
         success: true,
         credential: {
@@ -438,7 +446,7 @@ class PasskeyService {
 
   static async login(isConditional = false): Promise<LoginResult> {
     try {
-      const challenge = new Uint8Array(32)
+      const challenge = new Uint8Array(32)//must random
       crypto.getRandomValues(challenge)
 
       const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
@@ -448,7 +456,7 @@ class PasskeyService {
         rpId: window.location.hostname
       }
 
-      const credential = await navigator.credentials.get({
+      const credential = await navigator.credentials.get({//
         publicKey: publicKeyCredentialRequestOptions,
         mediation: isConditional ? "conditional" : "optional"
       }) as PublicKeyCredential;
@@ -458,32 +466,33 @@ class PasskeyService {
       let publicKey: Map<number, Uint8Array> | null = null;
 
       try {
+        DbgLog.log("[after login]credential:", credential);
         const credentialIdBase64 = CharUtils.uint8ArrayToBase64(new Uint8Array(credential.rawId));
         const storageKey = credentialIdBase64 ? `new_wallet_pk_${credentialIdBase64}` : null;
 
         if (storageKey) {
-          console.log('🔍 尝试从 localStorage 读取 Public Key');
-          console.log('   - credential.rawId (base64):', credentialIdBase64!.substring(0, 20) + '...');
-          console.log('   - 存储键名:', storageKey);
+          DbgLog.log('🔍 尝试从 localStorage 读取 Public Key');
+          DbgLog.log('   - credential.rawId (base64):', credentialIdBase64!.substring(0, 20) + '...');
+          DbgLog.log('   - 存储键名:', storageKey);
 
           let storedKey = localStorage.getItem(storageKey);
 
           if (!storedKey && credential.id) {
-            console.log('   - 尝试使用 credential.id 查找（兼容旧格式）');
+            DbgLog.log('   - 尝试使用 credential.id 查找（兼容旧格式）');
             const oldStorageKey = `new_wallet_pk_${credential.id}`;
             storedKey = localStorage.getItem(oldStorageKey);
             if (storedKey) {
-              console.log('   - ✅ 找到旧格式的数据，键名:', oldStorageKey);
+              DbgLog.log('   - ✅ 找到旧格式的数据，键名:', oldStorageKey);
             }
           }
 
           if (storedKey) {
             const keyData = JSON.parse(storedKey);
-            console.log('   - ✅ 找到 Public Key 数据');
+            DbgLog.log('   - ✅ 找到 Public Key 数据');
 
             publicKey = CharUtils.coseKeyFromStorage(keyData);
             if (publicKey) {
-              console.log('🔑 EIP-7951 Public Key retrieved from storage');
+              DbgLog.log('🔑 EIP-7951 Public Key retrieved from storage');
             } else {
               console.warn('⚠️ 无法从存储数据恢复 Public Key');
             }
@@ -491,19 +500,19 @@ class PasskeyService {
             console.warn('⚠️ No public key found in localStorage for credential');
             const allKeys = Object.keys(localStorage);
             const relatedKeys = allKeys.filter(key => key.startsWith('new_wallet_pk_'));
-            console.log('📋 localStorage 中所有相关的键:', relatedKeys);
+            DbgLog.log('📋 localStorage 中所有相关的键:', relatedKeys);
             if (relatedKeys.length > 0) {
-              console.log('💡 提示: 如果看到其他键，可能是旧格式的数据。请重新注册 7951 钱包。');
+              DbgLog.log('💡 提示: 如果看到其他键，可能是旧格式的数据。请重新注册 7951 钱包。');
             } else {
-              console.log('💡 提示: localStorage 中没有找到任何 Public Key 数据。');
-              console.log('   请确保:');
-              console.log('   1. 已经通过"注册 7951 钱包"按钮完成注册');
-              console.log('   2. 注册时看到了"💾 EIP-7951 Public Key saved"的日志');
-              console.log('   3. 登录时使用的是同一个设备');
+              DbgLog.log('💡 提示: localStorage 中没有找到任何 Public Key 数据。');
+              DbgLog.log('   请确保:');
+              DbgLog.log('   1. 已经通过"注册 7951 钱包"按钮完成注册');
+              DbgLog.log('   2. 注册时看到了"💾 EIP-7951 Public Key saved"的日志');
+              DbgLog.log('   3. 登录时使用的是同一个设备');
             }
           }
         } else {
-          console.warn('⚠️ 无法将 credential.rawId 转换为 base64');
+          console.warn('⚠️ 无法使用 credential.rawId');
         }
       } catch (e) {
         console.warn('Failed to retrieve public key for EIP-7951:', e);
@@ -523,7 +532,7 @@ class PasskeyService {
               const decoder = new TextDecoder('utf-8')
               username = decoder.decode(usernameBytes)
 
-              console.log('🔓 解析成功:', {
+              DbgLog.log('🔓 解析成功:', {
                 hasSeed: true,
                 username: username
               })
@@ -555,7 +564,7 @@ class PasskeyService {
       }
     } catch (error) {
       if (isConditional) {
-        console.log('Passkey conditional UI check completed or skipped')
+        DbgLog.log('Passkey conditional UI check completed or skipped')
       } else {
         console.error('Passkey authentication failed:', error)
       }
@@ -568,7 +577,7 @@ class PasskeyService {
   }
 
   static async checkAvailability(): Promise<AvailabilityResult> {
-    console.log('🔍 开始检查Passkey可用性...')
+    DbgLog.log('🔍 开始检查Passkey可用性...')
     try {
       const isSecureContext = window.isSecureContext
       const isApiAvailable = !!(window.PublicKeyCredential &&
@@ -597,7 +606,7 @@ class PasskeyService {
 
       const isSupported = isApiAvailable && isUVPAAAvailable
 
-      console.log('📊 可用性检查结果:', {
+      DbgLog.log('📊 可用性检查结果:', {
         isSecureContext,
         isApiAvailable,
         isUVPAAAvailable,

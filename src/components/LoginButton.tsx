@@ -3,6 +3,7 @@ import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/passkeyService'
 import { WalletType } from '../models/WalletType'
 import BiometricGuide from './BiometricGuide'
+import * as DbgLog from '../utils/DbgLog'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
@@ -23,7 +24,7 @@ const LoginButton: React.FC = () => {
     const availability = await PasskeyService.checkAvailability()
     setDebugInfo(availability)
 
-    console.log("availability:", availability);
+    DbgLog.log("availability:", availability);
     if (!availability.isSecureContext) {
       setError('Passkey 需要在安全环境(HTTPS)下运行')
       return false
@@ -49,24 +50,24 @@ const LoginButton: React.FC = () => {
   }) => {
     const storedUser = localStorage.getItem('last_registered_username')
     const displayUser = credential.userHandle || storedUser || 'Passkey用户'
-    console.log("[login]credential=", credential);
-    console.log("[login]displayUser=", displayUser);
+    DbgLog.log("[login]credential=", credential);
+    DbgLog.log("[login]displayUser=", displayUser);
     let finalMasterSeed = credential.masterSeed
     if (!finalMasterSeed) {
       const seedKey = `eoa_seed_${credential.id}`
       const storedSeed = localStorage.getItem(seedKey)
-      console.log("[login]storedSeed=", storedSeed);
+      DbgLog.log("[login]storedSeed=", storedSeed);
       if (storedSeed) {
         try {
           finalMasterSeed = new Uint8Array(JSON.parse(storedSeed))
         } catch { /* ignore parse error */ }
       }
-      console.log("[login]finalMasterSeed=", finalMasterSeed);
+      DbgLog.log("[login]finalMasterSeed=", finalMasterSeed);
       if (!finalMasterSeed) {
         finalMasterSeed = new Uint8Array(32)
         crypto.getRandomValues(finalMasterSeed)
         localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))
-        console.log("[login]localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))=", localStorage.getItem(seedKey));
+        DbgLog.log("[login]localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))=", localStorage.getItem(seedKey));
       }
     }
 
@@ -137,6 +138,7 @@ const LoginButton: React.FC = () => {
 
     try {
       const fallbackUsername = localStorage.getItem('last_registered_username') || '本机用户'
+      DbgLog.log("[handleCreateAccount]fallbackUsername=", fallbackUsername);
       const registerResult = await PasskeyService.register(fallbackUsername)
 
       if (registerResult.success && registerResult.credential) {

@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import PasskeyService from './passkeyService';
 import CharUtils from '../utils/CharUtils';
 import { WalletType } from '../models/WalletType';
+import * as DbgLog from '../utils/DbgLog';
 
 interface DerivedWallet {
   index: number;
@@ -259,7 +260,7 @@ class WalletService {
         if (!isDeployed) {
           if (factoryAddress && publicKey) {
             initCode = WalletService.buildInitCode(factoryAddress, publicKey, salt);
-            console.log('Account not deployed, using initCode:', initCode);
+            DbgLog.log('Account not deployed, using initCode:', initCode);
           } else {
             console.warn('Account not deployed and no factory address provided. The UserOperation may fail.');
             console.warn('To fix this, provide a factory address in the chain configuration.');
@@ -351,7 +352,7 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
       txHash = ethers.keccak256(signedTx);
     }
 
-    console.log('EOA Transaction Broadcast Success! Hash:', txHash);
+    DbgLog.log('EOA Transaction Broadcast Success! Hash:', txHash);
     return txHash;
   }
 
@@ -391,7 +392,7 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
       txHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(signedData)));
     }
 
-    console.log('Smart Account Transaction Broadcast Success! Hash:', txHash);
+    DbgLog.log('Smart Account Transaction Broadcast Success! Hash:', txHash);
     return txHash;
   }
 }
