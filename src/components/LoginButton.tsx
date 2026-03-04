@@ -90,15 +90,6 @@ const LoginButton: React.FC = () => {
     try {
       if (!await checkAvailabilityGuard()) return
 
-      const hasRegisteredBefore =
-        localStorage.getItem('wallet_login_state') ||
-        Object.keys(localStorage).some(k => k.startsWith('new_wallet_pk_'))
-
-      if (!hasRegisteredBefore) {
-        setShowCreateAccount(true)
-        return
-      }
-
       const result = await PasskeyService.login()
 
       if (result.success && result.credential) {
@@ -108,7 +99,7 @@ const LoginButton: React.FC = () => {
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError('登录过程中发生错误：' + (err as Error).message)
+      setShowCreateAccount(true)
     } finally {
       setIsLoading(false)
     }
