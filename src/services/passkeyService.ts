@@ -1,6 +1,7 @@
 import { decode } from 'cbor-x';
 import CharUtils from '../utils/CharUtils';
 import * as DbgLog from '../utils/DbgLog';
+import { safeGetItem, safeSetItem, safeKeys } from '../utils/safeStorage';
 
 interface AvailabilityResult {
   isSupported: boolean;
@@ -413,8 +414,8 @@ class PasskeyService {
           if (keyData) {
             const credentialIdBase64 = CharUtils.uint8ArrayToBase64(new Uint8Array(credential.rawId));
             if (credentialIdBase64) {
-              localStorage.setItem(`new_wallet_pk_${credentialIdBase64}`, JSON.stringify(keyData));
-              DbgLog.log('💾 EIP-7951 Public Key saved to localStorage with key:', `new_wallet_pk_${credentialIdBase64}`);
+              safeSetItem(`new_wallet_pk_${credentialIdBase64}`, JSON.stringify(keyData));
+              DbgLog.log('💾 EIP-7951 Public Key saved with key:', `new_wallet_pk_${credentialIdBase64}`);
             } else {
               console.warn('⚠️ 无法将 credential.rawId 转换为 base64');
             }
@@ -455,7 +456,7 @@ class PasskeyService {
 
       const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
         challenge,
-        timeout: 60000,
+        timeout: 30000,
         userVerification: "required",
         rpId: window.location.hostname
       }
@@ -479,12 +480,12 @@ class PasskeyService {
           DbgLog.log('   - credential.rawId (base64):', credentialIdBase64!.substring(0, 20) + '...');
           DbgLog.log('   - 存储键名:', storageKey);
 
-          let storedKey = localStorage.getItem(storageKey);
+          let storedKey = safeGetItem(storageKey);
 
           if (!storedKey && credential.id) {
             DbgLog.log('   - 尝试使用 credential.id 查找（兼容旧格式）');
             const oldStorageKey = `new_wallet_pk_${credential.id}`;
-            storedKey = localStorage.getItem(oldStorageKey);
+            storedKey = safeGetItem(oldStorageKey);
             if (storedKey) {
               DbgLog.log('   - ✅ 找到旧格式的数据，键名:', oldStorageKey);
             }
@@ -501,8 +502,8 @@ class PasskeyService {
               console.warn('⚠️ 无法从存储数据恢复 Public Key');
             }
           } else {
-            console.warn('⚠️ No public key found in localStorage for credential');
-            const allKeys = Object.keys(localStorage);
+            console.warn('⚠️ No public key found in storage for credential');
+            const allKeys = safeKeys();
             const relatedKeys = allKeys.filter(key => key.startsWith('new_wallet_pk_'));
             DbgLog.log('📋 localStorage 中所有相关的键:', relatedKeys);
             if (relatedKeys.length > 0) {

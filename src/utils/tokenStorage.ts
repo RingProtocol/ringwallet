@@ -3,6 +3,8 @@
  * Storage key: imported_tokens_${chainId}_${walletAddress}
  */
 
+import { safeGetItem, safeSetItem } from './safeStorage'
+
 export interface TokenInfo {
   address: string
   symbol: string
@@ -28,7 +30,7 @@ export function addToken(
   if (exists) return
 
   const next = [...list, tokenInfo]
-  localStorage.setItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
+  safeSetItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
 }
 
 export function getTokenList(
@@ -36,7 +38,7 @@ export function getTokenList(
   chainId: number
 ): TokenInfo[] {
   try {
-    const raw = localStorage.getItem(getStorageKey(chainId, walletAddress))
+    const raw = safeGetItem(getStorageKey(chainId, walletAddress))
     if (!raw) return []
     return JSON.parse(raw) as TokenInfo[]
   } catch {
@@ -53,5 +55,5 @@ export function removeToken(
   const next = list.filter(
     (t) => t.address.toLowerCase() !== tokenAddress.toLowerCase()
   )
-  localStorage.setItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
+  safeSetItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
 }

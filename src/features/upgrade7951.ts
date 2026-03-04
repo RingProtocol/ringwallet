@@ -2,6 +2,7 @@ import type { UserData } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import PasskeyService from '../services/passkeyService'
 import CharUtils from '../utils/CharUtils'
+import { safeGetItem } from '../utils/safeStorage'
 
 interface UpgradeParams {
   user: UserData
@@ -47,7 +48,7 @@ export async function upgradeTo7951({ user, login }: UpgradeParams): Promise<Upg
     return { success: false, error: '升级过程中数据格式错误，请重试' }
   }
 
-  const storedKey = localStorage.getItem(`new_wallet_pk_${credentialIdBase64}`)
+  const storedKey = safeGetItem(`new_wallet_pk_${credentialIdBase64}`)
   if (!storedKey) {
     return { success: false, error: '升级过程中未找到 Public Key，请重试' }
   }

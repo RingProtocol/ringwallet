@@ -4,10 +4,12 @@ import PasskeyService from '../services/passkeyService'
 import { WalletType } from '../models/WalletType'
 import BiometricGuide from './BiometricGuide'
 import * as DbgLog from '../utils/DbgLog'
+import { safeGetItem } from '../utils/safeStorage'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
-  const { isLoggedIn, login, logout, user, activeWallet } = useAuth()
+  const { isLoggedIn, login, logout, activeWallet } = useAuth()
+  const hasLoginHistory = !!safeGetItem('user_has_passkey')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showCreateAccount, setShowCreateAccount] = useState(false)
@@ -65,6 +67,7 @@ const LoginButton: React.FC = () => {
     }
 
     login(userData)
+    safeSetItem('user_has_passkey', true)
   }
 
   const handleBiometricRetry = async () => {
@@ -111,7 +114,8 @@ const LoginButton: React.FC = () => {
     setShowCreateAccount(false)
 
     try {
-      const username = 'RingWallet'
+      const now = new Date()
+      const username = `RingWallet_${now.getMonth() + 1}.${now.getDate()}}`
       const registerResult = await PasskeyService.register(username)
 
       if (registerResult.success && registerResult.credential) {
@@ -171,13 +175,20 @@ const LoginButton: React.FC = () => {
           </button>
         </div>
       ) : (
-        <button
-          className="login-button"
-          onClick={handlePasskeyLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? '登录中...' : '登录'}
-        </button>
+            <>
+              <button
+                className="login-button"
+                onClick={handlePasskeyLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? '登录中...' : '登录'}
+              </button>
+              {!hasLoginHistory && (
+                <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
+                  Tip: If no passkey, after tapping Login just <span style={{ color: '#16a34a', fontWeight: 500 }}>close</span> the system dialog.
+                </p>
+              )}
+            </>
       )}
 
       {error && <div className="error-message">{error}</div>}

@@ -1,4 +1,5 @@
 import * as DbgLog from './DbgLog';
+import { safeGetItem, safeKeys } from './safeStorage';
 
 type ByteLike = Uint8Array | ArrayBuffer | DataView | Array<number>;
 type CoseKey = Map<number, Uint8Array> | Record<string | number, unknown>;
@@ -456,38 +457,37 @@ class CharUtils {
 
     for (const candidate of candidates) {
       const key = `${prefix}${candidate}`;
-      const stored = localStorage.getItem(key);
+      const stored = safeGetItem(key);
       if (stored) {
         try {
           const keyData = JSON.parse(stored);
           const restored = this.coseKeyFromStorage(keyData);
           if (restored) {
-            DbgLog.log(`✅ 从 localStorage 找到 Public Key (key: ${key.substring(0, 20)}...)`);
+            DbgLog.log(`✅ Found Public Key (key: ${key.substring(0, 20)}...)`);
             return restored;
           }
         } catch (e) {
-          console.warn(`解析 localStorage 数据失败 (key: ${key}):`, e);
+          console.warn(`Failed to parse stored key (key: ${key}):`, e);
         }
       }
     }
 
-    const allKeys = Object.keys(localStorage);
+    const allKeys = safeKeys();
     const relatedKeys = allKeys.filter(key => key.startsWith(prefix));
 
     if (relatedKeys.length > 0) {
-      DbgLog.log(`📋 找到 ${relatedKeys.length} 个相关的 localStorage 键，尝试第一个`);
       const firstKey = relatedKeys[0];
-      const stored = localStorage.getItem(firstKey);
+      const stored = safeGetItem(firstKey);
       if (stored) {
         try {
           const keyData = JSON.parse(stored);
           const restored = this.coseKeyFromStorage(keyData);
           if (restored) {
-            DbgLog.log(`✅ 从 localStorage 找到 Public Key (使用第一个相关键: ${firstKey.substring(0, 20)}...)`);
+            DbgLog.log(`✅ Found Public Key (fallback key: ${firstKey.substring(0, 20)}...)`);
             return restored;
           }
         } catch (e) {
-          console.warn(`解析 localStorage 数据失败 (key: ${firstKey}):`, e);
+          console.warn(`Failed to parse stored key (key: ${firstKey}):`, e);
         }
       }
     }

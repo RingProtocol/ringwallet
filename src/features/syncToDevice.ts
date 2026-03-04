@@ -1,6 +1,7 @@
 import type { UserData } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import PasskeyService from '../services/passkeyService'
+import { safeGetItem } from '../utils/safeStorage'
 
 interface SyncParams {
   user: UserData
@@ -34,7 +35,7 @@ export async function syncToDevice({ user, login }: SyncParams): Promise<SyncRes
 
   try {
     const credentialIdBase64 = btoa(String.fromCharCode(...new Uint8Array(result.credential.rawId)))
-    const storedKey = localStorage.getItem(`new_wallet_pk_${credentialIdBase64}`)
+    const storedKey = safeGetItem(`new_wallet_pk_${credentialIdBase64}`)
     if (storedKey) {
       const keyData = JSON.parse(storedKey)
       const xBytes = new Uint8Array(keyData.x)

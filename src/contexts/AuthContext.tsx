@@ -3,6 +3,7 @@ import WalletService from '../services/walletService'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
 import * as DbgLog from '../utils/DbgLog'
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
 export interface Chain {
   id: number;
@@ -105,80 +106,66 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
-    const savedLoginState = localStorage.getItem('wallet_login_state')
-
-    const savedChainId = localStorage.getItem('active_chain_id');
+    const savedChainId = safeGetItem('active_chain_id');
     if (savedChainId) {
       setActiveChainId(parseInt(savedChainId, 10));
     }
 
-    if (savedLoginState) {
-      try {
-        const loginData = JSON.parse(savedLoginState) as { isLoggedIn: boolean; user: UserData; timestamp: number }
-        if (loginData.isLoggedIn && loginData.timestamp) {
-          const isExpired = Date.now() - loginData.timestamp > 24 * 60 * 60 * 1000
-          if (!isExpired) {
-            if (loginData.user && loginData.user.publicKey) {
-              const publicKey = loginData.user.publicKey;
+    const savedLoginState = safeGetItem('wallet_login_state')
+    if (!savedLoginState) return
 
-              const isEmptyObject = typeof publicKey === 'object' && publicKey !== null &&
-                !(publicKey instanceof Map) &&
-                Object.keys(publicKey).length === 0;
+    try {
+      const loginData = JSON.parse(savedLoginState) as { isLoggedIn: boolean; user: UserData; timestamp: number }
+      if (!loginData.isLoggedIn || !loginData.timestamp) return
 
-              if (isEmptyObject) {
-                console.warn('⚠️ Public Key 是空对象，尝试从 localStorage 重新获取');
-                loginData.user.publicKey = null;
-              } else {
-                const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey as Map<number, Uint8Array>);
-                if (normalizedPublicKey) {
-                  loginData.user.publicKey = normalizedPublicKey;
-                  DbgLog.log('✅ Public Key 已规范化并恢复为 Map 格式');
-                } else {
-                  console.warn('⚠️ Public Key 格式无效，无法恢复:', publicKey);
-                  loginData.user.publicKey = null;
-                }
-              }
+      const isExpired = Date.now() - loginData.timestamp > 24 * 60 * 60 * 1000
+      if (isExpired) {
+        safeRemoveItem('wallet_login_state')
+        safeRemoveItem('active_wallet_index')
+        return
+      }
 
-              if (!loginData.user.publicKey && loginData.user.id) {
-                try {
-                  const restored = CharUtils.findPublicKeyFromStorage(loginData.user.id);
-                  if (restored) {
-                    loginData.user.publicKey = restored;
-                    DbgLog.log('✅ Public Key 从 localStorage 重新恢复成功');
-                  } else {
-                    console.warn('⚠️ 未在 localStorage 中找到 Public Key');
-                  }
-                } catch (e) {
-                  console.warn('从 localStorage 恢复 publicKey 失败:', e);
-                }
-              }
-            }
+      if (loginData.user?.publicKey) {
+        const publicKey = loginData.user.publicKey;
 
-            loginData.user.accountType = WalletType.EOA
+        const isEmptyObject = typeof publicKey === 'object' && publicKey !== null &&
+          !(publicKey instanceof Map) &&
+          Object.keys(publicKey).length === 0;
 
-            setIsLoggedIn(true)
-            setUser(loginData.user)
+        if (isEmptyObject) {
+          loginData.user.publicKey = null;
+        } else {
+          const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey as Map<number, Uint8Array>);
+          loginData.user.publicKey = normalizedPublicKey;
+        }
 
-            if (loginData.user?.masterSeed) {
-              const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
-              const derivedWallets = WalletService.deriveWallets(seed, 5)
-              setWallets(derivedWallets)
-
-              const savedIndex = localStorage.getItem('active_wallet_index')
-              if (savedIndex !== null) {
-                setActiveWalletIndex(parseInt(savedIndex, 10))
-              }
-            }
-          } else {
-            localStorage.removeItem('wallet_login_state')
-            localStorage.removeItem('active_wallet_index')
+        if (!loginData.user.publicKey && loginData.user.id) {
+          try {
+            loginData.user.publicKey = CharUtils.findPublicKeyFromStorage(loginData.user.id) ?? null;
+          } catch (e) {
+            console.warn('Failed to restore publicKey from storage:', e);
           }
         }
-      } catch (error) {
-        console.error('Error parsing saved login state:', error)
-        localStorage.removeItem('wallet_login_state')
-        localStorage.removeItem('active_wallet_index')
       }
+
+      loginData.user.accountType = WalletType.EOA
+      setIsLoggedIn(true)
+      setUser(loginData.user)
+
+      if (loginData.user?.masterSeed) {
+        const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
+        const derivedWallets = WalletService.deriveWallets(seed, 5)
+        setWallets(derivedWallets)
+
+        const savedIndex = safeGetItem('active_wallet_index')
+        if (savedIndex !== null) {
+          setActiveWalletIndex(parseInt(savedIndex, 10))
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring login state:', error)
+      safeRemoveItem('wallet_login_state')
+      safeRemoveItem('active_wallet_index')
     }
   }, [])
 
@@ -223,7 +210,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user: userDataForStorage,
       timestamp: Date.now()
     }
-    localStorage.setItem('wallet_login_state', JSON.stringify(loginState))
+    safeSetItem('wallet_login_state', JSON.stringify(loginState))
   }
 
   const logout = () => {
@@ -231,14 +218,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null)
     setWallets([])
     setActiveWalletIndex(0)
-    localStorage.removeItem('wallet_login_state')
-    localStorage.removeItem('active_wallet_index')
+    safeRemoveItem('wallet_login_state')
+    safeRemoveItem('active_wallet_index')
   }
 
   const switchWallet = (index: number) => {
     if (index >= 0 && index < wallets.length) {
       setActiveWalletIndex(index)
-      localStorage.setItem('active_wallet_index', index.toString())
+      safeSetItem('active_wallet_index', index.toString())
     }
   }
 
@@ -246,7 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const chain = CHAINS.find(c => c.id === chainId);
     if (chain) {
       setActiveChainId(chainId);
-      localStorage.setItem('active_chain_id', chainId.toString());
+      safeSetItem('active_chain_id', chainId.toString());
     }
   }
 
