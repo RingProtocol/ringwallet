@@ -4,7 +4,7 @@ import PasskeyService from '../services/passkeyService'
 import { WalletType } from '../models/WalletType'
 import BiometricGuide from './BiometricGuide'
 import * as DbgLog from '../utils/DbgLog'
-import { safeGetItem } from '../utils/safeStorage'
+import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
@@ -67,7 +67,7 @@ const LoginButton: React.FC = () => {
     }
 
     login(userData)
-    safeSetItem('user_has_passkey', true)
+    safeSetItem('user_has_passkey', 'true')
   }
 
   const handleBiometricRetry = async () => {
