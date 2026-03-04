@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/passkeyService'
 import { WalletType } from '../models/WalletType'
@@ -9,7 +9,11 @@ import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
   const { isLoggedIn, login, logout, activeWallet } = useAuth()
-  const hasLoginHistory = !!safeGetItem('user_has_passkey')
+  const [hasLoginHistory, setHasLoginHistory] = useState(true)
+
+  useEffect(() => {
+    setHasLoginHistory(!!safeGetItem('user_has_passkey'))
+  }, [])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showCreateAccount, setShowCreateAccount] = useState(false)
