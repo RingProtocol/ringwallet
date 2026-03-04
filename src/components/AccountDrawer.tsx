@@ -71,7 +71,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
     { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
     { key: 'feedback', icon: '💬', label: 'Feedback', action: () => setShowFeedback(true) },
-    { key: 'about', icon: 'ℹ️', label: 'About Ring', action: () => setShowAbout(true) },
+    { key: 'about', icon: 'ℹ️', label: 'About', action: () => setShowAbout(true) },
   ]
 
   return (
@@ -95,7 +95,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         <div className="about-overlay visible" onClick={() => setShowAbout(false)}>
           <div className="about-modal" onClick={(e) => e.stopPropagation()}>
             <div className="about-header">
-              <h3>About Ring</h3>
+              <h3>About</h3>
               <button className="about-close-btn" onClick={() => setShowAbout(false)}>✕</button>
             </div>
             <Introduce />
