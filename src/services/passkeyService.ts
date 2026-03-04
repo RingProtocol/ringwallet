@@ -5,7 +5,7 @@ interface AvailabilityResult {
   isSupported: boolean;
   isSecureContext: boolean;
   isApiAvailable: boolean;
-  isUVPAAAvailable: boolean;
+  isUVPAAAvailable: boolean;//User Verifying Platform Authenticator Available
   isConditionalMediationAvailable: boolean;
   error?: string;
 }
@@ -50,6 +50,10 @@ interface LoginResult {
 
 class PasskeyService {
   static #supportCache: boolean | null = null
+
+  static clearSupportCache(): void {
+    this.#supportCache = null
+  }
 
   static _parseAuthData(authData: Uint8Array): ParsedAuthData | null {
     try {
@@ -253,33 +257,32 @@ class PasskeyService {
       return false
     }
 
-    const isConditionalMediationAvailable = !!(PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> }).isConditionalMediationAvailable
+    const PKC = PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> }
 
     console.log('✅ 基本API存在，开始实际功能检测...')
-    try {
-      console.log('📡 调用API检测功能可用性...')
-      const checks: Promise<boolean>[] = [PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()]
-      if (isConditionalMediationAvailable) {
-        checks.push((PublicKeyCredential as unknown as { isConditionalMediationAvailable: () => Promise<boolean> }).isConditionalMediationAvailable())
-      }
+    console.log('📡 调用API检测功能可用性...')
 
-      const results = await Promise.all(checks)
-      const isUVPAAAvailable = results[0]
-      const canConditionalMediate = isConditionalMediationAvailable ? results[1] : false
-
-      console.log('📊 检测结果:', {
-        isUVPAAAvailable,
-        isConditionalMediationAvailable: canConditionalMediate
-      })
-
-      this.#supportCache = isUVPAAAvailable
-      console.log('🎯 最终支持结果:', this.#supportCache)
-      return this.#supportCache
-    } catch (error) {
-      console.error('💥 Passkey支持检测失败:', error)
-      this.#supportCache = false
-      return false
+    const checks: Promise<boolean>[] = [PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()]
+    if (PKC.isConditionalMediationAvailable) {
+      checks.push(PKC.isConditionalMediationAvailable())
     }
+
+    const results = await Promise.allSettled(checks)
+    const isUVPAAAvailable = results[0].status === 'fulfilled' ? results[0].value : false
+    const canConditionalMediate = results[1]?.status === 'fulfilled' ? results[1].value : false
+
+    if (results[0].status === 'rejected') {
+      console.error('💥 UVPAA check failed:', results[0].reason)
+    }
+
+    console.log('📊 检测结果:', {
+      isUVPAAAvailable,
+      isConditionalMediationAvailable: canConditionalMediate
+    })
+
+    this.#supportCache = isUVPAAAvailable
+    console.log('🎯 最终支持结果:', this.#supportCache)
+    return this.#supportCache
   }
 
   static async getDeterministicSeed(credentialId: BufferSource): Promise<null> {
@@ -575,16 +578,20 @@ class PasskeyService {
       let isConditionalMediationAvailable = false
 
       if (isApiAvailable) {
-        try {
-          const PKC = PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> };
-          const results = await Promise.all([
-            PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(),
-            PKC.isConditionalMediationAvailable ? PKC.isConditionalMediationAvailable() : Promise.resolve(false)
-          ])
-          isUVPAAAvailable = results[0]
-          isConditionalMediationAvailable = results[1]
-        } catch (e) {
-          console.error('Passkey capability check failed:', e)
+        const PKC = PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> };
+        const results = await Promise.allSettled([
+          PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(),
+          PKC.isConditionalMediationAvailable ? PKC.isConditionalMediationAvailable() : Promise.resolve(false)
+        ])
+        if (results[0].status === 'fulfilled') {
+          isUVPAAAvailable = results[0].value
+        } else {
+          console.error('UVPAA check failed:', results[0].reason)
+        }
+        if (results[1].status === 'fulfilled') {
+          isConditionalMediationAvailable = results[1].value
+        } else {
+          console.warn('Conditional mediation check failed (non-critical):', results[1].reason)
         }
       }
 

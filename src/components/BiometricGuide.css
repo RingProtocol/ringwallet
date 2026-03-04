@@ -1,0 +1,142 @@
+.biometric-guide {
+  text-align: left;
+  padding: 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.biometric-guide-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.biometric-guide-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0c4a6e;
+}
+
+.biometric-guide-icon {
+  font-size: 22px;
+}
+
+.biometric-guide-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.biometric-guide-section {
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.biometric-guide-section h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.biometric-guide-primary {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #93c5fd;
+  position: relative;
+}
+
+.biometric-guide-section-label {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4338ca;
+  background: #eef2ff;
+  margin-bottom: 8px;
+}
+
+.biometric-guide-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.8;
+}
+
+.biometric-guide-steps li {
+  margin-bottom: 2px;
+}
+
+.biometric-guide-steps li strong {
+  color: #0f172a;
+}
+
+.biometric-guide-toggle {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #64748b;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.biometric-guide-toggle:hover {
+  color: #334155;
+}
+
+.biometric-guide-fallback {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.biometric-guide-fallback-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.biometric-guide-retry {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.biometric-guide-retry:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.biometric-guide-retry:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.biometric-guide-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}

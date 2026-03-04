@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/passkeyService'
 import { WalletType } from '../models/WalletType'
+import BiometricGuide from './BiometricGuide'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
@@ -9,6 +10,7 @@ const LoginButton: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showCreateAccount, setShowCreateAccount] = useState(false)
+  const [showBiometricGuide, setShowBiometricGuide] = useState(false)
   const [debugInfo, setDebugInfo] = useState<{
     isSupported: boolean;
     isSecureContext: boolean;
@@ -31,7 +33,7 @@ const LoginButton: React.FC = () => {
       return false
     }
     if (!availability.isUVPAAAvailable) {
-      setError('您的设备未启用生物识别(指纹/面容)或屏幕锁，无法使用Passkey')
+      setShowBiometricGuide(true)
       return false
     }
     return true
@@ -47,20 +49,24 @@ const LoginButton: React.FC = () => {
   }) => {
     const storedUser = localStorage.getItem('last_registered_username')
     const displayUser = credential.userHandle || storedUser || 'Passkey用户'
-
+    console.log("[login]credential=", credential);
+    console.log("[login]displayUser=", displayUser);
     let finalMasterSeed = credential.masterSeed
     if (!finalMasterSeed) {
       const seedKey = `eoa_seed_${credential.id}`
       const storedSeed = localStorage.getItem(seedKey)
+      console.log("[login]storedSeed=", storedSeed);
       if (storedSeed) {
         try {
           finalMasterSeed = new Uint8Array(JSON.parse(storedSeed))
         } catch { /* ignore parse error */ }
       }
+      console.log("[login]finalMasterSeed=", finalMasterSeed);
       if (!finalMasterSeed) {
         finalMasterSeed = new Uint8Array(32)
         crypto.getRandomValues(finalMasterSeed)
         localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))
+        console.log("[login]localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))=", localStorage.getItem(seedKey));
       }
     }
 
@@ -76,10 +82,24 @@ const LoginButton: React.FC = () => {
     login(userData)
   }
 
+  const handleBiometricRetry = async () => {
+    setIsLoading(true)
+    setError('')
+    PasskeyService.clearSupportCache()
+    const availability = await PasskeyService.checkAvailability()
+    setIsLoading(false)
+    if (availability.isUVPAAAvailable) {
+      setShowBiometricGuide(false)
+    } else {
+      setError('仍未检测到设备验证，请确认已完成设置')
+    }
+  }
+
   const handlePasskeyLogin = async () => {
     setIsLoading(true)
     setError('')
     setShowCreateAccount(false)
+    setShowBiometricGuide(false)
     setDebugInfo(null)
 
     try {
@@ -160,7 +180,9 @@ const LoginButton: React.FC = () => {
 
   return (
     <div className="login-container">
-      {showCreateAccount ? (
+      {showBiometricGuide ? (
+        <BiometricGuide onRetry={handleBiometricRetry} isChecking={isLoading} />
+      ) : showCreateAccount ? (
         <div style={{ padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0369a1' }}>
             未找到已有账户
@@ -197,8 +219,6 @@ const LoginButton: React.FC = () => {
           </ul>
         </div>
       )}
-
-
     </div>
   )
 }
