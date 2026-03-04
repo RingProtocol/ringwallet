@@ -9,6 +9,7 @@ import BalanceDisplay from '@/components/BalanceDisplay'
 import TransactionActions from '@/components/TransactionActions'
 import AccountDrawer from '@/components/AccountDrawer'
 import MultiTabs from '@/components/MultiTabs'
+import { VERSION } from './version'
 import './App.css'
 
 function AppContent() {
@@ -35,6 +36,7 @@ function AppContent() {
         <LoginButton />
         {!isLoggedIn && <Introduce />}
       </div>
+      <footer className="app-version">version:{VERSION}</footer>
     </div>
   )
 }

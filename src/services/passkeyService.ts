@@ -333,10 +333,14 @@ class PasskeyService {
       }
 
       const encoder = new TextEncoder()
-      const usernameBytes = encoder.encode(username)
-
-      if (32 + usernameBytes.length > 64) {
-        throw new Error("用户名太长，无法与 Seed 一起打包存储")
+      const maxUsernameBytes = 64 - 32 // 32 bytes for seed
+      let usernameToUse = username
+      let usernameBytes = encoder.encode(usernameToUse)
+      if (usernameBytes.length > maxUsernameBytes) {
+        while (usernameBytes.length > maxUsernameBytes && usernameToUse.length > 0) {
+          usernameToUse = usernameToUse.slice(0, -1)
+          usernameBytes = encoder.encode(usernameToUse)
+        }
       }
 
       const userId = new Uint8Array(32 + usernameBytes.length)
@@ -355,8 +359,8 @@ class PasskeyService {
         // User: The user account associated with the credential
         user: {
           id: userId,
-          name: username,
-          displayName: username
+          name: usernameToUse,
+          displayName: usernameToUse
         },
         // Parameters: Supported cryptographic algorithms
         pubKeyCredParams: [

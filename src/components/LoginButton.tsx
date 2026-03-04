@@ -137,7 +137,7 @@ const LoginButton: React.FC = () => {
     setShowCreateAccount(false)
 
     try {
-      const fallbackUsername = localStorage.getItem('last_registered_username') || '本机用户'
+      const fallbackUsername = localStorage.getItem('last_registered_username') || 'RingWallet'
       DbgLog.log("[handleCreateAccount]fallbackUsername=", fallbackUsername);
       const registerResult = await PasskeyService.register(fallbackUsername)
 
