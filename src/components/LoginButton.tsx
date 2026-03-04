@@ -48,34 +48,18 @@ const LoginButton: React.FC = () => {
     masterSeed: Uint8Array | null;
     publicKey: Map<number, Uint8Array> | null;
   }) => {
-    const storedUser = localStorage.getItem('last_registered_username')
-    const displayUser = credential.userHandle || storedUser || 'Passkey用户'
     DbgLog.log("[login]credential=", credential);
-    DbgLog.log("[login]displayUser=", displayUser);
-    let finalMasterSeed = credential.masterSeed
-    if (!finalMasterSeed) {
-      const seedKey = `eoa_seed_${credential.id}`
-      const storedSeed = localStorage.getItem(seedKey)
-      DbgLog.log("[login]storedSeed=", storedSeed);
-      if (storedSeed) {
-        try {
-          finalMasterSeed = new Uint8Array(JSON.parse(storedSeed))
-        } catch { /* ignore parse error */ }
-      }
-      DbgLog.log("[login]finalMasterSeed=", finalMasterSeed);
-      if (!finalMasterSeed) {
-        finalMasterSeed = new Uint8Array(32)
-        crypto.getRandomValues(finalMasterSeed)
-        localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))
-        DbgLog.log("[login]localStorage.setItem(seedKey, JSON.stringify(Array.from(finalMasterSeed)))=", localStorage.getItem(seedKey));
-      }
+
+    if (!credential.masterSeed) {
+      setError('无法恢复钱包种子，请重新创建账户')
+      return
     }
 
     const userData: UserData = {
       id: credential.id,
-      name: displayUser,
+      name: credential.userHandle || 'RingWallet',
       loginTime: new Date().toLocaleString('zh-CN'),
-      masterSeed: finalMasterSeed ?? undefined,
+      masterSeed: credential.masterSeed,
       publicKey: credential.publicKey,
       accountType: WalletType.EOA
     }
@@ -108,7 +92,6 @@ const LoginButton: React.FC = () => {
 
       const hasRegisteredBefore =
         localStorage.getItem('wallet_login_state') ||
-        localStorage.getItem('last_registered_username') ||
         Object.keys(localStorage).some(k => k.startsWith('new_wallet_pk_'))
 
       if (!hasRegisteredBefore) {
@@ -137,17 +120,15 @@ const LoginButton: React.FC = () => {
     setShowCreateAccount(false)
 
     try {
-      const fallbackUsername = localStorage.getItem('last_registered_username') || 'RingWallet'
-      DbgLog.log("[handleCreateAccount]fallbackUsername=", fallbackUsername);
-      const registerResult = await PasskeyService.register(fallbackUsername)
+      const username = 'RingWallet'
+      const registerResult = await PasskeyService.register(username)
 
       if (registerResult.success && registerResult.credential) {
-        localStorage.setItem('last_registered_username', fallbackUsername)
         loginWithCredential({
           id: registerResult.credential.id,
           rawId: registerResult.credential.rawId,
           type: registerResult.credential.type,
-          userHandle: fallbackUsername,
+          userHandle: username,
           masterSeed: registerResult.credential.masterSeed,
           publicKey: registerResult.credential.publicKey as Map<number, Uint8Array> | null
         })
