@@ -24,6 +24,7 @@ const LoginButton: React.FC = () => {
     isApiAvailable: boolean;
     isUVPAAAvailable: boolean;
     isConditionalMediationAvailable: boolean;
+    isIOSFallback?: boolean;
   } | null>(null)
 
   const checkAvailabilityGuard = async (): Promise<boolean> => {
@@ -203,7 +204,7 @@ const LoginButton: React.FC = () => {
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             <li>{debugInfo.isSecureContext ? '✅' : '❌'} HTTPS/安全上下文</li>
             <li>{debugInfo.isApiAvailable ? '✅' : '❌'} WebAuthn API</li>
-            <li>{debugInfo.isUVPAAAvailable ? '✅' : '❌'} 平台验证器(指纹/面容)</li>
+            <li>{debugInfo.isUVPAAAvailable ? '✅' : '❌'} 平台验证器(指纹/面容){debugInfo.isIOSFallback ? ' (iOS密码替代)' : ''}</li>
             <li>{debugInfo.isConditionalMediationAvailable ? '✅' : '⚠️'} 自动填充支持 (非必须)</li>
           </ul>
         </div>

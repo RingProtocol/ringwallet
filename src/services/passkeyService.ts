@@ -2,6 +2,7 @@ import { decode } from 'cbor-x';
 import CharUtils from '../utils/CharUtils';
 import * as DbgLog from '../utils/DbgLog';
 import { safeGetItem, safeSetItem, safeKeys } from '../utils/safeStorage';
+import { isIOSWithPasscodeCapable } from './devices/iosDetect';
 
 interface AvailabilityResult {
   isSupported: boolean;
@@ -9,6 +10,7 @@ interface AvailabilityResult {
   isApiAvailable: boolean;
   isUVPAAAvailable: boolean;//User Verifying Platform Authenticator Available
   isConditionalMediationAvailable: boolean;
+  isIOSFallback?: boolean;
   error?: string;
 }
 
@@ -270,11 +272,16 @@ class PasskeyService {
     }
 
     const results = await Promise.allSettled(checks)
-    const isUVPAAAvailable = results[0].status === 'fulfilled' ? results[0].value : false
+    let isUVPAAAvailable = results[0].status === 'fulfilled' ? results[0].value : false
     const canConditionalMediate = results[1]?.status === 'fulfilled' ? results[1].value : false
 
     if (results[0].status === 'rejected') {
       console.error('💥 UVPAA check failed:', results[0].reason)
+    }
+
+    if (!isUVPAAAvailable && isIOSWithPasscodeCapable()) {
+      DbgLog.log('📱 iOS 16+ fallback: 设备密码可用于 passkey')
+      isUVPAAAvailable = true
     }
 
     DbgLog.log('📊 检测结果:', {
@@ -597,6 +604,7 @@ class PasskeyService {
           PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(),
           PKC.isConditionalMediationAvailable ? PKC.isConditionalMediationAvailable() : Promise.resolve(false)
         ])
+        DbgLog.log('📊 results:', results);
         if (results[0].status === 'fulfilled') {
           isUVPAAAvailable = results[0].value
         } else {
@@ -609,6 +617,13 @@ class PasskeyService {
         }
       }
 
+      let isIOSFallback = false
+      if (!isUVPAAAvailable && isApiAvailable && isIOSWithPasscodeCapable()) {
+        DbgLog.log('📱 iOS 16+ 检测到: UVPAA=false 但设备密码可用于 passkey，启用 fallback')
+        isUVPAAAvailable = true
+        isIOSFallback = true
+      }
+
       const isSupported = isApiAvailable && isUVPAAAvailable
 
       DbgLog.log('📊 可用性检查结果:', {
@@ -616,7 +631,8 @@ class PasskeyService {
         isApiAvailable,
         isUVPAAAvailable,
         isSupported,
-        isConditionalMediationAvailable
+        isConditionalMediationAvailable,
+        isIOSFallback
       })
 
       return {
@@ -624,7 +640,8 @@ class PasskeyService {
         isSecureContext,
         isApiAvailable,
         isUVPAAAvailable,
-        isConditionalMediationAvailable
+        isConditionalMediationAvailable,
+        isIOSFallback
       }
     } catch (error) {
       console.error('💥 Passkey可用性检查失败:', error)

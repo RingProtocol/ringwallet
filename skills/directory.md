@@ -40,6 +40,7 @@ This document defines the repository layout and conventions. Follow it when addi
   - `src/components/` — Reusable UI components.
   - `src/contexts/` — React (or other) context providers.
   - `src/services/` — Business logic, API clients, wallet/passkey services.
+  - `src/services/devices/` — Device detection & platform compatibility helpers (e.g. iOS/Android feature probing, browser capability checks).
   - `src/utils/` — Pure helpers (e.g. `CharUtils`).
   - `src/hooks/` — Shared hooks (if any).
   - `src/constants/` or `src/config/` — Shared constants and config (non-secret).
@@ -85,6 +86,7 @@ This document defines the repository layout and conventions. Follow it when addi
 |---------------------------------|-----------------|--------------------------------------------|
 | New app for a platform          | `apps/<platform>/` | One folder per platform (pwa, extension, …). |
 | Shared components, services, utils | `src/`          | No app entrypoints in `src/`.              |
+| Device detection & compatibility   | `src/services/devices/` | Platform probing, browser capability checks. |
 | PWA manifest, icons, SW         | `public/` (and build output) | Keep current layout unless explicitly refactoring. |
 | Feature/technical design        | `docs/`         | Specs, guides, ADRs.                        |
 | Task lists and plans            | `task&plan/`    | TODOs, roadmaps, migration plans.          |
