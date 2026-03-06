@@ -7,5 +7,5 @@ Account menu items
 - 4. Migrate from Android
 - 5. Security check
 - 6. Developer tools
-- 7. About Ring
+- 7. About
 - 8. Feedback

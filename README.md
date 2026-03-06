@@ -31,7 +31,7 @@ If you want to contribute, report issues, or extend the wallet for your own use 
 
 ## Long-term support
 
-Ring Wallet is backed by **[ring.exchange](https://ring.exchange)** with long-term technical support and a commitment to keep improving security, UX, and compatibility.
+Ring Wallet is backed by **[Ring]** with long-term technical support and a commitment to keep improving security, UX, and compatibility.
 
 ---
 

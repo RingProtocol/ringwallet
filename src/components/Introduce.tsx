@@ -29,7 +29,7 @@ const Introduce: React.FC = () => {
         ))}
       </dl>
       <p className="introduce-open">
-        Ring Wallet is <strong>open source</strong>. We want to build in the open and with the community. Long-term support by <a href="https://ring.exchange" target="_blank" rel="noopener noreferrer">ring.exchange</a>.
+        Ring Wallet is <strong>open source</strong>. We want to build in the open and with the community. Long-term support by Ring.
       </p>
       <p className="introduce-tagline">Own your keys. Own your future.</p>
     </section>
