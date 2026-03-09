@@ -1,20 +1,4 @@
 import { parse } from 'node-html-parser'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-
-let _providerScript: string | null = null
-
-export function getProviderScript(): string {
-  if (!_providerScript) {
-    try {
-      _providerScript = readFileSync(join(process.cwd(), 'public', 'dappsdk.js'), 'utf-8')
-    } catch {
-      _providerScript = '// Ring Wallet DApp SDK - file not found'
-      console.warn('[proxy] Could not load public/dappsdk.js')
-    }
-  }
-  return _providerScript
-}
 
 // ─── URL resolution ───
 
@@ -99,12 +83,21 @@ function rewriteUrlsRegex(html: string, targetOrigin: string, proxyBase: string)
     })
 }
 
+function stripCspMeta(root: ReturnType<typeof parse>) {
+  for (const meta of root.querySelectorAll('meta')) {
+    const equiv = meta.getAttribute('http-equiv')
+    if (equiv && /^content-security-policy/i.test(equiv)) {
+      meta.remove()
+    }
+  }
+}
+
 export function injectProvider(html: string, targetOrigin: string, proxyBase: string): string {
-  const script = getProviderScript()
-  const providerTag = `<script>\n// ── Ring Wallet Provider (injected) ──\n${script}\n</script>\n`
+  const providerTag = `<script src="${proxyBase}/dappsdk.js"></script>\n`
 
   try {
     const root = parse(html, { comment: true })
+    stripCspMeta(root)
     rewriteElementUrls(root, targetOrigin, proxyBase)
     const head = root.querySelector('head')
     if (head) {
@@ -115,9 +108,10 @@ export function injectProvider(html: string, targetOrigin: string, proxyBase: st
     return rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
   } catch {
     const rewritten = rewriteUrlsRegex(html, targetOrigin, proxyBase)
-    if (rewritten.includes('<head>'))  return rewritten.replace('<head>', '<head>' + providerTag)
-    if (rewritten.includes('<HEAD>'))  return rewritten.replace('<HEAD>', '<HEAD>' + providerTag)
-    return providerTag + rewritten
+    const stripped = rewritten.replace(/<meta[^>]+http-equiv\s*=\s*["']?content-security-policy["']?[^>]*>/gi, '')
+    if (stripped.includes('<head>'))  return stripped.replace('<head>', '<head>' + providerTag)
+    if (stripped.includes('<HEAD>'))  return stripped.replace('<HEAD>', '<HEAD>' + providerTag)
+    return providerTag + stripped
   }
 }
 

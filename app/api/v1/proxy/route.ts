@@ -45,7 +45,11 @@ export async function GET(request: NextRequest) {
     const html = await response.text()
     const injected = injectProvider(html, targetOrigin, proxyBase)
     return new NextResponse(injected, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' },
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'X-Frame-Options': 'ALLOWALL',
+      },
     })
   } catch (err) {
     console.error('[Proxy]', (err as Error).message)
