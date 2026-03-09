@@ -7,4 +7,5 @@
 @import '../src/components/ChainSwitcher.css';
 @import '../src/components/BalanceDisplay.css';
 @import '../src/components/TransactionActions.css';
+@import '../src/features/dapps/components/DApps.css';
 

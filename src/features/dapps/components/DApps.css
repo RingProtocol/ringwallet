@@ -1,0 +1,478 @@
+/* ─── DApp List ─────────────────────────────────────── */
+
+.dapp-list {
+  width: 100%;
+  padding: 8px 0;
+}
+
+.dapp-list__search {
+  margin-bottom: 12px;
+}
+
+.dapp-list__search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dapp-list__search-input:focus {
+  border-color: #667eea;
+}
+
+.dapp-list__featured {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.dapp-list__featured::-webkit-scrollbar { display: none; }
+
+.dapp-featured-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  cursor: pointer;
+  min-width: 80px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.dapp-featured-card:active {
+  transform: scale(0.96);
+}
+
+.dapp-featured-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.dapp-featured-card__name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.dapp-list__categories {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  scrollbar-width: none;
+}
+.dapp-list__categories::-webkit-scrollbar { display: none; }
+
+.dapp-category-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.dapp-category-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border-color: transparent;
+}
+
+.dapp-list__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dapp-list__empty {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+.dapp-list__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+.dapp-list__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: dapp-spin 0.7s linear infinite;
+}
+
+@keyframes dapp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dapp-list__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: #e74c3c;
+  font-size: 14px;
+}
+
+.dapp-list__retry-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: #667eea;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ─── DApp Card ─────────────────────────────────────── */
+
+.dapp-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.dapp-card:active {
+  transform: scale(0.98);
+  background: rgba(102, 126, 234, 0.06);
+}
+
+.dapp-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.dapp-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.dapp-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
+
+.dapp-card__desc {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── DApp Container ────────────────────────────────── */
+
+.dapp-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f7;
+  z-index: 2000;
+}
+
+.dapp-container__navbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.dapp-container__back-btn {
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #667eea;
+  line-height: 1;
+}
+
+.dapp-container__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dapp-container__navbar-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.dapp-container__navbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dapp-container__navbar-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.dapp-container__action-btn {
+  font-size: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #888;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.dapp-container__action-btn:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dapp-container__status-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(102, 126, 234, 0.06);
+  font-size: 12px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.dapp-container__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ecdc4;
+}
+
+.dapp-container__status-chain {
+  margin-left: auto;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.dapp-container__iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+/* ─── Approval Dialog ───────────────────────────────── */
+
+.approval-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 3000;
+  animation: approval-fade-in 0.15s ease;
+}
+
+@keyframes approval-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.approval-dialog {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: approval-slide-up 0.25s ease;
+}
+
+@keyframes approval-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.approval-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.approval-dialog__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.approval-dialog__header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.approval-dialog__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.approval-dialog__origin {
+  font-size: 12px;
+  color: #888;
+}
+
+.approval-dialog__desc {
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 16px;
+}
+
+.approval-content__permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(78, 205, 196, 0.06);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.approval-content__perm-item {
+  font-size: 13px;
+  color: #4ecdc4;
+  font-weight: 500;
+}
+
+.approval-content__detail-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: #f8f8fa;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.approval-content__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.approval-content__label {
+  font-size: 13px;
+  color: #888;
+}
+
+.approval-content__value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.approval-content__value--mono {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 12px;
+}
+
+.approval-content__message-box {
+  padding: 14px;
+  background: #f8f8fa;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.approval-content__message-box--code {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.approval-content__warning {
+  font-size: 12px;
+  color: #e67e22;
+  margin-bottom: 16px;
+}
+
+.approval-dialog__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.approval-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+.approval-btn:active { opacity: 0.8; }
+
+.approval-btn--reject {
+  background: #f0f0f2;
+  color: #666;
+}
+
+.approval-btn--approve {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}

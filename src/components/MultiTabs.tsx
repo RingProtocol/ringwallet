@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import TokenBalance from './TokenBalance'
 import TransactionHistory from './TransactionHistory'
+import DAppsPage from '../features/dapps/components/DAppsPage'
 import './MultiTabs.css'
 
 const tabs = [
   { key: 'tokens', label: 'Tokens' },
   { key: 'activity', label: 'Activity' },
+  { key: 'dapps', label: 'DApps' },
 ]
 
 const MultiTabs: React.FC = () => {
@@ -27,6 +29,7 @@ const MultiTabs: React.FC = () => {
       <div className="tabs-content">
         {activeTab === 'tokens' && <TokenBalance />}
         {activeTab === 'activity' && <TransactionHistory />}
+        {activeTab === 'dapps' && <DAppsPage />}
       </div>
     </div>
   )
