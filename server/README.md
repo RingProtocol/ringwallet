@@ -58,7 +58,7 @@ vercel --prod
 
 ```bash
 # 本地运行 seed 脚本（会自动建表 + 插入初始数据）
-DATABASE_URL="postgresql://..." node seed.js
+DATABASE_URL="postgresql://neondb_owner:npg_QU4MFy7tOejE@ep-lucky-forest-afzb0038-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require" node seed.js
 ```
 
 输出：
