@@ -238,3 +238,10 @@ Schema 在 `src/server/db.ts` 的 `initDB()` 中自动创建。种子数据用 `
 - `dappService.ts` 的 API 调用使用相对路径 `/api/v1/dapps`（前端和 API 同域）
 - DB schema 变更需同步修改 `src/server/db.ts` 和 `scripts/db.js`
 - 前端 DApp 功能入口在 `MultiTabs.tsx` 的 "DApps" tab
+
+## 修改记录
+
+详见各 fix 文件：
+
+- [fix1.md](fix1.md) — CSP 阻止内联脚本注入：改为外部 `<script src>` 引用 + 剥离原站 CSP
+- [fix2.md](fix2.md) — 第三方脚本校验失败 + JS 动态资源 404：`DIRECT_LOAD_DOMAINS` 白名单 + `<base href>` 注入

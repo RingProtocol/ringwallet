@@ -1,5 +1,22 @@
 import { parse } from 'node-html-parser'
 
+// Third-party domains whose scripts must load directly (self-validating, anti-tamper, etc.)
+const DIRECT_LOAD_DOMAINS = new Set([
+  'challenges.cloudflare.com',
+  'browser-intake-datadoghq.com',
+  'www.datadoghq-browser-agent.com',
+  'static.cloudflareinsights.com',
+  'www.google-analytics.com',
+  'www.googletagmanager.com',
+  'cdn.segment.com',
+  'js.sentry-cdn.com',
+  'cdn.amplitude.com',
+])
+
+function shouldDirectLoad(absoluteUrl: string): boolean {
+  try { return DIRECT_LOAD_DOMAINS.has(new URL(absoluteUrl).hostname) } catch { return false }
+}
+
 // ─── URL resolution ───
 
 function resolveUrl(rawUrl: string, targetOrigin: string): string | null {
@@ -12,6 +29,7 @@ function resolveUrl(rawUrl: string, targetOrigin: string): string | null {
 }
 
 function toProxyUrl(absoluteUrl: string, proxyBase: string, isNav: boolean): string {
+  if (shouldDirectLoad(absoluteUrl)) return absoluteUrl
   const ep = isNav ? '/api/v1/proxy' : '/api/v1/proxy-asset'
   return `${proxyBase}${ep}?url=${encodeURIComponent(absoluteUrl)}`
 }
@@ -73,13 +91,14 @@ function rewriteInlineCssUrls(html: string, targetOrigin: string, proxyBase: str
 
 function rewriteUrlsRegex(html: string, targetOrigin: string, proxyBase: string): string {
   return html
-    .replace(/(src|href|action)=(["'])\/\/([^"']+)/g, (_, attr, q, rest) =>
-      `${attr}=${q}${toProxyUrl('https://' + rest, proxyBase, attr === 'href')}`)
+    .replace(/(src|href|action)=(["'])\/\/([^"']+)/g, (_, attr, q, rest) => {
+      const abs = 'https://' + rest
+      return `${attr}=${q}${toProxyUrl(abs, proxyBase, attr === 'href')}`
+    })
     .replace(/(src|href|action)=(["'])\//g, (_, attr, q) =>
       `${attr}=${q}${proxyBase}/api/v1/proxy-asset?url=${encodeURIComponent(targetOrigin + '/')}`)
     .replace(/(src|href|action)=(["'])(https?:\/\/[^"']+)/g, (_, attr, q, url) => {
-      const ep = attr === 'href' ? '/api/v1/proxy' : '/api/v1/proxy-asset'
-      return `${attr}=${q}${proxyBase}${ep}?url=${encodeURIComponent(url)}`
+      return `${attr}=${q}${toProxyUrl(url, proxyBase, attr === 'href')}`
     })
 }
 
@@ -94,24 +113,30 @@ function stripCspMeta(root: ReturnType<typeof parse>) {
 
 export function injectProvider(html: string, targetOrigin: string, proxyBase: string): string {
   const providerTag = `<script src="${proxyBase}/dappsdk.js"></script>\n`
+  const baseTag = `<base href="${targetOrigin}/">\n`
 
   try {
     const root = parse(html, { comment: true })
     stripCspMeta(root)
     rewriteElementUrls(root, targetOrigin, proxyBase)
+
+    const existingBase = root.querySelector('base')
+    if (existingBase) existingBase.remove()
+
     const head = root.querySelector('head')
     if (head) {
-      head.innerHTML = providerTag + head.innerHTML
+      head.innerHTML = providerTag + baseTag + head.innerHTML
     } else {
-      return providerTag + rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
+      return providerTag + baseTag + rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
     }
     return rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
   } catch {
     const rewritten = rewriteUrlsRegex(html, targetOrigin, proxyBase)
     const stripped = rewritten.replace(/<meta[^>]+http-equiv\s*=\s*["']?content-security-policy["']?[^>]*>/gi, '')
-    if (stripped.includes('<head>'))  return stripped.replace('<head>', '<head>' + providerTag)
-    if (stripped.includes('<HEAD>'))  return stripped.replace('<HEAD>', '<HEAD>' + providerTag)
-    return providerTag + stripped
+    const inject = providerTag + baseTag
+    if (stripped.includes('<head>'))  return stripped.replace('<head>', '<head>' + inject)
+    if (stripped.includes('<HEAD>'))  return stripped.replace('<HEAD>', '<HEAD>' + inject)
+    return inject + stripped
   }
 }
 
