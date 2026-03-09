@@ -2,10 +2,10 @@
  * Database seed script.
  *
  * Usage:
- *   DATABASE_URL="postgresql://..." node seed.js
+ *   DATABASE_URL="postgresql://..." node server/seed.js
  *
- * Or if .env is configured:
- *   node --env-file=.env seed.js
+ * This script uses the server/db.js module (standalone, does NOT depend on
+ * Next.js or src/server/db.ts). Keep both in sync if you change the schema.
  */
 
 import { initDB, getSQL, upsertCategory, createDApp, getDApps } from './db.js'

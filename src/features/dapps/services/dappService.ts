@@ -1,6 +1,5 @@
 import type { DAppListResponse } from '../types/dapp'
 
-const API_BASE = 'https://api.walletapp.testring.org'
 const CACHE_KEY = 'ring_dapp_list'
 const CACHE_TTL = 5 * 60 * 1000
 
@@ -46,7 +45,7 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
   if (cached) return cached.data
 
   try {
-    const res = await fetch(`${API_BASE}/v1/dapps`, {
+    const res = await fetch('/api/v1/dapps', {
       headers: {
         'Accept': 'application/json',
         'X-Wallet-Version': '1.0.0',
@@ -66,7 +65,7 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
 
 export function buildDAppUrl(dappUrl: string, mode: 'proxy' | 'sdk'): string {
   if (mode === 'proxy') {
-    return `${API_BASE}/v1/proxy?url=${encodeURIComponent(dappUrl)}`
+    return `/api/v1/proxy?url=${encodeURIComponent(dappUrl)}`
   }
   const sep = dappUrl.includes('?') ? '&' : '?'
   return `${dappUrl}${sep}ring_wallet=1`

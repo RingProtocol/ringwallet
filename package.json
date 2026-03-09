@@ -17,12 +17,15 @@
     "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
     "ext:dev": "vite --config apps/extension/vite.config.ts",
     "ext:build": "vite build --config apps/extension/vite.config.ts && node apps/extension/copy-assets.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:seed": "node server/seed.js"
   },
   "dependencies": {
-    "next": "latest",
+    "@neondatabase/serverless": "^1.0.2",
     "cbor-x": "^1.6.0",
     "ethers": "^6.16.0",
+    "next": "latest",
+    "node-html-parser": "^7.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "serve": "^14.2.0"
