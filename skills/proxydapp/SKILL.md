@@ -88,8 +88,8 @@ skills/dapps/framework.md      # 完整框架设计文档
 ### 数据库脚本
 
 ```
-server/db.js                   # 独立 DB 模块（供 seed.js 使用，不依赖 Next.js）
-server/seed.js                 # 建表 + 种子数据 (npm run db:seed)
+scripts/db.js                  # 独立 DB 模块（供 seed.js 使用，不依赖 Next.js）
+scripts/seed.js                # 建表 + 种子数据 (npm run db:seed)
 ```
 
 ## API 接口
@@ -236,5 +236,5 @@ Schema 在 `src/server/db.ts` 的 `initDB()` 中自动创建。种子数据用 `
 - 修改 SDK 脚本时，同时更新 `skills/dapps/dappsdk.js` 和 `public/dappsdk.js`
 - 代理的 URL 路径都带 `/api/` 前缀（Next.js API Routes 约定）
 - `dappService.ts` 的 API 调用使用相对路径 `/api/v1/dapps`（前端和 API 同域）
-- DB schema 变更需同步修改 `src/server/db.ts` 和 `server/db.js`
+- DB schema 变更需同步修改 `src/server/db.ts` 和 `scripts/db.js`
 - 前端 DApp 功能入口在 `MultiTabs.tsx` 的 "DApps" tab

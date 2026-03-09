@@ -134,7 +134,6 @@ export async function createDApp(dapp) {
 
 export async function updateDApp(id, updates) {
   const sql = getSQL()
-  const fields = []
   const dapp = await getDAppById(id)
   if (!dapp) return null
 

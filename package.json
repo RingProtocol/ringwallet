@@ -18,7 +18,7 @@
     "ext:dev": "vite --config apps/extension/vite.config.ts",
     "ext:build": "vite build --config apps/extension/vite.config.ts && node apps/extension/copy-assets.ts",
     "typecheck": "tsc --noEmit",
-    "db:seed": "node server/seed.js"
+    "db:seed": "node scripts/seed.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
