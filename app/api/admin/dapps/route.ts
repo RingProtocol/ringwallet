@@ -22,9 +22,9 @@ export async function POST(request: Request) {
   try {
     await ensureDB()
     const body = await request.json()
-    const { id, name, url } = body
-    if (!id || !name || !url) {
-      return NextResponse.json({ error: 'id, name, url are required' }, { status: 400 })
+    const { name, url } = body
+    if (!name || !url) {
+      return NextResponse.json({ error: 'name, url are required' }, { status: 400 })
     }
     const rows = await createDApp(body)
     return NextResponse.json(rows[0], { status: 201 })

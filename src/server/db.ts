@@ -29,9 +29,10 @@ export async function initDB() {
     )
   `
 
+  // dapps.id is SERIAL (auto-increment integer). Existing DBs with TEXT id must be migrated.
   await sql`
     CREATE TABLE IF NOT EXISTS dapps (
-      id            TEXT PRIMARY KEY,
+      id            SERIAL PRIMARY KEY,
       name          TEXT NOT NULL,
       description   TEXT DEFAULT '',
       url           TEXT NOT NULL,
@@ -106,7 +107,7 @@ export async function getDApps(filters: DAppFilters = {}) {
   return sql`SELECT * FROM dapps ORDER BY sort_order ASC, name ASC`
 }
 
-export async function getDAppById(id: string) {
+export async function getDAppById(id: number) {
   const sql = getSQL()
   const rows = await sql`SELECT * FROM dapps WHERE id = ${id}`
   return rows[0] || null
@@ -116,9 +117,9 @@ export async function getDAppById(id: string) {
 export async function createDApp(dapp: Record<string, any>) {
   const sql = getSQL()
   return sql`
-    INSERT INTO dapps (id, name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
+    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
     VALUES (
-      ${dapp.id}, ${dapp.name}, ${dapp.description || ''}, ${dapp.url}, ${dapp.icon || ''},
+      ${dapp.name}, ${dapp.description || ''}, ${dapp.url}, ${dapp.icon || ''},
       ${JSON.stringify(dapp.chains || [])}, ${dapp.category || null},
       ${dapp.featured || false}, ${dapp.inject_mode || 'sdk'},
       ${dapp.status || 'active'}, ${dapp.sort_order || 0}
@@ -128,7 +129,7 @@ export async function createDApp(dapp: Record<string, any>) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function updateDApp(id: string, updates: Record<string, any>) {
+export async function updateDApp(id: number, updates: Record<string, any>) {
   const sql = getSQL()
   const dapp = await getDAppById(id)
   if (!dapp) return null
@@ -145,7 +146,7 @@ export async function updateDApp(id: string, updates: Record<string, any>) {
   `
 }
 
-export async function deleteDApp(id: string) {
+export async function deleteDApp(id: number) {
   const sql = getSQL()
   return sql`DELETE FROM dapps WHERE id = ${id} RETURNING *`
 }
