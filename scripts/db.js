@@ -28,7 +28,7 @@ export async function initDB() {
 
   await sql`
     CREATE TABLE IF NOT EXISTS dapps (
-      id            TEXT PRIMARY KEY,
+      id            SERIAL PRIMARY KEY,
       name          TEXT NOT NULL,
       description   TEXT DEFAULT '',
       url           TEXT NOT NULL,
@@ -114,9 +114,8 @@ export async function getDAppById(id) {
 export async function createDApp(dapp) {
   const sql = getSQL()
   return sql`
-    INSERT INTO dapps (id, name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
+    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
     VALUES (
-      ${dapp.id},
       ${dapp.name},
       ${dapp.description || ''},
       ${dapp.url},

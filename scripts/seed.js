@@ -1,11 +1,13 @@
 /**
  * Database seed script.
  *
+ * Drops existing dapps table, recreates schema, and inserts seed data.
+ *
  * Usage:
  *   DATABASE_URL="postgresql://..." node scripts/seed.js
  */
 
-import { initDB, getSQL, upsertCategory, createDApp, getDApps } from './db.js'
+import { initDB, getSQL, upsertCategory, createDApp } from './db.js'
 
 const SEED_CATEGORIES = [
   { id: 'defi',   name: 'DeFi',    icon: '', sort_order: 1 },
@@ -18,7 +20,6 @@ const SEED_CATEGORIES = [
 
 const SEED_DAPPS = [
   {
-    id: 'uniswap',
     name: 'Uniswap',
     description: 'Decentralized token exchange',
     url: 'https://app.uniswap.org',
@@ -26,12 +27,11 @@ const SEED_DAPPS = [
     chains: [1, 10, 137, 42161, 8453],
     category: 'defi',
     featured: true,
-    inject_mode: 'proxy',
+    inject_mode: 'sdk',
     status: 'active',
     sort_order: 1,
   },
   {
-    id: 'aave',
     name: 'Aave',
     description: 'Decentralized lending protocol',
     url: 'https://app.aave.com',
@@ -39,12 +39,11 @@ const SEED_DAPPS = [
     chains: [1, 10, 137, 42161],
     category: 'defi',
     featured: true,
-    inject_mode: 'proxy',
+    inject_mode: 'sdk',
     status: 'active',
     sort_order: 2,
   },
   {
-    id: 'opensea',
     name: 'OpenSea',
     description: 'NFT marketplace',
     url: 'https://opensea.io',
@@ -52,13 +51,18 @@ const SEED_DAPPS = [
     chains: [1, 137, 42161],
     category: 'nft',
     featured: true,
-    inject_mode: 'proxy',
+    inject_mode: 'sdk',
     status: 'active',
     sort_order: 3,
   },
 ]
 
 async function seed() {
+  const sql = getSQL()
+
+  console.log('Dropping old dapps table...')
+  await sql`DROP TABLE IF EXISTS dapps`
+
   console.log('Initializing database schema...')
   await initDB()
   console.log('Schema ready.')
@@ -70,16 +74,9 @@ async function seed() {
   }
 
   console.log('Seeding DApps...')
-  const existing = await getDApps()
-  const existingIds = new Set(existing.map(d => d.id))
-
   for (const dapp of SEED_DAPPS) {
-    if (existingIds.has(dapp.id)) {
-      console.log(`  ~ ${dapp.id} (already exists, skipped)`)
-      continue
-    }
-    await createDApp(dapp)
-    console.log(`  + ${dapp.id}`)
+    const rows = await createDApp(dapp)
+    console.log(`  + [${rows[0].id}] ${dapp.name}`)
   }
 
   console.log('Done! Seeded', SEED_CATEGORIES.length, 'categories and', SEED_DAPPS.length, 'DApps.')

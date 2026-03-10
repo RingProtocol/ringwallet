@@ -364,17 +364,7 @@ export default function AdminDAppsPage() {
                   ))}
                 </select>
               </div>
-              <div style={styles.formRow}>
-                <label style={styles.label}>注入方式</label>
-                <select
-                  style={styles.select}
-                  value={form.inject_mode || 'sdk'}
-                  onChange={(e) => setForm((f) => ({ ...f, inject_mode: e.target.value as 'proxy' | 'sdk' }))}
-                >
-                  <option value="sdk">SDK</option>
-                  <option value="proxy">Proxy</option>
-                </select>
-              </div>
+              <input type="hidden" value="sdk" />
               <div style={styles.formRow}>
                 <label style={styles.label}>状态</label>
                 <select
