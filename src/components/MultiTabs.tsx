@@ -10,8 +10,16 @@ const tabs = [
   { key: 'dapps', label: 'DApps' },
 ]
 
+function getInitialTab(): string {
+  if (typeof window === 'undefined') return 'tokens'
+  const p = new URLSearchParams(window.location.search)
+  const t = p.get('tab')
+  if (t && tabs.some(tab => tab.key === t)) return t
+  return 'tokens'
+}
+
 const MultiTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('tokens')
+  const [activeTab, setActiveTab] = useState(getInitialTab)
 
   return (
     <div className="multi-tabs">

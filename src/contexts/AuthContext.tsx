@@ -51,6 +51,9 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+// Exposed for test pages that need to provide a mock auth context
+export { AuthContext as AuthContext__TEST_ONLY }
+
 export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext)
   if (context === undefined) {

@@ -1,14 +1,21 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useDAppList } from '../hooks/useDAppList'
 import DAppCard from './DAppCard'
 import type { DAppInfo } from '../types/dapp'
 
 interface Props {
   onSelectDApp: (dapp: DAppInfo) => void
+  onDAppsReady?: (dapps: DAppInfo[]) => void
 }
 
-const DAppList: React.FC<Props> = ({ onSelectDApp }) => {
+const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
   const { dapps, categories, loading, error, reload } = useDAppList()
+
+  useEffect(() => {
+    if (!loading && dapps.length > 0 && onDAppsReady) {
+      onDAppsReady(dapps)
+    }
+  }, [loading, dapps, onDAppsReady])
   const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
 

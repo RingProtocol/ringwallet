@@ -244,4 +244,5 @@ Schema 在 `src/server/db.ts` 的 `initDB()` 中自动创建。种子数据用 `
 详见各 fix 文件：
 
 - [fix1.md](fix1.md) — CSP 阻止内联脚本注入：改为外部 `<script src>` 引用 + 剥离原站 CSP
-- [fix2.md](fix2.md) — 第三方脚本校验失败 + JS 动态资源 404：`DIRECT_LOAD_DOMAINS` 白名单 + `<base href>` 注入
+- [fix2.md](fix2.md) — 第三方脚本校验失败 + JS 动态资源 404：`DIRECT_LOAD_DOMAINS` 白名单（`<base href>` 已回退）
+- [fix3.md](fix3.md) — DApp API 调用 CORS 拦截：SDK 拦截 fetch/XHR + proxy-asset 升级为全方法反向代理

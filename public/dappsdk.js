@@ -26,6 +26,84 @@
   try { isInIframe = window.self !== window.top } catch (_) { isInIframe = true }
 
   // ────────────────────────────────────────────────────
+  //  Network proxy — intercept fetch/XHR so all DApp
+  //  HTTP traffic goes through our proxy-asset endpoint
+  //  (eliminates CORS for DApp API calls)
+  // ────────────────────────────────────────────────────
+
+  var _proxyBase = ''
+  var _dappOrigin = ''
+
+  try {
+    var _href = window.location.href
+    var _m = _href.match(/\/api\/v1\/proxy\?url=([^&]+)/)
+    if (_m) {
+      _dappOrigin = new URL(decodeURIComponent(_m[1])).origin
+      _proxyBase = window.location.origin
+    }
+  } catch (_e) {}
+
+  function _shouldProxy(url) {
+    if (!_proxyBase) return false
+    if (url.startsWith(_proxyBase)) return false
+    if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('about:')) return false
+    return true
+  }
+
+  function _toAbsolute(url) {
+    if (url.startsWith('//')) return 'https:' + url
+    if (/^https?:\/\//i.test(url)) return url
+    if (url.startsWith('/')) return _dappOrigin + url
+    return _dappOrigin + '/' + url
+  }
+
+  function _proxyUrl(url) {
+    var abs = _toAbsolute(url)
+    if (!_shouldProxy(abs)) return url
+    return _proxyBase + '/api/v1/proxy-asset?url=' + encodeURIComponent(abs)
+  }
+
+  if (_proxyBase) {
+    var _origFetch = window.fetch
+    window.fetch = function (input, init) {
+      try {
+        var url
+        if (typeof input === 'string') {
+          url = input
+        } else if (input instanceof Request) {
+          url = input.url
+        } else {
+          url = String(input)
+        }
+
+        var proxied = _proxyUrl(url)
+        if (proxied !== url) {
+          if (typeof input === 'string') {
+            input = proxied
+          } else if (input instanceof Request) {
+            input = new Request(proxied, input)
+          } else {
+            input = proxied
+          }
+        }
+      } catch (_e) {}
+      return _origFetch.call(window, input, init)
+    }
+
+    var _OrigXHR = window.XMLHttpRequest
+    var _origOpen = _OrigXHR.prototype.open
+    _OrigXHR.prototype.open = function (method, url) {
+      try {
+        var proxied = _proxyUrl(String(url))
+        if (proxied !== String(url)) {
+          arguments[1] = proxied
+        }
+      } catch (_e) {}
+      return _origOpen.apply(this, arguments)
+    }
+  }
+
+  // ────────────────────────────────────────────────────
   //  ProviderRpcError
   // ────────────────────────────────────────────────────
 
