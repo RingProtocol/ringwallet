@@ -76,7 +76,7 @@ async function seed() {
   console.log('Seeding DApps...')
   for (const dapp of SEED_DAPPS) {
     const rows = await createDApp(dapp)
-    console.log(`  + [${rows[0].id}] ${dapp.name}`)
+    console.log(`  + [${rows[0].id}] ${dapp.name}  apikey=${rows[0].apikey}`)
   }
 
   console.log('Done! Seeded', SEED_CATEGORIES.length, 'categories and', SEED_DAPPS.length, 'DApps.')

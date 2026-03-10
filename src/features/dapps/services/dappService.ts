@@ -40,12 +40,24 @@ function getExpiredCache(): DAppListResponse | null {
   }
 }
 
+function getTestDappKey(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('testdapp')
+}
+
 export async function fetchDAppList(): Promise<DAppListResponse> {
-  const cached = getCache()
-  if (cached) return cached.data
+  const testKey = getTestDappKey()
+
+  if (!testKey) {
+    const cached = getCache()
+    if (cached) return cached.data
+  }
 
   try {
-    const res = await fetch('/api/v1/dapps', {
+    let url = '/api/v1/dapps'
+    if (testKey) url += `?testdapp=${encodeURIComponent(testKey)}`
+
+    const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
         'X-Wallet-Version': '1.0.0',

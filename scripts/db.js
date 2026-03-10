@@ -39,6 +39,7 @@ export async function initDB() {
       inject_mode   TEXT DEFAULT 'sdk' CHECK (inject_mode IN ('proxy', 'sdk')),
       status        TEXT DEFAULT 'active' CHECK (status IN ('active', 'maintenance', 'deprecated')),
       sort_order    INTEGER DEFAULT 0,
+      apikey        TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
       created_at    TIMESTAMPTZ DEFAULT NOW(),
       updated_at    TIMESTAMPTZ DEFAULT NOW()
     )
@@ -114,7 +115,7 @@ export async function getDAppById(id) {
 export async function createDApp(dapp) {
   const sql = getSQL()
   return sql`
-    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
+    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order, apikey)
     VALUES (
       ${dapp.name},
       ${dapp.description || ''},
@@ -125,7 +126,8 @@ export async function createDApp(dapp) {
       ${dapp.featured || false},
       ${dapp.inject_mode || 'sdk'},
       ${dapp.status || 'active'},
-      ${dapp.sort_order || 0}
+      ${dapp.sort_order || 0},
+      ${dapp.apikey || crypto.randomUUID()}
     )
     RETURNING *
   `
@@ -150,6 +152,7 @@ export async function updateDApp(id, updates) {
       inject_mode = ${merged.inject_mode},
       status = ${merged.status},
       sort_order = ${merged.sort_order},
+      apikey = ${merged.apikey},
       updated_at = NOW()
     WHERE id = ${id}
     RETURNING *

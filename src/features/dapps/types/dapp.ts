@@ -9,6 +9,7 @@ export interface DAppInfo {
   featured: boolean
   inject_mode: 'proxy' | 'sdk'
   status: 'active' | 'maintenance' | 'deprecated'
+  apikey: string
 }
 
 export interface DAppCategory {

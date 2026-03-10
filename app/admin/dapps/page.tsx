@@ -24,6 +24,7 @@ interface DApp {
   inject_mode: 'proxy' | 'sdk'
   status: 'active' | 'maintenance' | 'deprecated'
   sort_order: number
+  apikey: string
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -54,6 +55,9 @@ const styles: Record<string, React.CSSProperties> = {
   badgeActive: { background: '#166534', color: '#86efac' },
   badgeMaintenance: { background: '#854d0e', color: '#fde047' },
   badgeDeprecated: { background: '#7f1d1d', color: '#fca5a5' },
+  mono: { fontFamily: 'monospace', fontSize: 12, color: '#a1a1aa', wordBreak: 'break-all' },
+  apikeyWrap: { display: 'flex', alignItems: 'center', gap: 6 },
+  btnTiny: { padding: '2px 8px', borderRadius: 4, border: 'none', fontSize: 11, cursor: 'pointer', background: '#3f3f46', color: '#e4e4e7' },
 }
 
 function statusBadge(status: string) {
@@ -151,6 +155,7 @@ export default function AdminDAppsPage() {
       inject_mode: d.inject_mode,
       status: d.status,
       sort_order: d.sort_order ?? 0,
+      apikey: d.apikey,
     })
     setEditingId(d.id)
     setModal('edit')
@@ -181,6 +186,7 @@ export default function AdminDAppsPage() {
             inject_mode: form.inject_mode || 'sdk',
             status: form.status || 'active',
             sort_order: form.sort_order ?? 0,
+            ...(form.apikey ? { apikey: form.apikey } : {}),
           }),
         })
         const data = await res.json().catch(() => ({}))
@@ -203,6 +209,7 @@ export default function AdminDAppsPage() {
             inject_mode: form.inject_mode || 'sdk',
             status: form.status || 'active',
             sort_order: form.sort_order ?? 0,
+            apikey: form.apikey,
           }),
         })
         const data = await res.json().catch(() => ({}))
@@ -273,6 +280,7 @@ export default function AdminDAppsPage() {
               <tr>
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>名称</th>
+                  <th style={styles.th}>API Key</th>
                 <th style={styles.th}>状态</th>
                 <th style={styles.th}>分类</th>
                 <th style={styles.th}>精选</th>
@@ -284,6 +292,7 @@ export default function AdminDAppsPage() {
                 <tr key={d.id}>
                   <td style={styles.td}>{d.id}</td>
                   <td style={styles.td}>{d.name}</td>
+                  <td style={styles.td}><span style={styles.mono}>{d.apikey}</span></td>
                   <td style={styles.td}>{statusBadge(d.status)}</td>
                   <td style={styles.td}>{d.category || '—'}</td>
                   <td style={styles.td}>{d.featured ? '是' : '否'}</td>
@@ -348,6 +357,23 @@ export default function AdminDAppsPage() {
                   onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
                   placeholder="https://..."
                 />
+              </div>
+              <div style={styles.formRow}>
+                <label style={styles.label}>API Key</label>
+                <div style={styles.apikeyWrap}>
+                  <input
+                    style={{ ...styles.input, flex: 1 }}
+                    value={form.apikey || '(自动生成)'}
+                    readOnly
+                  />
+                  <button
+                    type="button"
+                    style={styles.btnTiny}
+                    onClick={() => setForm((f) => ({ ...f, apikey: crypto.randomUUID() }))}
+                  >
+                    重新生成
+                  </button>
+                </div>
               </div>
               <div style={styles.formRow}>
                 <label style={styles.label}>分类</label>

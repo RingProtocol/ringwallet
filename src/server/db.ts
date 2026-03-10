@@ -43,6 +43,7 @@ export async function initDB() {
       inject_mode   TEXT DEFAULT 'sdk' CHECK (inject_mode IN ('proxy', 'sdk')),
       status        TEXT DEFAULT 'active' CHECK (status IN ('active', 'maintenance', 'deprecated')),
       sort_order    INTEGER DEFAULT 0,
+      apikey        TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
       created_at    TIMESTAMPTZ DEFAULT NOW(),
       updated_at    TIMESTAMPTZ DEFAULT NOW()
     )
@@ -113,16 +114,23 @@ export async function getDAppById(id: number) {
   return rows[0] || null
 }
 
+export async function getDAppByApiKey(apikey: string) {
+  const sql = getSQL()
+  const rows = await sql`SELECT * FROM dapps WHERE apikey = ${apikey}`
+  return rows[0] || null
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createDApp(dapp: Record<string, any>) {
   const sql = getSQL()
   return sql`
-    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order)
+    INSERT INTO dapps (name, description, url, icon, chains, category, featured, inject_mode, status, sort_order, apikey)
     VALUES (
       ${dapp.name}, ${dapp.description || ''}, ${dapp.url}, ${dapp.icon || ''},
       ${JSON.stringify(dapp.chains || [])}, ${dapp.category || null},
       ${dapp.featured || false}, ${dapp.inject_mode || 'sdk'},
-      ${dapp.status || 'active'}, ${dapp.sort_order || 0}
+      ${dapp.status || 'active'}, ${dapp.sort_order || 0},
+      ${dapp.apikey || crypto.randomUUID()}
     )
     RETURNING *
   `
@@ -140,7 +148,8 @@ export async function updateDApp(id: number, updates: Record<string, any>) {
       name = ${m.name}, description = ${m.description}, url = ${m.url}, icon = ${m.icon},
       chains = ${JSON.stringify(m.chains)}, category = ${m.category},
       featured = ${m.featured}, inject_mode = ${m.inject_mode},
-      status = ${m.status}, sort_order = ${m.sort_order}, updated_at = NOW()
+      status = ${m.status}, sort_order = ${m.sort_order},
+      apikey = ${m.apikey}, updated_at = NOW()
     WHERE id = ${id}
     RETURNING *
   `
