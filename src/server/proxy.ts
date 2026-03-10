@@ -113,30 +113,24 @@ function stripCspMeta(root: ReturnType<typeof parse>) {
 
 export function injectProvider(html: string, targetOrigin: string, proxyBase: string): string {
   const providerTag = `<script src="${proxyBase}/dappsdk.js"></script>\n`
-  const baseTag = `<base href="${targetOrigin}/">\n`
 
   try {
     const root = parse(html, { comment: true })
     stripCspMeta(root)
     rewriteElementUrls(root, targetOrigin, proxyBase)
-
-    const existingBase = root.querySelector('base')
-    if (existingBase) existingBase.remove()
-
     const head = root.querySelector('head')
     if (head) {
-      head.innerHTML = providerTag + baseTag + head.innerHTML
+      head.innerHTML = providerTag + head.innerHTML
     } else {
-      return providerTag + baseTag + rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
+      return providerTag + rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
     }
     return rewriteInlineCssUrls(root.toString(), targetOrigin, proxyBase)
   } catch {
     const rewritten = rewriteUrlsRegex(html, targetOrigin, proxyBase)
     const stripped = rewritten.replace(/<meta[^>]+http-equiv\s*=\s*["']?content-security-policy["']?[^>]*>/gi, '')
-    const inject = providerTag + baseTag
-    if (stripped.includes('<head>'))  return stripped.replace('<head>', '<head>' + inject)
-    if (stripped.includes('<HEAD>'))  return stripped.replace('<HEAD>', '<HEAD>' + inject)
-    return inject + stripped
+    if (stripped.includes('<head>'))  return stripped.replace('<head>', '<head>' + providerTag)
+    if (stripped.includes('<HEAD>'))  return stripped.replace('<HEAD>', '<HEAD>' + providerTag)
+    return providerTag + stripped
   }
 }
 

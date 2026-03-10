@@ -27,7 +27,7 @@ Uniswap 的打包后 JS 代码中用相对路径引用静态资源（如 `"/imag
 
 ## 修复
 
-### 1. 第三方脚本直接加载白名单
+### 1. 第三方脚本直接加载白名单（已生效）
 
 `proxy.ts` 新增 `DIRECT_LOAD_DOMAINS` 集合，`toProxyUrl()` 对白名单域名返回原始绝对 URL 而不包装为 proxy-asset：
 
@@ -46,34 +46,33 @@ const DIRECT_LOAD_DOMAINS = new Set([
 
 function toProxyUrl(absoluteUrl, proxyBase, isNav) {
   if (shouldDirectLoad(absoluteUrl)) return absoluteUrl  // 直接返回原始 URL
-  const ep = isNav ? '/api/v1/proxy' : '/api/v1/proxy-asset'
-  return `${proxyBase}${ep}?url=${encodeURIComponent(absoluteUrl)}`
+  ...
 }
 ```
 
-### 2. `<base href>` 修复 JS 动态路径
+### 2. `<base href>` 方案（已回退 ❌）
 
-在 `<head>` 顶部注入 `<base href="{targetOrigin}/">` 标签。效果：
+曾尝试在 `<head>` 注入 `<base href="{targetOrigin}/">`，让 JS 动态生成的相对路径解析到原始域名。
 
-- JS 代码动态创建的 `img.src = '/images/noise-color.png'` 解析为 `https://app.uniswap.org/images/noise-color.png`（图片加载无 CORS 限制）
-- 已被 proxy.ts 重写的 HTML 资源 URL 都是绝对路径，不受 `<base>` 影响
-- 移除 DApp 原有的 `<base>` 标签避免冲突
+**回退原因**：`<base href>` 影响范围过大，也会改变 JS `import()` 动态模块加载的路径解析。导致：
 
-```typescript
-const baseTag = `<base href="${targetOrigin}/">\n`
-// 移除已有 base 标签
-const existingBase = root.querySelector('base')
-if (existingBase) existingBase.remove()
-// 注入到 head 顶部
-head.innerHTML = providerTag + baseTag + head.innerHTML
+```
+Access to script at 'https://app.uniswap.org/assets/service_connect-DN_dqJnm.js'
+from origin 'https://proxy.vercel.app' has been blocked by CORS policy
 ```
 
-## 注意事项
+动态 `import('/assets/xxx.js')` 被解析到原始域名，跨域加载脚本触发 CORS 拦截。图片跨域加载不受 CORS 限制，但脚本受限。
 
-- `<base href>` 也会影响 `fetch()` 的相对路径解析 — DApp 的 `fetch('/api/xxx')` 会解析到原始域名，这通常是正确行为
-- 如果遇到新的第三方脚本校验失败，往 `DIRECT_LOAD_DOMAINS` 添加对应域名即可
-- CSS 中的 `url()` 引用已在 `rewriteCssUrls()` 中处理，不受此影响
+### 3. 图片 404 的现状
+
+[3][4] 的图片 404 属于代理方案的固有局限 — JS 代码内部硬编码的相对路径无法通过 HTML 重写覆盖。这些是装饰性资源（背景纹理、logo），不影响 DApp 核心功能。
+
+## 经验教训
+
+- **不要使用 `<base href>`**：它会影响所有 URL 解析，包括 `import()`、`fetch()`、`new URL()`、`<a href>` 等，副作用不可控
+- 第三方脚本（Turnstile、Datadog、Sentry 等）有自校验机制，必须直接从原始域名加载
+- JS 内部动态生成的相对路径 404 是代理方案的已知局限，功能无影响
 
 ## 涉及文件
 
-- `src/server/proxy.ts` — 新增 `DIRECT_LOAD_DOMAINS`、`shouldDirectLoad()`、`<base href>` 注入
+- `src/server/proxy.ts` — 新增 `DIRECT_LOAD_DOMAINS`、`shouldDirectLoad()`
