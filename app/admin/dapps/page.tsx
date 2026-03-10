@@ -65,6 +65,16 @@ function statusBadge(status: string) {
   return <span style={{ ...styles.badge, ...s }}>{status}</span>
 }
 
+function randomApiKey8(): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = crypto.getRandomValues(new Uint8Array(8))
+  let out = ''
+  for (let i = 0; i < bytes.length; i++) {
+    out += alphabet[bytes[i] % alphabet.length]
+  }
+  return out
+}
+
 export default function AdminDAppsPage() {
   const router = useRouter()
   const [dapps, setDapps] = useState<DApp[]>([])
@@ -369,7 +379,7 @@ export default function AdminDAppsPage() {
                   <button
                     type="button"
                     style={styles.btnTiny}
-                    onClick={() => setForm((f) => ({ ...f, apikey: crypto.randomUUID() }))}
+                    onClick={() => setForm((f) => ({ ...f, apikey: randomApiKey8() }))}
                   >
                     重新生成
                   </button>
