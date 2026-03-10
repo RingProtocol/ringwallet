@@ -373,14 +373,5 @@
     document.addEventListener('DOMContentLoaded', announceProvider)
   }
 
-  // ────────────────────────────────────────────────────
-  //  Public API on window
-  // ────────────────────────────────────────────────────
-
-  window.ringWallet = {
-    provider: provider,
-    version: '1.0.0'
-  }
-
   console.log('[Ring Wallet] DApp SDK v1.0.0 initialized' + (isInIframe ? ' (iframe mode)' : ''))
 })()
