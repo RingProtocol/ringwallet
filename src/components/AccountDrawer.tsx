@@ -114,7 +114,14 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
             <div className="drawer-account-icon">🔐</div>
             <div className="drawer-account-detail">
               <span className="drawer-account-name">Wallet #{activeWalletIndex + 1}</span>
-              <span className="drawer-account-address">{formatAddress(activeWallet.address)}</span>
+              <div className="drawer-account-addr-row">
+                <span className="drawer-account-address">{formatAddress(activeWallet.address)}</span>
+                <button
+                  className="drawer-copy-btn"
+                  onClick={(e) => copyToClipboard(e, activeWallet.address)}
+                  title="Copy Address"
+                >📋Copy</button>
+              </div>
             </div>
           </div>
         )}
@@ -162,7 +169,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                           className="drawer-copy-btn"
                           onClick={(e) => copyToClipboard(e, wallet.address)}
                           title="Copy Address"
-                        >📋</button>
+                        >📋Copy</button>
                       </div>
                     </div>
                   ))}
