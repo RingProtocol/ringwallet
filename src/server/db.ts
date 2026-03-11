@@ -1,6 +1,16 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless'
+import crypto from 'crypto'
 
 let _sql: NeonQueryFunction<false, false> | null = null
+
+/** 8-char API key (same alphabet as admin UI randomApiKey8). */
+function randomApiKey8(): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = crypto.randomBytes(8)
+  let out = ''
+  for (let i = 0; i < bytes.length; i++) out += alphabet[bytes[i]! % alphabet.length]
+  return out
+}
 
 function getSQL() {
   if (!_sql) {
@@ -130,7 +140,7 @@ export async function createDApp(dapp: Record<string, any>) {
       ${JSON.stringify(dapp.chains || [])}, ${dapp.category || null},
       ${dapp.featured || false}, ${dapp.inject_mode || 'sdk'},
       ${dapp.status || 'active'}, ${dapp.sort_order || 0},
-      ${dapp.apikey || crypto.randomUUID()}
+      ${dapp.apikey || randomApiKey8()}
     )
     RETURNING *
   `
