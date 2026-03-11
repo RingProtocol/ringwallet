@@ -62,18 +62,37 @@ export const useAuth = (): AuthContextValue => {
   return context
 }
 
+// RPC URLs are baked in at build time (Vite: vite build; Next: next.config webpack DefinePlugin from process.env).
+// If Vercel env is missing during `next build`, import.meta.env.VITE_RPC_* is empty → use public fallbacks so import/send still work.
+const RPC_FALLBACK: Record<number, string> = {
+  1: 'https://eth.llamarpc.com',
+  11155111: 'https://rpc.sepolia.org',
+  10: 'https://mainnet.optimism.io',
+  42161: 'https://arb1.arbitrum.io/rpc',
+  137: 'https://polygon-rpc.com',
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
+  const rpc = (chainId: number, envUrl: string | undefined) => {
+    const fromEnv = envUrl && String(envUrl).trim()
+    const url = fromEnv || RPC_FALLBACK[chainId] || ''
+    if (chainId === 11155111 && !fromEnv) {
+      console.log('[AuthContext] Sepolia RPC: env not set, using fallback', { VITE_RPC_SEPOLIA: import.meta.env.VITE_RPC_SEPOLIA, fallback: url })
+    }
+    return url
+  }
+
   const DEFAULT_CHAINS: Chain[] = [
-    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ETH_MAINNET, explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
-    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: import.meta.env.VITE_RPC_SEPOLIA, explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
-    { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_OPTIMISM, explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
-    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ARBITRUM, explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
-    { id: 137, name: 'Polygon', symbol: 'POL', rpcUrl: import.meta.env.VITE_RPC_POLYGON, explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON }
+    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: rpc(1, import.meta.env.VITE_RPC_ETH_MAINNET), explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
+    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: rpc(11155111, import.meta.env.VITE_RPC_SEPOLIA), explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
+    { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: rpc(10, import.meta.env.VITE_RPC_OPTIMISM), explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
+    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', rpcUrl: rpc(42161, import.meta.env.VITE_RPC_ARBITRUM), explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
+    { id: 137, name: 'Polygon', symbol: 'POL', rpcUrl: rpc(137, import.meta.env.VITE_RPC_POLYGON), explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON },
   ];
 
   const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);

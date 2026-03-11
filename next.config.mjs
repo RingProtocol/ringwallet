@@ -1,3 +1,9 @@
+/**
+ * RPC and other VITE_* vars are inlined at build time via webpack DefinePlugin below.
+ * On Vercel: add VITE_RPC_ETH_MAINNET etc. under Project → Environment Variables,
+ * enable for Production (and Preview if needed), then redeploy — build must see them.
+ * Alternatively set NEXT_PUBLIC_RPC_* ; they are mapped to VITE_* in the plugin.
+ */
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

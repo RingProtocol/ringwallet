@@ -10,6 +10,8 @@ const projectRoot = path.resolve(__dirname, '../..')
 
 export default defineConfig({
   root,
+  // Load .env from repo root so `vite build` picks up VITE_* same as local dev
+  envDir: projectRoot,
   publicDir: path.resolve(projectRoot, 'public'),
   plugins: [
     react(),
