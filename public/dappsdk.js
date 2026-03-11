@@ -328,13 +328,24 @@
   // ────────────────────────────────────────────────────
   //  Inject as window.ethereum (legacy compatibility)
   // ────────────────────────────────────────────────────
+  //
+  // When running inside Ring Wallet's iframe, always override window.ethereum
+  // even if MetaMask extension already injected its provider into this frame.
+  // When loaded as a standalone page (no iframe), only inject if no other wallet
+  // is present so we don't conflict with MetaMask in the user's main browser.
 
-  if (typeof window.ethereum === 'undefined') {
-    Object.defineProperty(window, 'ethereum', {
-      value: provider,
-      writable: false,
-      configurable: true
-    })
+  if (isInIframe || typeof window.ethereum === 'undefined') {
+    try {
+      Object.defineProperty(window, 'ethereum', {
+        value: provider,
+        writable: false,
+        configurable: true
+      })
+    } catch (_e1) {
+      // MetaMask (some versions) sets the property as non-configurable.
+      // Fall back to direct assignment so Ring Wallet still wins inside the iframe.
+      try { window.ethereum = provider } catch (_e2) {}
+    }
   }
 
   // ────────────────────────────────────────────────────
