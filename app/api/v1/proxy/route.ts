@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
 
     const html = await response.text()
     const injected = injectProvider(html, targetOrigin, proxyBase)
+    // Do not set X-Frame-Options so the proxied page can be embedded in our iframe.
+    // (Omitting the header = allow framing; ALLOWALL is non-standard.)
     return new NextResponse(injected, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache',
-        'X-Frame-Options': 'ALLOWALL',
       },
     })
   } catch (err) {
