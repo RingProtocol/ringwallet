@@ -1,4 +1,5 @@
 import { parse } from 'node-html-parser'
+import { dappsdkScriptTag } from './dappsdk'
 
 // Third-party domains whose scripts must load directly (self-validating, anti-tamper, etc.)
 const DIRECT_LOAD_DOMAINS = new Set([
@@ -112,7 +113,7 @@ function stripCspMeta(root: ReturnType<typeof parse>) {
 }
 
 export function injectProvider(html: string, targetOrigin: string, proxyBase: string): string {
-  const providerTag = `<script src="${proxyBase}/dappsdk.js"></script>\n`
+  const providerTag = dappsdkScriptTag(proxyBase)
 
   try {
     const root = parse(html, { comment: true })

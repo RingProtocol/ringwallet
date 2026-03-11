@@ -1,6 +1,9 @@
 /**
  * Ring Wallet DApp SDK v1.0.0
  *
+ * Canonical source: this repo public/dappsdk.js (served at /dappsdk.js when deployed).
+ * Code that injects or references this script uses src/server/dappsdk.ts.
+ *
  * Drop this script into any DApp to enable communication with Ring Wallet
  * when loaded inside the wallet's iframe container.
  *
@@ -8,9 +11,7 @@
  *   - EIP-1193 (Ethereum Provider JavaScript API)
  *   - EIP-6963 (Multi Injected Provider Discovery)
  *
- * Usage:
- *   <script src="https://api.walletapp.testring.org/static/dappsdk.js"></script>
- *   or copy this file into your project and include it before your app bundle.
+ * Usage: see docs/dev_delivers/dapp-integration.md (self-host this file or load from wallet host).
  */
 ;(function () {
   'use strict'
