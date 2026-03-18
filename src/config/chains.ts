@@ -80,6 +80,37 @@ function rpcUrl(chainId: string | number): string {
 
 // ─── Chain definitions ───
 
+// Ordered list of ~20 major mainnet chains shown by default in ChainSwitcher.
+// BTC + SOL first, then Ethereum, then popular L2s and L1s.
+export const FEATURED_CHAIN_IDS: (number | string)[] = [
+  'bitcoin-mainnet',
+  'solana-mainnet',
+  1,        // Ethereum
+  10,       // Optimism
+  42161,    // Arbitrum One
+  8453,     // Base
+  137,      // Polygon
+  324,      // zkSync Era
+  59144,    // Linea
+  534352,   // Scroll
+  56,       // BNB Smart Chain
+  43114,    // Avalanche C-Chain
+  250,      // Fantom
+  42220,    // Celo
+  100,      // Gnosis
+  1284,     // Moonbeam
+  5000,     // Mantle
+  1101,     // Polygon zkEVM
+  81457,    // Blast
+  7777777,  // Zora
+]
+
+export const FEATURED_TESTNET_IDS: (number | string)[] = [
+  'bitcoin-testnet',
+  'solana-devnet',
+  11155111, // Sepolia
+]
+
 export const DEFAULT_CHAINS: Chain[] = [
   {
     id: 1,

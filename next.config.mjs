@@ -28,6 +28,17 @@ const nextConfig = {
         'import.meta.env': JSON.stringify(viteEnv),
       })
     );
+
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    };
+
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
+
     return config;
   },
 };
