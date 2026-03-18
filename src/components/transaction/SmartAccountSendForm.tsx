@@ -62,7 +62,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({ onClose }) 
         activeWallet.credentialId!,
         toAddress,
         amount,
-        activeChainId,
+        Number(activeChainId),
         activeChain?.rpcUrl,
         activeWallet.address,
         factoryAddress,

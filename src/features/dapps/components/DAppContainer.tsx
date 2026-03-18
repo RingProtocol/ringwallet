@@ -18,11 +18,11 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
 
   const bridge = useMemo(() => new WalletBridge({
     getActiveAddress: () => activeWallet?.address || null,
-    getActiveChainId: () => activeChainId,
+    getActiveChainId: () => Number(activeChainId),
     getActiveChainRpcUrl: () => activeChain.rpcUrl,
     getActivePrivateKey: () => activeWallet?.privateKey || null,
-    getChains: () => CHAINS.map(c => ({ id: c.id, name: c.name, rpcUrl: c.rpcUrl })),
-    switchChain,
+    getChains: () => CHAINS.filter(c => typeof c.id === 'number').map(c => ({ id: c.id as number, name: c.name, rpcUrl: c.rpcUrl })),
+    switchChain: (chainId: number) => switchChain(chainId),
   }), [])
 
   useEffect(() => {

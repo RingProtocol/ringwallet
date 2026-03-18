@@ -1,16 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import WalletService from '../services/walletService'
+import { SolanaKeyService } from '../services/solanaKeyService'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
+import { ChainFamily } from '../models/ChainType'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
+export type { ChainFamily }
+
 export interface Chain {
-  id: number;
+  id: number | string;
   name: string;
   symbol: string;
   rpcUrl: string;
   explorer: string;
+  family?: ChainFamily;
+  cluster?: 'mainnet-beta' | 'devnet' | 'testnet';
   bundlerUrl?: string;
   entryPoint?: string;
   factoryAddress?: string;
@@ -44,14 +50,18 @@ interface AuthContextValue {
   login: (userData: UserData) => Promise<void>;
   logout: () => void;
   CHAINS: Chain[];
-  activeChainId: number;
+  activeChainId: number | string;
   activeChain: Chain;
-  switchChain: (chainId: number) => void;
+  switchChain: (chainId: number | string) => void;
+  /** Solana wallets — same index mapping as EVM wallets */
+  solanaWallets: Wallet[];
+  activeSolanaWallet: Wallet | null;
+  /** True when the currently selected chain is a Solana chain */
+  isSolanaChain: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-// Exposed for test pages that need to provide a mock auth context
 export { AuthContext as AuthContext__TEST_ONLY }
 
 export const useAuth = (): AuthContextValue => {
@@ -62,8 +72,6 @@ export const useAuth = (): AuthContextValue => {
   return context
 }
 
-// RPC URLs are baked in at build time (Vite: vite build; Next: next.config webpack DefinePlugin from process.env).
-// If Vercel env is missing during `next build`, import.meta.env.VITE_RPC_* is empty → use public fallbacks so import/send still work.
 const RPC_FALLBACK: Record<number, string> = {
   1: 'https://eth.llamarpc.com',
   11155111: 'https://rpc.sepolia.org',
@@ -76,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
+  const [solanaWallets, setSolanaWallets] = useState<Wallet[]>([])
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
   const rpc = (chainId: number, envUrl: string | undefined) => {
@@ -88,15 +97,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const DEFAULT_CHAINS: Chain[] = [
-    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: rpc(1, import.meta.env.VITE_RPC_ETH_MAINNET), explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
-    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: rpc(11155111, import.meta.env.VITE_RPC_SEPOLIA), explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
-    { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: rpc(10, import.meta.env.VITE_RPC_OPTIMISM), explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
-    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', rpcUrl: rpc(42161, import.meta.env.VITE_RPC_ARBITRUM), explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
-    { id: 137, name: 'Polygon', symbol: 'POL', rpcUrl: rpc(137, import.meta.env.VITE_RPC_POLYGON), explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON },
+    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(1, import.meta.env.VITE_RPC_ETH_MAINNET), explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
+    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', family: ChainFamily.EVM, rpcUrl: rpc(11155111, import.meta.env.VITE_RPC_SEPOLIA), explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
+    { id: 10, name: 'Optimism', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(10, import.meta.env.VITE_RPC_OPTIMISM), explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
+    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(42161, import.meta.env.VITE_RPC_ARBITRUM), explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
+    { id: 137, name: 'Polygon', symbol: 'POL', family: ChainFamily.EVM, rpcUrl: rpc(137, import.meta.env.VITE_RPC_POLYGON), explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON },
+    {
+      id: 'solana-mainnet',
+      name: 'Solana',
+      symbol: 'SOL',
+      family: ChainFamily.Solana,
+      cluster: 'mainnet-beta',
+      rpcUrl: import.meta.env.VITE_SOLANA_MAINNET_RPC || 'https://api.mainnet-beta.solana.com',
+      explorer: 'https://solscan.io',
+    },
+    {
+      id: 'solana-devnet',
+      name: 'Solana Devnet',
+      symbol: 'SOL',
+      family: ChainFamily.Solana,
+      cluster: 'devnet',
+      rpcUrl: import.meta.env.VITE_SOLANA_DEVNET_RPC || 'https://api.devnet.solana.com',
+      explorer: 'https://solscan.io/?cluster=devnet',
+    },
   ];
 
   const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
-  const [activeChainId, setActiveChainId] = useState(1);
+  const [activeChainId, setActiveChainId] = useState<number | string>(1);
 
   useEffect(() => {
     const fetchChains = async () => {
@@ -104,18 +131,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const response = await fetch('/chainid.json');
         if (!response.ok) throw new Error('Failed to fetch chain data');
         const data = await response.json();
-        
-        // Map external chain data to our Chain interface
-        const extraChains: Chain[] = data.map((c: any) => ({
-          id: c.chainId,
-          name: c.name,
-          symbol: c.nativeCurrency?.symbol || 'ETH',
-          rpcUrl: c.rpc && c.rpc.length > 0 ? c.rpc[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '') : '',
-          explorer: c.explorers && c.explorers.length > 0 ? c.explorers[0].url : '',
-          // Bundler and other AA fields are undefined for these extra chains
-        })).filter((c: Chain) => 
-          c.rpcUrl && !c.rpcUrl.includes('${') && // Filter out RPCs that still have unreplaced variables
-          !DEFAULT_CHAINS.some(dc => dc.id === c.id) // Filter out duplicates
+
+        const extraChains: Chain[] = data.map((c: Record<string, unknown>) => ({
+          id: c.chainId as number,
+          name: c.name as string,
+          symbol: (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
+          family: ChainFamily.EVM,
+          rpcUrl: (c.rpc as string[])?.length > 0
+            ? (c.rpc as string[])[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '')
+            : '',
+          explorer: (c.explorers as Array<{ url: string }>)?.length > 0
+            ? (c.explorers as Array<{ url: string }>)[0].url
+            : '',
+        })).filter((c: Chain) =>
+          c.rpcUrl && !String(c.rpcUrl).includes('${') &&
+          !DEFAULT_CHAINS.some(dc => dc.id === c.id)
         );
 
         setChains([...DEFAULT_CHAINS, ...extraChains]);
@@ -130,7 +160,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const savedChainId = safeGetItem('active_chain_id');
     if (savedChainId) {
-      setActiveChainId(parseInt(savedChainId, 10));
+      // Numeric string → number; non-numeric string (e.g. 'solana-mainnet') → keep as string
+      const parsed = Number(savedChainId);
+      setActiveChainId(Number.isInteger(parsed) && !isNaN(parsed) ? parsed : savedChainId);
     }
 
     const savedLoginState = safeGetItem('wallet_login_state')
@@ -179,6 +211,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const derivedWallets = WalletService.deriveWallets(seed, 5)
         setWallets(derivedWallets)
 
+        try {
+          const derivedSolana = SolanaKeyService.deriveWallets(seed, 5)
+          setSolanaWallets(derivedSolana)
+        } catch (e) {
+          console.error('Failed to derive Solana wallets during session restore:', e)
+        }
+
         const savedIndex = safeGetItem('active_wallet_index')
         if (savedIndex !== null) {
           setActiveWalletIndex(parseInt(savedIndex, 10))
@@ -199,9 +238,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (userData.masterSeed) {
       try {
-        const derivedWallets = WalletService.deriveWallets(userData.masterSeed as Uint8Array, 5)
+        const seed = userData.masterSeed as Uint8Array
+        const derivedWallets = WalletService.deriveWallets(seed, 5)
         setWallets(derivedWallets)
         setActiveWalletIndex(0)
+
+        try {
+          const derivedSolana = SolanaKeyService.deriveWallets(seed, 5)
+          setSolanaWallets(derivedSolana)
+        } catch (e) {
+          console.error('Failed to derive Solana wallets during login:', e)
+        }
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
       }
@@ -239,6 +286,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoggedIn(false)
     setUser(null)
     setWallets([])
+    setSolanaWallets([])
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
     safeRemoveItem('active_wallet_index')
@@ -251,7 +299,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
-  const switchChain = (chainId: number) => {
+  const switchChain = (chainId: number | string) => {
     const chain = CHAINS.find(c => c.id === chainId);
     if (chain) {
       setActiveChainId(chainId);
@@ -260,7 +308,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
+  const activeSolanaWallet = solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
   const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0];
+  const isSolanaChain = activeChain?.family === ChainFamily.Solana
 
   const value: AuthContextValue = {
     isLoggedIn,
@@ -274,7 +324,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     CHAINS,
     activeChainId,
     activeChain,
-    switchChain
+    switchChain,
+    solanaWallets,
+    activeSolanaWallet,
+    isSolanaChain,
   }
 
   return (

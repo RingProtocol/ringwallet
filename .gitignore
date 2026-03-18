@@ -6,3 +6,4 @@ skill
 docs
 dist-extension
 **/node_modules
+.env

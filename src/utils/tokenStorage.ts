@@ -14,13 +14,13 @@ export interface TokenInfo {
 
 const STORAGE_PREFIX = 'imported_tokens'
 
-function getStorageKey(chainId: number, walletAddress: string): string {
+function getStorageKey(chainId: number | string, walletAddress: string): string {
   return `${STORAGE_PREFIX}_${chainId}_${walletAddress.toLowerCase()}`
 }
 
 export function addToken(
   walletAddress: string,
-  chainId: number,
+  chainId: number | string,
   tokenInfo: TokenInfo
 ): void {
   const list = getTokenList(walletAddress, chainId)
@@ -35,7 +35,7 @@ export function addToken(
 
 export function getTokenList(
   walletAddress: string,
-  chainId: number
+  chainId: number | string
 ): TokenInfo[] {
   try {
     const raw = safeGetItem(getStorageKey(chainId, walletAddress))
@@ -48,7 +48,7 @@ export function getTokenList(
 
 export function removeToken(
   walletAddress: string,
-  chainId: number,
+  chainId: number | string,
   tokenAddress: string
 ): void {
   const list = getTokenList(walletAddress, chainId)

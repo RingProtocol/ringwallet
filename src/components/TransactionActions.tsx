@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { WalletType } from '../models/WalletType';
-import { EOASendForm, SmartAccountSendForm, ReceiveDialog } from './transaction';
+import { EOASendForm, SmartAccountSendForm, SolanaSendForm, ReceiveDialog } from './transaction';
 import './TransactionActions.css';
 
 const TransactionActions: React.FC = () => {
-  const { isLoggedIn, activeWallet } = useAuth();
+  const { isLoggedIn, activeWallet, activeSolanaWallet, isSolanaChain } = useAuth();
   const [showSend, setShowSend] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
 
-  if (!isLoggedIn || !activeWallet) return null;
+  if (!isLoggedIn) return null;
+  if (isSolanaChain && !activeSolanaWallet) return null;
+  if (!isSolanaChain && !activeWallet) return null;
 
-  const isSmartAccount = activeWallet.type === WalletType.SmartContract;
+  const isSmartAccount = !isSolanaChain && activeWallet?.type === WalletType.SmartContract;
+  const receiveAddress = isSolanaChain
+    ? (activeSolanaWallet?.address ?? '')
+    : (activeWallet?.address ?? '');
 
   return (
     <div className="transaction-actions-container">
@@ -24,16 +29,19 @@ const TransactionActions: React.FC = () => {
         </button>
       </div>
 
-      {showSend &&
-        (isSmartAccount ? (
+      {showSend && (
+        isSolanaChain ? (
+          <SolanaSendForm onClose={() => setShowSend(false)} />
+        ) : isSmartAccount ? (
           <SmartAccountSendForm onClose={() => setShowSend(false)} />
         ) : (
           <EOASendForm onClose={() => setShowSend(false)} />
-        ))}
+        )
+      )}
 
       {showReceive && (
         <ReceiveDialog
-          address={activeWallet.address}
+          address={receiveAddress}
           onClose={() => setShowReceive(false)}
         />
       )}

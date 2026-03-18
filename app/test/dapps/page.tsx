@@ -39,6 +39,9 @@ const mockAuth = {
   activeChainId: 1,
   activeChain: MOCK_CHAINS[0],
   switchChain: () => {},
+  solanaWallets: [],
+  activeSolanaWallet: null,
+  isSolanaChain: false,
 }
 
 export default function TestDAppsPage() {

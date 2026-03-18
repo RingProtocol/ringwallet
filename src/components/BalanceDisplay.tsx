@@ -1,38 +1,56 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
+import { ChainFamily } from '../models/ChainType'
+import { SolanaService } from '../services/solanaService'
 import './BalanceDisplay.css'
 
 const BalanceDisplay: React.FC = () => {
-  const { activeWallet, activeChain } = useAuth()
+  const { activeWallet, activeSolanaWallet, activeChain, isSolanaChain } = useAuth()
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchBalance = async () => {
-      if (!activeWallet || !activeChain || !activeChain.rpcUrl) return
+      if (!activeChain?.rpcUrl) return
 
-      setIsLoading(true)
-      try {
-        const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
-        const balanceWei = await provider.getBalance(activeWallet.address)
-        const balanceEth = ethers.formatEther(balanceWei)
-        const formatted = parseFloat(balanceEth).toFixed(4)
-        setBalance(formatted)
-      } catch (error) {
-        console.error('Failed to fetch balance:', error)
-        setBalance('0.0000')
-      } finally {
-        setIsLoading(false)
+      if (isSolanaChain) {
+        if (!activeSolanaWallet) return
+        setIsLoading(true)
+        try {
+          const service = new SolanaService(activeChain.rpcUrl)
+          const bal = await service.getBalance(activeSolanaWallet.address)
+          setBalance(bal.toFixed(4))
+        } catch (error) {
+          console.error('Failed to fetch Solana balance:', error)
+          setBalance('0.0000')
+        } finally {
+          setIsLoading(false)
+        }
+      } else {
+        if (!activeWallet) return
+        setIsLoading(true)
+        try {
+          const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
+          const balanceWei = await provider.getBalance(activeWallet.address)
+          const balanceEth = ethers.formatEther(balanceWei)
+          setBalance(parseFloat(balanceEth).toFixed(4))
+        } catch (error) {
+          console.error('Failed to fetch EVM balance:', error)
+          setBalance('0.0000')
+        } finally {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchBalance()
     const interval = setInterval(fetchBalance, 15000)
     return () => clearInterval(interval)
-  }, [activeWallet, activeChain])
+  }, [activeWallet, activeSolanaWallet, activeChain, isSolanaChain])
 
-  if (!activeWallet) return null
+  const displayWallet = isSolanaChain ? activeSolanaWallet : activeWallet
+  if (!displayWallet) return null
 
   return (
     <div className="balance-display">

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
+import { ChainFamily } from '../models/ChainType'
+import { SolanaService } from '../services/solanaService'
 import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
@@ -19,35 +21,70 @@ interface DisplayTokenInfo {
 }
 
 const TokenBalance: React.FC = () => {
-  const { activeWallet, activeChain } = useAuth()
+  const { activeWallet, activeSolanaWallet, activeChain, isSolanaChain } = useAuth()
   const [tokens, setTokens] = useState<DisplayTokenInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importedTokens, setImportedTokens] = useState<StoredTokenInfo[]>(() =>
-    activeWallet && activeChain
+    activeWallet && activeChain && !isSolanaChain
       ? getTokenList(activeWallet.address, activeChain.id)
       : []
   )
 
   useEffect(() => {
-    if (activeWallet && activeChain) {
+    if (activeWallet && activeChain && !isSolanaChain) {
       setImportedTokens(getTokenList(activeWallet.address, activeChain.id))
+    } else {
+      setImportedTokens([])
     }
-  }, [activeWallet?.address, activeChain?.id])
+  }, [activeWallet?.address, activeChain?.id, isSolanaChain])
 
   const handleImportToken = useCallback(
     (token: { address: string; symbol: string; name: string; decimals: number }) => {
-      if (!activeWallet || !activeChain) return
+      if (!activeWallet || !activeChain || isSolanaChain) return
       addToken(activeWallet.address, activeChain.id, token)
       setImportedTokens(getTokenList(activeWallet.address, activeChain.id))
     },
-    [activeWallet, activeChain]
+    [activeWallet, activeChain, isSolanaChain]
   )
 
+  // Solana balance fetching
   useEffect(() => {
-    const fetchBalances = async () => {
-      if (!activeWallet || !activeChain?.rpcUrl) return
+    if (!isSolanaChain) return
+    if (!activeSolanaWallet || !activeChain?.rpcUrl) return
 
+    const fetchSolanaBalances = async () => {
+      setIsLoading(true)
+      try {
+        const service = new SolanaService(activeChain.rpcUrl)
+        const bal = await service.getBalance(activeSolanaWallet.address)
+        setTokens([
+          {
+            symbol: 'SOL',
+            name: activeChain.name,
+            balance: bal.toFixed(4),
+            isNative: true,
+          },
+        ])
+      } catch (error) {
+        console.error('Failed to fetch Solana balances:', error)
+        setTokens([{ symbol: 'SOL', name: activeChain.name, balance: '0.0000', isNative: true }])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSolanaBalances()
+    const interval = setInterval(fetchSolanaBalances, 15000)
+    return () => clearInterval(interval)
+  }, [activeSolanaWallet, activeChain, isSolanaChain])
+
+  // EVM balance fetching
+  useEffect(() => {
+    if (isSolanaChain) return
+    if (!activeWallet || !activeChain?.rpcUrl) return
+
+    const fetchEVMBalances = async () => {
       setIsLoading(true)
       try {
         const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
@@ -90,7 +127,7 @@ const TokenBalance: React.FC = () => {
 
         setTokens([nativeToken, ...erc20Tokens])
       } catch (error) {
-        console.error('Failed to fetch token balances:', error)
+        console.error('Failed to fetch EVM token balances:', error)
         setTokens([
           {
             symbol: activeChain.symbol || 'ETH',
@@ -104,24 +141,27 @@ const TokenBalance: React.FC = () => {
       }
     }
 
-    fetchBalances()
-    const interval = setInterval(fetchBalances, 15000)
+    fetchEVMBalances()
+    const interval = setInterval(fetchEVMBalances, 15000)
     return () => clearInterval(interval)
-  }, [activeWallet, activeChain, importedTokens])
+  }, [activeWallet, activeChain, importedTokens, isSolanaChain])
 
-  if (!activeWallet) return null
+  const displayWallet = isSolanaChain ? activeSolanaWallet : activeWallet
+  if (!displayWallet) return null
 
   return (
     <div className="token-balance-list">
       <div className="token-list-header">
         <span className="token-list-title">资产</span>
-        <button
-          type="button"
-          className="token-import-btn"
-          onClick={() => setShowImportDialog(true)}
-        >
-          导入
-        </button>
+        {!isSolanaChain && (
+          <button
+            type="button"
+            className="token-import-btn"
+            onClick={() => setShowImportDialog(true)}
+          >
+            导入
+          </button>
+        )}
       </div>
       {isLoading && tokens.length === 0 ? (
         <div className="token-loading">Loading...</div>
@@ -146,12 +186,14 @@ const TokenBalance: React.FC = () => {
           </div>
         ))
       )}
-      <ImportTokenDialog
-        isOpen={showImportDialog}
-        onClose={() => setShowImportDialog(false)}
-        onImport={handleImportToken}
-        rpcUrl={activeChain?.rpcUrl}
-      />
+      {!isSolanaChain && (
+        <ImportTokenDialog
+          isOpen={showImportDialog}
+          onClose={() => setShowImportDialog(false)}
+          onImport={handleImportToken}
+          rpcUrl={activeChain?.rpcUrl}
+        />
+      )}
     </div>
   )
 }

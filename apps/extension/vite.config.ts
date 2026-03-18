@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -9,7 +10,7 @@ const projectRoot = path.resolve(__dirname, '../..')
 
 export default defineConfig({
   root,
-  plugins: [react()],
+  plugins: [nodePolyfills({ protocolImports: true }), react()],
   resolve: {
     alias: {
       '@': path.resolve(projectRoot, 'src')
