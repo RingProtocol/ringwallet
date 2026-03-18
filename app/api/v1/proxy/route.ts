@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { injectProvider } from '@/server/proxy'
-
+//ignore proxy
 const DAPP_WHITELIST = new Set(
   (process.env.DAPP_WHITELIST || '').split(',').map(s => s.trim()).filter(Boolean)
 )

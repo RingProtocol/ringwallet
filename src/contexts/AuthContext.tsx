@@ -3,24 +3,12 @@ import WalletService from '../services/walletService'
 import { SolanaKeyService } from '../services/solanaKeyService'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
-import { ChainFamily } from '../models/ChainType'
+import { ChainFamily, type Chain } from '../models/ChainType'
+import { DEFAULT_CHAINS } from '../config/chains'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
-export type { ChainFamily }
-
-export interface Chain {
-  id: number | string;
-  name: string;
-  symbol: string;
-  rpcUrl: string;
-  explorer: string;
-  family?: ChainFamily;
-  cluster?: 'mainnet-beta' | 'devnet' | 'testnet';
-  bundlerUrl?: string;
-  entryPoint?: string;
-  factoryAddress?: string;
-}
+export type { ChainFamily, Chain }
 
 export interface Wallet {
   index: number;
@@ -72,55 +60,12 @@ export const useAuth = (): AuthContextValue => {
   return context
 }
 
-const RPC_FALLBACK: Record<number, string> = {
-  1: 'https://eth.llamarpc.com',
-  11155111: 'https://rpc.sepolia.org',
-  10: 'https://mainnet.optimism.io',
-  42161: 'https://arb1.arbitrum.io/rpc',
-  137: 'https://polygon-rpc.com',
-}
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [solanaWallets, setSolanaWallets] = useState<Wallet[]>([])
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
-
-  const rpc = (chainId: number, envUrl: string | undefined) => {
-    const fromEnv = envUrl && String(envUrl).trim()
-    const url = fromEnv || RPC_FALLBACK[chainId] || ''
-    if (chainId === 11155111 && !fromEnv) {
-      console.log('[AuthContext] Sepolia RPC: env not set, using fallback', { VITE_RPC_SEPOLIA: import.meta.env.VITE_RPC_SEPOLIA, fallback: url })
-    }
-    return url
-  }
-
-  const DEFAULT_CHAINS: Chain[] = [
-    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(1, import.meta.env.VITE_RPC_ETH_MAINNET), explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
-    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', family: ChainFamily.EVM, rpcUrl: rpc(11155111, import.meta.env.VITE_RPC_SEPOLIA), explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
-    { id: 10, name: 'Optimism', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(10, import.meta.env.VITE_RPC_OPTIMISM), explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
-    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', family: ChainFamily.EVM, rpcUrl: rpc(42161, import.meta.env.VITE_RPC_ARBITRUM), explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
-    { id: 137, name: 'Polygon', symbol: 'POL', family: ChainFamily.EVM, rpcUrl: rpc(137, import.meta.env.VITE_RPC_POLYGON), explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON },
-    {
-      id: 'solana-mainnet',
-      name: 'Solana',
-      symbol: 'SOL',
-      family: ChainFamily.Solana,
-      cluster: 'mainnet-beta',
-      rpcUrl: import.meta.env.VITE_SOLANA_MAINNET_RPC || 'https://api.mainnet-beta.solana.com',
-      explorer: 'https://solscan.io',
-    },
-    {
-      id: 'solana-devnet',
-      name: 'Solana Devnet',
-      symbol: 'SOL',
-      family: ChainFamily.Solana,
-      cluster: 'devnet',
-      rpcUrl: import.meta.env.VITE_SOLANA_DEVNET_RPC || 'https://api.devnet.solana.com',
-      explorer: 'https://solscan.io/?cluster=devnet',
-    },
-  ];
 
   const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
   const [activeChainId, setActiveChainId] = useState<number | string>(1);
