@@ -42,6 +42,9 @@ const mockAuth = {
   solanaWallets: [],
   activeSolanaWallet: null,
   isSolanaChain: false,
+  bitcoinWallets: [],
+  activeBitcoinWallet: null,
+  isBitcoinChain: false,
 }
 
 export default function TestDAppsPage() {

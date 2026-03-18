@@ -35,6 +35,7 @@ const ChainSwitcher: React.FC = () => {
 
   const chainIcon = (chain: Chain): string => {
     if (chain.family === ChainFamily.Solana) return '◎'
+    if (chain.family === ChainFamily.Bitcoin) return '₿'
     return '🌐'
   }
 

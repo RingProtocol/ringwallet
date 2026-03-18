@@ -51,6 +51,12 @@ const ENV: Record<string, ChainEnvConfig> = {
   'solana-devnet': {
     rpc: env('VITE_SOLANA_DEVNET_RPC'),
   },
+  'bitcoin-mainnet': {
+    rpc: env('VITE_BITCOIN_API'),
+  },
+  'bitcoin-testnet': {
+    rpc: env('VITE_BITCOIN_TESTNET_API'),
+  },
 }
 
 // ─── Fallback RPCs (free / public endpoints) ───
@@ -63,6 +69,8 @@ const RPC_FALLBACK: Record<string, string> = {
   '137':      'https://polygon-rpc.com',
   'solana-mainnet': 'https://api.mainnet-beta.solana.com',
   'solana-devnet':  'https://api.devnet.solana.com',
+  'bitcoin-mainnet': 'https://blockstream.info/api',
+  'bitcoin-testnet': 'https://blockstream.info/testnet/api',
 }
 
 function rpcUrl(chainId: string | number): string {
@@ -145,5 +153,23 @@ export const DEFAULT_CHAINS: Chain[] = [
     cluster: 'devnet',
     rpcUrl: rpcUrl('solana-devnet'),
     explorer: 'https://solscan.io/?cluster=devnet',
+  },
+  {
+    id: 'bitcoin-mainnet',
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    family: ChainFamily.Bitcoin,
+    rpcUrl: rpcUrl('bitcoin-mainnet'),
+    explorer: 'https://mempool.space',
+    network: 'mainnet',
+  },
+  {
+    id: 'bitcoin-testnet',
+    name: 'Bitcoin Testnet',
+    symbol: 'tBTC',
+    family: ChainFamily.Bitcoin,
+    rpcUrl: rpcUrl('bitcoin-testnet'),
+    explorer: 'https://mempool.space/testnet',
+    network: 'testnet',
   },
 ]

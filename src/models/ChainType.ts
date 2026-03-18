@@ -1,6 +1,7 @@
 export enum ChainFamily {
   EVM = 'evm',
   Solana = 'solana',
+  Bitcoin = 'bitcoin',
 }
 
 export interface Chain {
@@ -14,4 +15,6 @@ export interface Chain {
   bundlerUrl?: string;
   entryPoint?: string;
   factoryAddress?: string;
+  /** Bitcoin-specific: which network variant */
+  network?: 'mainnet' | 'testnet' | 'signet' | 'regtest';
 }

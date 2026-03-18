@@ -3,10 +3,11 @@ import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
+import { BitcoinService } from '../services/bitcoinService'
 import './BalanceDisplay.css'
 
 const BalanceDisplay: React.FC = () => {
-  const { activeWallet, activeSolanaWallet, activeChain, isSolanaChain } = useAuth()
+  const { activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain } = useAuth()
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -14,7 +15,20 @@ const BalanceDisplay: React.FC = () => {
     const fetchBalance = async () => {
       if (!activeChain?.rpcUrl) return
 
-      if (isSolanaChain) {
+      if (isBitcoinChain) {
+        if (!activeBitcoinWallet) return
+        setIsLoading(true)
+        try {
+          const service = new BitcoinService(activeChain.rpcUrl, activeChain.network === 'testnet')
+          const bal = await service.getBalance(activeBitcoinWallet.address)
+          setBalance(bal.toFixed(8))
+        } catch (error) {
+          console.error('Failed to fetch Bitcoin balance:', error)
+          setBalance('0.00000000')
+        } finally {
+          setIsLoading(false)
+        }
+      } else if (isSolanaChain) {
         if (!activeSolanaWallet) return
         setIsLoading(true)
         try {
@@ -47,9 +61,9 @@ const BalanceDisplay: React.FC = () => {
     fetchBalance()
     const interval = setInterval(fetchBalance, 15000)
     return () => clearInterval(interval)
-  }, [activeWallet, activeSolanaWallet, activeChain, isSolanaChain])
+  }, [activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain])
 
-  const displayWallet = isSolanaChain ? activeSolanaWallet : activeWallet
+  const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
   if (!displayWallet) return null
 
   return (

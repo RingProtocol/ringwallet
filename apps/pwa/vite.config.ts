@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -15,6 +17,8 @@ export default defineConfig({
   envDir: projectRoot,
   publicDir: path.resolve(projectRoot, 'public'),
   plugins: [
+    wasm(),
+    topLevelAwait(),
     nodePolyfills({ protocolImports: true }),
     react(),
     VitePWA({
@@ -67,6 +71,7 @@ export default defineConfig({
         manualChunks: {
           'solana': ['@solana/web3.js', '@solana/spl-token', 'ed25519-hd-key'],
           'ethers': ['ethers'],
+          'bitcoin': ['bitcoinjs-lib', 'bip32', 'tiny-secp256k1'],
         }
       }
     }
