@@ -17,6 +17,9 @@
     "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
     "ext:dev": "vite --config apps/extension/vite.config.ts",
     "ext:build": "vite build --config apps/extension/vite.config.ts && node apps/extension/copy-assets.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "db:seed": "node scripts/seed.js"
   },
@@ -37,9 +40,11 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
+    "@vitest/coverage-v8": "^1.6.0",
     "typescript": "^5.3.3",
     "vite": "^4.4.5",
     "vite-plugin-node-polyfills": "^0.25.0",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^1.6.0"
   }
 }
