@@ -1,4 +1,4 @@
 [submodule "docs"]
 	path = docs
-	url = git@github.com:RingProtocol/wallet-docs.git
+	url = git@github.com:RingProtocol/docs.git
 
