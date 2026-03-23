@@ -1,3 +1,4 @@
+import { buildDappProxyIframeUrl } from '@/config/dappProxy'
 import type { DAppListResponse } from '../types/dapp'
 
 const CACHE_KEY = 'ring_dapp_list'
@@ -77,7 +78,7 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
 
 export function buildDAppUrl(dappUrl: string, mode: 'proxy' | 'sdk'): string {
   if (mode === 'proxy') {
-    return `/api/v1/proxy?url=${encodeURIComponent(dappUrl)}`
+    return buildDappProxyIframeUrl(dappUrl)
   }
   const sep = dappUrl.includes('?') ? '&' : '?'
   return `${dappUrl}${sep}ring_wallet=1`
