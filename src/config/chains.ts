@@ -57,6 +57,18 @@ const ENV: Record<string, ChainEnvConfig> = {
   'bitcoin-testnet': {
     rpc: env('VITE_BITCOIN_TESTNET_API'),
   },
+  'tron-mainnet': {
+    rpc: env('VITE_TRON_MAINNET_RPC'),
+  },
+  'tron-shasta': {
+    rpc: env('VITE_TRON_SHASTA_RPC'),
+  },
+  'cosmos-hub': {
+    rpc: env('VITE_COSMOS_HUB_RPC'),
+  },
+  'provenance-mainnet': {
+    rpc: env('VITE_PROVENANCE_RPC'),
+  },
 }
 
 // ─── Fallback RPCs (free / public endpoints) ───
@@ -71,6 +83,10 @@ const RPC_FALLBACK: Record<string, string> = {
   'solana-devnet':  'https://api.devnet.solana.com',
   'bitcoin-mainnet': 'https://blockstream.info/api',
   'bitcoin-testnet': 'https://blockstream.info/testnet/api',
+  'tron-mainnet':    'https://api.trongrid.io/jsonrpc',
+  'tron-shasta':     'https://api.shasta.trongrid.io/jsonrpc',
+  'cosmos-hub':      'https://cosmos-rpc.publicnode.com',
+  'provenance-mainnet': 'https://api.provenance.io',
 }
 
 function rpcUrl(chainId: string | number): string {
@@ -85,6 +101,9 @@ function rpcUrl(chainId: string | number): string {
 export const FEATURED_CHAIN_IDS: (number | string)[] = [
   'bitcoin-mainnet',
   'solana-mainnet',
+  'tron-mainnet',
+  'cosmos-hub',
+  'provenance-mainnet',
   1,        // Ethereum
   10,       // Optimism
   42161,    // Arbitrum One
@@ -108,6 +127,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'bitcoin-testnet',
   'solana-devnet',
+  'tron-shasta',
   11155111, // Sepolia
 ]
 
@@ -202,5 +222,43 @@ export const DEFAULT_CHAINS: Chain[] = [
     rpcUrl: rpcUrl('bitcoin-testnet'),
     explorer: 'https://mempool.space/testnet',
     network: 'testnet',
+  },
+  // ─── Tron ───
+  {
+    id: 'tron-mainnet',
+    name: 'Tron',
+    symbol: 'TRX',
+    family: ChainFamily.Tron,
+    rpcUrl: rpcUrl('tron-mainnet'),
+    explorer: 'https://tronscan.org',
+  },
+  {
+    id: 'tron-shasta',
+    name: 'Tron Shasta Testnet',
+    symbol: 'TRX',
+    family: ChainFamily.Tron,
+    rpcUrl: rpcUrl('tron-shasta'),
+    explorer: 'https://shasta.tronscan.org',
+  },
+  // ─── Cosmos ───
+  {
+    id: 'cosmos-hub',
+    name: 'Cosmos Hub',
+    symbol: 'ATOM',
+    family: ChainFamily.Cosmos,
+    rpcUrl: rpcUrl('cosmos-hub'),
+    explorer: 'https://www.mintscan.io/cosmos',
+    coinType: 118,
+    addressPrefix: 'cosmos',
+  },
+  {
+    id: 'provenance-mainnet',
+    name: 'Provenance',
+    symbol: 'HASH',
+    family: ChainFamily.Cosmos,
+    rpcUrl: rpcUrl('provenance-mainnet'),
+    explorer: 'https://explorer.provenance.io',
+    coinType: 505,
+    addressPrefix: 'pb',
   },
 ]

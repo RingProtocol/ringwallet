@@ -2,6 +2,8 @@ export enum ChainFamily {
   EVM = 'evm',
   Solana = 'solana',
   Bitcoin = 'bitcoin',
+  Tron = 'tron',
+  Cosmos = 'cosmos',
 }
 
 export interface Chain {
@@ -17,4 +19,8 @@ export interface Chain {
   factoryAddress?: string;
   /** Bitcoin-specific: which network variant */
   network?: 'mainnet' | 'testnet' | 'signet' | 'regtest';
+  /** BIP44 coin type override (e.g. 505 for Provenance, 118 for Cosmos Hub) */
+  coinType?: number;
+  /** Bech32 human-readable prefix for Cosmos chains (e.g. "cosmos", "pb", "osmo") */
+  addressPrefix?: string;
 }

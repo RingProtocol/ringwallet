@@ -42,8 +42,8 @@ export interface SignResult {
 export interface ChainPlugin {
   readonly family: ChainFamily
 
-  /** Derive N accounts from a 32-byte masterSeed. */
-  deriveAccounts(masterSeed: Uint8Array, count: number): DerivedAccount[]
+  /** Derive N accounts from a 32-byte masterSeed. Options are chain-family-specific. */
+  deriveAccounts(masterSeed: Uint8Array, count: number, options?: Record<string, unknown>): DerivedAccount[]
 
   /** Check whether an address string is valid for this chain. */
   isValidAddress(address: string): boolean
