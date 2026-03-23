@@ -45,6 +45,8 @@ const mockAuth = {
   bitcoinWallets: [],
   activeBitcoinWallet: null,
   isBitcoinChain: false,
+  accountsByFamily: {},
+  activeAccount: null,
 }
 
 export default function TestDAppsPage() {

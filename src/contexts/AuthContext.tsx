@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import WalletService from '../services/walletService'
-import { SolanaKeyService } from '../services/solanaKeyService'
-import { BitcoinKeyService } from '../services/bitcoinKeyService'
+import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
+import { chainRegistry, type DerivedAccount } from '../services/chains'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, type Chain } from '../models/ChainType'
@@ -52,6 +50,11 @@ interface AuthContextValue {
   activeBitcoinWallet: Wallet | null;
   /** True when the currently selected chain is a Bitcoin chain */
   isBitcoinChain: boolean;
+
+  /** All derived accounts keyed by ChainFamily. Prefer this over the per-chain arrays. */
+  accountsByFamily: Record<string, DerivedAccount[]>;
+  /** Active account for the currently selected chain family. */
+  activeAccount: DerivedAccount | null;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -66,12 +69,20 @@ export const useAuth = (): AuthContextValue => {
   return context
 }
 
+function derivedAccountToWallet(account: DerivedAccount): Wallet {
+  return {
+    index: account.index,
+    address: account.address,
+    privateKey: account.privateKey,
+    type: WalletType.EOA,
+    path: account.path,
+  }
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
-  const [wallets, setWallets] = useState<Wallet[]>([])
-  const [solanaWallets, setSolanaWallets] = useState<Wallet[]>([])
-  const [bitcoinWallets, setBitcoinWallets] = useState<Wallet[]>([])
+  const [accountsByFamily, setAccountsByFamily] = useState<Record<string, DerivedAccount[]>>({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
   const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
@@ -109,10 +120,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchChains();
   }, []);
 
+  function deriveAllFromSeed(seed: Uint8Array, count: number) {
+    const all = chainRegistry.deriveAllAccounts(seed, count)
+    setAccountsByFamily(all)
+  }
+
   useEffect(() => {
     const savedChainId = safeGetItem('active_chain_id');
     if (savedChainId) {
-      // Numeric string → number; non-numeric string (e.g. 'solana-mainnet') → keep as string
       const parsed = Number(savedChainId);
       setActiveChainId(Number.isInteger(parsed) && !isNaN(parsed) ? parsed : savedChainId);
     }
@@ -160,22 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (loginData.user?.masterSeed) {
         const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
-        const derivedWallets = WalletService.deriveWallets(seed, 5)
-        setWallets(derivedWallets)
-
-        try {
-          const derivedSolana = SolanaKeyService.deriveWallets(seed, 5)
-          setSolanaWallets(derivedSolana)
-        } catch (e) {
-          console.error('Failed to derive Solana wallets during session restore:', e)
-        }
-
-        try {
-          const derivedBtc = BitcoinKeyService.deriveWallets(seed, 5, false)
-          setBitcoinWallets(derivedBtc)
-        } catch (e) {
-          console.error('Failed to derive Bitcoin wallets during session restore:', e)
-        }
+        deriveAllFromSeed(seed, 5)
 
         const savedIndex = safeGetItem('active_wallet_index')
         if (savedIndex !== null) {
@@ -198,23 +198,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (userData.masterSeed) {
       try {
         const seed = userData.masterSeed as Uint8Array
-        const derivedWallets = WalletService.deriveWallets(seed, 5)
-        setWallets(derivedWallets)
+        deriveAllFromSeed(seed, 5)
         setActiveWalletIndex(0)
-
-        try {
-          const derivedSolana = SolanaKeyService.deriveWallets(seed, 5)
-          setSolanaWallets(derivedSolana)
-        } catch (e) {
-          console.error('Failed to derive Solana wallets during login:', e)
-        }
-
-        try {
-          const derivedBtc = BitcoinKeyService.deriveWallets(seed, 5, false)
-          setBitcoinWallets(derivedBtc)
-        } catch (e) {
-          console.error('Failed to derive Bitcoin wallets during login:', e)
-        }
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
       }
@@ -251,16 +236,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setIsLoggedIn(false)
     setUser(null)
-    setWallets([])
-    setSolanaWallets([])
-    setBitcoinWallets([])
+    setAccountsByFamily({})
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
     safeRemoveItem('active_wallet_index')
   }
 
   const switchWallet = (index: number) => {
-    if (index >= 0 && index < wallets.length) {
+    const evmAccounts = accountsByFamily[ChainFamily.EVM] ?? []
+    if (index >= 0 && index < evmAccounts.length) {
       setActiveWalletIndex(index)
       safeSetItem('active_wallet_index', index.toString())
     }
@@ -274,12 +258,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
+  // Backward-compatible per-family wallet arrays (derived from accountsByFamily)
+  const wallets = useMemo(
+    () => (accountsByFamily[ChainFamily.EVM] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily],
+  )
+  const solanaWallets = useMemo(
+    () => (accountsByFamily[ChainFamily.Solana] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily],
+  )
+  const bitcoinWallets = useMemo(
+    () => (accountsByFamily[ChainFamily.Bitcoin] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily],
+  )
+
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
   const activeSolanaWallet = solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
   const activeBitcoinWallet = bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
   const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0];
   const isSolanaChain = activeChain?.family === ChainFamily.Solana
   const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
+
+  const activeAccount = useMemo(() => {
+    const family = activeChain?.family
+    if (!family) return null
+    const accounts = accountsByFamily[family] ?? []
+    return accounts[activeWalletIndex] ?? null
+  }, [accountsByFamily, activeChain, activeWalletIndex])
 
   const value: AuthContextValue = {
     isLoggedIn,
@@ -300,6 +305,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     bitcoinWallets,
     activeBitcoinWallet,
     isBitcoinChain,
+    accountsByFamily,
+    activeAccount,
   }
 
   return (
