@@ -1,4 +1,4 @@
-const DEFAULT_DAPP_PROXY_BASE = 'https://proxyapi.testring.org'
+const DEFAULT_DAPP_PROXY_BASE = 'http://127.0.0.1:80'
 
 function env(key: string): string | undefined {
   const val = (import.meta.env as Record<string, string | undefined>)[key]
