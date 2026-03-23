@@ -126,7 +126,7 @@ Login state (including `masterSeed`) is serialized to `localStorage` key `wallet
 | Pure utility functions | `src/utils/` |
 | Shared hooks | `src/hooks/` |
 | DApp browser feature code | `src/features/dapps/` |
-| Feature technical design / spec | `docs/` |
+| Feature technical design / spec | `docs/` (git submodule: [`wallet-docs`](https://github.com/RingProtocol/wallet-docs)) |
 | Task lists / roadmaps / plans | `task&plan/` |
 | PWA manifest, icons, service worker | `public/` |
 
