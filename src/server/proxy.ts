@@ -38,9 +38,17 @@ function toProxyUrl(absoluteUrl: string, proxyBase: string, isNav: boolean): str
 // ─── HTML injection ───
 
 const RESOURCE_ATTRS: Record<string, string[]> = {
-  script: ['src'], link: ['href'], img: ['src', 'srcset'],
-  source: ['src', 'srcset'], video: ['src', 'poster'], audio: ['src'],
-  embed: ['src'], object: ['data'], input: ['src'], iframe: ['src'],
+  script: ['src'],
+  link: ['href'],
+  img: ['src', 'srcset'],
+  source: ['src', 'srcset'],
+  video: ['src', 'poster', 'track'],
+  audio: ['src', 'track'],
+  embed: ['src'],
+  object: ['data'],
+  input: ['src'],
+  iframe: ['src'],
+  frame: ['src'],
 }
 
 function rewriteElementUrls(root: ReturnType<typeof parse>, targetOrigin: string, proxyBase: string) {
@@ -103,6 +111,9 @@ function rewriteUrlsRegex(html: string, targetOrigin: string, proxyBase: string)
     })
 }
 
+/**
+ * @param root Inject csp is not necessary, as it is stripped.
+ */
 function stripCspMeta(root: ReturnType<typeof parse>) {
   for (const meta of root.querySelectorAll('meta')) {
     const equiv = meta.getAttribute('http-equiv')

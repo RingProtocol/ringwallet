@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { injectProvider } from '@/server/proxy'
 //ignore proxy
-const DAPP_WHITELIST = new Set(
-  (process.env.DAPP_WHITELIST || '').split(',').map(s => s.trim()).filter(Boolean)
-)
 
-function isDAppAllowed(url: string): boolean {
-  if (DAPP_WHITELIST.size === 0) return true
-  try { return DAPP_WHITELIST.has(new URL(url).hostname) } catch { return false }
-}
 
 function getProxyBase(request: NextRequest): string {
   const proto = request.headers.get('x-forwarded-proto') || 'https'
@@ -19,7 +12,6 @@ function getProxyBase(request: NextRequest): string {
 export async function GET(request: NextRequest) {
   const targetUrl = request.nextUrl.searchParams.get('url')
   if (!targetUrl) return NextResponse.json({ error: 'Missing ?url= parameter' }, { status: 400 })
-  if (!isDAppAllowed(targetUrl)) return NextResponse.json({ error: 'URL not allowed' }, { status: 403 })
 
   try {
     const targetOrigin = new URL(targetUrl).origin
