@@ -162,7 +162,7 @@ export default function AdminDAppsPage() {
       chains: d.chains || [],
       category: d.category,
       featured: d.featured,
-      inject_mode: d.inject_mode,
+      inject_mode: d.inject_mode === 'proxy' ? 'proxy' : 'sdk',
       status: d.status,
       sort_order: d.sort_order ?? 0,
       apikey: d.apikey,
@@ -400,7 +400,19 @@ export default function AdminDAppsPage() {
                   ))}
                 </select>
               </div>
-              <input type="hidden" value="sdk" />
+              <div style={styles.formRow}>
+                <label style={styles.label}>注入模式</label>
+                <select
+                  style={styles.select}
+                  value={form.inject_mode === 'proxy' ? 'proxy' : 'sdk'}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, inject_mode: e.target.value as DApp['inject_mode'] }))
+                  }
+                >
+                  <option value="sdk">SDK（iframe 内 WalletBridge）</option>
+                  <option value="proxy">Proxy（经服务端代理）</option>
+                </select>
+              </div>
               <div style={styles.formRow}>
                 <label style={styles.label}>状态</label>
                 <select
