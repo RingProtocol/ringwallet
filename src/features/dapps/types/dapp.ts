@@ -7,7 +7,6 @@ export interface DAppInfo {
   chains: number[]
   category: string
   featured: boolean
-  inject_mode: 'proxy' | 'sdk'
   status: 'active' | 'maintenance' | 'deprecated'
   apikey: string
 }

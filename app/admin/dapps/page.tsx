@@ -91,7 +91,6 @@ export default function AdminDAppsPage() {
     chains: [],
     category: null,
     featured: false,
-    inject_mode: 'sdk',
     status: 'active',
     sort_order: 0,
   })

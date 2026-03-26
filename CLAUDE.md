@@ -167,7 +167,7 @@ When adding a new chain family:
 
 | Path | Status | Note |
 |------|--------|------|
-| `src/server/proxy.ts`, `app/api/v1/proxy/route.ts`, `app/api/v1/proxy-asset/route.ts` | **Unused — do not touch** | Server-side HTML-rewriting proxy for the DApp browser. Currently disabled and not called by any client code. The implementation is fragile. Do not wire it up, refactor it, or add features to it unless explicitly asked. |
+| `src/server/proxy.ts`, `app/api/v1/proxy/route.ts`, `app/api/v1/proxy-asset/route.ts` | **Removed** | Server-side HTML-rewriting proxy. These files have been deleted. |
 
 ---
 

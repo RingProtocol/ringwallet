@@ -46,7 +46,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
     bridge.notifyChainChanged('0x' + activeChainId.toString(16))
   }, [activeChainId])
 
-  const iframeSrc = buildDAppUrl(dapp.url, dapp.inject_mode)
+  const iframeSrc = buildDAppUrl(dapp.url)
 
   const handleRefresh = useCallback(() => {
     const iframe = iframeRef.current
