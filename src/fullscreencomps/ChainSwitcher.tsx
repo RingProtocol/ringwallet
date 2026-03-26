@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useAuth, type Chain } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import { FEATURED_CHAIN_IDS, FEATURED_TESTNET_IDS } from '../config/chains'
@@ -26,6 +26,31 @@ const ChainSwitcher: React.FC = () => {
   const [showAddPanel, setShowAddPanel] = useState(false)
   const [addSearchTerm, setAddSearchTerm] = useState('')
   const [userAddedIds, setUserAddedIds] = useState<(number | string)[]>(loadUserAddedIds)
+
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent | PointerEvent) => {
+      // 在捕获阶段处理，确保即使事件被阻止冒泡也能执行
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (isOpen) {
+          setIsOpen(false)
+        }
+      }
+    }
+
+    if (isOpen) {
+      // 使用 capture: true 强制在捕获阶段监听事件，防止被子组件 e.stopPropagation() 拦截
+      document.addEventListener('pointerdown', handleClickOutside, { capture: true })
+      document.addEventListener('touchstart', handleClickOutside, { capture: true })
+      document.addEventListener('mousedown', handleClickOutside, { capture: true })
+    }
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside, { capture: true })
+      document.removeEventListener('touchstart', handleClickOutside, { capture: true })
+      document.removeEventListener('mousedown', handleClickOutside, { capture: true })
+    }
+  }, [isOpen])
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen)
@@ -115,7 +140,7 @@ const ChainSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="chain-switcher-container">
+    <div className="chain-switcher-container" ref={containerRef}>
       <div className="chain-switcher-trigger" onClick={toggleDropdown}>
         <div className="chain-icon">{chainIcon(activeChain)}</div>
         <div className="chain-info">

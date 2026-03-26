@@ -12,7 +12,7 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "vite:dev": "vite --config apps/pwa/vite.config.ts",
+    "vite:dev": "vite --config apps/pwa/vite.config.ts --port 3003",
     "vite:build": "tsc && vite build --config apps/pwa/vite.config.ts",
     "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
     "ext:dev": "vite --config apps/extension/vite.config.ts",

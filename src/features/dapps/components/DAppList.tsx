@@ -73,7 +73,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
         <div className="dapp-list__featured">
           {featured.map(d => (
             <button key={d.id} className="dapp-featured-card" onClick={() => onSelectDApp(d)}>
-              <img className="dapp-featured-card__icon" src={d.icon} alt={d.name} />
+              <img className="dapp-featured-card__icon" src={d.icon || undefined} alt={d.name} />
               <span className="dapp-featured-card__name">{d.name}</span>
             </button>
           ))}

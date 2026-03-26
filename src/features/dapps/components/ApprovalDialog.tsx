@@ -146,7 +146,7 @@ const ApprovalDialog: React.FC<Props> = ({ request, onApprove, onReject }) => {
         <div className="approval-dialog__header">
           <img
             className="approval-dialog__icon"
-            src={request.dappIcon}
+            src={request.dappIcon || undefined}
             alt=""
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none'

@@ -67,7 +67,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
         <div className="dapp-container__info">
           <img
             className="dapp-container__navbar-icon"
-            src={dapp.icon}
+            src={dapp.icon || undefined}
             alt=""
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
