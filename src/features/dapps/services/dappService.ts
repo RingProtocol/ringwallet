@@ -14,7 +14,8 @@ interface RawDAppRow {
   'DApp URL'?: string
   'App logo URL'?: string
   'App description'?: string
-  ApiKey?: number | string
+  Category?: string
+  Top?: number | string
 }
 
 export function getCache(): CacheEntry | null {
@@ -66,6 +67,22 @@ function cleanField(value: unknown): string {
     .trim()
 }
 
+function parseTop(value: unknown): number {
+  const normalized = cleanField(value)
+  if (!normalized) return 0
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function getCategoryName(value: unknown): string {
+  const category = cleanField(value)
+  return category || 'General'
+}
+
+function getCategoryId(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'general'
+}
+
 function isDAppListResponse(data: unknown): data is DAppListResponse {
   if (!data || typeof data !== 'object') return false
   const value = data as Partial<DAppListResponse>
@@ -73,27 +90,35 @@ function isDAppListResponse(data: unknown): data is DAppListResponse {
 }
 
 function transformRawDAppRows(rows: RawDAppRow[]): DAppListResponse {
-  const dapps = rows.map((row, index) => ({
-    id: index + 1,
-    name: cleanField(row['App name']) || `DApp ${index + 1}`,
-    description: cleanField(row['App description']),
-    url: cleanField(row['DApp URL']),
-    icon: cleanField(row['App logo URL']),
-    chains: [],
-    category: 'general',
-    top: index === 0 ? 1 : 0,
+  const categoryMap = new Map<string, string>()
+
+  const dapps = rows.map((row, index) => {
+    const categoryName = getCategoryName(row.Category)
+    const categoryId = getCategoryId(categoryName)
+    categoryMap.set(categoryId, categoryName)
+
+    return {
+      id: index + 1,
+      name: cleanField(row['App name']) || `DApp ${index + 1}`,
+      description: cleanField(row['App description']),
+      url: cleanField(row['DApp URL']),
+      icon: cleanField(row['App logo URL']),
+      chains: [],
+      category: categoryId,
+      top: parseTop(row.Top),
+    }
+  })
+
+  const categories = Array.from(categoryMap.entries()).map(([id, name], index) => ({
+    id,
+    name,
+    icon: '',
+    sort_order: index,
   }))
 
   return {
     dapps,
-    categories: [
-      {
-        id: 'general',
-        name: 'General',
-        icon: '',
-        sort_order: 0,
-      },
-    ],
+    categories,
     updated_at: new Date().toISOString(),
   }
 }
