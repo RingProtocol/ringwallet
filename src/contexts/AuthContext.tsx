@@ -1,20 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import WalletService from '../services/walletService'
+import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
+import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY, type DerivedAccount } from '../services/chains'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
+import { ChainFamily, type Chain } from '../models/ChainType'
+import { DEFAULT_CHAINS } from '../config/chains'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
-export interface Chain {
-  id: number;
-  name: string;
-  symbol: string;
-  rpcUrl: string;
-  explorer: string;
-  bundlerUrl?: string;
-  entryPoint?: string;
-  factoryAddress?: string;
-}
+export type { ChainFamily, Chain }
 
 export interface Wallet {
   index: number;
@@ -44,12 +37,29 @@ interface AuthContextValue {
   login: (userData: UserData) => Promise<void>;
   logout: () => void;
   CHAINS: Chain[];
-  activeChainId: number;
+  activeChainId: number | string;
   activeChain: Chain;
-  switchChain: (chainId: number) => void;
+  switchChain: (chainId: number | string) => void;
+  /** Solana wallets — same index mapping as EVM wallets */
+  solanaWallets: Wallet[];
+  activeSolanaWallet: Wallet | null;
+  /** True when the currently selected chain is a Solana chain */
+  isSolanaChain: boolean;
+  /** Bitcoin wallets — same index mapping as EVM wallets */
+  bitcoinWallets: Wallet[];
+  activeBitcoinWallet: Wallet | null;
+  /** True when the currently selected chain is a Bitcoin chain */
+  isBitcoinChain: boolean;
+
+  /** All derived accounts keyed by ChainFamily. Prefer this over the per-chain arrays. */
+  accountsByFamily: Record<string, DerivedAccount[]>;
+  /** Active account for the currently selected chain family. */
+  activeAccount: DerivedAccount | null;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export { AuthContext as AuthContext__TEST_ONLY }
 
 export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext)
@@ -59,22 +69,24 @@ export const useAuth = (): AuthContextValue => {
   return context
 }
 
+function derivedAccountToWallet(account: DerivedAccount): Wallet {
+  return {
+    index: account.index,
+    address: account.address,
+    privateKey: account.privateKey,
+    type: WalletType.EOA,
+    path: account.path,
+  }
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
-  const [wallets, setWallets] = useState<Wallet[]>([])
+  const [accountsByFamily, setAccountsByFamily] = useState<Record<string, DerivedAccount[]>>({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
-  const DEFAULT_CHAINS: Chain[] = [
-    { id: 1, name: 'Ethereum Mainnet', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ETH_MAINNET, explorer: 'https://etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ETH_MAINNET, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ETH_MAINNET },
-    { id: 11155111, name: 'Sepolia Testnet', symbol: 'SepoliaETH', rpcUrl: import.meta.env.VITE_RPC_SEPOLIA, explorer: 'https://sepolia.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_SEPOLIA, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_SEPOLIA },
-    { id: 10, name: 'Optimism', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_OPTIMISM, explorer: 'https://optimistic.etherscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_OPTIMISM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_OPTIMISM },
-    { id: 42161, name: 'Arbitrum One', symbol: 'ETH', rpcUrl: import.meta.env.VITE_RPC_ARBITRUM, explorer: 'https://arbiscan.io', bundlerUrl: import.meta.env.VITE_BUNDLER_ARBITRUM, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_ARBITRUM },
-    { id: 137, name: 'Polygon', symbol: 'POL', rpcUrl: import.meta.env.VITE_RPC_POLYGON, explorer: 'https://polygonscan.com', bundlerUrl: import.meta.env.VITE_BUNDLER_POLYGON, entryPoint: import.meta.env.VITE_ENTRYPOINT_4337, factoryAddress: import.meta.env.VITE_FACTORY_POLYGON }
-  ];
-
   const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
-  const [activeChainId, setActiveChainId] = useState(1);
+  const [activeChainId, setActiveChainId] = useState<number | string>(1);
 
   useEffect(() => {
     const fetchChains = async () => {
@@ -82,18 +94,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const response = await fetch('/chainid.json');
         if (!response.ok) throw new Error('Failed to fetch chain data');
         const data = await response.json();
-        
-        // Map external chain data to our Chain interface
-        const extraChains: Chain[] = data.map((c: any) => ({
-          id: c.chainId,
-          name: c.name,
-          symbol: c.nativeCurrency?.symbol || 'ETH',
-          rpcUrl: c.rpc && c.rpc.length > 0 ? c.rpc[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '') : '',
-          explorer: c.explorers && c.explorers.length > 0 ? c.explorers[0].url : '',
-          // Bundler and other AA fields are undefined for these extra chains
-        })).filter((c: Chain) => 
-          c.rpcUrl && !c.rpcUrl.includes('${') && // Filter out RPCs that still have unreplaced variables
-          !DEFAULT_CHAINS.some(dc => dc.id === c.id) // Filter out duplicates
+
+        const extraChains: Chain[] = data.map((c: Record<string, unknown>) => ({
+          id: c.chainId as number,
+          name: c.name as string,
+          symbol: (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
+          family: ChainFamily.EVM,
+          rpcUrl: (c.rpc as string[])?.length > 0
+            ? (c.rpc as string[])[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '')
+            : '',
+          explorer: (c.explorers as Array<{ url: string }>)?.length > 0
+            ? (c.explorers as Array<{ url: string }>)[0].url
+            : '',
+        })).filter((c: Chain) =>
+          c.rpcUrl && !String(c.rpcUrl).includes('${') &&
+          !DEFAULT_CHAINS.some(dc => dc.id === c.id)
         );
 
         setChains([...DEFAULT_CHAINS, ...extraChains]);
@@ -105,10 +120,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchChains();
   }, []);
 
+  function deriveAllFromSeed(seed: Uint8Array, count: number) {
+    const all = chainRegistry.deriveAllAccounts(seed, count)
+    setAccountsByFamily(all)
+  }
+
   useEffect(() => {
     const savedChainId = safeGetItem('active_chain_id');
     if (savedChainId) {
-      setActiveChainId(parseInt(savedChainId, 10));
+      const parsed = Number(savedChainId);
+      setActiveChainId(Number.isInteger(parsed) && !isNaN(parsed) ? parsed : savedChainId);
     }
 
     const savedLoginState = safeGetItem('wallet_login_state')
@@ -154,8 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (loginData.user?.masterSeed) {
         const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
-        const derivedWallets = WalletService.deriveWallets(seed, 5)
-        setWallets(derivedWallets)
+        deriveAllFromSeed(seed, 5)
 
         const savedIndex = safeGetItem('active_wallet_index')
         if (savedIndex !== null) {
@@ -177,8 +197,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (userData.masterSeed) {
       try {
-        const derivedWallets = WalletService.deriveWallets(userData.masterSeed as Uint8Array, 5)
-        setWallets(derivedWallets)
+        const seed = userData.masterSeed as Uint8Array
+        deriveAllFromSeed(seed, 5)
         setActiveWalletIndex(0)
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
@@ -216,20 +236,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setIsLoggedIn(false)
     setUser(null)
-    setWallets([])
+    setAccountsByFamily({})
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
     safeRemoveItem('active_wallet_index')
   }
 
   const switchWallet = (index: number) => {
-    if (index >= 0 && index < wallets.length) {
+    const evmAccounts = accountsByFamily[ChainFamily.EVM] ?? []
+    if (index >= 0 && index < evmAccounts.length) {
       setActiveWalletIndex(index)
       safeSetItem('active_wallet_index', index.toString())
     }
   }
 
-  const switchChain = (chainId: number) => {
+  const switchChain = (chainId: number | string) => {
     const chain = CHAINS.find(c => c.id === chainId);
     if (chain) {
       setActiveChainId(chainId);
@@ -237,8 +258,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
+  const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0]
+  const isSolanaChain = activeChain?.family === ChainFamily.Solana
+  const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
+
+  // Backward-compatible per-family wallet arrays (derived from accountsByFamily)
+  const wallets = useMemo(
+    () => (accountsByFamily[ChainFamily.EVM] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily],
+  )
+  const solanaWallets = useMemo(
+    () => (accountsByFamily[ChainFamily.Solana] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily],
+  )
+  const bitcoinWallets = useMemo(() => {
+    const isBtcTestnet =
+      activeChain?.family === ChainFamily.Bitcoin && activeChain.network === 'testnet'
+    const key = isBtcTestnet ? BITCOIN_TESTNET_ACCOUNTS_KEY : ChainFamily.Bitcoin
+    return (accountsByFamily[key] ?? []).map(derivedAccountToWallet)
+  }, [accountsByFamily, activeChain])
+
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
-  const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0];
+  const activeSolanaWallet = solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
+  const activeBitcoinWallet = bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
+
+  const activeAccount = useMemo(() => {
+    const family = activeChain?.family
+    if (!family) return null
+    if (family === ChainFamily.Bitcoin && activeChain.network === 'testnet') {
+      return (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[activeWalletIndex] ?? null
+    }
+    const accounts = accountsByFamily[family] ?? []
+    return accounts[activeWalletIndex] ?? null
+  }, [accountsByFamily, activeChain, activeWalletIndex])
 
   const value: AuthContextValue = {
     isLoggedIn,
@@ -252,7 +304,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     CHAINS,
     activeChainId,
     activeChain,
-    switchChain
+    switchChain,
+    solanaWallets,
+    activeSolanaWallet,
+    isSolanaChain,
+    bitcoinWallets,
+    activeBitcoinWallet,
+    isBitcoinChain,
+    accountsByFamily,
+    activeAccount,
   }
 
   return (

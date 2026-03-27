@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -10,13 +13,26 @@ const projectRoot = path.resolve(__dirname, '../..')
 
 export default defineConfig({
   root,
+  // Load .env from repo root so `vite build` picks up VITE_* same as local dev
+  envDir: projectRoot,
   publicDir: path.resolve(projectRoot, 'public'),
   plugins: [
+    wasm(),
+    topLevelAwait(),
+    nodePolyfills({ protocolImports: true }),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/favicon.png', 'icons/logo.png'],
       manifestFilename: 'manifest.json',
+      workbox: {
+        // Exclude large vendor chunks from SW precache; they are loaded on demand
+        globPatterns: ['**/*.{html,css}', 'assets/index-*.js'],
+        maximumFileSizeToCacheInBytes: 600 * 1024,
+        // Use development mode to avoid workbox's internal terser minification
+        // which crashes on large precache manifests (workbox-build v7 known issue)
+        mode: 'development',
+      },
       manifest: {
         name: 'Ring Wallet',
         short_name: 'Ring Wallet',
@@ -48,7 +64,17 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(projectRoot, 'dist'),
-    emptyOutDir: true
+    emptyOutDir: true,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'solana': ['@solana/web3.js', '@solana/spl-token', 'ed25519-hd-key'],
+          'ethers': ['ethers'],
+          'bitcoin': ['bitcoinjs-lib', 'bip32', 'tiny-secp256k1'],
+        }
+      }
+    }
   },
   server: {
     port: 3000,

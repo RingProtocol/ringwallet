@@ -3,5 +3,7 @@ dist
 .next
 project.zip
 skill
-docs
 dist-extension
+**/node_modules
+.env
+.venv

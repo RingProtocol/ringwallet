@@ -10,7 +10,7 @@ interface AccountDrawerProps {
 }
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
-  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login } = useAuth()
+  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
   const [showWalletList, setShowWalletList] = useState(false)
   const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
@@ -109,15 +109,26 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
           <button className="drawer-close-btn" onClick={handleClose}>✕</button>
         </div>
 
-        {activeWallet && (
-          <div className="drawer-account-info">
-            <div className="drawer-account-icon">🔐</div>
-            <div className="drawer-account-detail">
-              <span className="drawer-account-name">Wallet #{activeWalletIndex + 1}</span>
-              <span className="drawer-account-address">{formatAddress(activeWallet.address)}</span>
+        {(() => {
+          const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
+          if (!displayWallet) return null
+          return (
+            <div className="drawer-account-info">
+              <div className="drawer-account-icon">🔐</div>
+              <div className="drawer-account-detail">
+                <span className="drawer-account-name">Wallet #{activeWalletIndex + 1}</span>
+                <div className="drawer-account-addr-row">
+                  <span className="drawer-account-address">{formatAddress(displayWallet.address)}</span>
+                  <button
+                    className="drawer-copy-btn"
+                    onClick={(e) => copyToClipboard(e, displayWallet.address)}
+                    title="Copy Address"
+                  >📋Copy</button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {featureError && (
           <div className="drawer-error">{featureError}</div>
@@ -146,7 +157,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
 
               {item.key === 'switch' && showWalletList && (
                 <div className="drawer-wallet-list">
-                  {wallets.map((wallet, index) => (
+                  {(isBitcoinChain ? bitcoinWallets : isSolanaChain ? solanaWallets : wallets).map((wallet, index) => (
                     <div
                       key={index}
                       className={`drawer-wallet-option ${index === activeWalletIndex ? 'active' : ''}`}
@@ -162,7 +173,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                           className="drawer-copy-btn"
                           onClick={(e) => copyToClipboard(e, wallet.address)}
                           title="Copy Address"
-                        >📋</button>
+                        >📋Copy</button>
                       </div>
                     </div>
                   ))}

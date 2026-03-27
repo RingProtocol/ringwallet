@@ -45,6 +45,20 @@ Live at [wallet.ring.exchange](https://wallet.ring.exchange).
 
 ## Get started
 
+Clone the repository (including the `docs` submodule):
+
+```bash
+git clone --recurse-submodules <repo-url>
+```
+
+If you already cloned without submodules, run:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then install and start the dev server:
+
 ```bash
 yarn install
 yarn dev

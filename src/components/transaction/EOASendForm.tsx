@@ -63,7 +63,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
         activeWallet.privateKey!,
         toAddress,
         amount,
-        activeChainId,
+        Number(activeChainId),
         activeChain?.rpcUrl,
         tokenOpts,
       );

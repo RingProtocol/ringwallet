@@ -99,6 +99,12 @@
   color: #1a1a2e;
 }
 
+.drawer-account-addr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .drawer-account-address {
   font-size: 0.82rem;
   color: #667;
