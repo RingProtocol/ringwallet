@@ -9,6 +9,16 @@ interface AccountDrawerProps {
   onClose: () => void
 }
 
+type MenuItem = {
+  key: string
+  icon: string
+  label: string
+  action: () => void
+  disabled?: boolean
+  sublabel?: string
+  hidden?: boolean
+}
+
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, logout, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
   const [showWalletList, setShowWalletList] = useState(false)
@@ -67,7 +77,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     handleClose()
   }
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
     { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {}, disabled: true },
     // { key: 'upgrade-sc', icon: '⬆️', label: '升级到智能合约钱包', sublabel: '即将推出', action: () => {}, disabled: true },
@@ -141,16 +151,16 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         )}
 
         <div className="drawer-menu-list">
-          {menuItems.filter(i => !('hidden' in i && i.hidden)).map((item) => (
+          {menuItems.filter(i => !i.hidden).map((item) => (
             <React.Fragment key={item.key}>
               <div
-                className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${'disabled' in item && item.disabled ? 'disabled' : ''}`}
-                onClick={'disabled' in item && item.disabled ? undefined : item.action}
+                className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
+                onClick={item.disabled ? undefined : item.action}
               >
                 <span className="drawer-menu-icon">{item.icon}</span>
                 <span className="drawer-menu-label">
                   {item.label}
-                  {'sublabel' in item && item.sublabel && (
+                  {item.sublabel && (
                     <span style={{ marginLeft: '6px', fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', padding: '1px 6px', borderRadius: '8px' }}>
                       {item.sublabel}
                     </span>
