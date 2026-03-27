@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
-import { BitcoinService } from '../services/bitcoinService'
+import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
@@ -58,7 +58,11 @@ const TokenBalance: React.FC = () => {
     const fetchBitcoinBalances = async () => {
       setIsLoading(true)
       try {
-        const service = new BitcoinService(activeChain.rpcUrl, activeChain.network === 'testnet')
+        const service = new BitcoinService(
+          activeChain.rpcUrl,
+          activeChain.network === 'testnet',
+          bitcoinForkForChain(activeChain),
+        )
         const bal = await service.getBalance(activeBitcoinWallet.address)
         setTokens([
           {

@@ -1,8 +1,35 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
+import type { Chain } from '../models/ChainType';
 import { BitcoinKeyService } from './bitcoinKeyService';
 
 bitcoin.initEccLib(ecc);
+
+export type BitcoinFork = 'mainnet' | 'testnet3' | 'testnet4';
+
+/** Resolve fork from chain config (see `Chain.bitcoinFork` in `ChainType.ts`). */
+export function bitcoinForkForChain(chain: Pick<Chain, 'id' | 'network' | 'bitcoinFork'>): BitcoinFork {
+  if (chain.bitcoinFork) return chain.bitcoinFork;
+  if (chain.network === 'mainnet') return 'mainnet';
+  if (chain.id === 'bitcoin-testnet3') return 'testnet3';
+  if (chain.network === 'testnet') return 'testnet4';
+  return 'mainnet';
+}
+
+/** When only `rpcUrl` is available (e.g. plugin broadcast). */
+export function inferBitcoinForkFromRpcUrl(rpcUrl: string): BitcoinFork {
+  const u = rpcUrl.toLowerCase();
+  if (u.includes('testnet4') || u.includes('/testnet4')) return 'testnet4';
+  if (
+    u.includes('blockstream.info/testnet') ||
+    u.includes('mempool.space/testnet/api') ||
+    (u.includes('bitcoin-testnet') && !u.includes('testnet4'))
+  ) {
+    return 'testnet3';
+  }
+  if (u.includes('testnet')) return 'testnet4';
+  return 'mainnet';
+}
 
 const SATS_PER_BTC = 100_000_000;
 const DUST_THRESHOLD = 546;
@@ -32,32 +59,41 @@ export class BitcoinService {
   private apiBase: string;
   private network: bitcoin.Network;
   private isTestnet: boolean;
+  private bitcoinFork: BitcoinFork;
   /** Esplora indexer — required for address UTXO lists; Bitcoin Core JSON-RPC alone cannot serve arbitrary-address UTXOs. */
   private static readonly MAINNET_API_FALLBACKS: BitcoinApiEndpoint[] = [
     { base: 'https://blockstream.info/api', kind: 'esplora' },
   ];
 
-  /** Testnet4 ≠ legacy testnet3; balance UTXOs must be queried from a testnet4 indexer (e.g. mempool.space/testnet4). */
-  private getTestnetFallbackEndpoints(): BitcoinApiEndpoint[] {
+  /**
+   * Testnet3 vs testnet4 share `tb1` addresses but not UTXO sets. Never mix Esplora bases across forks.
+   */
+  private getTestnetForkEndpoints(): BitcoinApiEndpoint[] {
     const env = import.meta.env as Record<string, string | undefined>;
     const addDedup = <T extends { base: string }>(list: T[], item: T) => {
       if (!list.some(x => x.base === item.base)) list.push(item);
     };
     const endpoints: BitcoinApiEndpoint[] = [];
-    for (const key of ['VITE_BITCOIN_TESTNET4_API', 'VITE_BITCOIN_TESTNET_API'] as const) {
-      const raw = env[key]?.trim();
-      if (!raw) continue;
-      const base = this.normalizeBase(raw);
-      addDedup(endpoints, { base, kind: this.detectApiKind(base) });
+    if (this.bitcoinFork === 'testnet4') {
+      const raw = env.VITE_BITCOIN_TESTNET4_API?.trim();
+      if (raw) addDedup(endpoints, { base: this.normalizeBase(raw), kind: this.detectApiKind(raw) });
+      addDedup(endpoints, { base: 'https://mempool.space/testnet4/api', kind: 'esplora' });
+    } else if (this.bitcoinFork === 'testnet3') {
+      for (const key of ['VITE_BITCOIN_TESTNET3_API', 'VITE_BITCOIN_TESTNET_API'] as const) {
+        const raw = env[key]?.trim();
+        if (!raw) continue;
+        addDedup(endpoints, { base: this.normalizeBase(raw), kind: this.detectApiKind(raw) });
+      }
+      addDedup(endpoints, { base: 'https://mempool.space/testnet/api', kind: 'esplora' });
+      addDedup(endpoints, { base: 'https://blockstream.info/testnet/api', kind: 'esplora' });
     }
-    addDedup(endpoints, { base: 'https://mempool.space/testnet4/api', kind: 'esplora' });
-    addDedup(endpoints, { base: 'https://blockstream.info/testnet/api', kind: 'esplora' });
     return endpoints;
   }
 
-  constructor(apiBase: string, isTestnet: boolean) {
+  constructor(apiBase: string, isTestnet: boolean, bitcoinFork?: BitcoinFork) {
     this.apiBase = apiBase.replace(/\/$/, '');
     this.isTestnet = isTestnet;
+    this.bitcoinFork = bitcoinFork ?? (isTestnet ? 'testnet4' : 'mainnet');
     this.network = BitcoinKeyService.getNetwork(isTestnet);
   }
 
@@ -75,7 +111,7 @@ export class BitcoinService {
     ];
 
     if (this.isTestnet) {
-      candidates.push(...this.getTestnetFallbackEndpoints());
+      candidates.push(...this.getTestnetForkEndpoints());
     } else {
       candidates.push(
         ...BitcoinService.MAINNET_API_FALLBACKS.map(e => ({

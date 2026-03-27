@@ -148,6 +148,8 @@ When adding a new chain family:
 3. Add chain entries + env overrides to `DEFAULT_CHAINS` in `src/config/chains.ts`.
 4. Branch on `activeChain.family` in the UI layer — do **not** embed chain-specific logic directly in components.
 
+**Switching chains (testnets, Bitcoin forks):** see [`docs/test-switch-chain.md`](docs/test-switch-chain.md) — what updates when `activeChain` changes, and why Bitcoin Testnet3 vs Testnet4 need separate `bitcoinFork` / Esplora indexers.
+
 ### Signing Flow
 
 1. `PasskeyService.verifyIdentity()` — biometric gate.

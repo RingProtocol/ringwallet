@@ -81,9 +81,9 @@ class BitcoinChainPlugin implements ChainPlugin {
       throw new Error('[BitcoinPlugin] masterSeed required in options for Bitcoin signing')
     }
 
-    const { BitcoinService } = await import('../../bitcoinService')
+    const { BitcoinService, bitcoinForkForChain } = await import('../../bitcoinService')
 
-    const service = new BitcoinService(req.rpcUrl, isTestnet)
+    const service = new BitcoinService(req.rpcUrl, isTestnet, bitcoinForkForChain(req.chainConfig))
     const amountSats = Math.round(parseFloat(req.amount) * 1e8)
     const feeRate = opts.feeRate as number | undefined
 
@@ -100,9 +100,9 @@ class BitcoinChainPlugin implements ChainPlugin {
   }
 
   async broadcastTransaction(signed: SignResult, rpcUrl: string): Promise<string> {
-    const { BitcoinService } = await import('../../bitcoinService')
+    const { BitcoinService, inferBitcoinForkFromRpcUrl } = await import('../../bitcoinService')
     const isTestnet = rpcUrl.includes('testnet')
-    const service = new BitcoinService(rpcUrl, isTestnet)
+    const service = new BitcoinService(rpcUrl, isTestnet, inferBitcoinForkFromRpcUrl(rpcUrl))
     return service.broadcast(signed.rawTx)
   }
 }

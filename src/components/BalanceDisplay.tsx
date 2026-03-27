@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
-import { BitcoinService } from '../services/bitcoinService'
+import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import './BalanceDisplay.css'
 
 const BalanceDisplay: React.FC = () => {
@@ -19,7 +19,11 @@ const BalanceDisplay: React.FC = () => {
         if (!activeBitcoinWallet) return
         setIsLoading(true)
         try {
-          const service = new BitcoinService(activeChain.rpcUrl, activeChain.network === 'testnet')
+          const service = new BitcoinService(
+            activeChain.rpcUrl,
+            activeChain.network === 'testnet',
+            bitcoinForkForChain(activeChain),
+          )
           const bal = await service.getBalance(activeBitcoinWallet.address)
           setBalance(bal.toFixed(8))
         } catch (error) {

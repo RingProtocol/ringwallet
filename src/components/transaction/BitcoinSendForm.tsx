@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import PasskeyService from '../../services/passkeyService';
-import { BitcoinService } from '../../services/bitcoinService';
+import { BitcoinService, bitcoinForkForChain } from '../../services/bitcoinService';
 import { BitcoinKeyService } from '../../services/bitcoinKeyService';
 import '../TransactionActions.css';
 
@@ -61,7 +61,7 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
     if (isNaN(amountBtc) || amountBtc <= 0) return;
 
     try {
-      const service = new BitcoinService(activeChain.rpcUrl, isTestnet);
+      const service = new BitcoinService(activeChain.rpcUrl, isTestnet, bitcoinForkForChain(activeChain));
       const amountSats = BitcoinService.btcToSats(amountBtc);
       const { feeSats, feeRate } = await service.estimateFeeSats(
         activeBitcoinWallet.address,
@@ -104,7 +104,7 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
         ? seed
         : new Uint8Array(Object.values(seed as unknown as Record<string, number>));
 
-      const service = new BitcoinService(activeChain.rpcUrl, isTestnet);
+      const service = new BitcoinService(activeChain.rpcUrl, isTestnet, bitcoinForkForChain(activeChain));
       const amountSats = BitcoinService.btcToSats(amountBtc);
 
       setIsBroadcasting(true);

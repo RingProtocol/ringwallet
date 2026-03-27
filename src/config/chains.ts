@@ -55,8 +55,13 @@ const ENV: Record<string, ChainEnvConfig> = {
   'bitcoin-mainnet': {
     rpc: env('VITE_BITCOIN_API'),
   },
+  /** Testnet4 only — do not fall back to `VITE_BITCOIN_TESTNET_API` (that is typically testnet3 / Alchemy `bitcoin-testnet`). */
   'bitcoin-testnet': {
-    rpc: env('VITE_BITCOIN_TESTNET4_API') || env('VITE_BITCOIN_TESTNET_API'),
+    rpc: env('VITE_BITCOIN_TESTNET4_API'),
+  },
+  /** Legacy testnet3; `VITE_BITCOIN_TESTNET_API` is wired here for typical Alchemy `bitcoin-testnet` URLs. */
+  'bitcoin-testnet3': {
+    rpc: env('VITE_BITCOIN_TESTNET3_API') || env('VITE_BITCOIN_TESTNET_API'),
   },
   'tron-mainnet': {
     rpc: env('VITE_TRON_MAINNET_RPC'),
@@ -84,6 +89,7 @@ const RPC_FALLBACK: Record<string, string> = {
   'solana-devnet':  'https://api.devnet.solana.com',
   'bitcoin-mainnet': 'https://blockstream.info/api',
   'bitcoin-testnet': 'https://mempool.space/testnet4/api',
+  'bitcoin-testnet3': 'https://blockstream.info/testnet/api',
   'tron-mainnet':    'https://api.trongrid.io/jsonrpc',
   'tron-shasta':     'https://api.shasta.trongrid.io/jsonrpc',
   'cosmos-hub':      'https://cosmos-rpc.publicnode.com',
@@ -127,6 +133,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
 
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'bitcoin-testnet',
+  'bitcoin-testnet3',
   'solana-devnet',
   'tron-shasta',
   11155111, // Sepolia
@@ -214,6 +221,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     rpcUrl: rpcUrl('bitcoin-mainnet'),
     explorer: 'https://mempool.space',
     network: 'mainnet',
+    bitcoinFork: 'mainnet',
   },
   {
     id: 'bitcoin-testnet',
@@ -223,6 +231,17 @@ export const DEFAULT_CHAINS: Chain[] = [
     rpcUrl: rpcUrl('bitcoin-testnet'),
     explorer: 'https://mempool.space/testnet4',
     network: 'testnet',
+    bitcoinFork: 'testnet4',
+  },
+  {
+    id: 'bitcoin-testnet3',
+    name: 'Bitcoin Testnet3',
+    symbol: 'tBTC',
+    family: ChainFamily.Bitcoin,
+    rpcUrl: rpcUrl('bitcoin-testnet3'),
+    explorer: 'https://mempool.space/testnet',
+    network: 'testnet',
+    bitcoinFork: 'testnet3',
   },
   // ─── Tron ───
   {
