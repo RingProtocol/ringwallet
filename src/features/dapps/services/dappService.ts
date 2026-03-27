@@ -40,6 +40,11 @@ function getExpiredCache(): DAppListResponse | null {
   }
 }
 
+function env(key: string): string | undefined {
+  const val = (import.meta.env as Record<string, string | undefined>)[key]
+  return val?.trim() || undefined
+}
+
 function getTestDappKey(): string | null {
   if (typeof window === 'undefined') return null
   return new URLSearchParams(window.location.search).get('testdapp')
@@ -47,6 +52,8 @@ function getTestDappKey(): string | null {
 
 export async function fetchDAppList(): Promise<DAppListResponse> {
   const testKey = getTestDappKey()
+  const dappUrl = env('VITE_DAPP_URL')
+  const dappKey = env('VITE_DAPP_KEY')
 
   if (!testKey) {
     const cached = getCache()
@@ -54,8 +61,14 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
   }
 
   try {
-    let url = '/api/v1/dapps'
-    if (testKey) url += `?testdapp=${encodeURIComponent(testKey)}`
+    let url: string
+    if (testKey && dappUrl) {
+      url = `${dappUrl}?testdapp=${encodeURIComponent(testKey)}`
+    } else if (dappUrl && dappKey) {
+      url = `${dappUrl}?secret=${encodeURIComponent(dappKey)}`
+    } else {
+      throw new Error('DAPP_URL or DAPP_KEY is not configured')
+    }
 
     const res = await fetch(url, {
       headers: {
