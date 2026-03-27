@@ -21,7 +21,7 @@ We believe ownership should feel natural, safe, and open. Ring Wallet is our ste
 
 ## License
 
-Ring Wallet is **open source** under the **GLP License**.  
+Ring Wallet is **open source** under the **GPL License**.  
 You are free to use, modify, and distribute the code for **personal and non-commercial purposes** at no cost. Commercial use is not permitted.
 
 ---
