@@ -8,6 +8,14 @@ interface CacheEntry {
   timestamp: number
 }
 
+interface RawDAppRow {
+  'App name'?: string
+  'DApp URL'?: string
+  'App logo URL'?: string
+  'App description'?: string
+  ApiKey?: number | string
+}
+
 function getCache(): CacheEntry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
@@ -45,40 +53,94 @@ function env(key: string): string | undefined {
   return val?.trim() || undefined
 }
 
-function getTestDappKey(): string | null {
+function getTestDappApiKey(): string | null {
   if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('testdapp')
+  return new URLSearchParams(window.location.search).get('apikey')
+}
+
+function cleanField(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .replace(/^[`'"\s]+|[`'"\s]+$/g, '')
+    .trim()
+}
+
+function isDAppListResponse(data: unknown): data is DAppListResponse {
+  if (!data || typeof data !== 'object') return false
+  const value = data as Partial<DAppListResponse>
+  return Array.isArray(value.dapps) && Array.isArray(value.categories) && typeof value.updated_at === 'string'
+}
+
+function transformRawDAppRows(rows: RawDAppRow[]): DAppListResponse {
+  const dapps = rows.map((row, index) => ({
+    id: index + 1,
+    name: cleanField(row['App name']) || `DApp ${index + 1}`,
+    description: cleanField(row['App description']),
+    url: cleanField(row['DApp URL']),
+    icon: cleanField(row['App logo URL']),
+    chains: [],
+    category: 'general',
+    featured: index === 0,
+    status: 'active' as const,
+    apikey: cleanField(row.ApiKey),
+  }))
+
+  return {
+    dapps,
+    categories: [
+      {
+        id: 'general',
+        name: 'General',
+        icon: '',
+        sort_order: 0,
+      },
+    ],
+    updated_at: new Date().toISOString(),
+  }
+}
+
+function normalizeDAppListResponse(data: unknown): DAppListResponse {
+  if (isDAppListResponse(data)) return data
+  if (Array.isArray(data)) {
+    return transformRawDAppRows(data as RawDAppRow[])
+  }
+  throw new Error('Invalid DApp list response format')
 }
 
 export async function fetchDAppList(): Promise<DAppListResponse> {
-  const testKey = getTestDappKey()
+  const cached = getCache()
+  if (cached) return cached.data
+
+  const apikey = env('VITE_TEST_API_KEY') || getTestDappApiKey()
   const dappUrl = env('VITE_DAPP_URL')
-  const dappKey = env('VITE_DAPP_KEY')
-
-  if (!testKey) {
-    const cached = getCache()
-    if (cached) return cached.data
+  const dappToken = env('VITE_DAPP_TOKEN')
+  console.log("dappUrl:", dappUrl)
+  console.log("dappToken:", dappToken)
+  if (!dappUrl) {
+    throw new Error('DAPP_URL is not configured')
   }
-
+  console.log("apikey:", apikey)
   try {
-    let url: string
-    if (testKey && dappUrl) {
-      url = `${dappUrl}?testdapp=${encodeURIComponent(testKey)}`
-    } else if (dappUrl && dappKey) {
-      url = `${dappUrl}?secret=${encodeURIComponent(dappKey)}`
-    } else {
-      throw new Error('DAPP_URL or DAPP_KEY is not configured')
+    let url: string = dappUrl
+    if (apikey && dappToken) {
+      url = `${dappUrl}?testdapp=${encodeURIComponent(apikey)}&secret=${encodeURIComponent(dappToken)}`
+    } else if (dappToken) {
+      url = `${dappUrl}?secret=${encodeURIComponent(dappToken)}`
+    } else if (apikey) {
+      url = `${dappUrl}?testdapp=${encodeURIComponent(apikey)}`
     }
+    console.log("Fetching DApp list from " + url);
 
     const res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'X-Wallet-Version': '1.0.0',
-        'X-Platform': 'pwa',
-      },
+      // headers: {
+      //   'Accept': 'application/json',
+      //   'X-Wallet-Version': '1.0.0',
+      //   'X-Platform': 'pwa',
+      // },
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data: DAppListResponse = await res.json()
+    const raw = await res.json()
+    const data = normalizeDAppListResponse(raw)
     setCache(data)
     return data
   } catch (err) {

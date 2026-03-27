@@ -1,3 +1,22 @@
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+const dotenvPath = resolve(process.cwd(), '.env')
+try {
+  const content = readFileSync(dotenvPath, 'utf8')
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eqIndex = trimmed.indexOf('=')
+    if (eqIndex < 0) continue
+    const key = trimmed.slice(0, eqIndex)
+    const val = trimmed.slice(eqIndex + 1).replace(/^["']|["']$/g, '')
+    if (key.startsWith('VITE_')) {
+      process.env[key] = val
+    }
+  }
+} catch {}
+
 /**
  * RPC and other VITE_* vars are inlined at build time via webpack DefinePlugin below.
  * On Vercel: add VITE_RPC_ETH_MAINNET etc. under Project → Environment Variables,
