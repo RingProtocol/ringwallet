@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { DAppInfo, DAppCategory } from '../types/dapp'
-import { fetchDAppList } from '../services/dappService'
-
-function getTestDappApiKey(): string | null {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('testdapp')
-}
+import { fetchDAppList, getCache } from '../services/dappService'
 
 export function useDAppList() {
   const [dapps, setDapps] = useState<DAppInfo[]>([])
@@ -14,17 +9,26 @@ export function useDAppList() {
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    setLoading(true)
+    const cached = getCache()
+
     setError(null)
+
+    if (cached?.data) {
+      setDapps(cached.data.dapps)
+      setCategories(cached.data.categories)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+
     try {
       const data = await fetchDAppList()
-      const testKey = getTestDappApiKey()
-      setDapps(data.dapps.filter(d =>
-        d.status === 'active' || (testKey && d.apikey === testKey)
-      ))
+      setDapps(data.dapps)
       setCategories(data.categories)
     } catch (err) {
-      setError((err as Error).message || 'Failed to load DApps')
+      if (!cached?.data) {
+        setError((err as Error).message || 'Failed to load DApps')
+      }
     } finally {
       setLoading(false)
     }

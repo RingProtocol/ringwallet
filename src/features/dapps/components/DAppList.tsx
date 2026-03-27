@@ -33,14 +33,17 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
     return list
   }, [dapps, activeCategory, search])
 
-  const featured = useMemo(() => dapps.filter(d => d.featured), [dapps])
+  const featured = useMemo(
+    () => dapps.filter(d => d.top > 0).sort((a, b) => b.top - a.top),
+    [dapps],
+  )
 
   if (loading) {
     return (
       <div className="dapp-list">
         <div className="dapp-list__loading">
           <div className="dapp-list__spinner" />
-          <span>加载 DApps...</span>
+          <span>Loading DApps...</span>
         </div>
       </div>
     )
@@ -50,8 +53,8 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
     return (
       <div className="dapp-list">
         <div className="dapp-list__error">
-          <span>加载失败: {error}</span>
-          <button className="dapp-list__retry-btn" onClick={reload}>重试</button>
+          <span>Loading failed: {error}</span>
+          <button className="dapp-list__retry-btn" onClick={reload}>Retry</button>
         </div>
       </div>
     )
@@ -62,7 +65,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
       <div className="dapp-list__search">
         <input
           type="text"
-          placeholder="搜索 DApp..."
+          placeholder="Search DApp..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="dapp-list__search-input"
@@ -85,7 +88,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
           className={`dapp-category-btn ${activeCategory === 'all' ? 'active' : ''}`}
           onClick={() => setActiveCategory('all')}
         >
-          All
+          全部
         </button>
         {categories.map(c => (
           <button
@@ -100,7 +103,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
 
       <div className="dapp-list__grid">
         {filtered.length === 0 ? (
-          <div className="dapp-list__empty">暂无 DApp</div>
+          <div className="dapp-list__empty">No DApps</div>
         ) : (
           filtered.map(d => (
             <DAppCard key={d.id} dapp={d} onClick={onSelectDApp} />

@@ -6,9 +6,7 @@ export interface DAppInfo {
   icon: string
   chains: number[]
   category: string
-  featured: boolean
-  status: 'active' | 'maintenance' | 'deprecated'
-  apikey: string
+  top: number
 }
 
 export interface DAppCategory {

@@ -6,6 +6,7 @@ const CACHE_TTL = 5 * 60 * 1000
 interface CacheEntry {
   data: DAppListResponse
   timestamp: number
+  is_cached: boolean
 }
 
 interface RawDAppRow {
@@ -16,7 +17,7 @@ interface RawDAppRow {
   ApiKey?: number | string
 }
 
-function getCache(): CacheEntry | null {
+export function getCache(): CacheEntry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
     if (!raw) return null
@@ -30,7 +31,7 @@ function getCache(): CacheEntry | null {
 
 function setCache(data: DAppListResponse): void {
   try {
-    const entry: CacheEntry = { data, timestamp: Date.now() }
+    const entry: CacheEntry = { data, timestamp: Date.now(), is_cached: true }
     localStorage.setItem(CACHE_KEY, JSON.stringify(entry))
   } catch {
     // storage full or unavailable
@@ -80,9 +81,7 @@ function transformRawDAppRows(rows: RawDAppRow[]): DAppListResponse {
     icon: cleanField(row['App logo URL']),
     chains: [],
     category: 'general',
-    featured: index === 0,
-    status: 'active' as const,
-    apikey: cleanField(row.ApiKey),
+    top: index === 0 ? 1 : 0,
   }))
 
   return {
@@ -108,9 +107,6 @@ function normalizeDAppListResponse(data: unknown): DAppListResponse {
 }
 
 export async function fetchDAppList(): Promise<DAppListResponse> {
-  const cached = getCache()
-  if (cached) return cached.data
-
   const apikey = env('VITE_TEST_API_KEY') || getTestDappApiKey()
   const dappUrl = env('VITE_DAPP_URL')
   const dappToken = env('VITE_DAPP_TOKEN')
