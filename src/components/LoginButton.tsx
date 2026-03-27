@@ -8,7 +8,7 @@ import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import './LoginButton.css'
 
 const LoginButton: React.FC = () => {
-  const { isLoggedIn, login, logout, activeWallet } = useAuth()
+  const { isLoggedIn, login } = useAuth()
   const [hasLoginHistory, setHasLoginHistory] = useState(true)
 
   useEffect(() => {
@@ -143,22 +143,8 @@ const LoginButton: React.FC = () => {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-  }
-
   if (isLoggedIn) {
-    return (
-      <div className="login-status">
-        <div className="user-info">
-          <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: '#eef2ff', color: '#334155', fontSize: '12px' }}>
-            {activeWallet?.type === WalletType.SmartContract ? '钱包类型: 智能合约' : '钱包类型: EOA'}
-          </span>
-        </div>
-
-        <button className="logout-button" onClick={handleLogout} style={{ marginTop: '20px' }}>退出登录</button>
-      </div>
-    )
+    return null
   }
 
   return (

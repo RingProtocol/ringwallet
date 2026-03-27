@@ -1,4 +1,8 @@
 .multi-tabs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   width: 100%;
   margin-top: 16px;
 }
@@ -33,5 +37,6 @@
 }
 
 .tabs-content {
+  flex: 1;
   min-height: 120px;
 }

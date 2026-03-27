@@ -10,7 +10,7 @@ interface AccountDrawerProps {
 }
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
-  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
+  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, logout, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
   const [showWalletList, setShowWalletList] = useState(false)
   const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
@@ -62,16 +62,22 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     }
   }
 
+  const handleLogout = () => {
+    logout()
+    handleClose()
+  }
+
   const menuItems = [
     { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
     { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {}, disabled: true },
-    { key: 'upgrade-sc', icon: '⬆️', label: '升级到智能合约钱包', sublabel: '即将推出', action: () => {}, disabled: true },
-    { key: 'signing-scheme', icon: '🔏', label: 'Passkey 原生签名 (secp256r1)', sublabel: '即将推出', action: () => {}, disabled: true },
-    { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
-    { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
-    { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
+    // { key: 'upgrade-sc', icon: '⬆️', label: '升级到智能合约钱包', sublabel: '即将推出', action: () => {}, disabled: true },
+    // { key: 'signing-scheme', icon: '🔏', label: 'Passkey 原生签名 (secp256r1)', sublabel: '即将推出', action: () => {}, disabled: true },
+    // { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
+    // { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
+    // { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
     { key: 'feedback', icon: '💬', label: 'Feedback', action: () => setShowFeedback(true) },
     { key: 'about', icon: 'ℹ️', label: 'About', action: () => setShowAbout(true) },
+    { key: 'logout', icon: '↩️', label: '退出登录', action: handleLogout },
   ]
 
   return (
