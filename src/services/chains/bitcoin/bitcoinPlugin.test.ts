@@ -65,6 +65,13 @@ describe('BitcoinPlugin — deriveAccounts', () => {
   it('throws on seed shorter than 16 bytes', () => {
     expect(() => plugin.deriveAccounts(new Uint8Array(8), 1)).toThrow()
   })
+
+  it('derives tb1q addresses when options.isTestnet is true', () => {
+    const accounts = plugin.deriveAccounts(KNOWN_SEED, 2, { isTestnet: true })
+    expect(accounts[0].path).toBe("m/44'/1'/0'/0/0")
+    expect(accounts[0].address).toMatch(/^tb1q/)
+    expect(accounts[0].meta?.isTestnet).toBe(true)
+  })
 })
 
 describe('BitcoinPlugin — isValidAddress', () => {

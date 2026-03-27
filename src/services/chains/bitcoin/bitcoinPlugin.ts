@@ -29,13 +29,12 @@ function deriveNode(masterSeed: Uint8Array, isTestnet: boolean, index: number): 
 class BitcoinChainPlugin implements ChainPlugin {
   readonly family = ChainFamily.Bitcoin
 
-  deriveAccounts(masterSeed: Uint8Array, count: number): DerivedAccount[] {
+  deriveAccounts(masterSeed: Uint8Array, count: number, options?: Record<string, unknown>): DerivedAccount[] {
     if (!masterSeed || masterSeed.length < 16) {
       throw new Error('[BitcoinPlugin] Invalid masterSeed: must be at least 16 bytes')
     }
 
-    // Derive mainnet accounts by default; testnet accounts use meta flag
-    const isTestnet = false
+    const isTestnet = options?.isTestnet === true
     const network = getNetwork(isTestnet)
 
     return Array.from({ length: count }, (_, i) => {

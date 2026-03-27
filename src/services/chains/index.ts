@@ -1,6 +1,6 @@
 export type { ChainPlugin, DerivedAccount, SignRequest, SignResult } from './types'
 export { ChainFamily } from './types'
-export { chainRegistry } from './registry'
+export { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY } from './registry'
 
 import './evm/evmPlugin'
 import './solana/solanaPlugin'

@@ -97,6 +97,7 @@ const ChainSwitcher: React.FC = () => {
       if (chain) ordered.push(chain)
     }
 
+    //custom chain
     for (const id of userAddedIds) {
       if (seen.has(id)) continue
       seen.add(id)

@@ -51,11 +51,12 @@ const ENV: Record<string, ChainEnvConfig> = {
   'solana-devnet': {
     rpc: env('VITE_SOLANA_DEVNET_RPC'),
   },
+  // May be Esplora base URL or Alchemy `https://bitcoin-mainnet.g.alchemy.com/v2/<key>` — UTXO reads still use Esplora fallback in BitcoinService.
   'bitcoin-mainnet': {
     rpc: env('VITE_BITCOIN_API'),
   },
   'bitcoin-testnet': {
-    rpc: env('VITE_BITCOIN_TESTNET_API'),
+    rpc: env('VITE_BITCOIN_TESTNET4_API') || env('VITE_BITCOIN_TESTNET_API'),
   },
   'tron-mainnet': {
     rpc: env('VITE_TRON_MAINNET_RPC'),
@@ -82,7 +83,7 @@ const RPC_FALLBACK: Record<string, string> = {
   'solana-mainnet': 'https://api.mainnet-beta.solana.com',
   'solana-devnet':  'https://api.devnet.solana.com',
   'bitcoin-mainnet': 'https://blockstream.info/api',
-  'bitcoin-testnet': 'https://blockstream.info/testnet/api',
+  'bitcoin-testnet': 'https://mempool.space/testnet4/api',
   'tron-mainnet':    'https://api.trongrid.io/jsonrpc',
   'tron-shasta':     'https://api.shasta.trongrid.io/jsonrpc',
   'cosmos-hub':      'https://cosmos-rpc.publicnode.com',
@@ -216,11 +217,11 @@ export const DEFAULT_CHAINS: Chain[] = [
   },
   {
     id: 'bitcoin-testnet',
-    name: 'Bitcoin Testnet',
+    name: 'Bitcoin Testnet4',
     symbol: 'tBTC',
     family: ChainFamily.Bitcoin,
     rpcUrl: rpcUrl('bitcoin-testnet'),
-    explorer: 'https://mempool.space/testnet',
+    explorer: 'https://mempool.space/testnet4',
     network: 'testnet',
   },
   // ─── Tron ───

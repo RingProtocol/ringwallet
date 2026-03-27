@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
-import { chainRegistry, type DerivedAccount } from '../services/chains'
+import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY, type DerivedAccount } from '../services/chains'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, type Chain } from '../models/ChainType'
@@ -258,6 +258,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
+  const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0]
+  const isSolanaChain = activeChain?.family === ChainFamily.Solana
+  const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
+
   // Backward-compatible per-family wallet arrays (derived from accountsByFamily)
   const wallets = useMemo(
     () => (accountsByFamily[ChainFamily.EVM] ?? []).map(derivedAccountToWallet),
@@ -267,21 +271,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     () => (accountsByFamily[ChainFamily.Solana] ?? []).map(derivedAccountToWallet),
     [accountsByFamily],
   )
-  const bitcoinWallets = useMemo(
-    () => (accountsByFamily[ChainFamily.Bitcoin] ?? []).map(derivedAccountToWallet),
-    [accountsByFamily],
-  )
+  const bitcoinWallets = useMemo(() => {
+    const isBtcTestnet =
+      activeChain?.family === ChainFamily.Bitcoin && activeChain.network === 'testnet'
+    const key = isBtcTestnet ? BITCOIN_TESTNET_ACCOUNTS_KEY : ChainFamily.Bitcoin
+    return (accountsByFamily[key] ?? []).map(derivedAccountToWallet)
+  }, [accountsByFamily, activeChain])
 
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
   const activeSolanaWallet = solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
   const activeBitcoinWallet = bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
-  const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0];
-  const isSolanaChain = activeChain?.family === ChainFamily.Solana
-  const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
 
   const activeAccount = useMemo(() => {
     const family = activeChain?.family
     if (!family) return null
+    if (family === ChainFamily.Bitcoin && activeChain.network === 'testnet') {
+      return (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[activeWalletIndex] ?? null
+    }
     const accounts = accountsByFamily[family] ?? []
     return accounts[activeWalletIndex] ?? null
   }, [accountsByFamily, activeChain, activeWalletIndex])

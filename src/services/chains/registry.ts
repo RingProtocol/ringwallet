@@ -1,6 +1,9 @@
 import { ChainFamily } from '../../models/ChainType'
 import type { ChainPlugin, DerivedAccount } from './types'
 
+/** Second slot for Bitcoin testnet (m/44'/1'/…); mainnet stays under `ChainFamily.Bitcoin`. */
+export const BITCOIN_TESTNET_ACCOUNTS_KEY = 'bitcoin_testnet' as const
+
 class ChainPluginRegistry {
   private plugins = new Map<ChainFamily, ChainPlugin>()
 
@@ -36,6 +39,11 @@ class ChainPluginRegistry {
     for (const [family, plugin] of this.plugins) {
       try {
         result[family] = plugin.deriveAccounts(masterSeed, count)
+        if (family === ChainFamily.Bitcoin) {
+          result[BITCOIN_TESTNET_ACCOUNTS_KEY] = plugin.deriveAccounts(masterSeed, count, {
+            isTestnet: true,
+          })
+        }
       } catch (e) {
         console.error(`[ChainRegistry] Failed to derive ${family} accounts:`, e)
         result[family] = []

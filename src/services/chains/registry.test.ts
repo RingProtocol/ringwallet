@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chainRegistry } from './index'
+import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY } from './index'
 import { ChainFamily } from '../../models/ChainType'
 
 const KNOWN_SEED = new Uint8Array(
@@ -37,6 +37,7 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
     expect(all[ChainFamily.EVM]).toHaveLength(3)
     expect(all[ChainFamily.Solana]).toHaveLength(3)
     expect(all[ChainFamily.Bitcoin]).toHaveLength(3)
+    expect(all[BITCOIN_TESTNET_ACCOUNTS_KEY]).toHaveLength(3)
     expect(all[ChainFamily.Tron]).toHaveLength(3)
     expect(all[ChainFamily.Cosmos]).toHaveLength(3)
   })
@@ -53,6 +54,7 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
     expect(all[ChainFamily.EVM][0].address).toMatch(/^0x/)
     expect(all[ChainFamily.Solana][0].address).toMatch(/^[1-9A-HJ-NP-Za-km-z]+$/)
     expect(all[ChainFamily.Bitcoin][0].address).toMatch(/^bc1q/)
+    expect(all[BITCOIN_TESTNET_ACCOUNTS_KEY][0].address).toMatch(/^tb1q/)
     expect(all[ChainFamily.Tron][0].address).toMatch(/^T/)
     expect(all[ChainFamily.Cosmos][0].address).toMatch(/^cosmos1/)
   })

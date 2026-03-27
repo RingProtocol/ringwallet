@@ -21,10 +21,39 @@ export interface FeeEstimates {
   [blocks: string]: number;
 }
 
+type BitcoinApiKind = 'esplora' | 'alchemy';
+
+interface BitcoinApiEndpoint {
+  base: string;
+  kind: BitcoinApiKind;
+}
+
 export class BitcoinService {
   private apiBase: string;
   private network: bitcoin.Network;
   private isTestnet: boolean;
+  /** Esplora indexer — required for address UTXO lists; Bitcoin Core JSON-RPC alone cannot serve arbitrary-address UTXOs. */
+  private static readonly MAINNET_API_FALLBACKS: BitcoinApiEndpoint[] = [
+    { base: 'https://blockstream.info/api', kind: 'esplora' },
+  ];
+
+  /** Testnet4 ≠ legacy testnet3; balance UTXOs must be queried from a testnet4 indexer (e.g. mempool.space/testnet4). */
+  private getTestnetFallbackEndpoints(): BitcoinApiEndpoint[] {
+    const env = import.meta.env as Record<string, string | undefined>;
+    const addDedup = <T extends { base: string }>(list: T[], item: T) => {
+      if (!list.some(x => x.base === item.base)) list.push(item);
+    };
+    const endpoints: BitcoinApiEndpoint[] = [];
+    for (const key of ['VITE_BITCOIN_TESTNET4_API', 'VITE_BITCOIN_TESTNET_API'] as const) {
+      const raw = env[key]?.trim();
+      if (!raw) continue;
+      const base = this.normalizeBase(raw);
+      addDedup(endpoints, { base, kind: this.detectApiKind(base) });
+    }
+    addDedup(endpoints, { base: 'https://mempool.space/testnet4/api', kind: 'esplora' });
+    addDedup(endpoints, { base: 'https://blockstream.info/testnet/api', kind: 'esplora' });
+    return endpoints;
+  }
 
   constructor(apiBase: string, isTestnet: boolean) {
     this.apiBase = apiBase.replace(/\/$/, '');
@@ -32,9 +61,139 @@ export class BitcoinService {
     this.network = BitcoinKeyService.getNetwork(isTestnet);
   }
 
+  private normalizeBase(base: string): string {
+    return base.replace(/\/$/, '');
+  }
+
+  private detectApiKind(base: string): BitcoinApiKind {
+    return /alchemy\.com\/v2\//i.test(base) ? 'alchemy' : 'esplora';
+  }
+
+  private getApiCandidates(kind?: BitcoinApiKind): BitcoinApiEndpoint[] {
+    const candidates: BitcoinApiEndpoint[] = [
+      { base: this.normalizeBase(this.apiBase), kind: this.detectApiKind(this.apiBase) },
+    ];
+
+    if (this.isTestnet) {
+      candidates.push(...this.getTestnetFallbackEndpoints());
+    } else {
+      candidates.push(
+        ...BitcoinService.MAINNET_API_FALLBACKS.map(e => ({
+          base: this.normalizeBase(e.base),
+          kind: e.kind,
+        })),
+      );
+    }
+
+    const unique = candidates.filter((candidate, index, arr) => {
+      return arr.findIndex(x => x.base === candidate.base) === index;
+    });
+
+    return kind ? unique.filter(c => c.kind === kind) : unique;
+  }
+
+  private assertAddressMatchesNetwork(address: string, label: 'source' | 'recipient' | 'address' = 'address'): void {
+    const target = label === 'recipient' ? 'recipient Bitcoin address' : label === 'source' ? 'source Bitcoin address' : 'Bitcoin address';
+    if (!BitcoinKeyService.isValidAddress(address)) {
+      throw new Error(`Invalid ${target}. Only bech32 P2WPKH (bc1q/tb1q) is supported`);
+    }
+    if (!BitcoinKeyService.isValidAddress(address, this.isTestnet)) {
+      const expectedPrefix = this.isTestnet ? 'tb1q' : 'bc1q';
+      throw new Error(`Address network mismatch for ${target}: expected ${expectedPrefix} address for current chain`);
+    }
+  }
+
+  private async fetchWithFallback(path: string, init?: RequestInit, kind?: BitcoinApiKind): Promise<Response> {
+    const failures: string[] = [];
+
+    for (const endpoint of this.getApiCandidates(kind)) {
+      try {
+        const res = await fetch(`${endpoint.base}${path}`, init);
+        if (res.ok) return res;
+
+        const body = await res.text().catch(() => '');
+        failures.push(
+          `${endpoint.base} [${endpoint.kind}] -> ${res.status} ${res.statusText || '(no statusText)'} ${body}`.trim(),
+        );
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        failures.push(`${endpoint.base} [${endpoint.kind}] -> ${msg}`);
+      }
+    }
+
+    throw new Error(
+      `Request failed for ${path}. Tried ${failures.length} endpoint(s)${kind ? ` (${kind})` : ''}: ${failures.join(' | ')}`,
+    );
+  }
+
+  /**
+   * Alchemy Bitcoin endpoints speak JSON-RPC (Bitcoin Core–compatible), not Esplora REST.
+   */
+  private async alchemyJsonRpc(baseUrl: string, method: string, params: unknown[] = []): Promise<unknown> {
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+    });
+    const body = await res.text().catch(() => '');
+    let parsed: { result?: unknown; error?: { code?: number; message?: string } };
+    try {
+      parsed = JSON.parse(body) as { result?: unknown; error?: { code?: number; message?: string } };
+    } catch {
+      throw new Error(`Alchemy JSON-RPC invalid response: HTTP ${res.status} ${body}`);
+    }
+    if (parsed.error) {
+      throw new Error(`Alchemy JSON-RPC error: ${parsed.error.message ?? JSON.stringify(parsed.error)}`);
+    }
+    if (!res.ok) {
+      throw new Error(`Alchemy JSON-RPC HTTP ${res.status}: ${body}`);
+    }
+    return parsed.result;
+  }
+
+  /** Bitcoin Core `estimatesmartfee` returns BTC/kB; convert to sat/vB for Esplora-style fee math. */
+  private static btcPerKbToSatPerVbyte(feerateBtcPerKb: number): number {
+    if (!Number.isFinite(feerateBtcPerKb) || feerateBtcPerKb <= 0) return 5;
+    return Math.max(1, Math.ceil((feerateBtcPerKb * SATS_PER_BTC) / 1000));
+  }
+
+  private async getFeeRateViaAlchemyRpc(targetBlocks: number): Promise<number> {
+    const failures: string[] = [];
+    const confTarget = Math.min(1008, Math.max(1, targetBlocks));
+    for (const endpoint of this.getApiCandidates('alchemy')) {
+      try {
+        const result = await this.alchemyJsonRpc(endpoint.base, 'estimatesmartfee', [confTarget, 'ECONOMICAL']);
+        const obj = result as { feerate?: number };
+        if (obj?.feerate !== undefined && obj.feerate > 0) {
+          return BitcoinService.btcPerKbToSatPerVbyte(obj.feerate);
+        }
+        failures.push(`${endpoint.base} -> empty or invalid feerate: ${JSON.stringify(result)}`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        failures.push(`${endpoint.base} -> ${msg}`);
+      }
+    }
+    throw new Error(`estimatesmartfee failed. Tried ${failures.length} endpoint(s): ${failures.join(' | ')}`);
+  }
+
+  private async broadcastViaAlchemyRpc(txHex: string): Promise<string> {
+    const failures: string[] = [];
+    for (const endpoint of this.getApiCandidates('alchemy')) {
+      try {
+        const result = await this.alchemyJsonRpc(endpoint.base, 'sendrawtransaction', [txHex]);
+        if (typeof result === 'string' && result.length > 0) return result;
+        failures.push(`${endpoint.base} -> unexpected result: ${JSON.stringify(result)}`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        failures.push(`${endpoint.base} -> ${msg}`);
+      }
+    }
+    throw new Error(`sendrawtransaction failed. Tried ${failures.length} endpoint(s): ${failures.join(' | ')}`);
+  }
+
   async getUtxos(address: string): Promise<Utxo[]> {
-    const res = await fetch(`${this.apiBase}/address/${address}/utxo`);
-    if (!res.ok) throw new Error(`Failed to fetch UTXOs: ${res.statusText}`);
+    this.assertAddressMatchesNetwork(address, 'address');
+    const res = await this.fetchWithFallback(`/address/${address}/utxo`, undefined, 'esplora');
     return res.json();
   }
 
@@ -56,10 +215,17 @@ export class BitcoinService {
    * Returns fee rate in sat/vByte for the target confirmation blocks.
    */
   async getFeeRate(targetBlocks: number = 3): Promise<number> {
-    const res = await fetch(`${this.apiBase}/fee-estimates`);
-    if (!res.ok) throw new Error(`Failed to fetch fee estimates: ${res.statusText}`);
-    const data: FeeEstimates = await res.json();
-    return data[String(targetBlocks)] ?? data['6'] ?? data['3'] ?? 5;
+    try {
+      const res = await this.fetchWithFallback('/fee-estimates', undefined, 'esplora');
+      const data: FeeEstimates = await res.json();
+      return data[String(targetBlocks)] ?? data['6'] ?? data['3'] ?? 5;
+    } catch {
+      try {
+        return await this.getFeeRateViaAlchemyRpc(targetBlocks);
+      } catch {
+        return 5;
+      }
+    }
   }
 
   /**
@@ -107,9 +273,8 @@ export class BitcoinService {
   }): Promise<{ txHex: string; fee: number }> {
     const { fromAddress, toAddress, amountSats, masterSeed, addressIndex } = params;
 
-    if (!BitcoinKeyService.isValidAddress(toAddress)) {
-      throw new Error('Invalid recipient Bitcoin address');
-    }
+    this.assertAddressMatchesNetwork(fromAddress, 'source');
+    this.assertAddressMatchesNetwork(toAddress, 'recipient');
 
     const utxos = await this.getUtxos(fromAddress);
     if (!utxos.length) throw new Error('No UTXOs available');
@@ -184,16 +349,16 @@ export class BitcoinService {
 
   /** Broadcast a raw transaction hex. Returns the txid. */
   async broadcast(txHex: string): Promise<string> {
-    const res = await fetch(`${this.apiBase}/tx`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: txHex,
-    });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Broadcast failed: ${errorText}`);
+    try {
+      const res = await this.fetchWithFallback('/tx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: txHex,
+      }, 'esplora');
+      return res.text();
+    } catch {
+      return this.broadcastViaAlchemyRpc(txHex);
     }
-    return res.text();
   }
 
   /** Convert satoshis to BTC string. */
