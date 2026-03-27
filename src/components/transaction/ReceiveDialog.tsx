@@ -1,5 +1,6 @@
 import React from 'react';
 import '../TransactionActions.css';
+import { useI18n } from '../../i18n';
 
 interface ReceiveDialogProps {
   address: string;
@@ -7,9 +8,10 @@ interface ReceiveDialogProps {
 }
 
 const ReceiveDialog: React.FC<ReceiveDialogProps> = ({ address, onClose }) => {
+  const { t } = useI18n()
   const copyToClipboard = () => {
     navigator.clipboard.writeText(address);
-    alert('已复制到剪贴板');
+    alert(t('copiedToClipboard'));
   };
 
   return (

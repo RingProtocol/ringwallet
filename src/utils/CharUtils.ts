@@ -28,7 +28,7 @@ class CharUtils {
     try {
       return Array.from(new Uint8Array(data as ArrayBuffer));
     } catch (e) {
-      console.warn('CharUtils.uint8ArrayToArray: 无法转换数据', e);
+      console.warn('CharUtils.uint8ArrayToArray: failed to convert data', e);
       return null;
     }
   }
@@ -55,7 +55,7 @@ class CharUtils {
         }
         return new Uint8Array(Object.values(obj).map(v => typeof v === 'number' ? v : Number(v)));
       } catch (e) {
-        console.warn('CharUtils.arrayToUint8Array: 无法从对象创建', e, data);
+        console.warn('CharUtils.arrayToUint8Array: failed to create from object', e, data);
         return null;
       }
     }
@@ -80,7 +80,7 @@ class CharUtils {
       }
       return bytes;
     } catch (e) {
-      console.warn('CharUtils.base64ToUint8Array: Base64 解码失败', e);
+      console.warn('CharUtils.base64ToUint8Array: Base64 decode failed', e);
       return null;
     }
   }
@@ -100,7 +100,7 @@ class CharUtils {
       }
       return this.base64ToUint8Array(base64);
     } catch (e) {
-      console.warn('CharUtils.base64URLToUint8Array: Base64URL 解码失败', e);
+      console.warn('CharUtils.base64URLToUint8Array: Base64URL decode failed', e);
       return null;
     }
   }
@@ -118,7 +118,7 @@ class CharUtils {
     if (!hex || typeof hex !== 'string') return null;
     const cleanHex = hex.startsWith('0x') || hex.startsWith('0X') ? hex.slice(2) : hex;
     if (cleanHex.length % 2 !== 0) {
-      console.warn('CharUtils.hexToUint8Array: 十六进制字符串长度必须是偶数');
+      console.warn('CharUtils.hexToUint8Array: hex string length must be even');
       return null;
     }
     const bytes = new Uint8Array(cleanHex.length / 2);
@@ -143,7 +143,7 @@ class CharUtils {
 
   static coseKeyToStorage(coseKey: CoseKey | null | undefined): CoseStorageFormat | null {
     if (!coseKey) {
-      console.warn('CharUtils.coseKeyToStorage: coseKey 为空');
+      console.warn('CharUtils.coseKeyToStorage: coseKey is empty');
       return null;
     }
 
@@ -153,7 +153,7 @@ class CharUtils {
       x = coseKey.get(-2);
       y = coseKey.get(-3);
       if (!x || !y) {
-        console.warn('CharUtils.coseKeyToStorage: Map 中缺少 -2 或 -3 键', {
+        console.warn('CharUtils.coseKeyToStorage: missing -2 or -3 key in Map', {
           hasMinus2: coseKey.has(-2),
           hasMinus3: coseKey.has(-3)
         });
@@ -164,7 +164,7 @@ class CharUtils {
       y = obj[-3] !== undefined ? obj[-3] : ((obj as { get?: (k: number) => unknown }).get?.(-3));
 
       if (!x || !y) {
-        console.warn('CharUtils.coseKeyToStorage: 对象中缺少 -2 或 -3 键', {
+        console.warn('CharUtils.coseKeyToStorage: missing -2 or -3 key in object', {
           hasMinus2: -2 in obj,
           hasMinus3: -3 in obj,
           hasGet: typeof (obj as { get?: unknown }).get === 'function',
@@ -172,12 +172,12 @@ class CharUtils {
         });
       }
     } else {
-      console.warn('CharUtils.coseKeyToStorage: 无效的 COSE 密钥格式', typeof coseKey);
+      console.warn('CharUtils.coseKeyToStorage: invalid COSE key format', typeof coseKey);
       return null;
     }
 
     if (!x || !y) {
-      console.warn('CharUtils.coseKeyToStorage: COSE 密钥缺少 x 或 y 坐标', {
+      console.warn('CharUtils.coseKeyToStorage: COSE key missing x or y coordinate', {
         hasX: !!x,
         hasY: !!y,
         xType: typeof x,
@@ -190,7 +190,7 @@ class CharUtils {
     const yArray = this.uint8ArrayToArray(y as ByteLike);
 
     if (!xArray || !yArray) {
-      console.warn('CharUtils.coseKeyToStorage: 无法转换 x 或 y 坐标为数组', {
+      console.warn('CharUtils.coseKeyToStorage: failed to convert x or y coordinate to array', {
         xType: typeof x,
         xIsUint8Array: x instanceof Uint8Array,
         yType: typeof y,
@@ -205,7 +205,7 @@ class CharUtils {
       y: Array.isArray(yArray) ? yArray : Array.from(yArray)
     };
 
-    DbgLog.log('CharUtils.coseKeyToStorage: 成功转换 COSE 密钥', {
+    DbgLog.log('CharUtils.coseKeyToStorage: COSE key converted successfully', {
       xLength: result.x.length,
       yLength: result.y.length
     });
@@ -215,7 +215,7 @@ class CharUtils {
 
   static coseKeyFromStorage(storageData: CoseStorageFormat | CoseKey | null | undefined): Map<number, Uint8Array> | null {
     if (!storageData) {
-      console.warn('CharUtils.coseKeyFromStorage: storageData 为空');
+      console.warn('CharUtils.coseKeyFromStorage: storageData is empty');
       return null;
     }
 
@@ -223,7 +223,7 @@ class CharUtils {
       if (storageData.has(-2) && storageData.has(-3)) {
         return storageData as Map<number, Uint8Array>;
       } else {
-        console.warn('CharUtils.coseKeyFromStorage: Map 格式无效，缺少 -2 或 -3 键');
+        console.warn('CharUtils.coseKeyFromStorage: invalid Map format (missing -2 or -3 key)');
         return null;
       }
     }
@@ -231,7 +231,7 @@ class CharUtils {
     if (typeof storageData === 'object' && storageData !== null) {
       const keys = Object.keys(storageData);
       if (keys.length === 0) {
-        console.warn('CharUtils.coseKeyFromStorage: storageData 是空对象 {}');
+        console.warn('CharUtils.coseKeyFromStorage: storageData is an empty object {}');
         return null;
       }
     }
@@ -245,9 +245,9 @@ class CharUtils {
         if (typed.x && typed.y) {
           xArray = typed.x;
           yArray = typed.y;
-          DbgLog.log('CharUtils.coseKeyFromStorage: 使用新格式 {_type: "Map", x, y}');
+          DbgLog.log('CharUtils.coseKeyFromStorage: using new format {_type: "Map", x, y}');
         } else {
-          console.warn('CharUtils.coseKeyFromStorage: _type="Map" 但缺少 x 或 y', {
+          console.warn('CharUtils.coseKeyFromStorage: _type="Map" but missing x or y', {
             hasX: !!typed.x,
             hasY: !!typed.y,
             xType: typeof typed.x,
@@ -257,11 +257,11 @@ class CharUtils {
       } else if ((obj as { x?: unknown; y?: unknown }).x !== undefined && (obj as { x?: unknown; y?: unknown }).y !== undefined) {
         xArray = (obj as { x: unknown }).x;
         yArray = (obj as { y: unknown }).y;
-        DbgLog.log('CharUtils.coseKeyFromStorage: 使用旧格式 {x, y}');
+        DbgLog.log('CharUtils.coseKeyFromStorage: using legacy format {x, y}');
       } else if (obj[-2] !== undefined && obj[-3] !== undefined) {
         xArray = this.uint8ArrayToArray(obj[-2] as ByteLike);
         yArray = this.uint8ArrayToArray(obj[-3] as ByteLike);
-        DbgLog.log('CharUtils.coseKeyFromStorage: 使用数字键格式 {-2, -3}');
+        DbgLog.log('CharUtils.coseKeyFromStorage: using numeric-key format {-2, -3}');
       } else if (typeof (obj as { get?: unknown }).get === 'function') {
         const getter = obj as { get: (k: number) => unknown };
         const xVal = getter.get(-2);
@@ -269,14 +269,14 @@ class CharUtils {
         if (xVal !== undefined && yVal !== undefined) {
           xArray = this.uint8ArrayToArray(xVal as ByteLike);
           yArray = this.uint8ArrayToArray(yVal as ByteLike);
-          DbgLog.log('CharUtils.coseKeyFromStorage: 使用 get 方法');
+          DbgLog.log('CharUtils.coseKeyFromStorage: using get() method');
         }
       }
 
       if (!xArray || !yArray) {
         const keys = Object.keys(storageData);
-        console.warn('CharUtils.coseKeyFromStorage: 尝试所有键:', keys);
-        console.warn('CharUtils.coseKeyFromStorage: 存储数据详情:', {
+        console.warn('CharUtils.coseKeyFromStorage: tried all keys:', keys);
+        console.warn('CharUtils.coseKeyFromStorage: storage data details:', {
           keys,
           xExists: 'x' in obj || -2 in obj,
           yExists: 'y' in obj || -3 in obj,
@@ -285,12 +285,12 @@ class CharUtils {
         });
       }
     } else {
-      console.warn('CharUtils.coseKeyFromStorage: storageData 不是对象', typeof storageData);
+      console.warn('CharUtils.coseKeyFromStorage: storageData is not an object', typeof storageData);
     }
 
     if (!xArray || !yArray) {
-      console.warn('CharUtils.coseKeyFromStorage: 无法从存储数据中提取 x 或 y 坐标');
-      console.warn('存储数据:', JSON.stringify(storageData, null, 2));
+      console.warn('CharUtils.coseKeyFromStorage: failed to extract x or y coordinate from storage data');
+      console.warn('Storage data:', JSON.stringify(storageData, null, 2));
       return null;
     }
 
@@ -299,7 +299,7 @@ class CharUtils {
       if (converted) {
         xArray = converted;
       } else {
-        console.warn('CharUtils.coseKeyFromStorage: x 不是数组且无法转换', typeof xArray, xArray);
+        console.warn('CharUtils.coseKeyFromStorage: x is not an array and cannot be converted', typeof xArray, xArray);
         return null;
       }
     }
@@ -309,7 +309,7 @@ class CharUtils {
       if (converted) {
         yArray = converted;
       } else {
-        console.warn('CharUtils.coseKeyFromStorage: y 不是数组且无法转换', typeof yArray, yArray);
+        console.warn('CharUtils.coseKeyFromStorage: y is not an array and cannot be converted', typeof yArray, yArray);
         return null;
       }
     }
@@ -318,7 +318,7 @@ class CharUtils {
     const yBytes = this.arrayToUint8Array(yArray as number[]);
 
     if (!xBytes || !yBytes) {
-      console.warn('CharUtils.coseKeyFromStorage: 无法将数组转换为 Uint8Array', {
+      console.warn('CharUtils.coseKeyFromStorage: failed to convert arrays to Uint8Array', {
         xArrayType: typeof xArray,
         xArrayIsArray: Array.isArray(xArray),
         xArrayLength: Array.isArray(xArray) ? xArray.length : 'N/A',
@@ -330,7 +330,7 @@ class CharUtils {
     }
 
     if (xBytes.length !== 32 || yBytes.length !== 32) {
-      console.warn('CharUtils.coseKeyFromStorage: 坐标长度不正确，期望 32 字节', {
+      console.warn('CharUtils.coseKeyFromStorage: unexpected coordinate length (expected 32 bytes)', {
         xLength: xBytes.length,
         yLength: yBytes.length
       });
@@ -340,7 +340,7 @@ class CharUtils {
     coseKey.set(-2, xBytes);
     coseKey.set(-3, yBytes);
 
-    DbgLog.log('CharUtils.coseKeyFromStorage: 成功恢复 COSE 密钥', {
+    DbgLog.log('CharUtils.coseKeyFromStorage: COSE key restored successfully', {
       xLength: xBytes.length,
       yLength: yBytes.length
     });
@@ -414,7 +414,7 @@ class CharUtils {
     if (typeof publicKey === 'object' && publicKey !== null &&
         !(publicKey instanceof Map) &&
         Object.keys(publicKey).length === 0) {
-      console.warn('CharUtils.normalizeCoseKey: publicKey 是空对象');
+      console.warn('CharUtils.normalizeCoseKey: publicKey is an empty object');
       return null;
     }
 
@@ -437,7 +437,7 @@ class CharUtils {
       return map;
     }
 
-    console.warn('CharUtils.normalizeCoseKey: 无法规范化公钥格式', publicKey);
+    console.warn('CharUtils.normalizeCoseKey: failed to normalize publicKey format', publicKey);
     return null;
   }
 

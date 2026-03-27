@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { syncToDevice } from '../features/syncToDevice'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
+import { useI18n } from '../i18n'
 
 interface AccountDrawerProps {
   isOpen: boolean
@@ -21,6 +22,7 @@ type MenuItem = {
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, logout, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
+  const { lang, setLang, t } = useI18n()
   const [showWalletList, setShowWalletList] = useState(false)
   const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
@@ -60,13 +62,13 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     try {
       const result = await syncToDevice({ user, login })
       if (result.success) {
-        alert('✅ 账号同步成功！\n\n已在此设备上创建了包含相同钱包密钥的 Passkey。\n下次您可以直接在此设备上使用生物识别登录，无需扫码。')
+        alert(`✅ ${t('syncSuccessTitle')}!\n\n${t('syncSuccessBody')}`)
         handleClose()
       } else {
-        setFeatureError(result.error || '同步失败')
+        setFeatureError(result.error || t('syncFailed'))
       }
     } catch (err) {
-      setFeatureError('同步错误: ' + (err as Error).message)
+      setFeatureError(t('syncErrorPrefix', { message: (err as Error).message }))
     } finally {
       setFeatureLoading(null)
     }
@@ -78,16 +80,17 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   }
 
   const menuItems: MenuItem[] = [
-    { key: 'switch', icon: '🔄', label: '切换账号', action: () => setShowWalletList(!showWalletList) },
-    { key: 'notifications', icon: '🔔', label: '通知设置', action: () => {}, disabled: true },
-    // { key: 'upgrade-sc', icon: '⬆️', label: '升级到智能合约钱包', sublabel: '即将推出', action: () => {}, disabled: true },
-    // { key: 'signing-scheme', icon: '🔏', label: 'Passkey 原生签名 (secp256r1)', sublabel: '即将推出', action: () => {}, disabled: true },
-    // { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? '同步中...' : '从 Android 迁移', action: handleMigrate, disabled: featureLoading === 'migrate' },
-    // { key: 'security', icon: '🛡️', label: '安全检查', action: () => {}, disabled: true },
+    { key: 'switch', icon: '🔄', label: t('switchAccount'), action: () => setShowWalletList(!showWalletList) },
+    { key: 'notifications', icon: '🔔', label: t('notifications'), action: () => {}, disabled: true },
+    { key: 'language', icon: '🌐', label: t('language'), sublabel: lang === 'en' ? t('english') : t('chinese'), action: () => setLang(lang === 'en' ? 'zh' : 'en') },
+    // { key: 'upgrade-sc', icon: '⬆️', label: 'Upgrade to smart account', sublabel: 'Coming soon', action: () => {}, disabled: true },
+    // { key: 'signing-scheme', icon: '🔏', label: 'Passkey native signing (secp256r1)', sublabel: 'Coming soon', action: () => {}, disabled: true },
+    // { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? t('syncing') : t('migrateFromAndroid'), action: handleMigrate, disabled: featureLoading === 'migrate' },
+    // { key: 'security', icon: '🛡️', label: 'Security check', action: () => {}, disabled: true },
     // { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
-    { key: 'feedback', icon: '💬', label: 'Feedback', action: () => setShowFeedback(true) },
-    { key: 'about', icon: 'ℹ️', label: 'About', action: () => setShowAbout(true) },
-    { key: 'logout', icon: '↩️', label: '退出登录', action: handleLogout },
+    { key: 'feedback', icon: '💬', label: t('feedback'), action: () => setShowFeedback(true) },
+    { key: 'about', icon: 'ℹ️', label: t('about'), action: () => setShowAbout(true) },
+    { key: 'logout', icon: '↩️', label: t('logout'), action: handleLogout },
   ]
 
   return (
@@ -96,7 +99,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         <div className="about-overlay visible" onClick={() => setShowFeedback(false)}>
           <div className="feedback-modal" onClick={(e) => e.stopPropagation()}>
             <div className="about-header">
-              <h3>Feedback</h3>
+              <h3>{t('feedback')}</h3>
               <button className="about-close-btn" onClick={() => setShowFeedback(false)}>✕</button>
             </div>
             <iframe
@@ -111,7 +114,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         <div className="about-overlay visible" onClick={() => setShowAbout(false)}>
           <div className="about-modal" onClick={(e) => e.stopPropagation()}>
             <div className="about-header">
-              <h3>About</h3>
+              <h3>{t('about')}</h3>
               <button className="about-close-btn" onClick={() => setShowAbout(false)}>✕</button>
             </div>
             <Introduce />
@@ -121,7 +124,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
       <div className={`drawer-overlay ${isOpen ? 'visible' : ''}`} onClick={handleClose} />
       <div className={`account-drawer ${isOpen ? 'open' : ''}`}>
         <div className="drawer-header">
-          <h3>账户</h3>
+          <h3>{t('account')}</h3>
           <button className="drawer-close-btn" onClick={handleClose}>✕</button>
         </div>
 
@@ -132,14 +135,14 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
             <div className="drawer-account-info">
               <div className="drawer-account-icon">🔐</div>
               <div className="drawer-account-detail">
-                <span className="drawer-account-name">Wallet #{activeWalletIndex + 1}</span>
+                <span className="drawer-account-name">{t('wallet')} #{activeWalletIndex + 1}</span>
                 <div className="drawer-account-addr-row">
                   <span className="drawer-account-address">{formatAddress(displayWallet.address)}</span>
                   <button
                     className="drawer-copy-btn"
                     onClick={(e) => copyToClipboard(e, displayWallet.address)}
-                    title="Copy Address"
-                  >📋Copy</button>
+                    title={t('copy')}
+                  >📋{t('copy')}</button>
                 </div>
               </div>
             </div>
@@ -180,7 +183,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                       onClick={() => handleSelectWallet(index)}
                     >
                       <div className="drawer-wallet-row">
-                        <span className="drawer-wallet-name">Wallet #{index + 1}</span>
+                        <span className="drawer-wallet-name">{t('wallet')} #{index + 1}</span>
                         {index === activeWalletIndex && <span className="drawer-wallet-check">✓</span>}
                       </div>
                       <div className="drawer-wallet-addr-row">
@@ -188,8 +191,8 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                         <button
                           className="drawer-copy-btn"
                           onClick={(e) => copyToClipboard(e, wallet.address)}
-                          title="Copy Address"
-                        >📋Copy</button>
+                          title={t('copy')}
+                        >📋{t('copy')}</button>
                       </div>
                     </div>
                   ))}

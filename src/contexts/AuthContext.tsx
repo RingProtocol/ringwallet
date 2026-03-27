@@ -215,13 +215,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const storageFormat = CharUtils.coseKeyToStorage(pk as Map<number, Uint8Array>);
         if (storageFormat) {
           userDataForStorage.publicKey = storageFormat;
-          DbgLog.log('✅ Public Key 已转换为存储格式');
+          DbgLog.log('✅ Public Key converted to storage format');
         } else {
-          console.warn('⚠️ 无法转换 publicKey 为存储格式，将跳过保存以避免序列化错误');
+          console.warn('⚠️ Failed to convert publicKey to storage format; skipping save to avoid serialization errors');
           delete userDataForStorage.publicKey;
         }
       } else {
-        DbgLog.log('✅ Public Key 已经是存储格式');
+        DbgLog.log('✅ Public Key is already in storage format');
       }
     }
 

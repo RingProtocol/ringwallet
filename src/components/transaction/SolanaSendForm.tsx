@@ -4,6 +4,7 @@ import PasskeyService from '../../services/passkeyService';
 import { SolanaService } from '../../services/solanaService';
 import { SolanaKeyService } from '../../services/solanaKeyService';
 import '../TransactionActions.css';
+import { useI18n } from '../../i18n';
 
 interface SolanaSendFormProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface SolanaSendFormProps {
 
 const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
   const { activeSolanaWallet, activeChain, user } = useAuth();
+  const { t } = useI18n()
 
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
@@ -34,7 +36,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
 
   const validateAddress = (addr: string): boolean => {
     if (!SolanaKeyService.isValidAddress(addr)) {
-      setAddressError('无效的 Solana 地址');
+      setAddressError(t('invalidAddress'));
       return false;
     }
     setAddressError('');
@@ -68,7 +70,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      setError('请输入有效金额');
+      setError(t('invalidAmount'));
       return;
     }
 
@@ -77,7 +79,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
       if (user?.id) {
         const verified = await PasskeyService.verifyIdentity(user.id);
         if (!verified) {
-          setError('生物识别验证失败，交易已取消');
+          setError(t('txCanceledBiometricFailed'));
           return;
         }
       }
@@ -173,10 +175,10 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
             </a>
             <div className="modal-actions">
               <button
-                onClick={() => navigator.clipboard.writeText(txSignature).then(() => alert('已复制'))}
+                onClick={() => navigator.clipboard.writeText(txSignature).then(() => alert(t('copied')))}
                 className="copy-btn"
               >
-                Copy Signature
+                {t('copySignature')}
               </button>
               <button onClick={handleClose} className="secondary-btn">
                 Close

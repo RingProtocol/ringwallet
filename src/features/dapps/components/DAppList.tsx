@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useDAppList } from '../hooks/useDAppList'
 import DAppCard from './DAppCard'
 import type { DAppInfo } from '../types/dapp'
+import { useI18n } from '../../../i18n'
 
 interface Props {
   onSelectDApp: (dapp: DAppInfo) => void
@@ -10,6 +11,7 @@ interface Props {
 
 const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
   const { dapps, categories, loading, error, reload } = useDAppList()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!loading && dapps.length > 0 && onDAppsReady) {
@@ -43,7 +45,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
       <div className="dapp-list">
         <div className="dapp-list__loading">
           <div className="dapp-list__spinner" />
-          <span>Loading DApps...</span>
+          <span>{t('loadingDapps')}</span>
         </div>
       </div>
     )
@@ -53,8 +55,8 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
     return (
       <div className="dapp-list">
         <div className="dapp-list__error">
-          <span>Loading failed: {error}</span>
-          <button className="dapp-list__retry-btn" onClick={reload}>Retry</button>
+          <span>{t('loadingFailed', { error })}</span>
+          <button className="dapp-list__retry-btn" onClick={reload}>{t('retry')}</button>
         </div>
       </div>
     )
@@ -65,7 +67,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
       <div className="dapp-list__search">
         <input
           type="text"
-          placeholder="Search DApp..."
+          placeholder={t('searchDappPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="dapp-list__search-input"
@@ -88,7 +90,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
           className={`dapp-category-btn ${activeCategory === 'all' ? 'active' : ''}`}
           onClick={() => setActiveCategory('all')}
         >
-          全部
+          {t('all')}
         </button>
         {categories.map(c => (
           <button
@@ -103,7 +105,7 @@ const DAppList: React.FC<Props> = ({ onSelectDApp, onDAppsReady }) => {
 
       <div className="dapp-list__grid">
         {filtered.length === 0 ? (
-          <div className="dapp-list__empty">No DApps</div>
+          <div className="dapp-list__empty">{t('noDapps')}</div>
         ) : (
           filtered.map(d => (
             <DAppCard key={d.id} dapp={d} onClick={onSelectDApp} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import './TransactionHistory.css'
+import { useI18n } from '../i18n'
 
 interface TxRecord {
   hash: string
@@ -13,6 +14,7 @@ interface TxRecord {
 
 const TransactionHistory: React.FC = () => {
   const { activeWallet, activeChain } = useAuth()
+  const { lang, t } = useI18n()
   const [transactions, setTransactions] = useState<TxRecord[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -39,11 +41,11 @@ const TransactionHistory: React.FC = () => {
   return (
     <div className="tx-history">
       {isLoading ? (
-        <div className="tx-loading">Loading...</div>
+        <div className="tx-loading">{t('loading')}</div>
       ) : transactions.length === 0 ? (
         <div className="tx-empty">
           <span className="tx-empty-icon">📭</span>
-          <span>暂无交易记录</span>
+          <span>{t('noTransactions')}</span>
         </div>
       ) : (
         transactions.map((tx) => (
@@ -66,7 +68,7 @@ const TransactionHistory: React.FC = () => {
                   : `From ${formatAddress(tx.from)}`}
               </span>
               <span className="tx-time">
-                {new Date(tx.timestamp * 1000).toLocaleString('zh-CN')}
+                {new Date(tx.timestamp * 1000).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US')}
               </span>
             </div>
             <div className="tx-value">

@@ -7,6 +7,7 @@ import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
+import { useI18n } from '../i18n'
 
 const ERC20_ABI = [
   'function balanceOf(address) view returns (uint256)',
@@ -23,6 +24,7 @@ interface DisplayTokenInfo {
 
 const TokenBalance: React.FC = () => {
   const { activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain } = useAuth()
+  const { t } = useI18n()
   const [tokens, setTokens] = useState<DisplayTokenInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
@@ -189,21 +191,21 @@ const TokenBalance: React.FC = () => {
   return (
     <div className="token-balance-list">
       <div className="token-list-header">
-        <span className="token-list-title">资产</span>
+        <span className="token-list-title">{t('assets')}</span>
         {isEvmChain && (
           <button
             type="button"
             className="token-import-btn"
             onClick={() => setShowImportDialog(true)}
           >
-            导入
+            {t('importToken')}
           </button>
         )}
       </div>
       {isLoading && tokens.length === 0 ? (
-        <div className="token-loading">Loading...</div>
+        <div className="token-loading">{t('loading')}</div>
       ) : tokens.length === 0 ? (
-        <div className="token-empty">No tokens found</div>
+        <div className="token-empty">{t('noTokensFound')}</div>
       ) : (
         tokens.map((token) => (
           <div

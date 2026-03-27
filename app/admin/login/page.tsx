@@ -77,13 +77,13 @@ export default function AdminLoginPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(data.error || '登录失败')
+        setError(data.error || 'Login failed')
         return
       }
       setAdminToken(token)
       router.replace('/admin/dapps')
     } catch {
-      setError('网络错误')
+      setError('Network error')
     } finally {
       setLoading(false)
     }
@@ -92,12 +92,12 @@ export default function AdminLoginPage() {
   return (
     <div style={styles.wrap}>
       <div style={styles.card}>
-        <h1 style={styles.title}>管理后台</h1>
-        <p style={styles.subtitle}>请输入管理员令牌登录</p>
+        <h1 style={styles.title}>Admin</h1>
+        <p style={styles.subtitle}>Enter admin token to sign in</p>
         <form onSubmit={handleSubmit}>
           <input
             type="password"
-            placeholder="管理员令牌"
+            placeholder="Admin token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             style={styles.input}
@@ -105,7 +105,7 @@ export default function AdminLoginPage() {
             autoComplete="current-password"
           />
           <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? '登录中…' : '登录'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
         {error && <p style={styles.error}>{error}</p>}

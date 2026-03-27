@@ -6,9 +6,11 @@ import BiometricGuide from './BiometricGuide'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import './LoginButton.css'
+import { useI18n } from '../i18n'
 
 const LoginButton: React.FC = () => {
   const { isLoggedIn, login } = useAuth()
+  const { lang, t } = useI18n()
   const [hasLoginHistory, setHasLoginHistory] = useState(true)
 
   useEffect(() => {
@@ -33,11 +35,11 @@ const LoginButton: React.FC = () => {
 
     DbgLog.log("availability:", availability);
     if (!availability.isSecureContext) {
-      setError('Passkey 需要在安全环境(HTTPS)下运行')
+      setError(t('passkeyNeedsSecureContext'))
       return false
     }
     if (!availability.isApiAvailable) {
-      setError('您的浏览器版本过低或不支持Passkey，请升级Chrome/Edge/Safari')
+      setError(t('passkeyApiUnavailable'))
       return false
     }
     if (!availability.isUVPAAAvailable) {
@@ -58,14 +60,14 @@ const LoginButton: React.FC = () => {
     DbgLog.log("[login]credential=", credential);
 
     if (!credential.masterSeed) {
-      setError('无法恢复钱包种子，请重新创建账户')
+      setError(t('cannotRestoreSeed'))
       return
     }
 
     const userData: UserData = {
       id: credential.id,
       name: credential.userHandle || 'RingWallet',
-      loginTime: new Date().toLocaleString('zh-CN'),
+      loginTime: new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US'),
       masterSeed: credential.masterSeed,
       publicKey: credential.publicKey,
       accountType: WalletType.EOA
@@ -84,7 +86,7 @@ const LoginButton: React.FC = () => {
     if (availability.isUVPAAAvailable) {
       setShowBiometricGuide(false)
     } else {
-      setError('仍未检测到设备验证，请确认已完成设置')
+      setError(t('biometricNotDetected'))
     }
   }
 
@@ -133,11 +135,11 @@ const LoginButton: React.FC = () => {
           publicKey: registerResult.credential.publicKey as Map<number, Uint8Array> | null
         })
       } else {
-        setError('创建账户失败: ' + (registerResult.error || '请重试'))
+        setError(t('createAccountFailed', { message: registerResult.error || t('retry') }))
       }
     } catch (err) {
       console.error('Create account error:', err)
-      setError('创建账户过程中发生错误：' + (err as Error).message)
+      setError(t('createAccountError', { message: (err as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +156,7 @@ const LoginButton: React.FC = () => {
       ) : showCreateAccount ? (
         <div style={{ padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0369a1' }}>
-            未找到已有账户
+            {t('noAccountFound')}
           </p>
           <button
             className="login-button"
@@ -162,7 +164,7 @@ const LoginButton: React.FC = () => {
             disabled={isLoading}
             style={{ width: '100%' }}
           >
-            {isLoading ? '创建中...' : '创建新账户'}
+            {isLoading ? t('creating') : t('createAccount')}
           </button>
         </div>
       ) : (
@@ -172,11 +174,11 @@ const LoginButton: React.FC = () => {
                 onClick={handlePasskeyLogin}
                 disabled={isLoading}
               >
-                {isLoading ? '登录中...' : '登录'}
+                {isLoading ? t('loggingIn') : t('login')}
               </button>
               {!hasLoginHistory && (
                 <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
-                  Tip: If no passkey, after tapping Login just <span style={{ color: '#16a34a', fontWeight: 500 }}>close</span> the system dialog.
+                  {t('loginTipNoPasskey')}
                 </p>
               )}
             </>
@@ -186,12 +188,15 @@ const LoginButton: React.FC = () => {
 
       {debugInfo && !debugInfo.isSupported && (
         <div className="debug-info" style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', textAlign: 'left' }}>
-          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>环境检测详情:</p>
+          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{t('envCheckDetails')}</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            <li>{debugInfo.isSecureContext ? '✅' : '❌'} HTTPS/安全上下文</li>
-            <li>{debugInfo.isApiAvailable ? '✅' : '❌'} WebAuthn API</li>
-            <li>{debugInfo.isUVPAAAvailable ? '✅' : '❌'} 平台验证器(指纹/面容){debugInfo.isIOSFallback ? ' (iOS密码替代)' : ''}</li>
-            <li>{debugInfo.isConditionalMediationAvailable ? '✅' : '⚠️'} 自动填充支持 (非必须)</li>
+            <li>{debugInfo.isSecureContext ? '✅' : '❌'} {t('httpsSecureContextLabel')}</li>
+            <li>{debugInfo.isApiAvailable ? '✅' : '❌'} {t('webauthnApiLabel')}</li>
+            <li>
+              {debugInfo.isUVPAAAvailable ? '✅' : '❌'} {t('platformAuthenticatorLabel')}
+              {debugInfo.isIOSFallback ? ` ${t('iosPasscodeFallbackLabel')}` : ''}
+            </li>
+            <li>{debugInfo.isConditionalMediationAvailable ? '✅' : '⚠️'} {t('conditionalMediationLabel')}</li>
           </ul>
         </div>
       )}

@@ -61,72 +61,72 @@ class PasskeyService {
 
   static _parseAuthData(authData: Uint8Array): ParsedAuthData | null {
     try {
-      DbgLog.log('🔍 开始解析 authData, 总长度:', authData.length, 'bytes');
+      DbgLog.log('🔍 Parsing authData. Total length:', authData.length, 'bytes');
 
       if (!(authData instanceof Uint8Array)) {
         authData = new Uint8Array(authData);
       }
 
       let offset = 37; // rpIdHash (32) + flags (1) + signCount (4)
-      DbgLog.log('📍 初始 offset:', offset);
+      DbgLog.log('📍 Initial offset:', offset);
 
       if (authData.length < offset) {
-        console.error('❌ authData 长度不足，无法解析 AAGUID');
+        console.error('❌ authData is too short to parse AAGUID');
         return null;
       }
 
       const aaguid = authData.slice(offset, offset + 16);
       offset += 16;
-      DbgLog.log('📍 AAGUID 解析完成, offset:', offset);
+      DbgLog.log('📍 AAGUID parsed. offset:', offset);
 
       if (authData.length < offset + 2) {
-        console.error('❌ authData 长度不足，无法读取 credentialIdLength');
+        console.error('❌ authData is too short to read credentialIdLength');
         return null;
       }
 
       const credentialIdLength = (new DataView(authData.buffer, authData.byteOffset, authData.byteLength)).getUint16(offset, false);
       offset += 2;
-      DbgLog.log('📍 Credential ID 长度:', credentialIdLength, ', offset:', offset);
+      DbgLog.log('📍 Credential ID length:', credentialIdLength, ', offset:', offset);
 
       if (credentialIdLength < 0 || credentialIdLength > 1024) {
-        console.error('❌ Credential ID 长度异常:', credentialIdLength);
+        console.error('❌ Unexpected Credential ID length:', credentialIdLength);
         return null;
       }
 
       if (authData.length < offset + credentialIdLength) {
-        console.error('❌ authData 长度不足，无法读取完整的 credentialId');
-        console.error('   需要:', offset + credentialIdLength, 'bytes, 实际:', authData.length, 'bytes');
+        console.error('❌ authData is too short to read full credentialId');
+        console.error('   Need:', offset + credentialIdLength, 'bytes. Actual:', authData.length, 'bytes');
         return null;
       }
 
       const credentialId = authData.slice(offset, offset + credentialIdLength);
       offset += credentialIdLength;
-      DbgLog.log('📍 Credential ID 解析完成, offset:', offset);
+      DbgLog.log('📍 Credential ID parsed. offset:', offset);
 
       if (authData.length <= offset) {
-        console.error('❌ authData 没有剩余数据用于解析 Public Key');
+        console.error('❌ authData has no remaining bytes to parse Public Key');
         console.error('   offset:', offset, ', authData.length:', authData.length);
         return null;
       }
 
       const publicKeyBytes = authData.slice(offset);
-      DbgLog.log('📍 Public Key CBOR 数据长度:', publicKeyBytes.length, 'bytes');
-      DbgLog.log('📍 Public Key CBOR 数据前 20 字节:', Array.from(publicKeyBytes.slice(0, 20)));
+      DbgLog.log('📍 Public Key CBOR byte length:', publicKeyBytes.length, 'bytes');
+      DbgLog.log('📍 Public Key CBOR first 20 bytes:', Array.from(publicKeyBytes.slice(0, 20)));
 
       if (publicKeyBytes.length === 0) {
-        console.error('❌ Public Key CBOR 数据为空');
+        console.error('❌ Public Key CBOR is empty');
         return null;
       }
 
       const publicKey = decode(new Uint8Array(publicKeyBytes));
-      DbgLog.log('✅ Public Key 解析成功');
-      DbgLog.log('📊 Public Key 类型:', publicKey instanceof Map ? 'Map' : typeof publicKey);
+      DbgLog.log('✅ Public Key parsed');
+      DbgLog.log('📊 Public Key type:', publicKey instanceof Map ? 'Map' : typeof publicKey);
 
       return { aaguid, credentialId, publicKey };
     } catch (e) {
       console.error('❌ Failed to parse authData:', e);
-      console.error('   错误详情:', (e as Error).message);
-      console.error('   authData 长度:', authData?.length);
+      console.error('   Details:', (e as Error).message);
+      console.error('   authData length:', authData?.length);
       return null;
     }
   }
@@ -241,30 +241,30 @@ class PasskeyService {
   }
 
   static async isSupported(): Promise<boolean> {
-    DbgLog.log('🔍 开始检查Passkey支持...')
+    DbgLog.log('🔍 Checking Passkey support...')
 
     if (this.#supportCache !== null) {
-      DbgLog.log('📦 使用缓存结果:', this.#supportCache)
+      DbgLog.log('📦 Using cached result:', this.#supportCache)
       return this.#supportCache
     }
 
-    DbgLog.log('🔎 检查基本API是否存在...')
+    DbgLog.log('🔎 Checking required APIs...')
     if (!window.PublicKeyCredential) {
-      console.warn('❌ PublicKeyCredential API不存在')
+      console.warn('❌ PublicKeyCredential API is not available')
       this.#supportCache = false
       return false
     }
 
     if (!PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-      console.warn('❌ isUserVerifyingPlatformAuthenticatorAvailable方法不存在')
+      console.warn('❌ isUserVerifyingPlatformAuthenticatorAvailable() is not available')
       this.#supportCache = false
       return false
     }
 
     const PKC = PublicKeyCredential as unknown as { isConditionalMediationAvailable?: () => Promise<boolean> }
 
-    DbgLog.log('✅ 基本API存在，开始实际功能检测...')
-    DbgLog.log('📡 调用API检测功能可用性...')
+    DbgLog.log('✅ Required APIs are present. Running capability checks...')
+    DbgLog.log('📡 Calling APIs to detect capability...')
 
     const checks: Promise<boolean>[] = [PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()]
     if (PKC.isConditionalMediationAvailable) {
@@ -280,17 +280,17 @@ class PasskeyService {
     }
 
     if (!isUVPAAAvailable && isIOSWithPasscodeCapable()) {
-      DbgLog.log('📱 iOS 16+ fallback: 设备密码可用于 passkey')
+      DbgLog.log('📱 iOS 16+ fallback: device passcode can be used for passkey')
       isUVPAAAvailable = true
     }
 
-    DbgLog.log('📊 检测结果:', {
+    DbgLog.log('📊 Results:', {
       isUVPAAAvailable,
       isConditionalMediationAvailable: canConditionalMediate
     })
 
     this.#supportCache = isUVPAAAvailable
-    DbgLog.log('🎯 最终支持结果:', this.#supportCache)
+    DbgLog.log('🎯 Final support:', this.#supportCache)
     return this.#supportCache
   }
 
@@ -391,18 +391,18 @@ class PasskeyService {
 
       let publicKey: Map<number, unknown> | null = null;
       try {
-        DbgLog.log('🔍 开始解析 attestationObject...');
+        DbgLog.log('🔍 Parsing attestationObject...');
         const response = credential.response as AuthenticatorAttestationResponse;
         const attestationObject = new Uint8Array(response.attestationObject);
-        DbgLog.log('📊 attestationObject 长度:', attestationObject.length, 'bytes');
+        DbgLog.log('📊 attestationObject length:', attestationObject.length, 'bytes');
 
         const decodedAttestation = decode(attestationObject) as { authData: Uint8Array | ArrayBuffer };
-        DbgLog.log('✅ attestationObject 解码成功');
+        DbgLog.log('✅ attestationObject decoded');
         DbgLog.log('📊 decodedAttestation keys:', Object.keys(decodedAttestation));
 
         const authData = decodedAttestation.authData;
-        DbgLog.log('📊 authData 类型:', authData instanceof Uint8Array ? 'Uint8Array' : authData instanceof ArrayBuffer ? 'ArrayBuffer' : typeof authData);
-        DbgLog.log('📊 authData 长度:', (authData as Uint8Array)?.length || (authData as ArrayBuffer)?.byteLength || 'unknown');
+        DbgLog.log('📊 authData type:', authData instanceof Uint8Array ? 'Uint8Array' : authData instanceof ArrayBuffer ? 'ArrayBuffer' : typeof authData);
+        DbgLog.log('📊 authData length:', (authData as Uint8Array)?.length || (authData as ArrayBuffer)?.byteLength || 'unknown');
 
         let authDataArray: Uint8Array;
         if (authData instanceof ArrayBuffer) {
@@ -424,10 +424,10 @@ class PasskeyService {
               safeSetItem(`new_wallet_pk_${credentialIdBase64}`, JSON.stringify(keyData));
               DbgLog.log('💾 EIP-7951 Public Key saved with key:', `new_wallet_pk_${credentialIdBase64}`);
             } else {
-              console.warn('⚠️ 无法将 credential.rawId 转换为 base64');
+              console.warn('⚠️ Failed to convert credential.rawId to base64');
             }
           } else {
-            console.warn('⚠️ 无法转换 publicKey 为存储格式');
+            console.warn('⚠️ Failed to convert publicKey to storage format');
           }
         }
       } catch (e) {
@@ -483,52 +483,52 @@ class PasskeyService {
         const storageKey = credentialIdBase64 ? `new_wallet_pk_${credentialIdBase64}` : null;
 
         if (storageKey) {
-          DbgLog.log('🔍 尝试从 localStorage 读取 Public Key');
+          DbgLog.log('🔍 Attempting to read Public Key from localStorage');
           DbgLog.log('   - credential.rawId (base64):', credentialIdBase64!.substring(0, 20) + '...');
-          DbgLog.log('   - 存储键名:', storageKey);
+          DbgLog.log('   - storage key:', storageKey);
 
           let storedKey = safeGetItem(storageKey);
 
           if (!storedKey && credential.id) {
-            DbgLog.log('   - 尝试使用 credential.id 查找（兼容旧格式）');
+            DbgLog.log('   - Trying credential.id (legacy format compatibility)');
             const oldStorageKey = `new_wallet_pk_${credential.id}`;
             storedKey = safeGetItem(oldStorageKey);
             if (storedKey) {
-              DbgLog.log('   - ✅ 找到旧格式的数据，键名:', oldStorageKey);
+              DbgLog.log('   - ✅ Found legacy-format data. Key:', oldStorageKey);
             }
           }
 
           if (storedKey) {
             const keyData = JSON.parse(storedKey);
-            DbgLog.log('   - ✅ 找到 Public Key 数据');
+            DbgLog.log('   - ✅ Public Key data found');
 
             publicKey = CharUtils.coseKeyFromStorage(keyData);
             if (publicKey) {
               DbgLog.log('🔑 EIP-7951 Public Key retrieved from storage');
             } else {
-              console.warn('⚠️ 无法从存储数据恢复 Public Key');
+              console.warn('⚠️ Failed to restore Public Key from storage data');
             }
           } else {
             console.warn('⚠️ No public key found in storage for credential');
             const allKeys = safeKeys();
             const relatedKeys = allKeys.filter(key => key.startsWith('new_wallet_pk_'));
-            DbgLog.log('📋 localStorage 中所有相关的键:', relatedKeys);
+            DbgLog.log('📋 Related keys in localStorage:', relatedKeys);
             if (relatedKeys.length > 0) {
-              DbgLog.log('💡 提示: 如果看到其他键，可能是旧格式的数据。请重新注册 7951 钱包。');
+              DbgLog.log('💡 Hint: other keys may be legacy-format data. Please re-register your 7951 wallet.');
             } else {
-              DbgLog.log('💡 提示: localStorage 中没有找到任何 Public Key 数据。');
-              DbgLog.log('   请确保:');
-              DbgLog.log('   1. 已经通过"注册 7951 钱包"按钮完成注册');
-              DbgLog.log('   2. 注册时看到了"💾 EIP-7951 Public Key saved"的日志');
-              DbgLog.log('   3. 登录时使用的是同一个设备');
+              DbgLog.log('💡 Hint: no Public Key data found in localStorage.');
+              DbgLog.log('   Please verify:');
+              DbgLog.log('   1. You completed registration via "Register 7951 Wallet"');
+              DbgLog.log('   2. You saw the log "💾 EIP-7951 Public Key saved" during registration');
+              DbgLog.log('   3. You are signing in on the same device');
             }
           }
         } else {
-          console.warn('⚠️ 无法使用 credential.rawId');
+          console.warn('⚠️ Unable to use credential.rawId');
         }
       } catch (e) {
         console.warn('Failed to retrieve public key for EIP-7951:', e);
-        console.error('错误详情:', e);
+        console.error('Details:', e);
       }
 
       const response = credential.response as AuthenticatorAssertionResponse;
@@ -544,7 +544,7 @@ class PasskeyService {
               const decoder = new TextDecoder('utf-8')
               username = decoder.decode(usernameBytes)
 
-              DbgLog.log('🔓 解析成功:', {
+          DbgLog.log('🔓 Parsed userHandle:', {
                 hasSeed: true,
                 username: username
               })
@@ -589,7 +589,7 @@ class PasskeyService {
   }
 
   static async checkAvailability(): Promise<AvailabilityResult> {
-    DbgLog.log('🔍 开始检查Passkey可用性...')
+    DbgLog.log('🔍 Checking Passkey availability...')
     try {
       const isSecureContext = window.isSecureContext
       const isApiAvailable = !!(window.PublicKeyCredential &&
@@ -619,14 +619,14 @@ class PasskeyService {
 
       let isIOSFallback = false
       if (!isUVPAAAvailable && isApiAvailable && isIOSWithPasscodeCapable()) {
-        DbgLog.log('📱 iOS 16+ 检测到: UVPAA=false 但设备密码可用于 passkey，启用 fallback')
+        DbgLog.log('📱 iOS 16+: UVPAA=false but passcode can be used for passkey; enabling fallback')
         isUVPAAAvailable = true
         isIOSFallback = true
       }
 
       const isSupported = isApiAvailable && isUVPAAAvailable
 
-      DbgLog.log('📊 可用性检查结果:', {
+      DbgLog.log('📊 Availability result:', {
         isSecureContext,
         isApiAvailable,
         isUVPAAAvailable,
@@ -644,7 +644,7 @@ class PasskeyService {
         isIOSFallback
       }
     } catch (error) {
-      console.error('💥 Passkey可用性检查失败:', error)
+      console.error('💥 Passkey availability check failed:', error)
       return {
         isSupported: false,
         isSecureContext: window.isSecureContext,

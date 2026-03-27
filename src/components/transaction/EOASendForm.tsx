@@ -4,12 +4,14 @@ import PasskeyService from '../../services/passkeyService';
 import { useSendForm } from './useSendForm';
 import SendFormFields from './SendFormFields';
 import '../TransactionActions.css';
+import { useI18n } from '../../i18n';
 
 interface EOASendFormProps {
   onClose: () => void;
 }
 
 const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
+  const { t } = useI18n()
   const {
     activeWallet,
     activeChainId,
@@ -54,7 +56,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
       if (user?.id) {
         const verified = await PasskeyService.verifyIdentity(user.id);
         if (!verified) {
-          setError('生物识别验证失败，交易已取消');
+          setError(t('txCanceledBiometricFailed'));
           return;
         }
       }

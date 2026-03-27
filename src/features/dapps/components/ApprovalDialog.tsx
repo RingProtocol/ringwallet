@@ -1,6 +1,7 @@
 import React from 'react'
 import type { ApprovalRequest } from '../types/approval'
 import type { TransactionData, SignData, SignTypedData, SwitchChainData } from '../types/approval'
+import { useI18n } from '../../../i18n'
 
 interface Props {
   request: ApprovalRequest
@@ -37,15 +38,18 @@ function hexToUtf8(hex: string): string {
   }
 }
 
-const ConnectContent: React.FC<{ request: ApprovalRequest }> = ({ request }) => (
-  <div className="approval-content">
-    <div className="approval-content__permissions">
-      <div className="approval-content__perm-item">✓ 查看你的钱包地址</div>
-      <div className="approval-content__perm-item">✓ 查看你的账户余额</div>
-      <div className="approval-content__perm-item">✓ 请求交易审批</div>
+const ConnectContent: React.FC<{ request: ApprovalRequest }> = () => {
+  const { t } = useI18n()
+  return (
+    <div className="approval-content">
+      <div className="approval-content__permissions">
+        <div className="approval-content__perm-item">✓ {t('permViewAddress')}</div>
+        <div className="approval-content__perm-item">✓ {t('permViewBalance')}</div>
+        <div className="approval-content__perm-item">✓ {t('permRequestApproval')}</div>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 const TransactionContent: React.FC<{ request: ApprovalRequest }> = ({ request }) => {
   const tx = request.data as TransactionData | undefined
@@ -79,6 +83,7 @@ const TransactionContent: React.FC<{ request: ApprovalRequest }> = ({ request })
 }
 
 const SignContent: React.FC<{ request: ApprovalRequest }> = ({ request }) => {
+  const { t } = useI18n()
   const data = request.data as SignData | undefined
   if (!data) return null
   const displayMsg = data.message.startsWith('0x') ? hexToUtf8(data.message) : data.message
@@ -88,13 +93,14 @@ const SignContent: React.FC<{ request: ApprovalRequest }> = ({ request }) => {
         {displayMsg.length > 200 ? displayMsg.slice(0, 200) + '...' : displayMsg}
       </div>
       <div className="approval-content__warning">
-        ⚠ 请仅在你信任的网站签名
+        ⚠ {t('signSafetyWarning')}
       </div>
     </div>
   )
 }
 
 const SignTypedContent: React.FC<{ request: ApprovalRequest }> = ({ request }) => {
+  const { t } = useI18n()
   const data = request.data as SignTypedData | undefined
   if (!data) return null
   const pretty = JSON.stringify(data.typedData, null, 2)
@@ -104,7 +110,7 @@ const SignTypedContent: React.FC<{ request: ApprovalRequest }> = ({ request }) =
         {pretty.length > 500 ? pretty.slice(0, 500) + '\n...' : pretty}
       </div>
       <div className="approval-content__warning">
-        ⚠ 请仅在你信任的网站签名结构化数据
+        ⚠ {t('typedSignSafetyWarning')}
       </div>
     </div>
   )
@@ -139,6 +145,7 @@ const contentMap: Record<string, React.FC<{ request: ApprovalRequest }>> = {
 
 const ApprovalDialog: React.FC<Props> = ({ request, onApprove, onReject }) => {
   const ContentComponent = contentMap[request.type] || ConnectContent
+  const { t } = useI18n()
 
   return (
     <div className="approval-overlay" onClick={onReject}>
@@ -164,12 +171,12 @@ const ApprovalDialog: React.FC<Props> = ({ request, onApprove, onReject }) => {
 
         <div className="approval-dialog__actions">
           <button className="approval-btn approval-btn--reject" onClick={onReject}>
-            拒绝
+            {t('reject')}
           </button>
           <button className="approval-btn approval-btn--approve" onClick={onApprove}>
-            {request.type === 'connect' ? '连接' :
-             request.type === 'transaction' ? '确认交易' :
-             request.type === 'switch_chain' ? '切换' : '签名'}
+            {request.type === 'connect' ? t('connectAction') :
+             request.type === 'transaction' ? t('approveTransactionAction') :
+             request.type === 'switch_chain' ? t('switchAction') : t('signAction')}
           </button>
         </div>
       </div>

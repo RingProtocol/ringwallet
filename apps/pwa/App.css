@@ -117,7 +117,7 @@
   }
 }
 
-/* 响应式设计 */
+/* Responsive */
 @media (max-width: 768px) {
   .card {
     padding: 30px 20px;

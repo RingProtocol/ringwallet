@@ -1,5 +1,6 @@
 import React from 'react'
 import './globals.css'
+import { I18nProvider } from '../src/i18n'
 
 export const metadata = {
   title: 'Ring Wallet',
@@ -26,11 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body>
         <div id="root">
-          {children}
+          <I18nProvider>{children}</I18nProvider>
         </div>
       </body>
     </html>
   )
 }
-
 

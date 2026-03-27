@@ -18,7 +18,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ padding: 24, textAlign: 'center' }}>
-      跳转中…
+      Redirecting…
     </div>
   )
 }

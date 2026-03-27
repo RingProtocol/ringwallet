@@ -178,7 +178,7 @@ export default function AdminDAppsPage() {
     try {
       if (modal === 'add') {
         if (!form.name?.trim() || !form.url?.trim()) {
-          setSubmitError('名称、URL 为必填')
+          setSubmitError('Name and URL are required')
           return
         }
         const res = await fetch('/api/admin/dapps', {
@@ -234,7 +234,7 @@ export default function AdminDAppsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm(`确定删除 DApp「${id}」？`)) return
+    if (!confirm(`Delete DApp "${id}"?`)) return
     try {
       const res = await fetch(`/api/admin/dapps/${id}`, {
         method: 'DELETE',
@@ -264,16 +264,16 @@ export default function AdminDAppsPage() {
   return (
     <div style={styles.wrap}>
       <header style={styles.header}>
-        <h1 style={styles.title}>DApp 管理</h1>
+        <h1 style={styles.title}>DApp Management</h1>
         <div style={styles.actions}>
           <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={openAdd}>
-            新增 DApp
+            Add DApp
           </button>
           <button type="button" style={{ ...styles.btn, ...styles.btnSecondary }} onClick={handleLogout}>
-            退出登录
+            Sign out
           </button>
           <Link href="/" style={{ ...styles.btn, ...styles.btnSecondary }}>
-            返回钱包
+            Back to wallet
           </Link>
         </div>
       </header>
@@ -281,19 +281,19 @@ export default function AdminDAppsPage() {
       {error && <p style={styles.error}>{error}</p>}
 
       {loading ? (
-        <p>加载中…</p>
+        <p>Loading…</p>
       ) : (
         <div style={styles.tableWrap}>
           <table style={styles.table}>
             <thead>
               <tr>
                 <th style={styles.th}>ID</th>
-                <th style={styles.th}>名称</th>
+                <th style={styles.th}>Name</th>
                   <th style={styles.th}>API Key</th>
-                <th style={styles.th}>状态</th>
-                <th style={styles.th}>分类</th>
-                <th style={styles.th}>精选</th>
-                <th style={styles.th}>操作</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Category</th>
+                <th style={styles.th}>Featured</th>
+                <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -304,14 +304,14 @@ export default function AdminDAppsPage() {
                   <td style={styles.td}><span style={styles.mono}>{d.apikey}</span></td>
                   <td style={styles.td}>{statusBadge(d.status)}</td>
                   <td style={styles.td}>{d.category || '—'}</td>
-                  <td style={styles.td}>{d.featured ? '是' : '否'}</td>
+                  <td style={styles.td}>{d.featured ? 'Yes' : 'No'}</td>
                   <td style={styles.td}>
                     <div style={styles.cellActions}>
                       <button type="button" style={{ ...styles.btn, ...styles.btnSecondary }} onClick={() => openEdit(d)}>
-                        编辑
+                        Edit
                       </button>
                       <button type="button" style={{ ...styles.btn, ...styles.btnDanger }} onClick={() => handleDelete(d.id)}>
-                        删除
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -320,7 +320,7 @@ export default function AdminDAppsPage() {
             </tbody>
           </table>
           {dapps.length === 0 && (
-            <p style={{ padding: 24, textAlign: 'center', color: '#71717a' }}>暂无 DApp，点击「新增 DApp」添加</p>
+            <p style={{ padding: 24, textAlign: 'center', color: '#71717a' }}>No DApps yet. Click "Add DApp" to create one.</p>
           )}
         </div>
       )}
@@ -328,15 +328,15 @@ export default function AdminDAppsPage() {
       {modal && (
         <div style={styles.modalOverlay} onClick={() => setModal(null)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>{modal === 'add' ? '新增 DApp' : '编辑 DApp'}</h2>
+            <h2 style={styles.modalTitle}>{modal === 'add' ? 'Add DApp' : 'Edit DApp'}</h2>
             <form onSubmit={handleSubmit}>
               <div style={styles.formRow}>
-                <label style={styles.label}>名称 *</label>
+                <label style={styles.label}>Name *</label>
                 <input
                   style={styles.input}
                   value={form.name || ''}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="显示名称"
+                  placeholder="Display name"
                 />
               </div>
               <div style={styles.formRow}>
@@ -350,16 +350,16 @@ export default function AdminDAppsPage() {
                 />
               </div>
               <div style={styles.formRow}>
-                <label style={styles.label}>描述</label>
+                <label style={styles.label}>Description</label>
                 <input
                   style={styles.input}
                   value={form.description || ''}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="简短描述"
+                  placeholder="Short description"
                 />
               </div>
               <div style={styles.formRow}>
-                <label style={styles.label}>图标 URL</label>
+                <label style={styles.label}>Icon URL</label>
                 <input
                   style={styles.input}
                   value={form.icon || ''}
@@ -372,7 +372,7 @@ export default function AdminDAppsPage() {
                 <div style={styles.apikeyWrap}>
                   <input
                     style={{ ...styles.input, flex: 1 }}
-                    value={form.apikey || '(自动生成)'}
+                    value={form.apikey || '(auto-generated)'}
                     readOnly
                   />
                   <button
@@ -380,18 +380,18 @@ export default function AdminDAppsPage() {
                     style={styles.btnTiny}
                     onClick={() => setForm((f) => ({ ...f, apikey: randomApiKey8() }))}
                   >
-                    重新生成
+                    Regenerate
                   </button>
                 </div>
               </div>
               <div style={styles.formRow}>
-                <label style={styles.label}>分类</label>
+                <label style={styles.label}>Category</label>
                 <select
                   style={styles.select}
                   value={form.category ?? ''}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value || null }))}
                 >
-                  <option value="">— 无 —</option>
+                  <option value="">— None —</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -401,7 +401,7 @@ export default function AdminDAppsPage() {
               </div>
               <input type="hidden" value="sdk" />
               <div style={styles.formRow}>
-                <label style={styles.label}>状态</label>
+                <label style={styles.label}>Status</label>
                 <select
                   style={styles.select}
                   value={form.status || 'active'}
@@ -413,7 +413,7 @@ export default function AdminDAppsPage() {
                 </select>
               </div>
               <div style={styles.formRow}>
-                <label style={styles.label}>排序</label>
+                <label style={styles.label}>Sort Order</label>
                 <input
                   style={styles.input}
                   type="number"
@@ -428,15 +428,15 @@ export default function AdminDAppsPage() {
                   checked={form.featured ?? false}
                   onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
                 />
-                <label htmlFor="featured" style={styles.label}>精选</label>
+                <label htmlFor="featured" style={styles.label}>Featured</label>
               </div>
               {submitError && <p style={styles.error}>{submitError}</p>}
               <div style={styles.modalActions}>
                 <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary }} disabled={saving}>
-                  {saving ? '保存中…' : '保存'}
+                  {saving ? 'Saving…' : 'Save'}
                 </button>
                 <button type="button" style={{ ...styles.btn, ...styles.btnSecondary }} onClick={() => setModal(null)}>
-                  取消
+                  Cancel
                 </button>
               </div>
             </form>

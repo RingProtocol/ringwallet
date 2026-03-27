@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ethers } from 'ethers'
 import './ImportTokenDialog.css'
+import { useI18n } from '../i18n'
 
 const ERC20_ABI = [
   'function symbol() view returns (string)',
@@ -28,23 +29,24 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
   onImport,
   rpcUrl,
 }) => {
+  const { t } = useI18n()
   const [address, setAddress] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const handleConfirm = async () => {
     if (!address.trim()) {
-      setError('请输入代币合约地址')
+      setError(t('tokenAddressRequired'))
       return
     }
 
     if (!ethers.isAddress(address.trim())) {
-      setError('无效的地址格式')
+      setError(t('invalidAddressFormat'))
       return
     }
 
     if (!rpcUrl) {
-      setError('RPC 未配置')
+      setError(t('rpcNotConfigured'))
       return
     }
 
@@ -71,7 +73,7 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
       onClose()
     } catch (e) {
       console.error('Failed to fetch token info:', e)
-      setError('无法获取代币信息，请检查地址是否有效')
+      setError(t('tokenInfoFetchFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -88,9 +90,9 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
   return (
     <div className="import-token-overlay" onClick={handleClose}>
       <div className="import-token-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>导入代币</h3>
+        <h3>{t('importTokenTitle')}</h3>
         <div className="form-group">
-          <label>代币合约地址</label>
+          <label>{t('tokenAddress')}</label>
           <input
             type="text"
             value={address}
@@ -107,10 +109,10 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
             disabled={isLoading || !address.trim()}
             className="primary-btn"
           >
-            {isLoading ? '导入中...' : '导入'}
+            {isLoading ? t('importing') : t('importToken')}
           </button>
           <button onClick={handleClose} className="secondary-btn">
-            取消
+            {t('cancel')}
           </button>
         </div>
       </div>

@@ -72,7 +72,7 @@ class WalletService {
 
       if (!coordinates || !coordinates.x || !coordinates.y) {
           console.warn('Invalid COSE key structure:', publicKey);
-        console.warn('尝试使用 CharUtils 验证:', CharUtils.isValidCoseKey(publicKey));
+        console.warn('CharUtils validation result:', CharUtils.isValidCoseKey(publicKey));
           return null;
       }
 

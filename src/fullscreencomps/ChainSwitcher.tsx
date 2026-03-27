@@ -31,7 +31,7 @@ const ChainSwitcher: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent | PointerEvent) => {
-      // 在捕获阶段处理，确保即使事件被阻止冒泡也能执行
+      // Handle in capture phase so this still runs even if bubbling is stopped
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         if (isOpen) {
           setIsOpen(false)
@@ -40,7 +40,7 @@ const ChainSwitcher: React.FC = () => {
     }
 
     if (isOpen) {
-      // 使用 capture: true 强制在捕获阶段监听事件，防止被子组件 e.stopPropagation() 拦截
+      // Force capture listeners so child e.stopPropagation() can't block closing
       document.addEventListener('pointerdown', handleClickOutside, { capture: true })
       document.addEventListener('touchstart', handleClickOutside, { capture: true })
       document.addEventListener('mousedown', handleClickOutside, { capture: true })

@@ -2,9 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getTokenList } from '../../utils/tokenStorage';
 import type { SignedTx, SendTokenOption } from './types';
+import { useI18n } from '../../i18n';
 
 export function useSendForm() {
   const { activeWallet, activeChainId, activeChain, user } = useAuth();
+  const { t } = useI18n()
 
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
@@ -60,7 +62,7 @@ export function useSendForm() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('已复制到剪贴板');
+    alert(t('copiedToClipboard'));
   };
 
   return {

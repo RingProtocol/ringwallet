@@ -1,8 +1,8 @@
 import React from 'react'
 
 export const metadata = {
-  title: '管理后台 - Ring Wallet',
-  description: 'DApp 管理',
+  title: 'Admin - Ring Wallet',
+  description: 'DApp Management',
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

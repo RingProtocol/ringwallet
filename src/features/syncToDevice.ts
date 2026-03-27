@@ -15,7 +15,7 @@ interface SyncResult {
 
 export async function syncToDevice({ user, login }: SyncParams): Promise<SyncResult> {
   if (!user.masterSeed || !user.name) {
-    return { success: false, error: '同步失败: 缺少必要的用户信息' }
+    return { success: false, error: 'Sync failed: missing required user info' }
   }
 
   let masterSeed: Uint8Array
@@ -30,7 +30,7 @@ export async function syncToDevice({ user, login }: SyncParams): Promise<SyncRes
   const result = await PasskeyService.register(user.name, masterSeed)
 
   if (!result.success || !result.credential) {
-    return { success: false, error: '同步失败: ' + result.error }
+    return { success: false, error: 'Sync failed: ' + result.error }
   }
 
   try {
@@ -47,7 +47,7 @@ export async function syncToDevice({ user, login }: SyncParams): Promise<SyncRes
       const updatedUser: UserData = {
         id: result.credential.id,
         name: user.name,
-        loginTime: new Date().toLocaleString('zh-CN'),
+        loginTime: new Date().toLocaleString(),
         masterSeed: user.masterSeed,
         publicKey: newPublicKey,
         accountType: WalletType.EOA

@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import { READ_ONLY_METHODS, APPROVAL_METHODS, RPC_ERRORS } from '../constants/rpcMethods'
 import type { WalletRequestMessage } from '../types/messages'
 import type { ApprovalRequest, ApprovalType } from '../types/approval'
+import { tGlobal } from '../../../i18n'
 
 interface BridgeConfig {
   getActiveAddress: () => string | null
@@ -162,8 +163,8 @@ export class WalletBridge {
 
     const approved = await this.requestApproval(
       'connect',
-      '连接请求',
-      '该 DApp 请求连接你的钱包',
+      tGlobal('connectRequestTitle'),
+      tGlobal('connectRequestDesc'),
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
@@ -180,8 +181,8 @@ export class WalletBridge {
     const tx = params[0] as Record<string, string>
     const approved = await this.requestApproval(
       'transaction',
-      '交易确认',
-      '请确认以下交易',
+      tGlobal('txConfirmTitle'),
+      tGlobal('txConfirmDesc'),
       tx,
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
@@ -211,8 +212,8 @@ export class WalletBridge {
     const [message, address] = params as [string, string]
     const approved = await this.requestApproval(
       'sign',
-      '签名请求',
-      '请确认签名以下消息',
+      tGlobal('signRequestTitle'),
+      tGlobal('signRequestDesc'),
       { message, address },
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
@@ -231,8 +232,8 @@ export class WalletBridge {
 
     const approved = await this.requestApproval(
       'sign_typed',
-      '类型化数据签名',
-      '请确认签名以下结构化数据',
+      tGlobal('typedDataSignTitle'),
+      tGlobal('typedDataSignDesc'),
       { address, typedData },
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
@@ -262,8 +263,8 @@ export class WalletBridge {
 
     const approved = await this.requestApproval(
       'switch_chain',
-      '切换网络',
-      `请求切换到 ${found.name}`,
+      tGlobal('switchNetworkTitle'),
+      tGlobal('switchNetworkDesc', { chainName: found.name }),
       { chainId, chainName: found.name },
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED

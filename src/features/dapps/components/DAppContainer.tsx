@@ -5,6 +5,7 @@ import { useApproval } from '../hooks/useApproval'
 import { buildDAppUrl } from '../services/dappService'
 import ApprovalDialog from './ApprovalDialog'
 import type { DAppInfo } from '../types/dapp'
+import { useI18n } from '../../../i18n'
 
 interface Props {
   dapp: DAppInfo
@@ -15,6 +16,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { activeWallet, activeChain, activeChainId, CHAINS, switchChain } = useAuth()
   const { pendingApproval, requestApproval, approve, reject } = useApproval()
+  const { t } = useI18n()
 
   const bridge = useMemo(() => new WalletBridge({
     getActiveAddress: () => activeWallet?.address || null,
@@ -74,8 +76,8 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
           <span className="dapp-container__navbar-title">{dapp.name}</span>
         </div>
         <div className="dapp-container__navbar-actions">
-          <button className="dapp-container__action-btn" onClick={handleRefresh} title="刷新">↻</button>
-          <button className="dapp-container__action-btn" onClick={handleDisconnect} title="断开">✕</button>
+          <button className="dapp-container__action-btn" onClick={handleRefresh} title={t('refresh')}>↻</button>
+          <button className="dapp-container__action-btn" onClick={handleDisconnect} title={t('disconnect')}>✕</button>
         </div>
       </div>
 
