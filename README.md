@@ -19,19 +19,27 @@ We believe ownership should feel natural, safe, and open. Ring Wallet is our ste
 
 ---
 
-## Open source
+## License
 
-Ring Wallet is **open source**. We want to build in the open and with the community.
-
-**Let’s build together.**
-
-If you want to contribute, report issues, or extend the wallet for your own use case, this repo is the place. Ideas, code, and feedback are welcome.
+Ring Wallet is **open source** under the **GLP License**.  
+You are free to use, modify, and distribute the code for **personal and non-commercial purposes** at no cost. Commercial use is not permitted.
 
 ---
 
-## Long-term support
+## Contributing
 
-Ring Wallet is backed by **[Ring]** with long-term technical support and a commitment to keep improving security, UX, and compatibility.
+**Let's build together.**
+
+Ring Wallet is open source, and we welcome contributions from everyone. If you want to contribute code, report issues, or extend the wallet for your own use case, this repo is the place. Ideas, code, and feedback are welcome.
+
+Check out our [issues](https://github.com/ringprotocol/wallet/issues) for current goals and tasks.
+
+---
+
+## Powered by Ring
+
+Ring Wallet is powered by **[Ring](https://ring.exchange)**.  
+Live at [wallet.ring.exchange](https://wallet.ring.exchange).
 
 ---
 
@@ -43,6 +51,13 @@ yarn dev
 ```
 
 Then open the app in your browser and sign in with your fingerprint.
+
+---
+
+## Usage Guide
+
+For installation and usage instructions, visit our docs:  
+[https://docs.ring.exchange/wallet/install-pwa](https://docs.ring.exchange/wallet/install-pwa)
 
 ---
 
