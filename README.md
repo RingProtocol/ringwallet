@@ -81,5 +81,5 @@ For installation and usage instructions, visit our docs:
 
 # Dependent Variables
 VITE_DAPP_URL=https://script.google.com/macros/s/AKfycbzFSlcUVztjCGIHesC0WFG-QP8MnPrfvZdKnYOTboATM7Vtgg8ExRwfo_Jlkh7Pf8FC9A/exec
-VITE_DAPP_TOKEN=
+DAPP_TOKEN=
 VITE_TEST_API_KEY=<Contact Ring to get>

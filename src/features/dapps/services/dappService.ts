@@ -50,11 +50,6 @@ function getExpiredCache(): DAppListResponse | null {
   }
 }
 
-function env(key: string): string | undefined {
-  const val = (import.meta.env as Record<string, string | undefined>)[key]
-  return val?.trim() || undefined
-}
-
 function getTestDappApiKey(): string | null {
   if (typeof window === 'undefined') return null
   return new URLSearchParams(window.location.search).get('apikey')
@@ -132,33 +127,14 @@ function normalizeDAppListResponse(data: unknown): DAppListResponse {
 }
 
 export async function fetchDAppList(): Promise<DAppListResponse> {
-  const apikey = env('VITE_TEST_API_KEY') || getTestDappApiKey()
-  const dappUrl = env('VITE_DAPP_URL')
-  const dappToken = env('VITE_DAPP_TOKEN')
-  console.log("dappUrl:", dappUrl)
-  console.log("dappToken:", dappToken)
-  if (!dappUrl) {
-    throw new Error('DAPP_URL is not configured')
-  }
-  console.log("apikey:", apikey)
+  const apikey = getTestDappApiKey()
   try {
-    let url: string = dappUrl
-    if (apikey && dappToken) {
-      url = `${dappUrl}?testdapp=${encodeURIComponent(apikey)}&secret=${encodeURIComponent(dappToken)}`
-    } else if (dappToken) {
-      url = `${dappUrl}?secret=${encodeURIComponent(dappToken)}`
-    } else if (apikey) {
-      url = `${dappUrl}?testdapp=${encodeURIComponent(apikey)}`
+    const url = new URL('/api/v1/dapps', window.location.origin)
+    if (apikey) {
+      url.searchParams.set('testdapp', apikey)
     }
-    console.log("Fetching DApp list from " + url);
 
-    const res = await fetch(url, {
-      // headers: {
-      //   'Accept': 'application/json',
-      //   'X-Wallet-Version': '1.0.0',
-      //   'X-Platform': 'pwa',
-      // },
-    })
+    const res = await fetch(url.toString())
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const raw = await res.json()
     const data = normalizeDAppListResponse(raw)
