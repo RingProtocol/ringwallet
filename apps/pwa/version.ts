@@ -1,4 +1,4 @@
 const major=1
 const minor=0
-const patch = 26
+const patch = 27
 export const VERSION=`${major}.${minor}.${patch}`

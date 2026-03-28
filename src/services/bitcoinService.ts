@@ -1,7 +1,7 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
 import type { Chain } from '../models/ChainType';
-import { BitcoinKeyService } from './bitcoinKeyService';
+import { BitcoinKeyService } from './wallet/bitcoinKeyService';
 
 bitcoin.initEccLib(ecc);
 

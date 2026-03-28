@@ -96,9 +96,9 @@ const RPC_FALLBACK: Record<string, string> = {
   'provenance-mainnet': 'https://api.provenance.io',
 }
 
-function rpcUrl(chainId: string | number): string {
+function rpcUrl(chainId: string | number): string[] {
   const key = String(chainId)
-  return ENV[key]?.rpc || RPC_FALLBACK[key] || ''
+  return [ENV[key]?.rpc, RPC_FALLBACK[key]].filter((url): url is string => Boolean(url))
 }
 
 // ─── Chain definitions ───

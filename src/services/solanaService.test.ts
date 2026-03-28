@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SolanaService } from './solanaService'
-import { SolanaKeyService } from './solanaKeyService'
+import { SolanaKeyService } from './wallet/solanaKeyService'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 

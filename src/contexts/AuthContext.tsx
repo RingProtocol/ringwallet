@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
-import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY, type DerivedAccount } from '../services/chains'
+import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY, type DerivedAccount } from '../services/chainplugins'
 import CharUtils from '../utils/CharUtils'
 import { WalletType } from '../models/WalletType'
-import { ChainFamily, type Chain } from '../models/ChainType'
+import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS } from '../config/chains'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
@@ -100,14 +100,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           name: c.name as string,
           symbol: (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
           family: ChainFamily.EVM,
-          rpcUrl: (c.rpc as string[])?.length > 0
-            ? (c.rpc as string[])[0].replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || '')
-            : '',
+          rpcUrl: ((c.rpc as string[]) ?? [])
+            .map(rpc => rpc.replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || ''))
+            .filter(Boolean),
           explorer: (c.explorers as Array<{ url: string }>)?.length > 0
             ? (c.explorers as Array<{ url: string }>)[0].url
             : '',
         })).filter((c: Chain) =>
-          c.rpcUrl && !String(c.rpcUrl).includes('${') &&
+          c.rpcUrl.length > 0 &&
+          !getPrimaryRpcUrl(c).includes('${') &&
           !DEFAULT_CHAINS.some(dc => dc.id === c.id)
         );
 

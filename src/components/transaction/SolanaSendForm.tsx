@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import PasskeyService from '../../services/passkeyService';
+import { getPrimaryRpcUrl } from '../../models/ChainType';
+import PasskeyService from '../../services/account/passkeyService';
 import { SolanaService } from '../../services/solanaService';
-import { SolanaKeyService } from '../../services/solanaKeyService';
+import { SolanaKeyService } from '../../services/wallet/solanaKeyService';
 import '../TransactionActions.css';
 import { useI18n } from '../../i18n';
 
@@ -54,7 +55,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
 
     try {
       const keypair = SolanaKeyService.keypairFromStoredKey(activeSolanaWallet.privateKey!);
-      const service = new SolanaService(activeChain.rpcUrl);
+      const service = new SolanaService(getPrimaryRpcUrl(activeChain));
       const fee = await service.estimateFee(keypair.publicKey, toAddress, amountNum);
       setEstimatedFee(fee.toFixed(6));
     } catch {
@@ -86,7 +87,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
 
       // Reconstruct Keypair from the in-memory private seed
       const keypair = SolanaKeyService.keypairFromStoredKey(activeSolanaWallet.privateKey!);
-      const service = new SolanaService(activeChain.rpcUrl);
+      const service = new SolanaService(getPrimaryRpcUrl(activeChain));
       const signature = await service.sendSOL(keypair, toAddress, amountNum);
       setTxSignature(signature);
     } catch (e) {

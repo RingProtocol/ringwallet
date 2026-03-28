@@ -1,8 +1,8 @@
 import { decode } from 'cbor-x';
-import CharUtils from '../utils/CharUtils';
-import * as DbgLog from '../utils/DbgLog';
-import { safeGetItem, safeSetItem, safeKeys } from '../utils/safeStorage';
-import { isIOSWithPasscodeCapable } from './devices/iosDetect';
+import CharUtils from '../../utils/CharUtils';
+import * as DbgLog from '../../utils/DbgLog';
+import { safeGetItem, safeSetItem, safeKeys } from '../../utils/safeStorage';
+import { isIOSWithPasscodeCapable } from '../devices/iosDetect';
 
 interface AvailabilityResult {
   isSupported: boolean;

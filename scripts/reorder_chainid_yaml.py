@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reorder docs/multichainwallet/chainid.yaml: priority chains first with index 1..35, then rest with index 36+.
+"""Reorder chainid.yaml: priority chains first with index 1..35, then rest with index 36+.
 
 Requires PyYAML (e.g. `python3 -m venv .venv && . .venv/bin/activate && pip install pyyaml`).
 Run from repo root: `python3 scripts/reorder_chainid_yaml.py`

@@ -1,5 +1,6 @@
 import React from 'react';
-import WalletService, { type EIP7951Result } from '../../services/walletService';
+import { getPrimaryRpcUrl } from '../../models/ChainType';
+import EvmWalletService, { type EIP7951Result } from '../../services/wallet/EvmWalletService';
 import { useSendForm } from './useSendForm';
 import SendFormFields from './SendFormFields';
 import type { SignedTx } from './types';
@@ -58,12 +59,12 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({ onClose }) 
       const salt = activeWallet.index || 0;
       const factoryAddress = activeChain?.factoryAddress || null;
 
-      const tx = await WalletService.signEIP7951Transaction(
+      const tx = await EvmWalletService.signEIP7951Transaction(
         activeWallet.credentialId!,
         toAddress,
         amount,
         Number(activeChainId),
-        activeChain?.rpcUrl,
+        getPrimaryRpcUrl(activeChain),
         activeWallet.address,
         factoryAddress,
         publicKey as Map<number, Uint8Array>,
@@ -84,9 +85,9 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({ onClose }) 
     setError('');
     setIsBroadcasting(true);
     try {
-      const hash = await WalletService.broadcastSmartAccountTransaction(
+      const hash = await EvmWalletService.broadcastSmartAccountTransaction(
         signedTx,
-        activeChain?.rpcUrl,
+        getPrimaryRpcUrl(activeChain),
         activeChain?.bundlerUrl,
         activeChain?.entryPoint,
       );

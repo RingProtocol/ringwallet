@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth, type UserData } from '../contexts/AuthContext'
-import PasskeyService from '../services/passkeyService'
+import PasskeyService from '../services/account/passkeyService'
 import { WalletType } from '../models/WalletType'
 import BiometricGuide from './BiometricGuide'
 import * as DbgLog from '../utils/DbgLog'

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Connection } from '@solana/web3.js'
 import { SolanaTokenService, ATA_CREATION_FEE_SOL } from './solanaTokenService'
-import { SolanaKeyService } from './solanaKeyService'
+import { SolanaKeyService } from './wallet/solanaKeyService'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 

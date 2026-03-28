@@ -1,7 +1,7 @@
 import { derivePath } from 'ed25519-hd-key';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { ethers } from 'ethers';
-import { WalletType } from '../models/WalletType';
+import { WalletType } from '../../models/WalletType';
 
 export interface DerivedSolanaWallet {
   index: number;

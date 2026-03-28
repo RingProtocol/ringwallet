@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
+import { getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import './BalanceDisplay.css'
@@ -21,14 +22,15 @@ const BalanceDisplay: React.FC = () => {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      if (!activeChain?.rpcUrl) return
+      const rpcUrl = getPrimaryRpcUrl(activeChain)
+      if (!rpcUrl) return
 
       if (isBitcoinChain) {
         if (!activeBitcoinWallet) return
         setIsLoading(true)
         try {
           const service = new BitcoinService(
-            activeChain.rpcUrl,
+            rpcUrl,
             activeChain.network === 'testnet',
             bitcoinForkForChain(activeChain),
           )
@@ -44,7 +46,7 @@ const BalanceDisplay: React.FC = () => {
         if (!activeSolanaWallet) return
         setIsLoading(true)
         try {
-          const service = new SolanaService(activeChain.rpcUrl)
+          const service = new SolanaService(rpcUrl)
           const bal = await service.getBalance(activeSolanaWallet.address)
           setBalance(bal.toFixed(4))
         } catch (error) {
@@ -57,7 +59,7 @@ const BalanceDisplay: React.FC = () => {
         if (!activeWallet) return
         setIsLoading(true)
         try {
-          const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
+          const provider = new ethers.JsonRpcProvider(rpcUrl)
           const balanceWei = await provider.getBalance(activeWallet.address)
           const balanceEth = ethers.formatEther(balanceWei)
           setBalance(parseFloat(balanceEth).toFixed(4))

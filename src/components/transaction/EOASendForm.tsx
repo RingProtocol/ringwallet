@@ -1,6 +1,7 @@
 import React from 'react';
-import WalletService from '../../services/walletService';
-import PasskeyService from '../../services/passkeyService';
+import { getPrimaryRpcUrl } from '../../models/ChainType';
+import EvmWalletService from '../../services/wallet/EvmWalletService';
+import PasskeyService from '../../services/account/passkeyService';
 import { useSendForm } from './useSendForm';
 import SendFormFields from './SendFormFields';
 import '../TransactionActions.css';
@@ -62,12 +63,12 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
         }
       }
 
-      const tx = await WalletService.signTransaction(
+      const tx = await EvmWalletService.signTransaction(
         activeWallet.privateKey!,
         toAddress,
         amount,
         Number(activeChainId),
-        activeChain?.rpcUrl,
+        getPrimaryRpcUrl(activeChain),
         tokenOpts,
       );
       setSignedTx(tx);
@@ -84,7 +85,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
     setError('');
     setIsBroadcasting(true);
     try {
-      const hash = await WalletService.broadcastEOATransaction(signedTx, activeChain?.rpcUrl);
+      const hash = await EvmWalletService.broadcastEOATransaction(signedTx, getPrimaryRpcUrl(activeChain));
       setBroadcastHash(hash);
       emitPendingTransaction({
         hash,

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { getPrimaryRpcUrl } from '@/models/ChainType'
 import { WalletBridge } from '../services/walletBridge'
 import { useApproval } from '../hooks/useApproval'
 import { buildDAppUrl } from '../services/dappService'
@@ -21,7 +22,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
   const bridge = useMemo(() => new WalletBridge({
     getActiveAddress: () => activeWallet?.address || null,
     getActiveChainId: () => Number(activeChainId),
-    getActiveChainRpcUrl: () => activeChain.rpcUrl,
+    getActiveChainRpcUrl: () => getPrimaryRpcUrl(activeChain),
     getActivePrivateKey: () => activeWallet?.privateKey || null,
     getChains: () => CHAINS.filter(c => typeof c.id === 'number').map(c => ({ id: c.id as number, name: c.name, rpcUrl: c.rpcUrl })),
     switchChain: (chainId: number) => switchChain(chainId),

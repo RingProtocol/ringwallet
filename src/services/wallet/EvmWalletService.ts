@@ -1,24 +1,7 @@
 import { ethers } from 'ethers';
-import PasskeyService from './passkeyService';
-import CharUtils from '../utils/CharUtils';
-import { WalletType } from '../models/WalletType';
-import * as DbgLog from '../utils/DbgLog';
-
-interface DerivedWallet {
-  index: number;
-  address: string;
-  privateKey: string;
-  type: WalletType;
-  path: string;
-}
-
-interface SmartAccountWallet {
-  index: number;
-  address: string;
-  privateKey: null;
-  type: WalletType;
-  credentialId: string;
-}
+import PasskeyService from '../account/passkeyService';
+import CharUtils from '../../utils/CharUtils';
+import * as DbgLog from '../../utils/DbgLog';
 
 export interface EIP7951Result {
   type: 'eip-7951';
@@ -30,40 +13,7 @@ export interface EIP7951Result {
   display: string;
 }
 
-class WalletService {
-  static deriveWallets(masterSeed: Uint8Array, count = 1, _accountName = 'default'): DerivedWallet[] {
-    if (!masterSeed || masterSeed.length !== 32) {
-      console.error('Invalid master seed provided to WalletService');
-      return [];
-    }
-
-    try {
-      const seedHex = ethers.hexlify(masterSeed);
-      const rootNode = ethers.HDNodeWallet.fromSeed(seedHex);
-
-      const wallets: DerivedWallet[] = [];
-      const basePath = "m/44'/60'/0'/0";
-
-      for (let i = 0; i < count; i++) {
-        const path = `${basePath}/${i}`;
-        const childNode = rootNode.derivePath(path);
-
-        wallets.push({
-          index: i,
-          address: childNode.address,
-          privateKey: childNode.privateKey,
-          type: WalletType.EOA,
-          path: path
-        });
-      }
-
-      return wallets;
-    } catch (error) {
-      console.error('Wallet derivation failed:', error);
-      throw error;
-    }
-  }
-
+class EvmWalletService {
   static deriveSmartAccount(publicKey: Map<number, Uint8Array> | Record<string | number, unknown>, salt = 0): string | null {
     try {
       if (!publicKey) return null;
@@ -259,7 +209,7 @@ class WalletService {
 
         if (!isDeployed) {
           if (factoryAddress && publicKey) {
-            initCode = WalletService.buildInitCode(factoryAddress, publicKey, salt);
+            initCode = this.buildInitCode(factoryAddress, publicKey, salt);
             DbgLog.log('Account not deployed, using initCode:', initCode);
           } else {
             console.warn('Account not deployed and no factory address provided. The UserOperation may fail.');
@@ -397,4 +347,4 @@ Authenticator Data: ${authDataHex.substring(0, 66)}...
   }
 }
 
-export default WalletService;
+export default EvmWalletService;

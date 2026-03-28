@@ -1,6 +1,6 @@
 import type { UserData } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
-import PasskeyService from '../services/passkeyService'
+import PasskeyService from '../services/account/passkeyService'
 import CharUtils from '../utils/CharUtils'
 import { safeGetItem } from '../utils/safeStorage'
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ethers } from 'ethers'
-import { SolanaKeyService } from './solanaKeyService'
+import { SolanaKeyService } from './wallet/solanaKeyService'
 import { WalletType } from '../models/WalletType'
 
 // ─── Test seeds ──────────────────────────────────────────────────────────────

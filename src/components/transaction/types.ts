@@ -1,4 +1,4 @@
-import type { EIP7951Result } from '../../services/walletService';
+import type { EIP7951Result } from '../../services/wallet/EvmWalletService';
 import type { TokenInfo } from '../../utils/tokenStorage';
 
 export type SignedTx = string | EIP7951Result;

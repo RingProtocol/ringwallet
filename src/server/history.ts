@@ -2,7 +2,7 @@ import { Connection, PublicKey, type ParsedInstruction } from '@solana/web3.js'
 import { ethers } from 'ethers'
 import { DEFAULT_CHAINS } from '@/config/chains'
 import type { HistoryApiResponse, TxRecord } from '@/features/history/types'
-import { ChainFamily, type Chain } from '@/models/ChainType'
+import { ChainFamily, getPrimaryRpcUrl, type Chain } from '@/models/ChainType'
 
 const DEFAULT_ALLOWED_ORIGINS = process.env.NODE_ENV === 'production'
   ? ['https://wallet.ring.exchange']
@@ -77,7 +77,7 @@ function resolveChain(chainId: string): Chain | null {
       id: Number(chainId),
       name: `Chain ${chainId}`,
       symbol: 'ETH',
-      rpcUrl: '',
+      rpcUrl: [],
       explorer: 'https://etherscan.io',
       family: ChainFamily.EVM,
     }
@@ -164,9 +164,10 @@ async function fetchEvmExplorerHistory(chain: Chain, address: string, limit: num
 }
 
 async function fetchEvmPendingTransactions(chain: Chain, hashes: string[]): Promise<TxRecord[]> {
-  if (!chain.rpcUrl || hashes.length === 0) return []
+  const rpcUrl = getPrimaryRpcUrl(chain)
+  if (!rpcUrl || hashes.length === 0) return []
 
-  const provider = new ethers.JsonRpcProvider(chain.rpcUrl)
+  const provider = new ethers.JsonRpcProvider(rpcUrl)
   const records = await Promise.all(hashes.map(async hash => {
     const transaction = await provider.getTransaction(hash)
     if (!transaction) return null
@@ -241,7 +242,7 @@ function extractSolanaTransfer(record: Awaited<ReturnType<Connection['getParsedT
 }
 
 async function fetchSolanaHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
-  const connection = new Connection(chain.rpcUrl, 'confirmed')
+  const connection = new Connection(getPrimaryRpcUrl(chain), 'confirmed')
   const owner = new PublicKey(address)
   const signatures = await connection.getSignaturesForAddress(owner, { limit })
   if (signatures.length === 0) return []
@@ -287,7 +288,7 @@ function mapBitcoinHistory(tx: BitcoinTx, address: string): TxRecord {
 }
 
 async function fetchBitcoinHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
-  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
   const response = await fetch(`${baseUrl}/address/${address}/txs`, {
     next: { revalidate: 60 },
   })
@@ -300,7 +301,7 @@ async function fetchBitcoinHistory(chain: Chain, address: string, limit: number)
 }
 
 async function fetchTronHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
-  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
   const response = await fetch(`${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`, {
     headers: { accept: 'application/json' },
     next: { revalidate: 60 },
@@ -345,7 +346,7 @@ async function fetchTronHistory(chain: Chain, address: string, limit: number): P
 }
 
 async function fetchCosmosHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
-  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
   const response = await fetch(`${baseUrl}/cosmos/tx/v1beta1/txs?events=message.sender='${address}'&pagination.limit=${limit}`, {
     next: { revalidate: 60 },
   })

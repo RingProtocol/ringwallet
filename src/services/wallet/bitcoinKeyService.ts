@@ -2,7 +2,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { BIP32Factory, type BIP32Interface } from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { ethers } from 'ethers';
-import { WalletType } from '../models/WalletType';
+import { WalletType } from '../../models/WalletType';
 
 bitcoin.initEccLib(ecc);
 

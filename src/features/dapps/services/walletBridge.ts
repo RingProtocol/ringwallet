@@ -9,7 +9,7 @@ interface BridgeConfig {
   getActiveChainId: () => number
   getActiveChainRpcUrl: () => string
   getActivePrivateKey: () => string | null
-  getChains: () => Array<{ id: number; name: string; rpcUrl: string }>
+  getChains: () => Array<{ id: number; name: string; rpcUrl: string[] }>
   switchChain: (chainId: number) => void
 }
 

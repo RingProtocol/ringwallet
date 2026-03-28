@@ -8,8 +8,8 @@ import DAppsPage from '@/features/dapps/components/DAppsPage'
 import '@/features/dapps/components/DApps.css'
 
 const MOCK_CHAINS: Chain[] = [
-  { id: 1, name: 'Ethereum', symbol: 'ETH', rpcUrl: 'https://eth.llamarpc.com', explorer: 'https://etherscan.io' },
-  { id: 11155111, name: 'Sepolia', symbol: 'SepoliaETH', rpcUrl: 'https://rpc.sepolia.org', explorer: 'https://sepolia.etherscan.io' },
+  { id: 1, name: 'Ethereum', symbol: 'ETH', rpcUrl: ['https://eth.llamarpc.com'], explorer: 'https://etherscan.io' },
+  { id: 11155111, name: 'Sepolia', symbol: 'SepoliaETH', rpcUrl: ['https://rpc.sepolia.org'], explorer: 'https://sepolia.etherscan.io' },
 ]
 
 const MOCK_WALLET: Wallet = {

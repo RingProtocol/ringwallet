@@ -12,7 +12,7 @@ function resolveChain(chainId: string): Chain | null {
       id: Number(chainId),
       name: `Chain ${chainId}`,
       symbol: 'ETH',
-      rpcUrl: '',
+      rpcUrl: [],
       explorer: 'https://etherscan.io',
       family: ChainFamily.EVM,
     }

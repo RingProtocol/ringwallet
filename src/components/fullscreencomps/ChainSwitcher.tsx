@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useAuth, type Chain } from '../contexts/AuthContext'
-import { ChainFamily } from '../models/ChainType'
-import { FEATURED_CHAIN_IDS, FEATURED_TESTNET_IDS } from '../config/chains'
-import { safeGetItem, safeSetItem } from '../utils/safeStorage'
+import { useAuth, type Chain } from '../../contexts/AuthContext'
+import { ChainFamily } from '../../models/ChainType'
+import { FEATURED_CHAIN_IDS, FEATURED_TESTNET_IDS } from '../../config/chains'
+import { safeGetItem, safeSetItem } from '../../utils/safeStorage'
 import './ChainSwitcher.css'
 
 const USER_CHAINS_KEY = 'user_added_chain_ids'

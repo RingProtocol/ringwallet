@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
-import { type Chain } from '../models/ChainType'
+import { getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
@@ -92,13 +92,14 @@ const TokenBalance: React.FC = () => {
   // Bitcoin balance fetching
   useEffect(() => {
     if (!isBitcoinChain) return
-    if (!activeBitcoinWallet || !activeChain?.rpcUrl) return
+    const rpcUrl = getPrimaryRpcUrl(activeChain)
+    if (!activeBitcoinWallet || !rpcUrl) return
 
     const fetchBitcoinBalances = async () => {
       setIsLoading(true)
       try {
         const service = new BitcoinService(
-          activeChain.rpcUrl,
+          rpcUrl,
           activeChain.network === 'testnet',
           bitcoinForkForChain(activeChain),
         )
@@ -127,12 +128,13 @@ const TokenBalance: React.FC = () => {
   // Solana balance fetching
   useEffect(() => {
     if (!isSolanaChain) return
-    if (!activeSolanaWallet || !activeChain?.rpcUrl) return
+    const rpcUrl = getPrimaryRpcUrl(activeChain)
+    if (!activeSolanaWallet || !rpcUrl) return
 
     const fetchSolanaBalances = async () => {
       setIsLoading(true)
       try {
-        const service = new SolanaService(activeChain.rpcUrl)
+        const service = new SolanaService(rpcUrl)
         const bal = await service.getBalance(activeSolanaWallet.address)
         setTokens([
           {
@@ -158,12 +160,13 @@ const TokenBalance: React.FC = () => {
   // EVM balance fetching
   useEffect(() => {
     if (!isEvmChain) return
-    if (!activeWallet || !activeChain?.rpcUrl) return
+    const rpcUrl = getPrimaryRpcUrl(activeChain)
+    if (!activeWallet || !rpcUrl) return
 
     const fetchEVMBalances = async () => {
       setIsLoading(true)
       try {
-        const provider = new ethers.JsonRpcProvider(activeChain.rpcUrl)
+        const provider = new ethers.JsonRpcProvider(rpcUrl)
         const balanceWei = await provider.getBalance(activeWallet.address)
         const balanceEth = ethers.formatEther(balanceWei)
 
@@ -267,7 +270,7 @@ const TokenBalance: React.FC = () => {
           isOpen={showImportDialog}
           onClose={() => setShowImportDialog(false)}
           onImport={handleImportToken}
-          rpcUrl={activeChain?.rpcUrl}
+          rpcUrl={getPrimaryRpcUrl(activeChain)}
         />
       )}
     </div>

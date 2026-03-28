@@ -10,7 +10,7 @@ export interface Chain {
   id: number | string;
   name: string;
   symbol: string;
-  rpcUrl: string;
+  rpcUrl: string[];
   explorer: string;
   family?: ChainFamily;
   cluster?: 'mainnet-beta' | 'devnet' | 'testnet';
@@ -28,4 +28,8 @@ export interface Chain {
   coinType?: number;
   /** Bech32 human-readable prefix for Cosmos chains (e.g. "cosmos", "pb", "osmo") */
   addressPrefix?: string;
+}
+
+export function getPrimaryRpcUrl(chain?: Pick<Chain, 'rpcUrl'> | null): string {
+  return chain?.rpcUrl[0] ?? ''
 }
