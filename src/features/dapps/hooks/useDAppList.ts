@@ -24,8 +24,6 @@ export function useDAppList() {
     try {
       const data = await fetchDAppList()
       setDapps(data.dapps)
-      console.log("dapplist>>data=", data)
-      console.log('categories==', data.categories)
       setCategories(data.categories)
     } catch (err) {
       if (!cached?.data) {
@@ -36,7 +34,9 @@ export function useDAppList() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
   return { dapps, categories, loading, error, reload: load }
 }
