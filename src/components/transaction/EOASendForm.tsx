@@ -5,6 +5,7 @@ import { useSendForm } from './useSendForm';
 import SendFormFields from './SendFormFields';
 import '../TransactionActions.css';
 import { useI18n } from '../../i18n';
+import { emitPendingTransaction } from '../../features/history/client';
 
 interface EOASendFormProps {
   onClose: () => void;
@@ -85,6 +86,16 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
     try {
       const hash = await WalletService.broadcastEOATransaction(signedTx, activeChain?.rpcUrl);
       setBroadcastHash(hash);
+      emitPendingTransaction({
+        hash,
+        from: activeWallet.address,
+        to: toAddress,
+        value: amount,
+        timestamp: Math.floor(Date.now() / 1000),
+        status: 'pending',
+        chainId: String(activeChain?.id ?? activeChainId),
+        address: activeWallet.address,
+      });
     } catch (e) {
       console.error(e);
       setError('Broadcast1 failed: ' + (e as Error).message);

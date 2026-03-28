@@ -1,0 +1,518 @@
+import { Connection, PublicKey, type ParsedInstruction } from '@solana/web3.js'
+import { ethers } from 'ethers'
+import { DEFAULT_CHAINS } from '@/config/chains'
+import type { HistoryApiResponse, TxRecord } from '@/features/history/types'
+import { ChainFamily, type Chain } from '@/models/ChainType'
+
+const DEFAULT_ALLOWED_ORIGINS = process.env.NODE_ENV === 'production'
+  ? ['https://wallet.ring.exchange']
+  : ['https://wallet.ring.exchange', 'https://wallet.testring.org', 'http://localhost:3000', 'http://127.0.0.1:3000']
+
+const allowedOrigins = new Set(
+  (process.env.HISTORY_ALLOWED_ORIGINS ?? DEFAULT_ALLOWED_ORIGINS.join(','))
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean),
+)
+
+const HISTORY_CACHE_TTL_MS = 60 * 1000
+const HISTORY_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300'
+const MAX_HISTORY_LIMIT = 20
+const historyCache = new Map<string, { expiresAt: number; value: HistoryApiResponse }>()
+
+interface HistoryParams {
+  address: string
+  chainId: string
+  limit: number
+  pendingHashes: string[]
+}
+
+interface EtherscanTransaction {
+  hash: string
+  from: string
+  to: string
+  value: string
+  timeStamp: string
+  isError: string
+  txreceipt_status?: string
+}
+
+interface BitcoinTx {
+  txid: string
+  vin: Array<{
+    prevout?: {
+      scriptpubkey_address?: string
+      value: number
+    }
+  }>
+  vout: Array<{
+    scriptpubkey_address?: string
+    value: number
+  }>
+  status?: {
+    confirmed?: boolean
+    block_time?: number
+  }
+}
+
+function normalizeLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return 8
+  return Math.max(1, Math.min(MAX_HISTORY_LIMIT, Math.trunc(limit)))
+}
+
+function normalizeAddress(address: string): string {
+  return address.trim()
+}
+
+function isNumericChainId(chainId: string): boolean {
+  return /^\d+$/.test(chainId)
+}
+
+function resolveChain(chainId: string): Chain | null {
+  const matched = DEFAULT_CHAINS.find(chain => String(chain.id) === chainId)
+  if (matched) return matched
+
+  if (isNumericChainId(chainId)) {
+    return {
+      id: Number(chainId),
+      name: `Chain ${chainId}`,
+      symbol: 'ETH',
+      rpcUrl: '',
+      explorer: 'https://etherscan.io',
+      family: ChainFamily.EVM,
+    }
+  }
+
+  return null
+}
+
+function formatUnits(value: bigint, decimals: number): string {
+  const formatted = ethers.formatUnits(value, decimals)
+  if (!formatted.includes('.')) return formatted
+  return formatted.replace(/\.?0+$/, '')
+}
+
+function parseBigInt(value: string | bigint | null | undefined): bigint {
+  if (typeof value === 'bigint') return value
+  if (!value) return 0n
+  try {
+    return BigInt(value)
+  } catch {
+    return 0n
+  }
+}
+
+function mapEtherscanStatus(tx: EtherscanTransaction): TxRecord['status'] {
+  if (tx.isError === '1' || tx.txreceipt_status === '0') return 'failed'
+  return 'confirmed'
+}
+
+function getEvmExplorerApiBaseUrl(chain: Chain): string {
+  const perChainOverrideKey = `HISTORY_EVM_API_BASE_URL_${String(chain.id)
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .toUpperCase()}`
+
+  return (
+    process.env[perChainOverrideKey]?.trim() ||
+    process.env.HISTORY_EVM_API_BASE_URL?.trim() ||
+    process.env.ETHERSCAN_API_BASE_URL?.trim() ||
+    'https://api.etherscan.io/v2/api'
+  )
+}
+
+async function fetchEvmExplorerHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
+  const apiKey = process.env.ETHERSCAN_API_KEY?.trim()
+  if (!apiKey || !isNumericChainId(String(chain.id))) {
+    console.warn('EVM history explorer config is incomplete', { chainId: chain.id })
+    return []
+  }
+
+  const url = new URL(getEvmExplorerApiBaseUrl(chain))
+  url.searchParams.set('chainid', String(chain.id))
+  url.searchParams.set('module', 'account')
+  url.searchParams.set('action', 'txlist')
+  url.searchParams.set('address', address)
+  url.searchParams.set('page', '1')
+  url.searchParams.set('offset', String(limit))
+  url.searchParams.set('sort', 'desc')
+  url.searchParams.set('apikey', apiKey)
+
+  const response = await fetch(url, { next: { revalidate: 60 } })
+  if (!response.ok) {
+    throw new Error(`Etherscan request failed with ${response.status}`)
+  }
+
+  const payload = await response.json() as {
+    status: string
+    message: string
+    result: EtherscanTransaction[] | string
+  }
+
+  if (!Array.isArray(payload.result)) {
+    if (payload.result === 'No transactions found') return []
+    throw new Error(typeof payload.result === 'string' ? payload.result : 'Unexpected Etherscan response')
+  }
+
+  return payload.result.slice(0, limit).map(tx => ({
+    hash: tx.hash,
+    from: tx.from ?? '',
+    to: tx.to ?? '',
+    value: formatUnits(parseBigInt(tx.value), 18),
+    timestamp: Number(tx.timeStamp || 0),
+    status: mapEtherscanStatus(tx),
+  }))
+}
+
+async function fetchEvmPendingTransactions(chain: Chain, hashes: string[]): Promise<TxRecord[]> {
+  if (!chain.rpcUrl || hashes.length === 0) return []
+
+  const provider = new ethers.JsonRpcProvider(chain.rpcUrl)
+  const records = await Promise.all(hashes.map(async hash => {
+    const transaction = await provider.getTransaction(hash)
+    if (!transaction) return null
+
+    const receipt = await provider.getTransactionReceipt(hash)
+    const block = transaction.blockNumber ? await provider.getBlock(transaction.blockNumber) : null
+
+    return {
+      hash,
+      from: transaction.from ?? '',
+      to: transaction.to ?? '',
+      value: formatUnits(transaction.value ?? 0n, 18),
+      timestamp: block?.timestamp ?? Math.floor(Date.now() / 1000),
+      status: receipt
+        ? (receipt.status === 1 ? 'confirmed' : 'failed')
+        : 'pending',
+    } satisfies TxRecord
+  }))
+
+  return records.filter((record): record is TxRecord => Boolean(record))
+}
+
+function extractSolanaTransfer(record: Awaited<ReturnType<Connection['getParsedTransactions']>>[number], address: string): {
+  from: string
+  to: string
+  value: string
+} {
+  const instructions = record?.transaction.message.instructions ?? []
+  for (const instruction of instructions) {
+    if (!('parsed' in instruction)) continue
+    const parsedInstruction = instruction as ParsedInstruction
+    const info = parsedInstruction.parsed?.info as Record<string, unknown> | undefined
+    if (!info) continue
+
+    const from = typeof info.source === 'string'
+      ? info.source
+      : typeof info.from === 'string'
+        ? info.from
+        : address
+    const to = typeof info.destination === 'string'
+      ? info.destination
+      : typeof info.to === 'string'
+        ? info.to
+        : address
+    const rawValue = typeof info.lamports === 'number'
+      ? BigInt(info.lamports)
+      : typeof info.amount === 'string'
+        ? parseBigInt(info.amount)
+        : null
+
+    if (rawValue !== null) {
+      return {
+        from,
+        to,
+        value: formatUnits(rawValue, 9),
+      }
+    }
+  }
+
+  const accountKeys = record?.transaction.message.accountKeys ?? []
+  const ownerIndex = accountKeys.findIndex(key => key.pubkey.toBase58() === address)
+  const preBalance = ownerIndex >= 0 ? record?.meta?.preBalances?.[ownerIndex] ?? 0 : 0
+  const postBalance = ownerIndex >= 0 ? record?.meta?.postBalances?.[ownerIndex] ?? 0 : 0
+  const delta = BigInt(Math.abs(postBalance - preBalance))
+  const signer = accountKeys.find(key => key.signer)?.pubkey.toBase58() ?? address
+
+  return {
+    from: signer,
+    to: address,
+    value: formatUnits(delta, 9),
+  }
+}
+
+async function fetchSolanaHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
+  const connection = new Connection(chain.rpcUrl, 'confirmed')
+  const owner = new PublicKey(address)
+  const signatures = await connection.getSignaturesForAddress(owner, { limit })
+  if (signatures.length === 0) return []
+
+  const transactions = await connection.getParsedTransactions(
+    signatures.map(item => item.signature),
+    { maxSupportedTransactionVersion: 0, commitment: 'confirmed' },
+  )
+
+  return signatures.map((signature, index) => {
+    const parsed = transactions[index]
+    const transfer = extractSolanaTransfer(parsed, address)
+    return {
+      hash: signature.signature,
+      from: transfer.from,
+      to: transfer.to,
+      value: transfer.value,
+      timestamp: signature.blockTime ?? Math.floor(Date.now() / 1000),
+      status: signature.err ? 'failed' : 'confirmed',
+    }
+  })
+}
+
+function mapBitcoinHistory(tx: BitcoinTx, address: string): TxRecord {
+  const received = tx.vout
+    .filter(output => output.scriptpubkey_address === address)
+    .reduce((sum, output) => sum + output.value, 0)
+  const spent = tx.vin
+    .filter(input => input.prevout?.scriptpubkey_address === address)
+    .reduce((sum, input) => sum + (input.prevout?.value ?? 0), 0)
+  const delta = received - spent
+  const externalInput = tx.vin.find(input => input.prevout?.scriptpubkey_address && input.prevout.scriptpubkey_address !== address)
+  const externalOutput = tx.vout.find(output => output.scriptpubkey_address && output.scriptpubkey_address !== address)
+
+  return {
+    hash: tx.txid,
+    from: externalInput?.prevout?.scriptpubkey_address ?? address,
+    to: externalOutput?.scriptpubkey_address ?? address,
+    value: formatUnits(BigInt(Math.abs(delta)), 8),
+    timestamp: tx.status?.block_time ?? Math.floor(Date.now() / 1000),
+    status: tx.status?.confirmed ? 'confirmed' : 'pending',
+  }
+}
+
+async function fetchBitcoinHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
+  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const response = await fetch(`${baseUrl}/address/${address}/txs`, {
+    next: { revalidate: 60 },
+  })
+  if (!response.ok) {
+    throw new Error(`Bitcoin history request failed with ${response.status}`)
+  }
+
+  const payload = await response.json() as BitcoinTx[]
+  return payload.slice(0, limit).map(tx => mapBitcoinHistory(tx, address))
+}
+
+async function fetchTronHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
+  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const response = await fetch(`${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`, {
+    headers: { accept: 'application/json' },
+    next: { revalidate: 60 },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Tron history request failed with ${response.status}`)
+  }
+
+  const payload = await response.json() as {
+    data?: Array<{
+      txID: string
+      block_timestamp: number
+      ret?: Array<{ contractRet?: string }>
+      raw_data?: {
+        contract?: Array<{
+          parameter?: {
+            value?: {
+              owner_address?: string
+              to_address?: string
+              amount?: number
+            }
+          }
+        }>
+      }
+    }>
+  }
+
+  return (payload.data ?? []).slice(0, limit).map(item => {
+    const transfer = item.raw_data?.contract?.[0]?.parameter?.value
+    return {
+      hash: item.txID,
+      from: transfer?.owner_address ?? address,
+      to: transfer?.to_address ?? address,
+      value: formatUnits(BigInt(transfer?.amount ?? 0), 6),
+      timestamp: Math.floor((item.block_timestamp ?? Date.now()) / 1000),
+      status: item.ret?.some(result => result.contractRet && result.contractRet !== 'SUCCESS')
+        ? 'failed'
+        : 'confirmed',
+    }
+  })
+}
+
+async function fetchCosmosHistory(chain: Chain, address: string, limit: number): Promise<TxRecord[]> {
+  const baseUrl = chain.rpcUrl.replace(/\/$/, '')
+  const response = await fetch(`${baseUrl}/cosmos/tx/v1beta1/txs?events=message.sender='${address}'&pagination.limit=${limit}`, {
+    next: { revalidate: 60 },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Cosmos history request failed with ${response.status}`)
+  }
+
+  const payload = await response.json() as {
+    tx_responses?: Array<{
+      txhash: string
+      timestamp?: string
+      code?: number
+      tx?: {
+        body?: {
+          messages?: Array<Record<string, unknown>>
+        }
+      }
+    }>
+  }
+
+  return (payload.tx_responses ?? []).slice(0, limit).map(item => {
+    const firstMessage = item.tx?.body?.messages?.[0] as Record<string, unknown> | undefined
+    const amountEntry = Array.isArray(firstMessage?.amount)
+      ? firstMessage?.amount?.[0] as Record<string, unknown> | undefined
+      : undefined
+    const amount = typeof amountEntry?.amount === 'string' ? amountEntry.amount : '0'
+    const decimals = chain.symbol === 'ATOM' ? 6 : 6
+
+    return {
+      hash: item.txhash,
+      from: typeof firstMessage?.from_address === 'string' ? firstMessage.from_address : address,
+      to: typeof firstMessage?.to_address === 'string' ? firstMessage.to_address : address,
+      value: formatUnits(parseBigInt(amount), decimals),
+      timestamp: item.timestamp ? Math.floor(new Date(item.timestamp).getTime() / 1000) : Math.floor(Date.now() / 1000),
+      status: item.code && item.code !== 0 ? 'failed' : 'confirmed',
+    }
+  })
+}
+
+async function fetchHistoryByFamily(chain: Chain, address: string, limit: number): Promise<{ transactions: TxRecord[]; source: string }> {
+  switch (chain.family) {
+    case ChainFamily.Solana:
+      return {
+        transactions: await fetchSolanaHistory(chain, address, limit),
+        source: 'solana-rpc',
+      }
+    case ChainFamily.Bitcoin:
+      return {
+        transactions: await fetchBitcoinHistory(chain, address, limit),
+        source: 'bitcoin-indexer',
+      }
+    case ChainFamily.Tron:
+      return {
+        transactions: await fetchTronHistory(chain, address, limit),
+        source: 'tron-api',
+      }
+    case ChainFamily.Cosmos:
+      return {
+        transactions: await fetchCosmosHistory(chain, address, limit),
+        source: 'cosmos-api',
+      }
+    case ChainFamily.EVM:
+    default:
+      return {
+        transactions: await fetchEvmExplorerHistory(chain, address, limit),
+        source: 'etherscan',
+      }
+  }
+}
+
+function mergeTransactions(...groups: TxRecord[][]): TxRecord[] {
+  const merged = new Map<string, TxRecord>()
+
+  for (const group of groups) {
+    for (const tx of group) {
+      merged.set(tx.hash.toLowerCase(), tx)
+    }
+  }
+
+  return [...merged.values()]
+    .sort((left, right) => {
+      if (left.status === 'pending' && right.status !== 'pending') return -1
+      if (left.status !== 'pending' && right.status === 'pending') return 1
+      return right.timestamp - left.timestamp
+    })
+}
+
+function getCacheKey(params: HistoryParams): string {
+  return `${params.chainId}:${params.address.toLowerCase()}:${params.limit}`
+}
+
+export function getCorsHeaders(origin: string | null): HeadersInit {
+  const headers: HeadersInit = {
+    Vary: 'Origin',
+    'Cache-Control': HISTORY_CACHE_CONTROL,
+  }
+
+  if (origin && allowedOrigins.has(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin
+    headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    headers['Access-Control-Allow-Headers'] = 'Content-Type'
+  }
+
+  return headers
+}
+
+export function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return true
+  return allowedOrigins.has(origin)
+}
+
+export function validateAddress(chain: Chain, address: string): boolean {
+  switch (chain.family) {
+    case ChainFamily.Solana:
+      try {
+        new PublicKey(address)
+        return true
+      } catch {
+        return false
+      }
+    case ChainFamily.EVM:
+      return ethers.isAddress(address)
+    default:
+      return address.length >= 8
+  }
+}
+
+export async function getHistory(params: HistoryParams): Promise<HistoryApiResponse> {
+  const normalizedAddress = normalizeAddress(params.address)
+  const normalizedLimit = normalizeLimit(params.limit)
+  const chain = resolveChain(params.chainId)
+
+  if (!chain) {
+    throw new Error('Unsupported chain')
+  }
+
+  const cacheKey = getCacheKey({
+    ...params,
+    address: normalizedAddress,
+    limit: normalizedLimit,
+  })
+
+  if (params.pendingHashes.length === 0) {
+    const cached = historyCache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value
+    }
+  }
+
+  const baseHistory = await fetchHistoryByFamily(chain, normalizedAddress, normalizedLimit)
+  const pendingHistory = chain.family === ChainFamily.EVM
+    ? await fetchEvmPendingTransactions(chain, params.pendingHashes)
+    : []
+
+  const value: HistoryApiResponse = {
+    transactions: mergeTransactions(baseHistory.transactions, pendingHistory).slice(0, normalizedLimit),
+    source: pendingHistory.length > 0 ? `${baseHistory.source}+rpc` : baseHistory.source,
+    cachedAt: Date.now(),
+  }
+
+  if (params.pendingHashes.length === 0) {
+    historyCache.set(cacheKey, {
+      expiresAt: Date.now() + HISTORY_CACHE_TTL_MS,
+      value,
+    })
+  }
+
+  return value
+}
