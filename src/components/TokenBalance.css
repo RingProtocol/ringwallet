@@ -108,6 +108,12 @@
   animation: pulse 1.5s infinite;
 }
 
+.token-loading-inline {
+  padding: 10px 16px 14px;
+  text-align: left;
+  font-size: 0.78rem;
+}
+
 @keyframes pulse {
   0% { opacity: 0.5; }
   50% { opacity: 1; }
