@@ -24,7 +24,8 @@ export function useDAppList() {
     try {
       const data = await fetchDAppList()
       setDapps(data.dapps)
-      console.log('categories', data.categories)
+      console.log("dapplist>>data=", data)
+      console.log('categories==', data.categories)
       setCategories(data.categories)
     } catch (err) {
       if (!cached?.data) {

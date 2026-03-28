@@ -66,6 +66,8 @@ yarn dev
 
 Then open the app in your browser and sign in with your fingerprint.
 
+If you run the Vite PWA dev server on `http://localhost:3003`, keep the Next server running on `http://localhost:3000` as well. Client-side `/api/v1/*` requests are resolved to the Next server, not the Vite dev server. You can override that target explicitly with `VITE_API_BASE_URL`.
+
 ---
 
 ## Usage Guide
@@ -82,4 +84,5 @@ For installation and usage instructions, visit our docs:
 # Dependent Variables
 VITE_DAPP_URL=https://script.google.com/macros/s/AKfycbzFSlcUVztjCGIHesC0WFG-QP8MnPrfvZdKnYOTboATM7Vtgg8ExRwfo_Jlkh7Pf8FC9A/exec
 DAPP_TOKEN=
+VITE_API_BASE_URL=http://localhost:3000
 VITE_TEST_API_KEY=<Contact Ring to get>

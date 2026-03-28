@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { ensureDB, getDApps, getCategories, getDAppByApiKey } from '@/server/db'
 import type { DAppListResponse } from '@/features/dapps/types/dapp'
 
 interface RawDAppRow {
@@ -86,11 +85,13 @@ function normalizeDAppListResponse(data: unknown): DAppListResponse {
   throw new Error('Invalid DApp list response format')
 }
 
-async function fetchRemoteDApps(testApiKey: string | null): Promise<DAppListResponse | null> {
+async function fetchRemoteDApps(testApiKey: string | null): Promise<DAppListResponse> {
   const dappUrl = env('VITE_DAPP_URL')
   const dappToken = env('DAPP_TOKEN')
 
-  if (!dappUrl) return null
+  if (!dappUrl) {
+    throw new Error('VITE_DAPP_URL environment variable is not set')
+  }
 
   const url = new URL(dappUrl)
   if (dappToken) {
@@ -119,31 +120,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const testApiKey = searchParams.get('testdapp')
-
     const remotePayload = await fetchRemoteDApps(testApiKey)
-    if (remotePayload) {
-      return NextResponse.json(remotePayload)
-    }
-
-    await ensureDB()
-    const [dapps, categories] = await Promise.all([
-      getDApps({ status: 'active' }),
-      getCategories(),
-    ])
-
-    if (testApiKey) {
-      const testDapp = await getDAppByApiKey(testApiKey)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (testDapp && !dapps.some((d: any) => d.id === testDapp.id)) {
-        dapps.push(testDapp)
-      }
-    }
-
-    return NextResponse.json({
-      dapps,
-      categories,
-      updated_at: new Date().toISOString(),
-    })
+    return NextResponse.json(remotePayload)
   } catch (err) {
     console.error('[API] /v1/dapps error:', (err as Error).message)
     return NextResponse.json({ error: 'Failed to fetch DApps' }, { status: 500 })

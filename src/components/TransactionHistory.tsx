@@ -11,6 +11,7 @@ import {
   writeHistoryCache,
 } from '../features/history/client'
 import type { HistoryApiResponse, PendingTransactionEventDetail, TxRecord } from '../features/history/types'
+import { resolveClientApiUrl } from '../utils/apiUrl'
 
 const PENDING_POLL_INTERVAL_MS = 15 * 1000
 
@@ -62,9 +63,18 @@ const TransactionHistory: React.FC = () => {
         searchParams.set('pending', pendingHashesRef.current.join(','))
       }
 
-      const response = await fetch(`/api/v1/history?${searchParams.toString()}`)
+      const url = resolveClientApiUrl('/api/v1/history')
+      url.search = searchParams.toString()
+
+      const response = await fetch(url.toString())
       if (!response.ok) {
         throw new Error(`Failed to fetch history: ${response.status}`)
+      }
+
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) {
+        const body = await response.text()
+        throw new Error(`Expected JSON but received ${contentType || 'unknown'}: ${body.slice(0, 120)}`)
       }
 
       const payload = await response.json() as HistoryApiResponse
