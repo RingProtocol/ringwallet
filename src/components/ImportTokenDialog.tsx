@@ -1,13 +1,9 @@
 import React, { useState } from 'react'
 import { ethers } from 'ethers'
+import type { Chain } from '../models/ChainType'
+import RpcService from '../services/rpc/rpcService'
 import './ImportTokenDialog.css'
 import { useI18n } from '../i18n'
-
-const ERC20_ABI = [
-  'function symbol() view returns (string)',
-  'function name() view returns (string)',
-  'function decimals() view returns (uint8)',
-] as const
 
 export interface ImportedTokenInfo {
   symbol: string
@@ -20,14 +16,14 @@ interface ImportTokenDialogProps {
   isOpen: boolean
   onClose: () => void
   onImport: (token: ImportedTokenInfo) => void
-  rpcUrl?: string
+  chain?: Chain | null
 }
 
 const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
   isOpen,
   onClose,
   onImport,
-  rpcUrl,
+  chain,
 }) => {
   const { t } = useI18n()
   const [address, setAddress] = useState('')
@@ -45,7 +41,7 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
       return
     }
 
-    if (!rpcUrl) {
+    if (!chain?.rpcUrl?.length) {
       setError(t('rpcNotConfigured'))
       return
     }
@@ -54,20 +50,14 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
     setIsLoading(true)
 
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl)
-      const contract = new ethers.Contract(address.trim(), ERC20_ABI, provider)
-
-      const [symbol, name, decimals] = await Promise.all([
-        contract.symbol(),
-        contract.name(),
-        contract.decimals(),
-      ])
+      const evmRpcService = RpcService.fromChain(chain).getEvmService()
+      const tokenInfo = await evmRpcService.getTokenMetadata(address.trim())
 
       onImport({
-        symbol: symbol || 'UNKNOWN',
-        name: name || 'Unknown Token',
+        symbol: tokenInfo.symbol,
+        name: tokenInfo.name,
         address: address.trim(),
-        decimals: Number(decimals),
+        decimals: tokenInfo.decimals,
       })
       setAddress('')
       onClose()

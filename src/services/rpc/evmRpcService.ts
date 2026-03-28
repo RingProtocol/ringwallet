@@ -1,0 +1,275 @@
+import { ethers } from 'ethers';
+import type {
+  BlockNumberReader,
+  GasPriceReader,
+  JsonRpcFailure,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  NativeBalanceOptions,
+  NativeBalanceReader,
+  RpcTransport,
+} from '../../models/rpcType';
+
+const ERC20_BALANCE_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+] as const
+
+const ERC20_METADATA_ABI = [
+  'function symbol() view returns (string)',
+  'function name() view returns (string)',
+  'function decimals() view returns (uint8)',
+] as const
+
+const ERC20_METADATA_INTERFACE = new ethers.Interface(ERC20_METADATA_ABI)
+
+export interface EvmTokenMetadata {
+  symbol: string
+  name: string
+  decimals: number
+}
+
+export class EvmRpcService implements RpcTransport, NativeBalanceReader, GasPriceReader, BlockNumberReader {
+  private readonly rpcUrls: string[]
+  private readonly providers = new Map<string, ethers.JsonRpcProvider>()
+  private activeRpcUrl: string | null
+
+  constructor(rpcUrls: string | readonly string[]) {
+    this.rpcUrls = (Array.isArray(rpcUrls) ? rpcUrls : [rpcUrls]).filter(Boolean)
+    this.activeRpcUrl = this.rpcUrls[0] ?? null
+  }
+
+  private getProviderForUrl(rpcUrl: string): ethers.JsonRpcProvider {
+    const cached = this.providers.get(rpcUrl)
+    if (cached) {
+      return cached
+    }
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    this.providers.set(rpcUrl, provider)
+    return provider
+  }
+
+  private markRpcUrlHealthy(rpcUrl: string): void {
+    this.activeRpcUrl = rpcUrl
+  }
+
+  private async tryRpcUrls<TResult>(runner: (provider: ethers.JsonRpcProvider, rpcUrl: string) => Promise<TResult>): Promise<TResult> {
+    if (this.rpcUrls.length === 0) {
+      throw new Error('RPC URL is required');
+    }
+
+    const orderedUrls = [
+      ...new Set([
+        this.activeRpcUrl,
+        ...this.rpcUrls,
+      ].filter((url): url is string => Boolean(url))),
+    ]
+
+    let lastError: unknown = null
+
+console.log('orderedUrls=', orderedUrls)
+    for (const rpcUrl of orderedUrls) {
+      try {
+        const result = await runner(this.getProviderForUrl(rpcUrl), rpcUrl)
+        this.markRpcUrlHealthy(rpcUrl)
+        return result
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error('All EVM RPC endpoints failed')
+  }
+
+  async request<TResult>(method: string, params: readonly unknown[] = []): Promise<TResult> {
+    const payload: JsonRpcRequest = {
+      jsonrpc: '2.0',
+      id: 1,
+      method,
+      params,
+    };
+
+    return this.tryRpcUrls(async (_provider, rpcUrl) => {
+      console.log('EVM RPC url=', rpcUrl)
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await response.text().catch(() => '');
+
+      let parsed: JsonRpcResponse<TResult>;
+      try {
+        parsed = JSON.parse(body) as JsonRpcResponse<TResult>;
+      } catch {
+        throw new Error(`EVM RPC invalid response: HTTP ${response.status} ${body}`);
+      }
+
+      if (this.isFailure(parsed)) {
+        throw new Error(`EVM RPC error ${parsed.error.code}: ${parsed.error.message}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(`EVM RPC HTTP ${response.status}: ${body}`);
+      }
+
+      return parsed.result
+    })
+  }
+
+  async getBalance(address: string, options: NativeBalanceOptions = {}): Promise<bigint> {
+    if (!ethers.isAddress(address)) {
+      throw new Error('Invalid EVM address');
+    }
+
+    const blockTag = options.blockTag ?? 'latest';
+    return this.tryRpcUrls((provider) => provider.getBalance(address, blockTag));
+  }
+
+  async getFormattedBalance(address: string, options: NativeBalanceOptions = {}): Promise<string> {
+    const balance = await this.getBalance(address, options);
+    return ethers.formatEther(balance);
+  }
+
+  async getTokenBalance(tokenAddress: string, walletAddress: string): Promise<bigint> {
+    if (!ethers.isAddress(tokenAddress)) {
+      throw new Error('Invalid EVM token address');
+    }
+
+    if (!ethers.isAddress(walletAddress)) {
+      throw new Error('Invalid EVM wallet address');
+    }
+
+    return this.tryRpcUrls(async (provider) => {
+      const contract = new ethers.Contract(tokenAddress, ERC20_BALANCE_ABI, provider)
+      return BigInt(await contract.balanceOf(walletAddress))
+    })
+  }
+
+  async getFormattedTokenBalance(tokenAddress: string, walletAddress: string, decimals: number): Promise<string> {
+    const balance = await this.getTokenBalance(tokenAddress, walletAddress)
+    return ethers.formatUnits(balance, decimals)
+  }
+
+  async getTokenMetadata(tokenAddress: string): Promise<EvmTokenMetadata> {
+    if (!ethers.isAddress(tokenAddress)) {
+      throw new Error('Invalid EVM token address');
+    }
+
+    return this.tryRpcUrls(async (provider, rpcUrl) => {
+      try {
+        const responses = await this.requestBatch([
+          {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_call',
+            params: [{ to: tokenAddress, data: ERC20_METADATA_INTERFACE.encodeFunctionData('symbol') }, 'latest'],
+          },
+          {
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'eth_call',
+            params: [{ to: tokenAddress, data: ERC20_METADATA_INTERFACE.encodeFunctionData('name') }, 'latest'],
+          },
+          {
+            jsonrpc: '2.0',
+            id: 3,
+            method: 'eth_call',
+            params: [{ to: tokenAddress, data: ERC20_METADATA_INTERFACE.encodeFunctionData('decimals') }, 'latest'],
+          },
+        ], rpcUrl)
+
+        const responseById = new Map(responses.map((response) => [response.id, response]))
+        const symbolResponse = responseById.get(1)
+        const nameResponse = responseById.get(2)
+        const decimalsResponse = responseById.get(3)
+
+        if (!symbolResponse || !nameResponse || !decimalsResponse) {
+          throw new Error('Incomplete EVM token metadata response')
+        }
+
+        if (this.isFailure(symbolResponse)) {
+          throw new Error(`EVM RPC error ${symbolResponse.error.code}: ${symbolResponse.error.message}`)
+        }
+
+        if (this.isFailure(nameResponse)) {
+          throw new Error(`EVM RPC error ${nameResponse.error.code}: ${nameResponse.error.message}`)
+        }
+
+        if (this.isFailure(decimalsResponse)) {
+          throw new Error(`EVM RPC error ${decimalsResponse.error.code}: ${decimalsResponse.error.message}`)
+        }
+
+        const [symbol] = ERC20_METADATA_INTERFACE.decodeFunctionResult('symbol', symbolResponse.result)
+        const [name] = ERC20_METADATA_INTERFACE.decodeFunctionResult('name', nameResponse.result)
+        const [decimals] = ERC20_METADATA_INTERFACE.decodeFunctionResult('decimals', decimalsResponse.result)
+
+        return {
+          symbol: symbol || 'UNKNOWN',
+          name: name || 'Unknown Token',
+          decimals: Number(decimals),
+        }
+      } catch {
+        const contract = new ethers.Contract(tokenAddress, ERC20_METADATA_ABI, provider)
+        const [symbol, name, decimals] = await Promise.all([
+          contract.symbol(),
+          contract.name(),
+          contract.decimals(),
+        ])
+
+        return {
+          symbol: symbol || 'UNKNOWN',
+          name: name || 'Unknown Token',
+          decimals: Number(decimals),
+        }
+      }
+    })
+  }
+
+  async getBlockNumber(): Promise<bigint> {
+    const result = await this.request<string>('eth_blockNumber');
+    return BigInt(result);
+  }
+
+  async getGasPrice(): Promise<bigint> {
+    const result = await this.request<string>('eth_gasPrice');
+    return BigInt(result);
+  }
+
+  private async requestBatch(
+    payloads: readonly JsonRpcRequest[],
+    rpcUrl: string,
+  ): Promise<JsonRpcResponse<string>[]> {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payloads),
+    });
+
+    const body = await response.text().catch(() => '');
+
+    let parsed: JsonRpcResponse<string>[]
+    try {
+      parsed = JSON.parse(body) as JsonRpcResponse<string>[]
+    } catch {
+      throw new Error(`EVM RPC invalid batch response: HTTP ${response.status} ${body}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`EVM RPC HTTP ${response.status}: ${body}`);
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('EVM RPC batch response must be an array')
+    }
+
+    return parsed
+  }
+
+  private isFailure<TResult>(response: JsonRpcResponse<TResult>): response is JsonRpcFailure {
+    return 'error' in response;
+  }
+}
+
+export default EvmRpcService;

@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import RpcService from '../services/rpc/rpcService'
 import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
 import { useI18n } from '../i18n'
-
-const ERC20_ABI = [
-  'function balanceOf(address) view returns (uint256)',
-] as const
 
 interface DisplayTokenInfo {
   symbol: string
@@ -166,9 +162,8 @@ const TokenBalance: React.FC = () => {
     const fetchEVMBalances = async () => {
       setIsLoading(true)
       try {
-        const provider = new ethers.JsonRpcProvider(rpcUrl)
-        const balanceWei = await provider.getBalance(activeWallet.address)
-        const balanceEth = ethers.formatEther(balanceWei)
+        const evmRpcService = RpcService.fromChain(activeChain).getEvmService()
+        const balanceEth = await evmRpcService.getFormattedBalance(activeWallet.address)
 
         const nativeToken: DisplayTokenInfo = {
           symbol: activeChain.symbol || 'ETH',
@@ -180,9 +175,11 @@ const TokenBalance: React.FC = () => {
         const erc20Tokens: DisplayTokenInfo[] = await Promise.all(
           importedTokens.map(async (t) => {
             try {
-              const contract = new ethers.Contract(t.address, ERC20_ABI, provider)
-              const bal = await contract.balanceOf(activeWallet.address)
-              const formatted = ethers.formatUnits(bal, t.decimals)
+              const formatted = await evmRpcService.getFormattedTokenBalance(
+                t.address,
+                activeWallet.address,
+                t.decimals,
+              )
               return {
                 symbol: t.symbol,
                 name: t.name,
@@ -270,7 +267,7 @@ const TokenBalance: React.FC = () => {
           isOpen={showImportDialog}
           onClose={() => setShowImportDialog(false)}
           onImport={handleImportToken}
-          rpcUrl={getPrimaryRpcUrl(activeChain)}
+          chain={activeChain}
         />
       )}
     </div>
