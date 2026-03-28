@@ -1,0 +1,45 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - id: changed-format-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.{js,jsx,ts,tsx,mjs,cjs,css,json,md}
+
+      - id: changed-code-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.{js,jsx,ts,tsx,mjs,cjs}
+
+      - if: steps.changed-format-files.outputs.any_changed == 'true'
+        run: yarn prettier --check ${{ steps.changed-format-files.outputs.all_changed_files }}
+
+      - if: steps.changed-code-files.outputs.any_changed == 'true'
+        run: yarn eslint --max-warnings=0 ${{ steps.changed-code-files.outputs.all_changed_files }}
+
+      - run: yarn typecheck
+
+      - run: yarn test

@@ -17,10 +17,16 @@
     "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
     "ext:dev": "vite --config apps/extension/vite.config.ts",
     "ext:build": "vite build --config apps/extension/vite.config.ts && node apps/extension/copy-assets.ts",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky",
+    "validate:staged": "lint-staged && yarn typecheck",
+    "validate:ci": "yarn typecheck && yarn test"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -40,16 +46,37 @@
     "tiny-secp256k1": "^2.2.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
     "typescript": "^5.3.3",
+    "typescript-eslint": "^8.57.2",
     "vite": "^4.4.5",
     "vite-plugin-node-polyfills": "^0.25.0",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.6.0",
     "vitest": "^1.6.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{css,json,md}": [
+      "prettier --write"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5"
   }
 }
