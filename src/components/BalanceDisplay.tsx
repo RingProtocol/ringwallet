@@ -5,10 +5,19 @@ import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import './BalanceDisplay.css'
 
+function getEmptyBalance(isBitcoinChain: boolean): string {
+  return isBitcoinChain ? '0.00000000' : '0.0000'
+}
+
 const BalanceDisplay: React.FC = () => {
   const { activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain } = useAuth()
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
+  const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
+
+  useEffect(() => {
+    setBalance(getEmptyBalance(isBitcoinChain))
+  }, [activeChain?.id, displayWallet?.address, isBitcoinChain])
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -66,7 +75,6 @@ const BalanceDisplay: React.FC = () => {
     return () => clearInterval(interval)
   }, [activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain])
 
-  const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
   if (!displayWallet) return null
 
   return (
