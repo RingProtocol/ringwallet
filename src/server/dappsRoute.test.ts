@@ -3,11 +3,13 @@ import { GET } from '../../app/api/v1/dapps/route'
 
 const ORIGINAL_DAPP_URL = process.env.VITE_DAPP_URL
 const ORIGINAL_DAPP_TOKEN = process.env.DAPP_TOKEN
+const TEST_DAPP_URL = process.env.VITE_DAPP_URL?.trim() || 'https://example.com/exec'
+const TEST_DAPP_TOKEN = process.env.DAPP_TOKEN?.trim() || 'secret-token'
 
 describe('/api/v1/dapps GET', () => {
   beforeEach(() => {
-    process.env.VITE_DAPP_URL = 'https://example.com/exec'
-    process.env.DAPP_TOKEN = 'secret-token'
+    process.env.VITE_DAPP_URL = TEST_DAPP_URL
+    process.env.DAPP_TOKEN = TEST_DAPP_TOKEN
   })
 
   afterEach(() => {
@@ -57,8 +59,8 @@ describe('/api/v1/dapps GET', () => {
     const upstreamUrl = new URL(String(calledUrl))
 
     expect(response.status).toBe(200)
-    expect(upstreamUrl.origin + upstreamUrl.pathname).toBe('https://example.com/exec')
-    expect(upstreamUrl.searchParams.get('secret')).toBe('secret-token')
+    expect(upstreamUrl.origin + upstreamUrl.pathname).toBe(new URL(TEST_DAPP_URL).origin + new URL(TEST_DAPP_URL).pathname)
+    expect(upstreamUrl.searchParams.get('secret')).toBe(TEST_DAPP_TOKEN)
     expect(upstreamUrl.searchParams.get('testdapp')).toBe('abc123')
     expect(init).toMatchObject({
       headers: { Accept: 'application/json' },

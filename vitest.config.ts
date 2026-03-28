@@ -1,8 +1,16 @@
+import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const env = loadEnv('', __dirname, '')
+
+for (const [key, value] of Object.entries(env)) {
+  if (process.env[key] === undefined) {
+    process.env[key] = value
+  }
+}
 
 export default defineConfig({
   test: {
