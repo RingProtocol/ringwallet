@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
-import { ChainFamily } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import './BalanceDisplay.css'
@@ -73,15 +72,14 @@ const BalanceDisplay: React.FC = () => {
   return (
     <div className="balance-display">
       <div className="balance-amount">
-        {isLoading && balance === '0.0000' ? (
-          <span className="loading-text">...</span>
-        ) : (
-          <>
-            {balance} <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
-          </>
-        )}
+        <>
+          {balance} <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
+        </>
       </div>
-      <div className="balance-label">Total Balance</div>
+      <div className="balance-label">
+        Total Balance
+        {isLoading && <span className="loading-text">...</span>}
+      </div>
     </div>
   )
 }

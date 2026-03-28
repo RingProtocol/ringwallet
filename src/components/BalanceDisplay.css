@@ -30,6 +30,7 @@
 }
 
 .loading-text {
+  margin-left: 6px;
   color: #ccc;
   animation: pulse 1.5s infinite;
 }
