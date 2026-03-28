@@ -28,5 +28,16 @@ yarn run build || {
   exit 1
 }
 git add .
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs')
+if [[ -n "$staged_files" ]]; then
+  console_matches=$(printf '%s\n' "$staged_files" | xargs grep -nH -E 'console\.log\s*\(' || true)
+  if [[ -n "$console_matches" ]]; then
+    echo "commit blocked: console.log found in staged files"
+    echo "$console_matches"
+    exit 1
+  fi
+fi
+
 git commit -m "$msg"
 git push origin "$branch"
