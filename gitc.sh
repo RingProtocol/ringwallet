@@ -23,7 +23,10 @@ echo "bumped patch: ${patch} -> ${next}"
 
 msg="${1:-update}"
 branch=$(git branch --show-current)
-yarn run build
+yarn run build || {
+  echo "build failed, aborting commit"
+  exit 1
+}
 git add .
 git commit -m "$msg"
 git push origin "$branch"
