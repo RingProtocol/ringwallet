@@ -92,3 +92,4 @@ VITE_TEST_API_KEY=<Contact Ring to get>
 - if activity is empty, search one time from etherscan;
 - if transaction happen, insert a pending transaction record, poll from blockchain every 8 seconds with rpc endpoint
 - after transaction is confirmed, update the status
+- fetch from rpc when open the wallet first time.

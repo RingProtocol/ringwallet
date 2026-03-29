@@ -144,16 +144,17 @@ const TransactionHistory: React.FC = () => {
 
     setTransactions(cached.transactions)
 
-    if (
-      cached.transactions.length === 0 ||
-      cached.transactions.some((tx) => tx.status === 'pending')
-    ) {
-      if (cached.transactions.length === 0) {
-        void fetchHistoryFromAPI(false)
-      } else {
-        void fetchHistoryFromChain()
-      }
+    if (cached.transactions.length === 0) {
+      void fetchHistoryFromAPI(false)
+      return
     }
+
+    if (cached.transactions.some((tx) => tx.status === 'pending')) {
+      void fetchHistoryFromChain()
+      return
+    }
+
+    void fetchHistoryFromAPI(false)
   }, [
     activeChain,
     address,
