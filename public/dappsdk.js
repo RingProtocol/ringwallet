@@ -11,7 +11,7 @@
  *   - EIP-1193 (Ethereum Provider JavaScript API)
  *   - EIP-6963 (Multi Injected Provider Discovery)
  *
- * Usage: see docs/dev_delivers/dapp-integration.md (self-host this file or load from wallet host).
+ * Usage: see documents/dapp-integration.md (self-host this file or load from wallet host).
  */
 ;(function () {
   'use strict'
@@ -24,7 +24,11 @@
   // ────────────────────────────────────────────────────
 
   var isInIframe = false
-  try { isInIframe = window.self !== window.top } catch (_) { isInIframe = true }
+  try {
+    isInIframe = window.self !== window.top
+  } catch (_) {
+    isInIframe = true
+  }
 
   // ────────────────────────────────────────────────────
   //  Network proxy — intercept fetch/XHR so all DApp
@@ -52,8 +56,8 @@
     this._accounts = []
     this._connected = false
     this._requestId = 0
-    this._pendingRequests = {}     // id → { resolve, reject, timer }
-    this._eventListeners = {}      // eventName → [fn]
+    this._pendingRequests = {} // id → { resolve, reject, timer }
+    this._eventListeners = {} // eventName → [fn]
     this.isRingWallet = true
     this.isMetaMask = false
 
@@ -74,8 +78,9 @@
     var params = args.params || []
 
     // Methods that can be answered locally
-    if (method === 'eth_accounts') return Promise.resolve(this._accounts.slice())
-    if (method === 'eth_chainId')  return Promise.resolve(this._chainId)
+    if (method === 'eth_accounts')
+      return Promise.resolve(this._accounts.slice())
+    if (method === 'eth_chainId') return Promise.resolve(this._chainId)
     if (method === 'net_version') {
       return Promise.resolve(
         this._chainId ? String(parseInt(this._chainId, 16)) : null
@@ -91,7 +96,10 @@
     return this.request({ method: 'eth_requestAccounts' })
   }
 
-  RingWalletProvider.prototype.send = function (methodOrPayload, paramsOrCallback) {
+  RingWalletProvider.prototype.send = function (
+    methodOrPayload,
+    paramsOrCallback
+  ) {
     // send(method, params) → Promise
     if (typeof methodOrPayload === 'string') {
       return this.request({ method: methodOrPayload, params: paramsOrCallback })
@@ -103,22 +111,30 @@
     // send({ method, params }, callback) → void (legacy JSON-RPC)
     if (typeof paramsOrCallback === 'function') {
       var self = this
-      this.request(methodOrPayload).then(function (result) {
-        paramsOrCallback(null, { id: methodOrPayload.id, jsonrpc: '2.0', result: result })
-      }).catch(function (err) {
-        paramsOrCallback(err, null)
-      })
+      this.request(methodOrPayload)
+        .then(function (result) {
+          paramsOrCallback(null, {
+            id: methodOrPayload.id,
+            jsonrpc: '2.0',
+            result: result,
+          })
+        })
+        .catch(function (err) {
+          paramsOrCallback(err, null)
+        })
       return
     }
   }
 
   RingWalletProvider.prototype.sendAsync = function (payload, callback) {
     var self = this
-    this.request({ method: payload.method, params: payload.params }).then(function (result) {
-      callback(null, { id: payload.id, jsonrpc: '2.0', result: result })
-    }).catch(function (err) {
-      callback(err, null)
-    })
+    this.request({ method: payload.method, params: payload.params })
+      .then(function (result) {
+        callback(null, { id: payload.id, jsonrpc: '2.0', result: result })
+      })
+      .catch(function (err) {
+        callback(err, null)
+      })
   }
 
   // ── Event emitter (EIP-1193 events) ────────────────
@@ -134,7 +150,9 @@
   RingWalletProvider.prototype.removeListener = function (eventName, listener) {
     var arr = this._eventListeners[eventName]
     if (!arr) return this
-    this._eventListeners[eventName] = arr.filter(function (fn) { return fn !== listener })
+    this._eventListeners[eventName] = arr.filter(function (fn) {
+      return fn !== listener
+    })
     return this
   }
 
@@ -152,7 +170,11 @@
     var arr = this._eventListeners[eventName]
     if (!arr) return
     for (var i = 0; i < arr.length; i++) {
-      try { arr[i].apply(null, args) } catch (e) { console.error('[RingWallet] event error:', e) }
+      try {
+        arr[i].apply(null, args)
+      } catch (e) {
+        console.error('[RingWallet] event error:', e)
+      }
     }
   }
 
@@ -170,14 +192,21 @@
         }
       }, self._REQUEST_TIMEOUT)
 
-      self._pendingRequests[id] = { resolve: resolve, reject: reject, timer: timer }
+      self._pendingRequests[id] = {
+        resolve: resolve,
+        reject: reject,
+        timer: timer,
+      }
 
-      window.parent.postMessage({
-        type: 'ring_wallet_request',
-        id: id,
-        method: method,
-        params: params
-      }, '*')
+      window.parent.postMessage(
+        {
+          type: 'ring_wallet_request',
+          id: id,
+          method: method,
+          params: params,
+        },
+        '*'
+      )
     })
   }
 
@@ -195,7 +224,13 @@
         delete self._pendingRequests[data.id]
 
         if (data.error) {
-          pending.reject(ProviderRpcError(data.error.code, data.error.message, data.error.data))
+          pending.reject(
+            ProviderRpcError(
+              data.error.code,
+              data.error.message,
+              data.error.data
+            )
+          )
         } else {
           pending.resolve(data.result)
         }
@@ -242,10 +277,13 @@
 
   RingWalletProvider.prototype._handshake = function () {
     if (!isInIframe) return
-    window.parent.postMessage({
-      type: 'ring_wallet_handshake',
-      version: '1.0.0'
-    }, '*')
+    window.parent.postMessage(
+      {
+        type: 'ring_wallet_handshake',
+        version: '1.0.0',
+      },
+      '*'
+    )
   }
 
   // ────────────────────────────────────────────────────
@@ -268,12 +306,14 @@
       Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: false,
-        configurable: true
+        configurable: true,
       })
     } catch (_e1) {
       // MetaMask (some versions) sets the property as non-configurable.
       // Fall back to direct assignment so Ring Wallet still wins inside the iframe.
-      try { window.ethereum = provider } catch (_e2) {}
+      try {
+        window.ethereum = provider
+      } catch (_e2) {}
     }
   }
 
@@ -282,18 +322,19 @@
   // ────────────────────────────────────────────────────
 
   var walletInfo = {
-    uuid: (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : 'ring-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+    uuid:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : 'ring-' + Date.now() + '-' + Math.random().toString(36).slice(2),
     name: 'Ring Wallet',
     icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MCA0MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjY3ZWVhIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNzY0YmEyIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMTIiIGZpbGw9InVybCgjZykiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjQiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
-    rdns: 'org.testring.ringwallet'
+    rdns: 'org.testring.ringwallet',
   }
 
   function announceProvider() {
     var detail = Object.freeze({
       info: Object.freeze(walletInfo),
-      provider: provider
+      provider: provider,
     })
 
     window.dispatchEvent(
@@ -313,5 +354,8 @@
     document.addEventListener('DOMContentLoaded', announceProvider)
   }
 
-  console.log('[Ring Wallet] DApp SDK v1.0.0 initialized' + (isInIframe ? ' (iframe mode)' : ''))
+  console.log(
+    '[Ring Wallet] DApp SDK v1.0.0 initialized' +
+      (isInIframe ? ' (iframe mode)' : '')
+  )
 })()

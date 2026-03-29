@@ -114,20 +114,20 @@ Login state (including `masterSeed`) is serialized to `localStorage` key `wallet
 
 ## 5. Directory Layout
 
-| What you're adding                                 | Where it goes                                                                         |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| New platform entrypoint (PWA, extension, electron) | `apps/<platform>/`                                                                    |
-| Shared UI component                                | `src/components/`                                                                     |
-| Business logic / wallet service                    | `src/services/`                                                                       |
-| Device/browser detection helpers                   | `src/services/devices/`                                                               |
-| React context providers                            | `src/contexts/`                                                                       |
-| Chain config / shared non-secret config            | `src/config/`                                                                         |
-| Pure utility functions                             | `src/utils/`                                                                          |
-| Shared hooks                                       | `src/hooks/`                                                                          |
-| DApp browser feature code                          | `src/features/dapps/`                                                                 |
-| Feature technical design / spec                    | `docs/` (git submodule: [`wallet-docs`](https://github.com/RingProtocol/wallet-docs)) |
-| Task lists / roadmaps / plans                      | `task&plan/`                                                                          |
-| PWA manifest, icons, service worker                | `public/`                                                                             |
+| What you're adding                                 | Where it goes           |
+| -------------------------------------------------- | ----------------------- |
+| New platform entrypoint (PWA, extension, electron) | `apps/<platform>/`      |
+| Shared UI component                                | `src/components/`       |
+| Business logic / wallet service                    | `src/services/`         |
+| Device/browser detection helpers                   | `src/services/devices/` |
+| React context providers                            | `src/contexts/`         |
+| Chain config / shared non-secret config            | `src/config/`           |
+| Pure utility functions                             | `src/utils/`            |
+| Shared hooks                                       | `src/hooks/`            |
+| DApp browser feature code                          | `src/features/dapps/`   |
+| Feature technical design / spec                    | `documents/`            |
+| Task lists / roadmaps / plans                      | `task&plan/`            |
+| PWA manifest, icons, service worker                | `public/`               |
 
 **Rules:**
 
@@ -149,7 +149,7 @@ When adding a new chain family:
 3. Add chain entries + env overrides to `DEFAULT_CHAINS` in `src/config/chains.ts`.
 4. Branch on `activeChain.family` in the UI layer — do **not** embed chain-specific logic directly in components.
 
-**Switching chains (testnets, Bitcoin forks):** see [`docs/test-switch-chain.md`](docs/test-switch-chain.md) — what updates when `activeChain` changes, and why Bitcoin Testnet3 vs Testnet4 need separate `bitcoinFork` / Esplora indexers.
+**Switching chains (testnets, Bitcoin forks):** when `activeChain` changes, also update the matching `bitcoinFork` and Esplora indexer configuration so Bitcoin Testnet3 and Testnet4 stay isolated.
 
 ### Signing Flow
 
