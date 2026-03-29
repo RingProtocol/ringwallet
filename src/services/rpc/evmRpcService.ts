@@ -80,7 +80,7 @@ export class EvmRpcService
     ]
 
     let lastError: unknown = null
-
+    console.debug('orderedUrls=', orderedUrls)
     for (const rpcUrl of orderedUrls) {
       try {
         const result = await runner(this.getProviderForUrl(rpcUrl), rpcUrl)
