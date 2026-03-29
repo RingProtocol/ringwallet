@@ -17,23 +17,24 @@ const LoginButton: React.FC = () => {
     setHasLoginHistory(!!safeGetItem('user_has_passkey'))
   }, [])
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false)
   const [error, setError] = useState('')
   const [showCreateAccount, setShowCreateAccount] = useState(false)
   const [showBiometricGuide, setShowBiometricGuide] = useState(false)
   const [debugInfo, setDebugInfo] = useState<{
-    isSupported: boolean;
-    isSecureContext: boolean;
-    isApiAvailable: boolean;
-    isUVPAAAvailable: boolean;
-    isConditionalMediationAvailable: boolean;
-    isIOSFallback?: boolean;
+    isSupported: boolean
+    isSecureContext: boolean
+    isApiAvailable: boolean
+    isUVPAAAvailable: boolean
+    isConditionalMediationAvailable: boolean
+    isIOSFallback?: boolean
   } | null>(null)
 
   const checkAvailabilityGuard = async (): Promise<boolean> => {
     const availability = await PasskeyService.checkAvailability()
     setDebugInfo(availability)
 
-    DbgLog.log("availability:", availability);
+    DbgLog.log('availability:', availability)
     if (!availability.isSecureContext) {
       setError(t('passkeyNeedsSecureContext'))
       return false
@@ -50,14 +51,14 @@ const LoginButton: React.FC = () => {
   }
 
   const loginWithCredential = (credential: {
-    id: string;
-    rawId: number[];
-    type: string;
-    userHandle: string | null;
-    masterSeed: Uint8Array | null;
-    publicKey: Map<number, Uint8Array> | null;
+    id: string
+    rawId: number[]
+    type: string
+    userHandle: string | null
+    masterSeed: Uint8Array | null
+    publicKey: Map<number, Uint8Array> | null
   }) => {
-    DbgLog.log("[login]credential=", credential);
+    DbgLog.log('[login]credential=', credential)
 
     if (!credential.masterSeed) {
       setError(t('cannotRestoreSeed'))
@@ -70,7 +71,7 @@ const LoginButton: React.FC = () => {
       loginTime: new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US'),
       masterSeed: credential.masterSeed,
       publicKey: credential.publicKey,
-      accountType: WalletType.EOA
+      accountType: WalletType.EOA,
     }
 
     login(userData)
@@ -78,6 +79,7 @@ const LoginButton: React.FC = () => {
   }
 
   const handleBiometricRetry = async () => {
+    setIsCreatingAccount(false)
     setIsLoading(true)
     setError('')
     PasskeyService.clearSupportCache()
@@ -91,6 +93,7 @@ const LoginButton: React.FC = () => {
   }
 
   const handlePasskeyLogin = async () => {
+    setIsCreatingAccount(false)
     setIsLoading(true)
     setError('')
     setShowCreateAccount(false)
@@ -98,7 +101,7 @@ const LoginButton: React.FC = () => {
     setDebugInfo(null)
 
     try {
-      if (!await checkAvailabilityGuard()) return
+      if (!(await checkAvailabilityGuard())) return
 
       const result = await PasskeyService.login()
 
@@ -116,6 +119,7 @@ const LoginButton: React.FC = () => {
   }
 
   const handleCreateAccount = async () => {
+    setIsCreatingAccount(true)
     setIsLoading(true)
     setError('')
     setShowCreateAccount(false)
@@ -132,15 +136,23 @@ const LoginButton: React.FC = () => {
           type: registerResult.credential.type,
           userHandle: username,
           masterSeed: registerResult.credential.masterSeed,
-          publicKey: registerResult.credential.publicKey as Map<number, Uint8Array> | null
+          publicKey: registerResult.credential.publicKey as Map<
+            number,
+            Uint8Array
+          > | null,
         })
       } else {
-        setError(t('createAccountFailed', { message: registerResult.error || t('retry') }))
+        setError(
+          t('createAccountFailed', {
+            message: registerResult.error || t('retry'),
+          })
+        )
       }
     } catch (err) {
       console.error('Create account error:', err)
       setError(t('createAccountError', { message: (err as Error).message }))
     } finally {
+      setIsCreatingAccount(false)
       setIsLoading(false)
     }
   }
@@ -154,8 +166,17 @@ const LoginButton: React.FC = () => {
       {showBiometricGuide ? (
         <BiometricGuide onRetry={handleBiometricRetry} isChecking={isLoading} />
       ) : showCreateAccount ? (
-        <div style={{ padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
-          <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0369a1' }}>
+        <div
+          style={{
+            padding: '12px',
+            background: '#f0f9ff',
+            borderRadius: '8px',
+            border: '1px solid #bae6fd',
+          }}
+        >
+          <p
+            style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0369a1' }}
+          >
             {t('noAccountFound')}
           </p>
           <button
@@ -164,39 +185,70 @@ const LoginButton: React.FC = () => {
             disabled={isLoading}
             style={{ width: '100%' }}
           >
-            {isLoading ? t('creating') : t('createAccount')}
+            {isCreatingAccount ? t('creating') : t('createAccount')}
+          </button>
+          <button
+            className="login-button"
+            onClick={handlePasskeyLogin}
+            disabled={isLoading}
+            style={{ width: '100%', marginTop: '8px' }}
+          >
+            {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
           </button>
         </div>
       ) : (
-            <>
-              <button
-                className="login-button"
-                onClick={handlePasskeyLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? t('loggingIn') : t('login')}
-              </button>
-              {!hasLoginHistory && (
-                <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
-                  {t('loginTipNoPasskey')}
-                </p>
-              )}
-            </>
+        <>
+          <button
+            className="login-button"
+            onClick={handlePasskeyLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? t('loggingIn') : t('login')}
+          </button>
+          {!hasLoginHistory && (
+            <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
+              {t('loginTipNoPasskey')}
+            </p>
+          )}
+        </>
       )}
 
       {error && <div className="error-message">{error}</div>}
 
       {debugInfo && !debugInfo.isSupported && (
-        <div className="debug-info" style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', textAlign: 'left' }}>
-          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{t('envCheckDetails')}</p>
+        <div
+          className="debug-info"
+          style={{
+            marginTop: '10px',
+            padding: '10px',
+            background: '#f5f5f5',
+            borderRadius: '4px',
+            fontSize: '12px',
+            textAlign: 'left',
+          }}
+        >
+          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+            {t('envCheckDetails')}
+          </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            <li>{debugInfo.isSecureContext ? '✅' : '❌'} {t('httpsSecureContextLabel')}</li>
-            <li>{debugInfo.isApiAvailable ? '✅' : '❌'} {t('webauthnApiLabel')}</li>
             <li>
-              {debugInfo.isUVPAAAvailable ? '✅' : '❌'} {t('platformAuthenticatorLabel')}
-              {debugInfo.isIOSFallback ? ` ${t('iosPasscodeFallbackLabel')}` : ''}
+              {debugInfo.isSecureContext ? '✅' : '❌'}{' '}
+              {t('httpsSecureContextLabel')}
             </li>
-            <li>{debugInfo.isConditionalMediationAvailable ? '✅' : '⚠️'} {t('conditionalMediationLabel')}</li>
+            <li>
+              {debugInfo.isApiAvailable ? '✅' : '❌'} {t('webauthnApiLabel')}
+            </li>
+            <li>
+              {debugInfo.isUVPAAAvailable ? '✅' : '❌'}{' '}
+              {t('platformAuthenticatorLabel')}
+              {debugInfo.isIOSFallback
+                ? ` ${t('iosPasscodeFallbackLabel')}`
+                : ''}
+            </li>
+            <li>
+              {debugInfo.isConditionalMediationAvailable ? '✅' : '⚠️'}{' '}
+              {t('conditionalMediationLabel')}
+            </li>
           </ul>
         </div>
       )}
