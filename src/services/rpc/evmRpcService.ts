@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import type { TxRecord } from '../../features/history/types'
 import type {
   BlockNumberReader,
   GasPriceReader,
@@ -26,6 +27,17 @@ export interface EvmTokenMetadata {
   symbol: string
   name: string
   decimals: number
+}
+
+type EvmChainHistoryRecord = TxRecord & {
+  id: string
+  assetType: 'native'
+}
+
+function formatUnits(value: bigint, decimals: number): string {
+  const formatted = ethers.formatUnits(value, decimals)
+  if (!formatted.includes('.')) return formatted
+  return formatted.replace(/\.?0+$/, '')
 }
 
 export class EvmRpcService
@@ -80,7 +92,6 @@ export class EvmRpcService
     ]
 
     let lastError: unknown = null
-    console.debug('orderedUrls=', orderedUrls)
     for (const rpcUrl of orderedUrls) {
       try {
         const result = await runner(this.getProviderForUrl(rpcUrl), rpcUrl)
@@ -315,6 +326,43 @@ export class EvmRpcService
   async getGasPrice(): Promise<bigint> {
     const result = await this.request<string>('eth_gasPrice')
     return BigInt(result)
+  }
+
+  async fetchHistoryFromChain(hashes: string[]): Promise<TxRecord[]> {
+    if (hashes.length === 0) return []
+
+    return this.tryRpcUrls(async (provider) => {
+      const records = await Promise.all(
+        hashes.map(async (hash) => {
+          const transaction = await provider.getTransaction(hash)
+          if (!transaction) return null
+
+          const receipt = await provider.getTransactionReceipt(hash)
+          const block = transaction.blockNumber
+            ? await provider.getBlock(transaction.blockNumber)
+            : null
+
+          return {
+            id: hash.toLowerCase(),
+            hash,
+            from: transaction.from ?? '',
+            to: transaction.to ?? '',
+            value: formatUnits(transaction.value ?? 0n, 18),
+            timestamp: block?.timestamp ?? Math.floor(Date.now() / 1000),
+            status: receipt
+              ? receipt.status === 1
+                ? 'confirmed'
+                : 'failed'
+              : 'pending',
+            assetType: 'native',
+          } satisfies EvmChainHistoryRecord
+        })
+      )
+
+      return records.filter((record): record is EvmChainHistoryRecord =>
+        Boolean(record)
+      )
+    })
   }
 
   private async requestBatch(

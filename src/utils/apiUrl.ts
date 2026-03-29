@@ -18,12 +18,5 @@ export function resolveClientApiUrl(path: string): URL {
     throw new Error('resolveClientApiUrl is only available in the browser')
   }
 
-  const { protocol, hostname, origin, port } = window.location
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
-
-  if (isLocalhost && port === '3003') {
-    return new URL(normalizedPath, `${protocol}//${hostname}:3000`)
-  }
-
-  return new URL(normalizedPath, origin)
+  return new URL(normalizedPath, window.location.origin)
 }

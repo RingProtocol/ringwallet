@@ -10,6 +10,8 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = __dirname
 const projectRoot = path.resolve(__dirname, '../..')
+const apiProxyTarget =
+  process.env.VITE_API_BASE_URL?.trim() || 'http://localhost:3000'
 
 export default defineConfig({
   root,
@@ -46,21 +48,21 @@ export default defineConfig({
           {
             src: 'icons/logo.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: 'icons/logo.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
-    })
+            type: 'image/png',
+          },
+        ],
+      },
+    }),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(projectRoot, 'src')
-    }
+      '@': path.resolve(projectRoot, 'src'),
+    },
   },
   build: {
     outDir: path.resolve(projectRoot, 'dist'),
@@ -69,16 +71,22 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'solana': ['@solana/web3.js', '@solana/spl-token', 'ed25519-hd-key'],
-          'ethers': ['ethers'],
-          'bitcoin': ['bitcoinjs-lib', 'bip32', 'tiny-secp256k1'],
-        }
-      }
-    }
+          solana: ['@solana/web3.js', '@solana/spl-token', 'ed25519-hd-key'],
+          ethers: ['ethers'],
+          bitcoin: ['bitcoinjs-lib', 'bip32', 'tiny-secp256k1'],
+        },
+      },
+    },
   },
   server: {
     port: 3000,
     host: '0.0.0.0',
-    allowedHosts: ['bridget-tritheistical-talia.ngrok-free.dev']
-  }
+    allowedHosts: ['bridget-tritheistical-talia.ngrok-free.dev'],
+    proxy: {
+      '/api': {
+        target: apiProxyTarget,
+        changeOrigin: true,
+      },
+    },
+  },
 })

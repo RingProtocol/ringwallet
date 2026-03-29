@@ -1,21 +1,18 @@
 # Ring Wallet
 
-
 ## Vision
 
-Ring Wallet is a new kind of crypto wallet: **no passwords, no mnemonics, no friction.** You sign in with your fingerprint. You keep full control of your keys. You pay no extra fees on transactions. 
+Ring Wallet is a new kind of crypto wallet: **no passwords, no mnemonics, no friction.** You sign in with your fingerprint. You keep full control of your keys. You pay no extra fees on transactions.
 
 We believe ownership should feel natural, safe, and open. Ring Wallet is our step toward that future.
 
-
-
-| Principle | What it means |
-|-----------|----------------|
-| **No password, no mnemonic** | Log in with your fingerprint. No seed phrases to write down or lose. |
-| **Self-custody** | Your keys, your assets. We don’t hold them for you. |
-| **No extra fee** | We don’t add transaction fees on top of network costs. |
-| **AI Agent friendly** | Built so agents and automation can interact with your wallet in a secure, programmable way. |
-| **Listener to your voice** | Designed to respond to how you want to use crypto—simple when you want simple, powerful when you need it. |
+| Principle                    | What it means                                                                                             |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **No password, no mnemonic** | Log in with your fingerprint. No seed phrases to write down or lose.                                      |
+| **Self-custody**             | Your keys, your assets. We don’t hold them for you.                                                       |
+| **No extra fee**             | We don’t add transaction fees on top of network costs.                                                    |
+| **AI Agent friendly**        | Built so agents and automation can interact with your wallet in a secure, programmable way.               |
+| **Listener to your voice**   | Designed to respond to how you want to use crypto—simple when you want simple, powerful when you need it. |
 
 ---
 
@@ -77,12 +74,21 @@ For installation and usage instructions, visit our docs:
 
 ---
 
-*Own your keys. Own your future.*
+_Own your keys. Own your future._
+
 # Debugging dapp
+
 - Apply dapp: https://forms.gle/2GXh5bAEXxpDj8gTA
 
 # Dependent Variables
+
 VITE_DAPP_URL=https://script.google.com/macros/s/AKfycbzFSlcUVztjCGIHesC0WFG-QP8MnPrfvZdKnYOTboATM7Vtgg8ExRwfo_Jlkh7Pf8FC9A/exec
 DAPP_TOKEN=
 VITE_API_BASE_URL=http://localhost:3000
 VITE_TEST_API_KEY=<Contact Ring to get>
+
+# tx history
+
+- if activity is empty, search one time from etherscan;
+- if transaction happen, insert a pending transaction record, poll from blockchain every 8 seconds with rpc endpoint
+- after transaction is confirmed, update the status

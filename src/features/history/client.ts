@@ -1,5 +1,10 @@
 import { safeGetItem, safeSetItem } from '../../utils/safeStorage'
-import type { HistoryCacheEntry, PendingTransactionEventDetail, TxRecord } from './types'
+import {
+  getTxRecordKey,
+  type HistoryCacheEntry,
+  type PendingTransactionEventDetail,
+  type TxRecord,
+} from './types'
 
 export const HISTORY_EVENT_NAME = 'ring:pending-transaction'
 export const HISTORY_LIMIT = 8
@@ -9,13 +14,20 @@ function getHistoryCacheKey(chainId: string, address: string): string {
   return `ring_history_v1:${chainId}:${address.toLowerCase()}`
 }
 
-export function readHistoryCache(chainId: string, address: string): HistoryCacheEntry | null {
+export function readHistoryCache(
+  chainId: string,
+  address: string
+): HistoryCacheEntry | null {
   const raw = safeGetItem(getHistoryCacheKey(chainId, address))
   if (!raw) return null
 
   try {
     const parsed = JSON.parse(raw) as HistoryCacheEntry
-    if (!parsed || !Array.isArray(parsed.transactions) || typeof parsed.updatedAt !== 'number') {
+    if (
+      !parsed ||
+      !Array.isArray(parsed.transactions) ||
+      typeof parsed.updatedAt !== 'number'
+    ) {
       return null
     }
     return parsed
@@ -24,7 +36,11 @@ export function readHistoryCache(chainId: string, address: string): HistoryCache
   }
 }
 
-export function writeHistoryCache(chainId: string, address: string, transactions: TxRecord[]): void {
+export function writeHistoryCache(
+  chainId: string,
+  address: string,
+  transactions: TxRecord[]
+): void {
   const payload: HistoryCacheEntry = {
     updatedAt: Date.now(),
     transactions,
@@ -41,7 +57,7 @@ export function mergeTransactions(...groups: TxRecord[][]): TxRecord[] {
 
   for (const group of groups) {
     for (const tx of group) {
-      merged.set(tx.hash.toLowerCase(), tx)
+      merged.set(getTxRecordKey(tx), tx)
     }
   }
 
@@ -52,7 +68,9 @@ export function mergeTransactions(...groups: TxRecord[][]): TxRecord[] {
   })
 }
 
-export function emitPendingTransaction(detail: PendingTransactionEventDetail): void {
+export function emitPendingTransaction(
+  detail: PendingTransactionEventDetail
+): void {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent(HISTORY_EVENT_NAME, { detail }))
 }

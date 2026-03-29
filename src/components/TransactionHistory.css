@@ -53,6 +53,12 @@
   margin-top: 2px;
 }
 
+.tx-asset {
+  font-size: 0.74rem;
+  color: #777;
+  margin-top: 2px;
+}
+
 .tx-value {
   font-weight: 600;
   font-size: 0.9rem;
@@ -90,7 +96,13 @@
 }
 
 @keyframes txPulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }

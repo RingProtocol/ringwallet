@@ -20,12 +20,12 @@
 
 ## 2. Core Constraints (Non-Negotiable)
 
-| Constraint | Detail |
-|------------|--------|
+| Constraint                          | Detail                                                                                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **No self-built server dependency** | Wallet functions must work without a proprietary backend. RPC calls go to public/free-tier nodes. Server code in `src/server/` is optional infrastructure. |
-| **No third-party wallet app** | Do not add features requiring Phantom, MetaMask, or any external wallet. |
-| **Keys never leave the browser** | Never send raw private keys or `masterSeed` over the network. Signing is always client-side. |
-| **Passkey as the only auth gate** | No alternative auth flows (OAuth, email/password, etc.) without explicit approval. |
+| **No third-party wallet app**       | Do not add features requiring Phantom, MetaMask, or any external wallet.                                                                                   |
+| **Keys never leave the browser**    | Never send raw private keys or `masterSeed` over the network. Signing is always client-side.                                                               |
+| **Passkey as the only auth gate**   | No alternative auth flows (OAuth, email/password, etc.) without explicit approval.                                                                         |
 
 ---
 
@@ -60,33 +60,32 @@ AuthContext (src/contexts/AuthContext.tsx)
 
 ### Key Modules
 
-| Module | Path | Responsibility |
-|--------|------|----------------|
-| **Chain config** | `src/config/chains.ts` | `DEFAULT_CHAINS` array and RPC URL resolution (env override → fallback). All chain definitions live here; `AuthContext` imports `DEFAULT_CHAINS`. |
-| **AuthContext** | `src/contexts/AuthContext.tsx` | The only React context. Holds user session, EVM wallets, Solana wallets, active chain/wallet selection. All components consume this via `useAuth()`. |
-| **PasskeyService** | `src/services/passkeyService.ts` | WebAuthn register/login/verifyIdentity/signChallenge. Extracts `masterSeed` from `userHandle`. Stores COSE public key in localStorage for EIP-7951. |
-| **WalletService** | `src/services/walletService.ts` | EVM wallet: `deriveWallets()` (BIP32), `signTransaction()` (EOA), `signEIP7951Transaction()` (smart account via Passkey), `broadcastEOATransaction()`, `broadcastSmartAccountTransaction()`. |
-| **SolanaKeyService** | `src/services/solanaKeyService.ts` | Solana key derivation via SLIP-0010 / Ed25519. `deriveWallets()`, `deriveKeypair()`. |
-| **SolanaService** | `src/services/solanaService.ts` | Solana on-chain ops: `getBalance()`, `sendSOL()`, `estimateFee()`, `requestAirdrop()`. |
-| **SolanaTokenService** | `src/services/solanaTokenService.ts` | SPL token balance/transfer operations. |
-| **WalletBridge** | `src/features/dapps/services/walletBridge.ts` | DApp iframe ↔ wallet communication. Implements EIP-1193 provider via `postMessage`. Routes read-only calls to RPC, approval-required calls (tx, sign) through `ApprovalDialog`. |
-| **DApp components** | `src/features/dapps/components/` | `DAppsPage`, `DAppList`, `DAppCard`, `DAppContainer` (iframe host), `ApprovalDialog`. |
-| **RPC methods** | `src/features/dapps/constants/rpcMethods.ts` | Whitelists: `READ_ONLY_METHODS`, `APPROVAL_METHODS`, `LOCAL_METHODS`, `RPC_ERRORS`. |
+| Module                 | Path                                          | Responsibility                                                                                                                                                                               |
+| ---------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chain config**       | `src/config/chains.ts`                        | `DEFAULT_CHAINS` array and RPC URL resolution (env override → fallback). All chain definitions live here; `AuthContext` imports `DEFAULT_CHAINS`.                                            |
+| **AuthContext**        | `src/contexts/AuthContext.tsx`                | The only React context. Holds user session, EVM wallets, Solana wallets, active chain/wallet selection. All components consume this via `useAuth()`.                                         |
+| **PasskeyService**     | `src/services/passkeyService.ts`              | WebAuthn register/login/verifyIdentity/signChallenge. Extracts `masterSeed` from `userHandle`. Stores COSE public key in localStorage for EIP-7951.                                          |
+| **WalletService**      | `src/services/walletService.ts`               | EVM wallet: `deriveWallets()` (BIP32), `signTransaction()` (EOA), `signEIP7951Transaction()` (smart account via Passkey), `broadcastEOATransaction()`, `broadcastSmartAccountTransaction()`. |
+| **SolanaKeyService**   | `src/services/solanaKeyService.ts`            | Solana key derivation via SLIP-0010 / Ed25519. `deriveWallets()`, `deriveKeypair()`.                                                                                                         |
+| **SolanaService**      | `src/services/solanaService.ts`               | Solana on-chain ops: `getBalance()`, `sendSOL()`, `estimateFee()`, `requestAirdrop()`.                                                                                                       |
+| **SolanaTokenService** | `src/services/solanaTokenService.ts`          | SPL token balance/transfer operations.                                                                                                                                                       |
+| **WalletBridge**       | `src/features/dapps/services/walletBridge.ts` | DApp iframe ↔ wallet communication. Implements EIP-1193 provider via `postMessage`. Routes read-only calls to RPC, approval-required calls (tx, sign) through `ApprovalDialog`.              |
+| **DApp components**    | `src/features/dapps/components/`              | `DAppsPage`, `DAppList`, `DAppCard`, `DAppContainer` (iframe host), `ApprovalDialog`.                                                                                                        |
+| **RPC methods**        | `src/features/dapps/constants/rpcMethods.ts`  | Whitelists: `READ_ONLY_METHODS`, `APPROVAL_METHODS`, `LOCAL_METHODS`, `RPC_ERRORS`.                                                                                                          |
 
 ### Platform Entrypoints
 
-| Platform | Entrypoint | Note |
-|----------|-----------|------|
-| PWA (primary) | `apps/pwa/App.tsx` → wraps `<AuthProvider>` around `<AppContent>` | Next.js serves via `app/page.tsx` → `<App />` |
-| Extension | `apps/extension/App.tsx` → similar structure | Built with separate Vite config, outputs to Chrome extension format |
+| Platform      | Entrypoint                                                        | Note                                                                |
+| ------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| PWA (primary) | `apps/pwa/App.tsx` → wraps `<AuthProvider>` around `<AppContent>` | Next.js serves via `app/page.tsx` → `<App />`                       |
+| Extension     | `apps/extension/App.tsx` → similar structure                      | Built with separate Vite config, outputs to Chrome extension format |
 
 ### Server-Side (Optional — Next.js API Routes)
 
-| Route | Purpose |
-|-------|---------|
+| Route                       | Purpose                                   |
+| --------------------------- | ----------------------------------------- |
 | `app/api/v1/dapps/route.ts` | Public DApp list API (reads from Neon DB) |
-| `app/api/admin/*` | Admin panel CRUD for DApp catalog |
-| `app/api/health/route.ts` | Health check |
+| `app/api/health/route.ts`   | Health check                              |
 
 ### Wallet Types & Signing Schemes
 
@@ -101,36 +100,37 @@ Login state (including `masterSeed`) is serialized to `localStorage` key `wallet
 
 ## 4. Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | React 18 + Next.js (App Router) + TypeScript |
-| Styling | CSS Modules (co-located `.css` files) |
-| EVM | `ethers.js` v6 |
-| Solana | `@solana/web3.js` v1 + `ed25519-hd-key` |
-| Auth | WebAuthn (Passkey) via `passkeyService.ts` |
-| Package manager | **yarn** (always use yarn, not npm) |
-| Build | Vite (per-platform config in `apps/<platform>/`) |
+| Layer           | Technology                                       |
+| --------------- | ------------------------------------------------ |
+| Framework       | React 18 + Next.js (App Router) + TypeScript     |
+| Styling         | CSS Modules (co-located `.css` files)            |
+| EVM             | `ethers.js` v6                                   |
+| Solana          | `@solana/web3.js` v1 + `ed25519-hd-key`          |
+| Auth            | WebAuthn (Passkey) via `passkeyService.ts`       |
+| Package manager | **yarn** (always use yarn, not npm)              |
+| Build           | Vite (per-platform config in `apps/<platform>/`) |
 
 ---
 
 ## 5. Directory Layout
 
-| What you're adding | Where it goes |
-|--------------------|---------------|
-| New platform entrypoint (PWA, extension, electron) | `apps/<platform>/` |
-| Shared UI component | `src/components/` |
-| Business logic / wallet service | `src/services/` |
-| Device/browser detection helpers | `src/services/devices/` |
-| React context providers | `src/contexts/` |
-| Chain config / shared non-secret config | `src/config/` |
-| Pure utility functions | `src/utils/` |
-| Shared hooks | `src/hooks/` |
-| DApp browser feature code | `src/features/dapps/` |
-| Feature technical design / spec | `docs/` (git submodule: [`wallet-docs`](https://github.com/RingProtocol/wallet-docs)) |
-| Task lists / roadmaps / plans | `task&plan/` |
-| PWA manifest, icons, service worker | `public/` |
+| What you're adding                                 | Where it goes                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| New platform entrypoint (PWA, extension, electron) | `apps/<platform>/`                                                                    |
+| Shared UI component                                | `src/components/`                                                                     |
+| Business logic / wallet service                    | `src/services/`                                                                       |
+| Device/browser detection helpers                   | `src/services/devices/`                                                               |
+| React context providers                            | `src/contexts/`                                                                       |
+| Chain config / shared non-secret config            | `src/config/`                                                                         |
+| Pure utility functions                             | `src/utils/`                                                                          |
+| Shared hooks                                       | `src/hooks/`                                                                          |
+| DApp browser feature code                          | `src/features/dapps/`                                                                 |
+| Feature technical design / spec                    | `docs/` (git submodule: [`wallet-docs`](https://github.com/RingProtocol/wallet-docs)) |
+| Task lists / roadmaps / plans                      | `task&plan/`                                                                          |
+| PWA manifest, icons, service worker                | `public/`                                                                             |
 
 **Rules:**
+
 - `src/` contains shared code only — no platform-specific entrypoints.
 - `apps/<platform>/` contains entrypoints and platform-specific config only — business logic belongs in `src/`.
 - Keep files small. Extract logic into dedicated functions or files.
@@ -143,6 +143,7 @@ Login state (including `masterSeed`) is serialized to `localStorage` key `wallet
 ### Chain Abstraction
 
 When adding a new chain family:
+
 1. Extend `ChainFamily` enum and `Chain` interface in `src/models/ChainType.ts`.
 2. Create `src/services/<chain>KeyService.ts` (key derivation) and `src/services/<chain>Service.ts` (on-chain ops).
 3. Add chain entries + env overrides to `DEFAULT_CHAINS` in `src/config/chains.ts`.
@@ -167,8 +168,8 @@ When adding a new chain family:
 
 ## 7. Dormant / Unused Code
 
-| Path | Status | Note |
-|------|--------|------|
+| Path                                                                                  | Status      | Note                                                             |
+| ------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------- |
 | `src/server/proxy.ts`, `app/api/v1/proxy/route.ts`, `app/api/v1/proxy-asset/route.ts` | **Removed** | Server-side HTML-rewriting proxy. These files have been deleted. |
 
 ---
