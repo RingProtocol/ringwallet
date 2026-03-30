@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { getPrimaryRpcUrl, type Chain } from '../models/ChainType'
+import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import RpcService from '../services/rpc/rpcService'
-import { getTokenList, addToken, type TokenInfo as StoredTokenInfo } from '../utils/tokenStorage'
+import {
+  getTokenList,
+  addToken,
+  type TokenInfo as StoredTokenInfo,
+} from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import './TokenBalance.css'
 import { useI18n } from '../i18n'
@@ -21,26 +25,50 @@ interface DisplayTokenInfo {
 function buildPlaceholderTokens(
   activeChain: Chain | null | undefined,
   isSolanaChain: boolean,
-  isBitcoinChain: boolean,
+  isBitcoinChain: boolean
 ): DisplayTokenInfo[] {
   if (!activeChain) return []
 
   if (isBitcoinChain) {
-    return [{ symbol: activeChain.symbol || 'BTC', name: activeChain.name, balance: '--', isNative: true }]
+    return [
+      {
+        symbol: activeChain.symbol || 'BTC',
+        name: activeChain.name,
+        balance: '--',
+        isNative: true,
+      },
+    ]
   }
 
   if (isSolanaChain) {
-    return [{ symbol: 'SOL', name: activeChain.name, balance: '--', isNative: true }]
+    return [
+      { symbol: 'SOL', name: activeChain.name, balance: '--', isNative: true },
+    ]
   }
 
-  return [{ symbol: activeChain.symbol || 'ETH', name: activeChain.name, balance: '--', isNative: true }]
+  return [
+    {
+      symbol: activeChain.symbol || 'ETH',
+      name: activeChain.name,
+      balance: '--',
+      isNative: true,
+    },
+  ]
 }
 
 const TokenBalance: React.FC = () => {
-  const { activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain } = useAuth()
+  const {
+    activeWallet,
+    activeSolanaWallet,
+    activeBitcoinWallet,
+    activeChain,
+    activeAccount,
+    isSolanaChain,
+    isBitcoinChain,
+  } = useAuth()
   const { t } = useI18n()
-  const isEvmChain = !isSolanaChain && !isBitcoinChain
-  const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
+  const isEvmChain =
+    activeChain?.family === ChainFamily.EVM || !activeChain?.family
   const [tokens, setTokens] = useState<DisplayTokenInfo[]>(() =>
     buildPlaceholderTokens(activeChain, isSolanaChain, isBitcoinChain)
   )
@@ -61,23 +89,30 @@ const TokenBalance: React.FC = () => {
   }, [activeWallet?.address, activeChain?.id, isEvmChain])
 
   useEffect(() => {
-    if (!displayWallet) {
+    if (!activeAccount) {
       setTokens([])
       return
     }
 
-    setTokens(buildPlaceholderTokens(activeChain, isSolanaChain, isBitcoinChain))
+    setTokens(
+      buildPlaceholderTokens(activeChain, isSolanaChain, isBitcoinChain)
+    )
   }, [
     activeChain?.id,
     activeChain?.name,
     activeChain?.symbol,
-    displayWallet?.address,
+    activeAccount?.address,
     isBitcoinChain,
     isSolanaChain,
   ])
 
   const handleImportToken = useCallback(
-    (token: { address: string; symbol: string; name: string; decimals: number }) => {
+    (token: {
+      address: string
+      symbol: string
+      name: string
+      decimals: number
+    }) => {
       if (!activeWallet || !activeChain || !isEvmChain) return
       addToken(activeWallet.address, activeChain.id, token)
       setImportedTokens(getTokenList(activeWallet.address, activeChain.id))
@@ -97,7 +132,7 @@ const TokenBalance: React.FC = () => {
         const service = new BitcoinService(
           rpcUrl,
           activeChain.network === 'testnet',
-          bitcoinForkForChain(activeChain),
+          bitcoinForkForChain(activeChain)
         )
         const bal = await service.getBalance(activeBitcoinWallet.address)
         setTokens([
@@ -110,7 +145,14 @@ const TokenBalance: React.FC = () => {
         ])
       } catch (error) {
         console.error('Failed to fetch Bitcoin balances:', error)
-        setTokens([{ symbol: activeChain.symbol || 'BTC', name: activeChain.name, balance: '0.00000000', isNative: true }])
+        setTokens([
+          {
+            symbol: activeChain.symbol || 'BTC',
+            name: activeChain.name,
+            balance: '0.00000000',
+            isNative: true,
+          },
+        ])
       } finally {
         setIsLoading(false)
       }
@@ -142,7 +184,14 @@ const TokenBalance: React.FC = () => {
         ])
       } catch (error) {
         console.error('Failed to fetch Solana balances:', error)
-        setTokens([{ symbol: 'SOL', name: activeChain.name, balance: '0.0000', isNative: true }])
+        setTokens([
+          {
+            symbol: 'SOL',
+            name: activeChain.name,
+            balance: '0.0000',
+            isNative: true,
+          },
+        ])
       } finally {
         setIsLoading(false)
       }
@@ -163,7 +212,9 @@ const TokenBalance: React.FC = () => {
       setIsLoading(true)
       try {
         const evmRpcService = RpcService.fromChain(activeChain).getEvmService()
-        const balanceEth = await evmRpcService.getFormattedBalance(activeWallet.address)
+        const balanceEth = await evmRpcService.getFormattedBalance(
+          activeWallet.address
+        )
 
         const nativeToken: DisplayTokenInfo = {
           symbol: activeChain.symbol || 'ETH',
@@ -178,7 +229,7 @@ const TokenBalance: React.FC = () => {
               const formatted = await evmRpcService.getFormattedTokenBalance(
                 t.address,
                 activeWallet.address,
-                t.decimals,
+                t.decimals
               )
               return {
                 symbol: t.symbol,
@@ -222,7 +273,7 @@ const TokenBalance: React.FC = () => {
     return () => clearInterval(interval)
   }, [activeWallet, activeChain, importedTokens, isEvmChain])
 
-  if (!displayWallet) return null
+  if (!activeAccount) return null
 
   return (
     <div className="token-balance-list">

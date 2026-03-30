@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { ChainFamily } from '../models/ChainType'
+import { BITCOIN_TESTNET_ACCOUNTS_KEY } from '../services/chainplugins'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
 import { useI18n } from '../i18n'
@@ -21,17 +23,12 @@ type MenuItem = {
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const {
-    wallets,
-    activeWallet,
     activeWalletIndex,
     switchWallet,
     logout,
-    isSolanaChain,
-    isBitcoinChain,
-    solanaWallets,
-    bitcoinWallets,
-    activeSolanaWallet,
-    activeBitcoinWallet,
+    activeChain,
+    activeAccount,
+    accountsByFamily,
   } = useAuth()
   const { lang, setLang, t } = useI18n()
   const [showWalletList, setShowWalletList] = useState(false)
@@ -175,12 +172,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         </div>
 
         {(() => {
-          const displayWallet = isBitcoinChain
-            ? activeBitcoinWallet
-            : isSolanaChain
-              ? activeSolanaWallet
-              : activeWallet
-          if (!displayWallet) return null
+          if (!activeAccount) return null
           return (
             <div className="drawer-account-info">
               <div className="drawer-account-icon">🔐</div>
@@ -190,11 +182,11 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                 </span>
                 <div className="drawer-account-addr-row">
                   <span className="drawer-account-address">
-                    {formatAddress(displayWallet.address)}
+                    {formatAddress(activeAccount.address)}
                   </span>
                   <button
                     className="drawer-copy-btn"
-                    onClick={(e) => copyToClipboard(e, displayWallet.address)}
+                    onClick={(e) => copyToClipboard(e, activeAccount.address)}
                     title={t('copy')}
                   >
                     📋{t('copy')}
@@ -245,12 +237,15 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
 
                 {item.key === 'switch' && showWalletList && (
                   <div className="drawer-wallet-list">
-                    {(isBitcoinChain
-                      ? bitcoinWallets
-                      : isSolanaChain
-                        ? solanaWallets
-                        : wallets
-                    ).map((wallet, index) => (
+                    {(() => {
+                      const family = activeChain?.family
+                      const key =
+                        family === ChainFamily.Bitcoin &&
+                        activeChain?.network === 'testnet'
+                          ? BITCOIN_TESTNET_ACCOUNTS_KEY
+                          : (family ?? ChainFamily.EVM)
+                      return accountsByFamily[key] ?? []
+                    })().map((wallet, index) => (
                       <div
                         key={index}
                         className={`drawer-wallet-option ${index === activeWalletIndex ? 'active' : ''}`}

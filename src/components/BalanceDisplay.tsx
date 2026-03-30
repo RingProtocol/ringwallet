@@ -11,14 +11,21 @@ function getEmptyBalance(isBitcoinChain: boolean): string {
 }
 
 const BalanceDisplay: React.FC = () => {
-  const { activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain } = useAuth()
+  const {
+    activeWallet,
+    activeSolanaWallet,
+    activeBitcoinWallet,
+    activeChain,
+    activeAccount,
+    isSolanaChain,
+    isBitcoinChain,
+  } = useAuth()
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
-  const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
 
   useEffect(() => {
     setBalance(getEmptyBalance(isBitcoinChain))
-  }, [activeChain?.id, displayWallet?.address, isBitcoinChain])
+  }, [activeChain?.id, activeAccount?.address, isBitcoinChain])
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -32,7 +39,7 @@ const BalanceDisplay: React.FC = () => {
           const service = new BitcoinService(
             rpcUrl,
             activeChain.network === 'testnet',
-            bitcoinForkForChain(activeChain),
+            bitcoinForkForChain(activeChain)
           )
           const bal = await service.getBalance(activeBitcoinWallet.address)
           setBalance(bal.toFixed(8))
@@ -75,15 +82,23 @@ const BalanceDisplay: React.FC = () => {
     fetchBalance()
     const interval = setInterval(fetchBalance, 15000)
     return () => clearInterval(interval)
-  }, [activeWallet, activeSolanaWallet, activeBitcoinWallet, activeChain, isSolanaChain, isBitcoinChain])
+  }, [
+    activeWallet,
+    activeSolanaWallet,
+    activeBitcoinWallet,
+    activeChain,
+    isSolanaChain,
+    isBitcoinChain,
+  ])
 
-  if (!displayWallet) return null
+  if (!activeAccount) return null
 
   return (
     <div className="balance-display">
       <div className="balance-amount">
         <>
-          {balance} <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
+          {balance}{' '}
+          <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
         </>
       </div>
       <div className="balance-label">
