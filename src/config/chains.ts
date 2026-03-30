@@ -102,6 +102,27 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
   'tron-shasta': ['https://api.shasta.trongrid.io/jsonrpc'],
   'cosmos-hub': ['https://cosmos-rpc.publicnode.com'],
   'provenance-mainnet': ['https://api.provenance.io'],
+  '43114': [
+    'https://api.avax.network/ext/bc/C/rpc',
+    'https://avalanche-c-chain-rpc.publicnode.com',
+  ],
+  '43113': [
+    'https://api.avax-test.network/ext/bc/C/rpc',
+    'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+  ],
+  '196': ['https://rpc.xlayer.tech', 'https://xlayerrpc.okx.com'],
+  '195': ['https://testrpc.xlayer.tech', 'https://xlayertestrpc.okx.com'],
+  '999': ['https://rpc.hyperliquid.xyz/evm'],
+  '998': ['https://api.hyperliquid-testnet.xyz/evm'],
+  '9745': ['https://rpc.plasma.to'],
+  '9746': ['https://testnet-rpc.plasma.to'],
+  '6342': ['https://carrot.megaeth.com/rpc'],
+  '2000': [
+    'https://rpc.dogechain.dog',
+    'https://rpc01-sg.dogechain.dog',
+    'https://rpc.ankr.com/dogechain',
+  ],
+  '568': ['https://rpc-testnet.dogechain.dog'],
 }
 
 function flattenRpcValues(
@@ -149,6 +170,11 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   1101, // Polygon zkEVM
   81457, // Blast
   7777777, // Zora
+  196, // X Layer
+  999, // Hyperliquid L1
+  9745, // Plasma
+  6342, // MegaETH Testnet
+  2000, // Dogechain
 ]
 
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
@@ -157,6 +183,11 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'solana-devnet',
   'tron-shasta',
   11155111, // Sepolia
+  43113, // Avalanche Fuji
+  195, // X Layer Testnet
+  998, // Hyperliquid Testnet
+  9746, // Plasma Testnet
+  568, // Dogechain Testnet
 ]
 
 export const DEFAULT_CHAINS: Chain[] = [
@@ -300,5 +331,99 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://explorer.provenance.io',
     coinType: 505,
     addressPrefix: 'pb',
+  },
+  // ─── Avalanche ───
+  {
+    id: 43114,
+    name: 'Avalanche C-Chain',
+    symbol: 'AVAX',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(43114),
+    explorer: 'https://snowscan.xyz',
+  },
+  {
+    id: 43113,
+    name: 'Avalanche Fuji Testnet',
+    symbol: 'AVAX',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(43113),
+    explorer: 'https://testnet.snowscan.xyz',
+  },
+  // ─── X Layer (OKX) ───
+  {
+    id: 196,
+    name: 'X Layer',
+    symbol: 'OKB',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(196),
+    explorer: 'https://www.oklink.com/xlayer',
+  },
+  {
+    id: 195,
+    name: 'X Layer Testnet',
+    symbol: 'OKB',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(195),
+    explorer: 'https://www.oklink.com/xlayer-test',
+  },
+  // ─── Hyperliquid ───
+  {
+    id: 999,
+    name: 'Hyperliquid L1',
+    symbol: 'HYPE',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(999),
+    explorer: 'https://hypurrscan.io',
+  },
+  {
+    id: 998,
+    name: 'Hyperliquid Testnet',
+    symbol: 'HYPE',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(998),
+    explorer: '',
+  },
+  // ─── Plasma ───
+  {
+    id: 9745,
+    name: 'Plasma',
+    symbol: 'XPL',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(9745),
+    explorer: 'https://plasmascan.to',
+  },
+  {
+    id: 9746,
+    name: 'Plasma Testnet',
+    symbol: 'XPL',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(9746),
+    explorer: 'https://testnet.plasmascan.to',
+  },
+  // ─── MegaETH ───
+  {
+    id: 6342,
+    name: 'MegaETH Testnet',
+    symbol: 'ETH',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(6342),
+    explorer: '',
+  },
+  // ─── Dogechain ───
+  {
+    id: 2000,
+    name: 'Dogechain',
+    symbol: 'DOGE',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(2000),
+    explorer: 'https://explorer.dogechain.dog',
+  },
+  {
+    id: 568,
+    name: 'Dogechain Testnet',
+    symbol: 'DOGE',
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(568),
+    explorer: '',
   },
 ]
