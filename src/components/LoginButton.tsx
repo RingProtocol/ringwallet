@@ -165,52 +165,48 @@ const LoginButton: React.FC = () => {
     <div className="login-container">
       {showBiometricGuide ? (
         <BiometricGuide onRetry={handleBiometricRetry} isChecking={isLoading} />
-      ) : showCreateAccount ? (
+      ) : (
         <div
           style={{
             padding: '12px',
-            background: '#f0f9ff',
+            background: showCreateAccount ? '#f0f9ff' : 'transparent',
             borderRadius: '8px',
-            border: '1px solid #bae6fd',
+            border: showCreateAccount ? '1px solid #bae6fd' : 'none',
           }}
         >
-          <p
-            style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0369a1' }}
+          {showCreateAccount && (
+            <p
+              style={{
+                margin: '0 0 8px 0',
+                fontSize: '14px',
+                color: '#0369a1',
+              }}
+            >
+              {t('noAccountFound')}
+            </p>
+          )}
+          <button
+            className="login-button"
+            onClick={handlePasskeyLogin}
+            disabled={isLoading}
+            style={{ width: '100%' }}
           >
-            {t('noAccountFound')}
-          </p>
+            {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
+          </button>
           <button
             className="login-button"
             onClick={handleCreateAccount}
             disabled={isLoading}
-            style={{ width: '100%' }}
+            style={{ width: '100%', marginTop: '8px' }}
           >
             {isCreatingAccount ? t('creating') : t('createAccount')}
           </button>
-          <button
-            className="login-button"
-            onClick={handlePasskeyLogin}
-            disabled={isLoading}
-            style={{ width: '100%', marginTop: '8px' }}
-          >
-            {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
-          </button>
-        </div>
-      ) : (
-        <>
-          <button
-            className="login-button"
-            onClick={handlePasskeyLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? t('loggingIn') : t('login')}
-          </button>
-          {!hasLoginHistory && (
+          {!hasLoginHistory && !showCreateAccount && (
             <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
               {t('loginTipNoPasskey')}
             </p>
           )}
-        </>
+        </div>
       )}
 
       {error && <div className="error-message">{error}</div>}

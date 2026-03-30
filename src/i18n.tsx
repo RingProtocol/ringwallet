@@ -15,6 +15,7 @@ export type Lang = 'en' | 'zh'
 type Vars = Record<string, string | number>
 
 const STORAGE_KEY = 'ring_wallet_lang'
+const EXPLICIT_STORAGE_KEY = 'ring_wallet_lang_explicit'
 
 const messages = {
   en: {
@@ -430,22 +431,17 @@ export function I18nProvider({
   const [lang, setLangState] = useState<Lang>(defaultLang)
 
   useEffect(() => {
+    const explicit = safeGetItem(EXPLICIT_STORAGE_KEY)
     const stored = safeGetItem(STORAGE_KEY)
-    if (isLang(stored)) {
+    if (explicit === 'true' && isLang(stored)) {
       setLangState(stored)
-      return
-    }
-    if (typeof navigator !== 'undefined') {
-      const detected = navigator.language.toLowerCase().startsWith('zh')
-        ? 'zh'
-        : 'en'
-      setLangState(detected)
     }
   }, [])
 
   const setLang = useCallback((next: Lang) => {
     setLangState(next)
     safeSetItem(STORAGE_KEY, next)
+    safeSetItem(EXPLICIT_STORAGE_KEY, 'true')
   }, [])
 
   const dict = messages[lang]
