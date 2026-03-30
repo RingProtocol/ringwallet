@@ -30,8 +30,10 @@ yarn run build || {
 git add .
 
 staged_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs')
-if [[ -n "$staged_files" ]]; then
-  console_matches=$(printf '%s\n' "$staged_files" | xargs grep -nH -E 'console\.log\s*\(' || true)
+# Skip test/ — CLIs and chain helpers legitimately print to stdout.
+staged_for_console_check=$(printf '%s\n' "$staged_files" | grep -v '^test/' || true)
+if [[ -n "$staged_for_console_check" ]]; then
+  console_matches=$(printf '%s\n' "$staged_for_console_check" | xargs grep -nH -E 'console\.log\s*\(' || true)
   if [[ -n "$console_matches" ]]; then
     echo "commit blocked: console.log found in staged files"
     echo "$console_matches"

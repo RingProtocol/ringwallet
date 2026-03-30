@@ -30,6 +30,12 @@ export default [
     },
   },
   {
+    files: ['test/**/*.{js,jsx,ts,tsx,mjs,cjs}'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['**/*.{test,spec}.{js,jsx,ts,tsx}'],
     languageOptions: {
       globals: {

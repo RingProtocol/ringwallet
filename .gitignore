@@ -6,5 +6,6 @@ skill
 dist-extension
 **/node_modules
 .env
+.env.test
 .venv
 *.tsbuildinfo
