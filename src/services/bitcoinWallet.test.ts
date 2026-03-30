@@ -9,16 +9,18 @@ import { WalletType } from '../models/WalletType'
 
 const KNOWN_SEED = Buffer.from(
   'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
-  'hex',
+  'hex'
 )
-
-const TEST_SEED = new Uint8Array(32).fill(1)
 
 // ─── TC-BTC-KEY-01 · Standard path derivation ───────────────────────────────
 
 describe('TC-BTC-KEY-01: standard BIP44 path P2WPKH address derivation', () => {
   it('returns a Bech32 address starting with bc1q (mainnet)', () => {
-    const { address } = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0)
+    const { address } = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    )
     expect(address).toMatch(/^bc1q/)
   })
 
@@ -29,17 +31,29 @@ describe('TC-BTC-KEY-01: standard BIP44 path P2WPKH address derivation', () => {
   })
 
   it('matches pre-computed reference address at index 0', () => {
-    const { address } = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0)
+    const { address } = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    )
     expect(address).toBe('bc1q67ngcrqr76xxusp5fksmnxqq8cvxcx68eg9zqx')
   })
 
   it('matches pre-computed reference address at index 1', () => {
-    const { address } = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 1)
+    const { address } = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      1
+    )
     expect(address).toBe('bc1q8507dt06tldnpapj9mv9k0mxjyvldpgve8qsq3')
   })
 
   it('derives valid private and public keys', () => {
-    const { privateKey, publicKey } = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0)
+    const { privateKey, publicKey } = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    )
     expect(privateKey).toBeInstanceOf(Buffer)
     expect(privateKey.length).toBe(32)
     expect(publicKey).toBeInstanceOf(Buffer)
@@ -52,13 +66,17 @@ describe('TC-BTC-KEY-01: standard BIP44 path P2WPKH address derivation', () => {
 describe('TC-BTC-KEY-02: multi-account derivation isolation', () => {
   it('derives 5 unique addresses from the same seed', () => {
     const wallets = BitcoinKeyService.deriveWallets(KNOWN_SEED, 5, false)
-    const addresses = wallets.map(w => w.address)
+    const addresses = wallets.map((w) => w.address)
     const unique = new Set(addresses)
     expect(unique.size).toBe(5)
   })
 
   it('index=0 is reproducible after batch derivation', () => {
-    const single = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0).address
+    const single = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    ).address
     const batch = BitcoinKeyService.deriveWallets(KNOWN_SEED, 5, false)
     expect(batch[0].address).toBe(single)
   })
@@ -114,7 +132,8 @@ describe('TC-BTC-KEY-03: cross-chain key isolation', () => {
   })
 
   it('all three addresses are in different formats', () => {
-    const btcAddr = BitcoinKeyService.deriveWallets(KNOWN_SEED, 1, false)[0].address
+    const btcAddr = BitcoinKeyService.deriveWallets(KNOWN_SEED, 1, false)[0]
+      .address
     const solAddr = SolanaKeyService.deriveWallets(KNOWN_SEED, 1)[0].address
 
     const evmRoot = ethers.HDNodeWallet.fromSeed(ethers.hexlify(KNOWN_SEED))
@@ -131,11 +150,15 @@ describe('TC-BTC-KEY-03: cross-chain key isolation', () => {
 
 describe('TC-BTC-KEY-04: invalid masterSeed handling', () => {
   it('throws on empty Uint8Array', () => {
-    expect(() => BitcoinKeyService.deriveAccountNode(new Uint8Array(0), false, 0)).toThrow()
+    expect(() =>
+      BitcoinKeyService.deriveAccountNode(new Uint8Array(0), false, 0)
+    ).toThrow()
   })
 
   it('throws on seed shorter than 16 bytes', () => {
-    expect(() => BitcoinKeyService.deriveAccountNode(new Uint8Array(8), false, 0)).toThrow()
+    expect(() =>
+      BitcoinKeyService.deriveAccountNode(new Uint8Array(8), false, 0)
+    ).toThrow()
   })
 
   it('accepts an all-zero 32-byte seed (BIP32 allows it)', () => {
@@ -150,13 +173,25 @@ describe('TC-BTC-KEY-04: invalid masterSeed handling', () => {
 
 describe('TC-BTC-KEY-05: testnet vs mainnet address isolation', () => {
   it('testnet address differs from mainnet address', () => {
-    const mainnet = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0).address
-    const testnet = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, true, 0).address
+    const mainnet = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    ).address
+    const testnet = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      true,
+      0
+    ).address
     expect(mainnet).not.toBe(testnet)
   })
 
   it('mainnet address starts with bc1q', () => {
-    const { address } = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0)
+    const { address } = BitcoinKeyService.deriveAccountNode(
+      KNOWN_SEED,
+      false,
+      0
+    )
     expect(address).toMatch(/^bc1q/)
   })
 
@@ -183,9 +218,15 @@ describe('TC-BTC-KEY-05: testnet vs mainnet address isolation', () => {
 describe('TC-BTC-ADDR-01: isValidAddress', () => {
   const validAddresses: [string, string][] = [
     ['BIP173 test vector', 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'],
-    ['derived mainnet', BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0).address],
+    [
+      'derived mainnet',
+      BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0).address,
+    ],
     ['testnet P2WPKH', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
-    ['derived testnet', BitcoinKeyService.deriveAccountNode(KNOWN_SEED, true, 0).address],
+    [
+      'derived testnet',
+      BitcoinKeyService.deriveAccountNode(KNOWN_SEED, true, 0).address,
+    ],
   ]
 
   const invalidAddresses: [string, string][] = [
@@ -206,16 +247,34 @@ describe('TC-BTC-ADDR-01: isValidAddress', () => {
   })
 
   it('rejects mainnet address when isTestnet=true', () => {
-    expect(BitcoinKeyService.isValidAddress('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4', true)).toBe(false)
+    expect(
+      BitcoinKeyService.isValidAddress(
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+        true
+      )
+    ).toBe(false)
   })
 
   it('rejects testnet address when isTestnet=false', () => {
-    expect(BitcoinKeyService.isValidAddress('tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx', false)).toBe(false)
+    expect(
+      BitcoinKeyService.isValidAddress(
+        'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+        false
+      )
+    ).toBe(false)
   })
 
   it('accepts both prefixes when isTestnet is undefined', () => {
-    expect(BitcoinKeyService.isValidAddress('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4')).toBe(true)
-    expect(BitcoinKeyService.isValidAddress('tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx')).toBe(true)
+    expect(
+      BitcoinKeyService.isValidAddress(
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
+      )
+    ).toBe(true)
+    expect(
+      BitcoinKeyService.isValidAddress(
+        'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'
+      )
+    ).toBe(true)
   })
 })
 
@@ -239,7 +298,92 @@ describe('TC-BTC-FEE: satoshi / BTC unit conversion', () => {
   it('round-trip: btcToSats(satsToBtc(n)) === n', () => {
     const values = [1, 546, 10_000, 50_000, 100_000_000, 2_100_000_000_000_000]
     for (const v of values) {
-      expect(BitcoinService.btcToSats(parseFloat(BitcoinService.satsToBtc(v)))).toBe(v)
+      expect(
+        BitcoinService.btcToSats(parseFloat(BitcoinService.satsToBtc(v)))
+      ).toBe(v)
+    }
+  })
+})
+
+describe('TC-BTC-BALANCE: address stats balance lookup', () => {
+  it('computes balance from chain and mempool stats without requiring /utxo', async () => {
+    const service = new BitcoinService(
+      'https://mempool.space/testnet4/api',
+      true,
+      'testnet4'
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (url: string | URL | Request) => {
+      const urlStr = typeof url === 'string' ? url : url.toString()
+      if (
+        urlStr.includes(
+          '/address/tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4/utxo'
+        )
+      ) {
+        throw new Error('utxo route should not be called for balance')
+      }
+      if (
+        urlStr.includes('/address/tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4')
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            chain_stats: { funded_txo_sum: 150_000, spent_txo_sum: 20_000 },
+            mempool_stats: { funded_txo_sum: 30_000, spent_txo_sum: 5_000 },
+          }),
+        } as Response
+      }
+      return originalFetch(url as RequestInfo)
+    }) as typeof fetch
+
+    try {
+      await expect(
+        service.getBalanceSats('tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4')
+      ).resolves.toBe(155_000)
+      await expect(
+        service.getBalance('tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4')
+      ).resolves.toBe(0.00155)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('falls back to the secondary testnet4 esplora endpoint when the primary one fails', async () => {
+    const service = new BitcoinService(
+      'https://mempool.space/testnet4/api',
+      true,
+      'testnet4'
+    )
+    const originalFetch = globalThis.fetch
+    const calls: string[] = []
+    globalThis.fetch = (async (url: string | URL | Request) => {
+      const urlStr = typeof url === 'string' ? url : url.toString()
+      calls.push(urlStr)
+      if (urlStr.startsWith('https://mempool.space/testnet4/api/')) {
+        throw new Error('Load failed')
+      }
+      if (urlStr.startsWith('https://mempool.ninja/testnet4/api/')) {
+        return {
+          ok: true,
+          json: async () => ({
+            chain_stats: { funded_txo_sum: 500_000, spent_txo_sum: 0 },
+            mempool_stats: { funded_txo_sum: 0, spent_txo_sum: 0 },
+          }),
+        } as Response
+      }
+      return originalFetch(url as RequestInfo)
+    }) as typeof fetch
+
+    try {
+      await expect(
+        service.getBalanceSats('tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4')
+      ).resolves.toBe(500_000)
+      expect(calls).toEqual([
+        'https://mempool.space/testnet4/api/address/tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4',
+        'https://mempool.ninja/testnet4/api/address/tb1qrl7az7l9gwsnaz2hwsytzygxe7x4phm3ghecq4',
+      ])
+    } finally {
+      globalThis.fetch = originalFetch
     }
   })
 })
@@ -251,9 +395,16 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
   // inside BitcoinService.buildAndSignTransaction.
 
   const MOCK_SEED = KNOWN_SEED
-  const address = BitcoinKeyService.deriveAccountNode(MOCK_SEED, false, 0).address
+  const address = BitcoinKeyService.deriveAccountNode(
+    MOCK_SEED,
+    false,
+    0
+  ).address
 
-  const makeMockService = (utxos: { txid: string; vout: number; value: number }[], feeRate = 5) => {
+  const makeMockService = (
+    utxos: { txid: string; vout: number; value: number }[],
+    feeRate = 5
+  ) => {
     const service = new BitcoinService('https://mock.api', false)
 
     // Mock fetch for UTXOs and fee estimates
@@ -261,15 +412,27 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
     globalThis.fetch = (async (url: string | URL | Request) => {
       const urlStr = typeof url === 'string' ? url : url.toString()
       if (urlStr.includes('/utxo')) {
-        return { ok: true, json: async () => utxos.map(u => ({ ...u, status: { confirmed: true } })) } as Response
+        return {
+          ok: true,
+          json: async () =>
+            utxos.map((u) => ({ ...u, status: { confirmed: true } })),
+        } as Response
       }
       if (urlStr.includes('/fee-estimates')) {
-        return { ok: true, json: async () => ({ '3': feeRate, '6': feeRate }) } as Response
+        return {
+          ok: true,
+          json: async () => ({ '3': feeRate, '6': feeRate }),
+        } as Response
       }
       return originalFetch(url as RequestInfo)
     }) as typeof fetch
 
-    return { service, cleanup: () => { globalThis.fetch = originalFetch } }
+    return {
+      service,
+      cleanup: () => {
+        globalThis.fetch = originalFetch
+      },
+    }
   }
 
   it('selects single UTXO when it covers the amount', async () => {
@@ -311,7 +474,7 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
           masterSeed: MOCK_SEED,
           addressIndex: 0,
           feeRate: 2,
-        }),
+        })
       ).rejects.toThrow(/Insufficient balance/)
     } finally {
       cleanup()
@@ -329,7 +492,7 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
           amountSats: 10_000,
           masterSeed: MOCK_SEED,
           addressIndex: 0,
-        }),
+        })
       ).rejects.toThrow(/No UTXOs/)
     } finally {
       cleanup()
@@ -396,7 +559,7 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
           amountSats: 10_000,
           masterSeed: MOCK_SEED,
           addressIndex: 0,
-        }),
+        })
       ).rejects.toThrow(/Invalid recipient/)
     } finally {
       cleanup()
@@ -407,7 +570,11 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
 // ─── TC-BTC-PSBT · Signed transaction structure ────────────────────────────
 
 describe('TC-BTC-PSBT: PSBT signature verification', () => {
-  const address = BitcoinKeyService.deriveAccountNode(KNOWN_SEED, false, 0).address
+  const address = BitcoinKeyService.deriveAccountNode(
+    KNOWN_SEED,
+    false,
+    0
+  ).address
 
   it('produces a valid hex-encoded transaction', async () => {
     const service = new BitcoinService('https://mock.api', false)
@@ -417,7 +584,14 @@ describe('TC-BTC-PSBT: PSBT signature verification', () => {
       if (urlStr.includes('/utxo')) {
         return {
           ok: true,
-          json: async () => [{ txid: 'f'.repeat(64), vout: 0, value: 100_000, status: { confirmed: true } }],
+          json: async () => [
+            {
+              txid: 'f'.repeat(64),
+              vout: 0,
+              value: 100_000,
+              status: { confirmed: true },
+            },
+          ],
         } as Response
       }
       if (urlStr.includes('/fee-estimates')) {

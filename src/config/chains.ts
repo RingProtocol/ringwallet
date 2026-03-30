@@ -9,96 +9,98 @@ interface ChainEnvConfig {
   factoryAddress?: string
 }
 
-function env(key: string): string | undefined {
+function env(key: string): string {
   const val = (import.meta.env as Record<string, string | undefined>)[key]
-  return val?.trim() || undefined
+  return val?.trim() || 'unknownalchemyapikey'
 }
 
 const ENV: Record<string, ChainEnvConfig> = {
   '1': {
-    rpc: env('VITE_RPC_ETH_MAINNET'),
+    rpc: `https://eth-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_ETH_MAINNET'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_ETH_MAINNET'),
   },
   '11155111': {
-    rpc: env('VITE_RPC_SEPOLIA'),
+    rpc: `https://eth-sepolia.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_SEPOLIA'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_SEPOLIA'),
   },
   '10': {
-    rpc: env('VITE_RPC_OPTIMISM'),
+    rpc: `https://optimism-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_OPTIMISM'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_OPTIMISM'),
   },
   '42161': {
-    rpc: env('VITE_RPC_ARBITRUM'),
+    rpc: `https://arb1.arbitrum.io/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_ARBITRUM'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_ARBITRUM'),
   },
   '137': {
-    rpc: env('VITE_RPC_POLYGON'),
+    rpc: `https://polygon-rpc.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_POLYGON'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_POLYGON'),
   },
   'solana-mainnet': {
-    rpc: env('VITE_SOLANA_MAINNET_RPC'),
+    rpc: `https://api.mainnet-beta.solana.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'solana-devnet': {
-    rpc: env('VITE_SOLANA_DEVNET_RPC'),
+    rpc: `https://api.devnet.solana.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   // May be Esplora base URL or Alchemy `https://bitcoin-mainnet.g.alchemy.com/v2/<key>` — UTXO reads still use Esplora fallback in BitcoinService.
   'bitcoin-mainnet': {
-    rpc: env('VITE_BITCOIN_API'),
+    rpc: `https://bitcoin-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   /** Testnet4 only — do not fall back to `VITE_BITCOIN_TESTNET_API` (that is typically testnet3 / Alchemy `bitcoin-testnet`). */
   'bitcoin-testnet': {
-    rpc: env('VITE_BITCOIN_TESTNET4_API'),
+    rpc: `https://bitcoin-testnet4.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   /** Legacy testnet3; `VITE_BITCOIN_TESTNET_API` is wired here for typical Alchemy `bitcoin-testnet` URLs. */
   'bitcoin-testnet3': {
-    rpc: env('VITE_BITCOIN_TESTNET3_API') || env('VITE_BITCOIN_TESTNET_API'),
+    rpc: `https://bitcoin-testnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'tron-mainnet': {
-    rpc: env('VITE_TRON_MAINNET_RPC'),
+    rpc: `https://api.trongrid.io/jsonrpc/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'tron-shasta': {
-    rpc: env('VITE_TRON_SHASTA_RPC'),
+    rpc: `https://api.shasta.trongrid.io/jsonrpc/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'cosmos-hub': {
-    rpc: env('VITE_COSMOS_HUB_RPC'),
+    rpc: `https://cosmos-rpc.publicnode.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'provenance-mainnet': {
-    rpc: env('VITE_PROVENANCE_RPC'),
+    rpc: `https://api.provenance.io/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
 }
 
 // ─── Fallback RPCs (free / public endpoints) ───
 
 const RPC_FALLBACK: Record<string, string> = {
-  '1':        'https://eth.llamarpc.com',
+  '1': 'https://eth.llamarpc.com',
   '11155111': 'https://rpc.sepolia.org',
-  '10':       'https://mainnet.optimism.io',
-  '42161':    'https://arb1.arbitrum.io/rpc',
-  '137':      'https://polygon-rpc.com',
+  '10': 'https://mainnet.optimism.io',
+  '42161': 'https://arb1.arbitrum.io/rpc',
+  '137': 'https://polygon-rpc.com',
   'solana-mainnet': 'https://api.mainnet-beta.solana.com',
-  'solana-devnet':  'https://api.devnet.solana.com',
+  'solana-devnet': 'https://api.devnet.solana.com',
   'bitcoin-mainnet': 'https://blockstream.info/api',
   'bitcoin-testnet': 'https://mempool.space/testnet4/api',
   'bitcoin-testnet3': 'https://blockstream.info/testnet/api',
-  'tron-mainnet':    'https://api.trongrid.io/jsonrpc',
-  'tron-shasta':     'https://api.shasta.trongrid.io/jsonrpc',
-  'cosmos-hub':      'https://cosmos-rpc.publicnode.com',
+  'tron-mainnet': 'https://api.trongrid.io/jsonrpc',
+  'tron-shasta': 'https://api.shasta.trongrid.io/jsonrpc',
+  'cosmos-hub': 'https://cosmos-rpc.publicnode.com',
   'provenance-mainnet': 'https://api.provenance.io',
 }
 
 function rpcUrl(chainId: string | number): string[] {
   const key = String(chainId)
-  return [ENV[key]?.rpc, RPC_FALLBACK[key]].filter((url): url is string => Boolean(url))
+  return [ENV[key]?.rpc, RPC_FALLBACK[key]].filter((url): url is string =>
+    Boolean(url)
+  )
 }
 
 // ─── Chain definitions ───
@@ -111,24 +113,24 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   'tron-mainnet',
   'cosmos-hub',
   'provenance-mainnet',
-  1,        // Ethereum
-  10,       // Optimism
-  42161,    // Arbitrum One
-  8453,     // Base
-  137,      // Polygon
-  324,      // zkSync Era
-  59144,    // Linea
-  534352,   // Scroll
-  56,       // BNB Smart Chain
-  43114,    // Avalanche C-Chain
-  250,      // Fantom
-  42220,    // Celo
-  100,      // Gnosis
-  1284,     // Moonbeam
-  5000,     // Mantle
-  1101,     // Polygon zkEVM
-  81457,    // Blast
-  7777777,  // Zora
+  1, // Ethereum
+  10, // Optimism
+  42161, // Arbitrum One
+  8453, // Base
+  137, // Polygon
+  324, // zkSync Era
+  59144, // Linea
+  534352, // Scroll
+  56, // BNB Smart Chain
+  43114, // Avalanche C-Chain
+  250, // Fantom
+  42220, // Celo
+  100, // Gnosis
+  1284, // Moonbeam
+  5000, // Mantle
+  1101, // Polygon zkEVM
+  81457, // Blast
+  7777777, // Zora
 ]
 
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
