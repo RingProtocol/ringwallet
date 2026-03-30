@@ -3,7 +3,7 @@ import { ChainFamily, type Chain } from '../models/ChainType'
 // ─── Per-chain env overrides (VITE_* injected at build time) ───
 
 interface ChainEnvConfig {
-  rpc?: string
+  rpc?: string | string[]
   bundlerUrl?: string
   entryPoint?: string
   factoryAddress?: string
@@ -79,28 +79,46 @@ const ENV: Record<string, ChainEnvConfig> = {
 
 // ─── Fallback RPCs (free / public endpoints) ───
 
-const RPC_FALLBACK: Record<string, string> = {
-  '1': 'https://eth.llamarpc.com',
-  '11155111': 'https://rpc.sepolia.org',
-  '10': 'https://mainnet.optimism.io',
-  '42161': 'https://arb1.arbitrum.io/rpc',
-  '137': 'https://polygon-rpc.com',
-  'solana-mainnet': 'https://api.mainnet-beta.solana.com',
-  'solana-devnet': 'https://api.devnet.solana.com',
-  'bitcoin-mainnet': 'https://blockstream.info/api',
-  'bitcoin-testnet': 'https://mempool.space/testnet4/api',
-  'bitcoin-testnet3': 'https://blockstream.info/testnet/api',
-  'tron-mainnet': 'https://api.trongrid.io/jsonrpc',
-  'tron-shasta': 'https://api.shasta.trongrid.io/jsonrpc',
-  'cosmos-hub': 'https://cosmos-rpc.publicnode.com',
-  'provenance-mainnet': 'https://api.provenance.io',
+type RpcConfigValue = string[]
+
+const RPC_FALLBACK: Record<string, RpcConfigValue> = {
+  '1': ['https://eth.llamarpc.com'],
+  '11155111': ['https://rpc.sepolia.org'],
+  '10': ['https://mainnet.optimism.io'],
+  '42161': ['https://arb1.arbitrum.io/rpc'],
+  '137': ['https://polygon-rpc.com'],
+  'solana-mainnet': ['https://api.mainnet-beta.solana.com'],
+  'solana-devnet': ['https://api.devnet.solana.com'],
+  'bitcoin-mainnet': [
+    'https://blockstream.info/api',
+    'https://mempool.space/api',
+  ],
+  'bitcoin-testnet': ['https://mempool.space/testnet4/api'],
+  'bitcoin-testnet3': ['https://blockstream.info/testnet/api'],
+  'tron-mainnet': [
+    'https://rpc.ankr.com/tron_jsonrpc',
+    'https://api.trongrid.io/jsonrpc',
+  ],
+  'tron-shasta': ['https://api.shasta.trongrid.io/jsonrpc'],
+  'cosmos-hub': ['https://cosmos-rpc.publicnode.com'],
+  'provenance-mainnet': ['https://api.provenance.io'],
+}
+
+function flattenRpcValues(
+  ...values: Array<string | string[] | undefined>
+): string[] {
+  return [
+    ...new Set(
+      values
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .filter((value): value is string => Boolean(value))
+    ),
+  ]
 }
 
 function rpcUrl(chainId: string | number): string[] {
   const key = String(chainId)
-  return [ENV[key]?.rpc, RPC_FALLBACK[key]].filter((url): url is string =>
-    Boolean(url)
-  )
+  return flattenRpcValues(ENV[key]?.rpc, RPC_FALLBACK[key])
 }
 
 // ─── Chain definitions ───

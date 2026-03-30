@@ -1,6 +1,13 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { safeGetItem, safeSetItem } from './utils/safeStorage'
 
 export type Lang = 'en' | 'zh'
@@ -42,62 +49,79 @@ const messages = {
     passkeyNeedsSecureContext: 'Passkey requires a secure context (HTTPS).',
     passkeyApiUnavailable:
       'Your browser does not support Passkey. Please upgrade Chrome/Edge/Safari.',
-    biometricNotDetected: 'Still no device verification detected. Please finish setup.',
+    biometricNotDetected:
+      'Still no device verification detected. Please finish setup.',
     biometricGuideTitle: 'Device verification required',
     biometricGuideDesc:
       'Your device has not enabled biometrics or a screen lock, so Passkey login is unavailable. Follow the steps below to enable it:',
     biometricGuideRecommended: 'Recommended',
-    biometricGuideToggleFallback: 'No biometrics on this device? See alternatives ›',
+    biometricGuideToggleFallback:
+      'No biometrics on this device? See alternatives ›',
     biometricGuideFallbackHint:
       'Even without Face ID / fingerprint, you can use Passkey normally after setting a screen lock.',
     biometricGuideChecking: 'Checking...',
     biometricGuideRetry: 'Enabled — check again',
-    biometricGuideRetryHint: 'Still not detected? Try restarting your browser and try again.',
+    biometricGuideRetryHint:
+      'Still not detected? Try restarting your browser and try again.',
     bioIosBiometricTitle: 'Enable Face ID / Touch ID',
     bioIosBiometricStep1: 'Open **Settings**',
-    bioIosBiometricStep2: 'Go to **Face ID & Passcode** (or **Touch ID & Passcode**)',
+    bioIosBiometricStep2:
+      'Go to **Face ID & Passcode** (or **Touch ID & Passcode**)',
     bioIosBiometricStep3: 'Enter your device passcode',
     bioIosBiometricStep4: 'Enable **Face ID** (or add a **fingerprint**)',
-    bioIosBiometricStep5: 'Return to this app and tap “Enabled — check again” below',
+    bioIosBiometricStep5:
+      'Return to this app and tap “Enabled — check again” below',
     bioIosFallbackTitle: 'Or: enable a device passcode',
     bioIosFallbackStep1: 'Open **Settings** → **Face ID & Passcode**',
     bioIosFallbackStep2: 'Tap **Turn Passcode On** and set a numeric passcode',
     bioAndroidBiometricTitle: 'Enable fingerprint / face unlock',
     bioAndroidBiometricStep1: 'Open **Settings**',
-    bioAndroidBiometricStep2: 'Search **Biometrics** or go to **Security → Biometrics**',
+    bioAndroidBiometricStep2:
+      'Search **Biometrics** or go to **Security → Biometrics**',
     bioAndroidBiometricStep3: 'Set up **Fingerprint** or **Face unlock**',
     bioAndroidBiometricStep4: 'Follow the prompts to finish enrollment',
-    bioAndroidBiometricStep5: 'Return to this app and tap “Enabled — check again” below',
+    bioAndroidBiometricStep5:
+      'Return to this app and tap “Enabled — check again” below',
     bioAndroidFallbackTitle: 'Or: enable a screen lock',
-    bioAndroidFallbackStep1: 'Open **Settings** → **Security** → **Screen lock**',
-    bioAndroidFallbackStep2: 'Choose **PIN** / **Password** / **Pattern** and finish setup',
+    bioAndroidFallbackStep1:
+      'Open **Settings** → **Security** → **Screen lock**',
+    bioAndroidFallbackStep2:
+      'Choose **PIN** / **Password** / **Pattern** and finish setup',
     bioMacosBiometricTitle: 'Enable Touch ID',
     bioMacosBiometricStep1: 'Open **System Settings**',
     bioMacosBiometricStep2: 'Go to **Touch ID & Password**',
     bioMacosBiometricStep3: 'Click **Add Fingerprint** and finish enrollment',
-    bioMacosBiometricStep4: 'Return to this app and tap “Enabled — check again” below',
+    bioMacosBiometricStep4:
+      'Return to this app and tap “Enabled — check again” below',
     bioMacosFallbackTitle: 'Or: make sure a login password is set',
     bioMacosFallbackStep1: 'Open **System Settings** → **Users & Groups**',
     bioMacosFallbackStep2: 'Make sure your account has a **login password**',
     bioWindowsBiometricTitle: 'Enable Windows Hello',
     bioWindowsBiometricStep1: 'Open **Settings**',
     bioWindowsBiometricStep2: 'Go to **Accounts** → **Sign-in options**',
-    bioWindowsBiometricStep3: 'Under **Windows Hello**, set up **Fingerprint** or **Face recognition**',
+    bioWindowsBiometricStep3:
+      'Under **Windows Hello**, set up **Fingerprint** or **Face recognition**',
     bioWindowsBiometricStep4: 'Follow the prompts to finish enrollment',
-    bioWindowsBiometricStep5: 'Return to this app and tap “Enabled — check again” below',
+    bioWindowsBiometricStep5:
+      'Return to this app and tap “Enabled — check again” below',
     bioWindowsFallbackTitle: 'Or: set up a PIN',
-    bioWindowsFallbackStep1: 'Open **Settings** → **Accounts** → **Sign-in options**',
+    bioWindowsFallbackStep1:
+      'Open **Settings** → **Accounts** → **Sign-in options**',
     bioWindowsFallbackStep2: 'Under **PIN (Windows Hello)**, click **Set up**',
     bioDesktopBiometricTitle: 'Enable system biometrics',
     bioDesktopBiometricStep1: 'Open your system **Settings / Preferences**',
     bioDesktopBiometricStep2: 'Find **Security** or **Sign-in options**',
     bioDesktopBiometricStep3: 'Enable **fingerprint** or **face unlock**',
-    bioDesktopBiometricStep4: 'Return to this app and tap “Enabled — check again” below',
+    bioDesktopBiometricStep4:
+      'Return to this app and tap “Enabled — check again” below',
     bioDesktopFallbackTitle: 'Or: set a screen lock / login password',
-    bioDesktopFallbackStep1: 'In system settings, make sure a **login password** or **PIN** is set',
-    cannotRestoreSeed: 'Cannot restore wallet seed. Please create a new account.',
+    bioDesktopFallbackStep1:
+      'In system settings, make sure a **login password** or **PIN** is set',
+    cannotRestoreSeed:
+      'Cannot restore wallet seed. Please create a new account.',
     createAccountFailed: 'Account creation failed: {message}',
-    createAccountError: 'An error occurred while creating the account: {message}',
+    createAccountError:
+      'An error occurred while creating the account: {message}',
     envCheckDetails: 'Environment check details:',
     httpsSecureContextLabel: 'HTTPS / secure context',
     webauthnApiLabel: 'WebAuthn API',
@@ -138,7 +162,8 @@ const messages = {
     insufficientBalance: 'Insufficient balance',
     txSent: 'Transaction sent',
     txFailed: 'Transaction failed: {message}',
-    txCanceledBiometricFailed: 'Biometric verification failed. Transaction canceled.',
+    txCanceledBiometricFailed:
+      'Biometric verification failed. Transaction canceled.',
     copySignature: 'Copy signature',
     importTokenTitle: 'Import token',
     tokenAddress: 'Token address',
@@ -148,7 +173,8 @@ const messages = {
     tokenAddressRequired: 'Please enter a token contract address.',
     invalidAddressFormat: 'Invalid address format.',
     rpcNotConfigured: 'RPC is not configured.',
-    tokenInfoFetchFailed: 'Failed to fetch token info. Please verify the address.',
+    tokenInfoFetchFailed:
+      'Failed to fetch token info. Please verify the address.',
     add: 'Add',
     admin: 'Admin',
     adminLogin: 'Admin login',
@@ -212,14 +238,16 @@ const messages = {
     loginTipNoPasskey:
       'Tip: If no passkey, after tapping Login just close the system dialog.',
     passkeyNeedsSecureContext: 'Passkey 需要在安全环境(HTTPS)下运行',
-    passkeyApiUnavailable: '您的浏览器版本过低或不支持Passkey，请升级Chrome/Edge/Safari',
+    passkeyApiUnavailable:
+      '您的浏览器版本过低或不支持Passkey，请升级Chrome/Edge/Safari',
     biometricNotDetected: '仍未检测到设备验证，请确认已完成设置',
     biometricGuideTitle: '需要开启设备验证',
     biometricGuideDesc:
       '您的设备尚未开启生物识别或屏幕锁，无法使用 Passkey 登录。请按以下步骤开启：',
     biometricGuideRecommended: '推荐',
     biometricGuideToggleFallback: '设备不支持生物识别？查看替代方案 ›',
-    biometricGuideFallbackHint: '即使没有指纹/面容，设置屏幕锁密码后也可以正常使用。',
+    biometricGuideFallbackHint:
+      '即使没有指纹/面容，设置屏幕锁密码后也可以正常使用。',
     biometricGuideChecking: '检测中...',
     biometricGuideRetry: '我已开启，重新检测',
     biometricGuideRetryHint: '仍未检测到？请尝试重启浏览器后再试。',
@@ -252,7 +280,8 @@ const messages = {
     bioWindowsBiometricTitle: '开启 Windows Hello',
     bioWindowsBiometricStep1: '打开 **设置**',
     bioWindowsBiometricStep2: '进入 **账户** → **登录选项**',
-    bioWindowsBiometricStep3: '在 **Windows Hello** 下设置 **指纹** 或 **面部识别**',
+    bioWindowsBiometricStep3:
+      '在 **Windows Hello** 下设置 **指纹** 或 **面部识别**',
     bioWindowsBiometricStep4: '按提示完成录入',
     bioWindowsBiometricStep5: '返回本应用，点击下方「我已开启，重新检测」',
     bioWindowsFallbackTitle: '或者：设置 PIN',
@@ -281,16 +310,16 @@ const messages = {
     importing: '导入中...',
     noTokensFound: '未找到资产',
     noTransactions: '暂无交易记录',
-    tokensTab: 'Tokens',
-    activityTab: 'Activity',
+    tokensTab: '资产',
+    activityTab: '活动',
     dappsTab: 'DApps',
     all: '全部',
-    searchDappPlaceholder: 'Search DApp...',
-    noDapps: 'No DApps',
-    loading: 'Loading...',
-    loadingDapps: 'Loading DApps...',
-    loadingFailed: 'Loading failed: {error}',
-    retry: 'Retry',
+    searchDappPlaceholder: '搜索 DApp...',
+    noDapps: '暂无 DApp',
+    loading: '加载中...',
+    loadingDapps: 'DApp 加载中...',
+    loadingFailed: '加载失败: {error}',
+    retry: '重试',
     refresh: '刷新',
     disconnect: '断开',
     chain: '链',
@@ -407,7 +436,9 @@ export function I18nProvider({
       return
     }
     if (typeof navigator !== 'undefined') {
-      const detected = navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
+      const detected = navigator.language.toLowerCase().startsWith('zh')
+        ? 'zh'
+        : 'en'
       setLangState(detected)
     }
   }, [])
@@ -424,10 +455,13 @@ export function I18nProvider({
       const template = dict[key] ?? messages.en[key] ?? key
       return formatMessage(template, vars)
     },
-    [dict],
+    [dict]
   )
 
-  const value = useMemo<I18nValue>(() => ({ lang, setLang, t }), [lang, setLang, t])
+  const value = useMemo<I18nValue>(
+    () => ({ lang, setLang, t }),
+    [lang, setLang, t]
+  )
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }
