@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { syncToDevice } from '../features/syncToDevice'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
 import { useI18n } from '../i18n'
@@ -21,10 +20,21 @@ type MenuItem = {
 }
 
 const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
-  const { wallets, activeWallet, activeWalletIndex, switchWallet, user, login, logout, isSolanaChain, isBitcoinChain, solanaWallets, bitcoinWallets, activeSolanaWallet, activeBitcoinWallet } = useAuth()
+  const {
+    wallets,
+    activeWallet,
+    activeWalletIndex,
+    switchWallet,
+    logout,
+    isSolanaChain,
+    isBitcoinChain,
+    solanaWallets,
+    bitcoinWallets,
+    activeSolanaWallet,
+    activeBitcoinWallet,
+  } = useAuth()
   const { lang, setLang, t } = useI18n()
   const [showWalletList, setShowWalletList] = useState(false)
-  const [featureLoading, setFeatureLoading] = useState<string | null>(null)
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
@@ -34,14 +44,22 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
   }
 
-  const copyToClipboard = (e: React.MouseEvent<HTMLButtonElement>, text: string) => {
+  const copyToClipboard = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    text: string
+  ) => {
     e.stopPropagation()
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = e.currentTarget
-      const original = btn.innerHTML
-      btn.innerHTML = '✅'
-      setTimeout(() => { btn.innerHTML = original }, 1000)
-    }).catch(err => console.error('Failed to copy:', err))
+    const btn = e.currentTarget
+    const original = btn.innerHTML
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        btn.innerHTML = '✅'
+        setTimeout(() => {
+          btn.innerHTML = original
+        }, 1000)
+      })
+      .catch((err) => console.error('Failed to copy:', err))
   }
 
   const handleSelectWallet = (index: number) => {
@@ -55,52 +73,67 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     onClose()
   }
 
-  const handleMigrate = async () => {
-    if (!user) return
-    setFeatureLoading('migrate')
-    setFeatureError('')
-    try {
-      const result = await syncToDevice({ user, login })
-      if (result.success) {
-        alert(`✅ ${t('syncSuccessTitle')}!\n\n${t('syncSuccessBody')}`)
-        handleClose()
-      } else {
-        setFeatureError(result.error || t('syncFailed'))
-      }
-    } catch (err) {
-      setFeatureError(t('syncErrorPrefix', { message: (err as Error).message }))
-    } finally {
-      setFeatureLoading(null)
-    }
-  }
-
   const handleLogout = () => {
     logout()
     handleClose()
   }
 
   const menuItems: MenuItem[] = [
-    { key: 'switch', icon: '🔄', label: t('switchAccount'), action: () => setShowWalletList(!showWalletList) },
-    { key: 'notifications', icon: '🔔', label: t('notifications'), action: () => {}, disabled: true },
-    { key: 'language', icon: '🌐', label: t('language'), sublabel: lang === 'en' ? t('english') : t('chinese'), action: () => setLang(lang === 'en' ? 'zh' : 'en') },
+    {
+      key: 'switch',
+      icon: '🔄',
+      label: t('switchAccount'),
+      action: () => setShowWalletList(!showWalletList),
+    },
+    {
+      key: 'notifications',
+      icon: '🔔',
+      label: t('notifications'),
+      action: () => {},
+      disabled: true,
+    },
+    {
+      key: 'language',
+      icon: '🌐',
+      label: t('language'),
+      sublabel: lang === 'en' ? t('english') : t('chinese'),
+      action: () => setLang(lang === 'en' ? 'zh' : 'en'),
+    },
     // { key: 'upgrade-sc', icon: '⬆️', label: 'Upgrade to smart account', sublabel: 'Coming soon', action: () => {}, disabled: true },
     // { key: 'signing-scheme', icon: '🔏', label: 'Passkey native signing (secp256r1)', sublabel: 'Coming soon', action: () => {}, disabled: true },
-    // { key: 'migrate', icon: '📱', label: featureLoading === 'migrate' ? t('syncing') : t('migrateFromAndroid'), action: handleMigrate, disabled: featureLoading === 'migrate' },
     // { key: 'security', icon: '🛡️', label: 'Security check', action: () => {}, disabled: true },
     // { key: 'developer', icon: '🛠️', label: 'Developer tools', action: () => {}, disabled: true },
-    { key: 'feedback', icon: '💬', label: t('feedback'), action: () => setShowFeedback(true) },
-    { key: 'about', icon: 'ℹ️', label: t('about'), action: () => setShowAbout(true) },
+    {
+      key: 'feedback',
+      icon: '💬',
+      label: t('feedback'),
+      action: () => setShowFeedback(true),
+    },
+    {
+      key: 'about',
+      icon: 'ℹ️',
+      label: t('about'),
+      action: () => setShowAbout(true),
+    },
     { key: 'logout', icon: '↩️', label: t('logout'), action: handleLogout },
   ]
 
   return (
     <>
       {showFeedback && (
-        <div className="about-overlay visible" onClick={() => setShowFeedback(false)}>
+        <div
+          className="about-overlay visible"
+          onClick={() => setShowFeedback(false)}
+        >
           <div className="feedback-modal" onClick={(e) => e.stopPropagation()}>
             <div className="about-header">
               <h3>{t('feedback')}</h3>
-              <button className="about-close-btn" onClick={() => setShowFeedback(false)}>✕</button>
+              <button
+                className="about-close-btn"
+                onClick={() => setShowFeedback(false)}
+              >
+                ✕
+              </button>
             </div>
             <iframe
               src="https://tally.so/r/Gxry7o"
@@ -111,95 +144,144 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
         </div>
       )}
       {showAbout && (
-        <div className="about-overlay visible" onClick={() => setShowAbout(false)}>
+        <div
+          className="about-overlay visible"
+          onClick={() => setShowAbout(false)}
+        >
           <div className="about-modal" onClick={(e) => e.stopPropagation()}>
             <div className="about-header">
               <h3>{t('about')}</h3>
-              <button className="about-close-btn" onClick={() => setShowAbout(false)}>✕</button>
+              <button
+                className="about-close-btn"
+                onClick={() => setShowAbout(false)}
+              >
+                ✕
+              </button>
             </div>
             <Introduce />
           </div>
         </div>
       )}
-      <div className={`drawer-overlay ${isOpen ? 'visible' : ''}`} onClick={handleClose} />
+      <div
+        className={`drawer-overlay ${isOpen ? 'visible' : ''}`}
+        onClick={handleClose}
+      />
       <div className={`account-drawer ${isOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <h3>{t('account')}</h3>
-          <button className="drawer-close-btn" onClick={handleClose}>✕</button>
+          <button className="drawer-close-btn" onClick={handleClose}>
+            ✕
+          </button>
         </div>
 
         {(() => {
-          const displayWallet = isBitcoinChain ? activeBitcoinWallet : isSolanaChain ? activeSolanaWallet : activeWallet
+          const displayWallet = isBitcoinChain
+            ? activeBitcoinWallet
+            : isSolanaChain
+              ? activeSolanaWallet
+              : activeWallet
           if (!displayWallet) return null
           return (
             <div className="drawer-account-info">
               <div className="drawer-account-icon">🔐</div>
               <div className="drawer-account-detail">
-                <span className="drawer-account-name">{t('wallet')} #{activeWalletIndex + 1}</span>
+                <span className="drawer-account-name">
+                  {t('wallet')} #{activeWalletIndex + 1}
+                </span>
                 <div className="drawer-account-addr-row">
-                  <span className="drawer-account-address">{formatAddress(displayWallet.address)}</span>
+                  <span className="drawer-account-address">
+                    {formatAddress(displayWallet.address)}
+                  </span>
                   <button
                     className="drawer-copy-btn"
                     onClick={(e) => copyToClipboard(e, displayWallet.address)}
                     title={t('copy')}
-                  >📋{t('copy')}</button>
+                  >
+                    📋{t('copy')}
+                  </button>
                 </div>
               </div>
             </div>
           )
         })()}
 
-        {featureError && (
-          <div className="drawer-error">{featureError}</div>
-        )}
+        {featureError && <div className="drawer-error">{featureError}</div>}
 
         <div className="drawer-menu-list">
-          {menuItems.filter(i => !i.hidden).map((item) => (
-            <React.Fragment key={item.key}>
-              <div
-                className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
-                onClick={item.disabled ? undefined : item.action}
-              >
-                <span className="drawer-menu-icon">{item.icon}</span>
-                <span className="drawer-menu-label">
-                  {item.label}
-                  {item.sublabel && (
-                    <span style={{ marginLeft: '6px', fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', padding: '1px 6px', borderRadius: '8px' }}>
-                      {item.sublabel}
+          {menuItems
+            .filter((i) => !i.hidden)
+            .map((item) => (
+              <React.Fragment key={item.key}>
+                <div
+                  className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
+                  onClick={item.disabled ? undefined : item.action}
+                >
+                  <span className="drawer-menu-icon">{item.icon}</span>
+                  <span className="drawer-menu-label">
+                    {item.label}
+                    {item.sublabel && (
+                      <span
+                        style={{
+                          marginLeft: '6px',
+                          fontSize: '10px',
+                          color: '#94a3b8',
+                          background: '#f1f5f9',
+                          padding: '1px 6px',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        {item.sublabel}
+                      </span>
+                    )}
+                  </span>
+                  {item.key === 'switch' && (
+                    <span
+                      className={`drawer-menu-arrow ${showWalletList ? 'expanded' : ''}`}
+                    >
+                      ›
                     </span>
                   )}
-                </span>
-                {item.key === 'switch' && (
-                  <span className={`drawer-menu-arrow ${showWalletList ? 'expanded' : ''}`}>›</span>
-                )}
-              </div>
-
-              {item.key === 'switch' && showWalletList && (
-                <div className="drawer-wallet-list">
-                  {(isBitcoinChain ? bitcoinWallets : isSolanaChain ? solanaWallets : wallets).map((wallet, index) => (
-                    <div
-                      key={index}
-                      className={`drawer-wallet-option ${index === activeWalletIndex ? 'active' : ''}`}
-                      onClick={() => handleSelectWallet(index)}
-                    >
-                      <div className="drawer-wallet-row">
-                        <span className="drawer-wallet-name">{t('wallet')} #{index + 1}</span>
-                        {index === activeWalletIndex && <span className="drawer-wallet-check">✓</span>}
-                      </div>
-                      <div className="drawer-wallet-addr-row">
-                        <span className="drawer-wallet-addr">{formatAddress(wallet.address)}</span>
-                        <button
-                          className="drawer-copy-btn"
-                          onClick={(e) => copyToClipboard(e, wallet.address)}
-                          title={t('copy')}
-                        >📋{t('copy')}</button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
-              )}
-            </React.Fragment>
-          ))}
+
+                {item.key === 'switch' && showWalletList && (
+                  <div className="drawer-wallet-list">
+                    {(isBitcoinChain
+                      ? bitcoinWallets
+                      : isSolanaChain
+                        ? solanaWallets
+                        : wallets
+                    ).map((wallet, index) => (
+                      <div
+                        key={index}
+                        className={`drawer-wallet-option ${index === activeWalletIndex ? 'active' : ''}`}
+                        onClick={() => handleSelectWallet(index)}
+                      >
+                        <div className="drawer-wallet-row">
+                          <span className="drawer-wallet-name">
+                            {t('wallet')} #{index + 1}
+                          </span>
+                          {index === activeWalletIndex && (
+                            <span className="drawer-wallet-check">✓</span>
+                          )}
+                        </div>
+                        <div className="drawer-wallet-addr-row">
+                          <span className="drawer-wallet-addr">
+                            {formatAddress(wallet.address)}
+                          </span>
+                          <button
+                            className="drawer-copy-btn"
+                            onClick={(e) => copyToClipboard(e, wallet.address)}
+                            title={t('copy')}
+                          >
+                            📋{t('copy')}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
         </div>
       </div>
     </>
