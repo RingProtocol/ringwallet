@@ -1,37 +1,25 @@
 # Chain integration tests (`test/chain`)
 
-Fork-based EVM checks with **Anvil** + **Alchemy** (see `documents/testchain/`).  
-Designed for **step-by-step** workflows: prepare RPC in one terminal, run commands in another.
+Fork-based EVM checks with **Anvil** + an upstream Sepolia RPC (often Alchemy). More detail: `documents/testchain/`.
 
 ## Prerequisites
 
-- [Foundry](https://getfoundry.sh) (`anvil` on `PATH`)
-- `.env.test` at repo root with `ALCHEMY_API_KEY` or `VITE_ALCHEMY_RPC_KEY`  
-  (template: `documents/testchain/env.test.example`)
+- [Foundry](https://getfoundry.sh) — `anvil` on `PATH`
+- Repo root `.env.test` with `ALCHEMY_API_KEY` or `VITE_ALCHEMY_RPC_KEY` (template: `documents/testchain/env.test.example`)
 
-## You must start Anvil yourself (`wait-anvil` does not)
+## Run flow (Anvil first)
 
-- **`yarn test:chain:wait-anvil` does not start `anvil`.** It only waits for an RPC that is **already** listening (default `http://127.0.0.1:8545`).
-- If nothing is bound to that port, you get **`timeout waiting for http://127.0.0.1:8545`**. Fix: open **another terminal**, run the `anvil --fork-url "https://eth-sepolia.g.alchemy.com/v2/key"` line from step 3 below, and **leave it running**.
-- Usual layout: **terminal A** = Anvil (long-running); **terminal B** = `wait-anvil` / `test:chain`.
+**Anvil is mandatory and you start it yourself.** `yarn test:chain:wait-anvil` only **polls** `http://127.0.0.1:8545`; it does not launch Anvil. If nothing listens on that port, you get a timeout — fix by starting Anvil in **terminal A** and leaving it running; use **terminal B** for the yarn commands below.
 
-## Commands (recommended order)
+| Step | Terminal | Command                                      | Notes                                                                          |
+| ---- | -------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1    | **B**    | `yarn test:chain:fork-url`                   | Prints Sepolia fork URL; use it in step 2                                      |
+| 2    | **A**    | `anvil --fork-url "<paste URL>" --port 8545` | **Keep this running.** Not a fork? Stop any plain `anvil` on 8545 first        |
+| 3    | B        | `yarn test:chain:doctor`                     | Optional — `.env.test` + `anvil` on PATH                                       |
+| 4    | B        | `yarn test:chain:wait-anvil`                 | Optional — confirms chainId is Sepolia (`11155111`), not plain Anvil (`31337`) |
+| 5    | B        | `yarn test:chain`                            | Runs Vitest on `test/chain/**/*.spec.ts`                                       |
 
-Copy **only** the command in the middle column — extra words after a space become [Vitest’s filename filter](https://vitest.dev/guide/filtering) and can yield _No test files found_.
-
-| Step | Terminal | Command                      | What it does                                                                                                                        |
-| ---- | -------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | B        | `yarn test:chain:doctor`     | Confirms `.env.test` + `anvil` on PATH                                                                                              |
-| 2    | B        | `yarn test:chain:fork-url`   | Prints fork URL (stdout) + example `anvil` line (stderr)                                                                            |
-| 3    | **A**    | _(manual)_                   | **Start Anvil and keep it running:** stop any plain `anvil` on that port, then `anvil --fork-url "…" --port 8545` (URL from step 2) |
-| 4    | B        | `yarn test:chain:wait-anvil` | Optional: A is up **and** chainId is Sepolia (`11155111`); rejects 31337 plain Anvil                                                |
-| 5    | B        | `yarn test:chain`            | Runs [Vitest](https://vitest.dev) on `test/chain/**/*.spec.ts`                                                                      |
-
-One-liner after Anvil is up:
-
-```bash
-yarn test:chain
-```
+**Vitest:** type **only** `yarn test:chain`. Extra tokens after it become [filename filters](https://vitest.dev/guide/filtering) → _No test files found_.
 
 Custom RPC:
 
@@ -44,38 +32,28 @@ TESTCHAIN_RPC_URL=http://127.0.0.1:8546 yarn test:chain
 ```
 test/chain/
   chains/           # Per-network profiles (extend here)
-    types.ts
-    sepolia.ts
-    index.ts        # registry
   lib/              # env, JSON-RPC helpers
   cli/run.mjs       # doctor | fork-url | wait-anvil
-  *.spec.ts         # Vitest specs (one file per milestone)
+  *.spec.ts         # Vitest specs
 ```
 
 ## Adding another network
 
-1. Copy `chains/sepolia.ts` → e.g. `chains/baseSepolia.ts` with new `chainId`, port, `buildForkRpcUrl`.
-2. Register in `chains/index.ts`.
-3. Add the same metadata to `cli/run.mjs` → `CHAINS` (`expectedChainId`, `defaultPort`, `buildForkUrl`).
-4. Add `chains/yourchain.spec.ts` or extend shared specs.
+1. Copy `chains/sepolia.ts`, adjust `chainId` / port / `buildForkRpcUrl`, register in `chains/index.ts`.
+2. Mirror metadata in `cli/run.mjs` → `CHAINS`.
+3. Add or extend `*.spec.ts`.
 
 ## CI
 
-`yarn test` (default Vitest config) **does not** run `test/chain`.  
-Chain tests need a running Anvil job; wire that in CI separately when ready.
+Default `yarn test` does **not** include `test/chain`. Add a job that starts Anvil + runs `yarn test:chain` when you want this in CI.
 
 ## Troubleshooting
 
 ### `failed to get fork block number` / HTTP **403** — _Unspecified origin not on whitelist_
 
-Alchemy (and some providers) **allowlist HTTP Origins** for keys meant for browser apps. **Anvil / Foundry** are not browsers, so the request can be rejected.
+Alchemy keys for browser apps may **allowlist Origins**; Anvil is not a browser.
 
-**Fix (pick one):**
+1. **Preferred:** In Alchemy dashboard, allow server / non-browser JSON-RPC for that key (wording varies by plan).
+2. **No Alchemy key:** use `TESTCHAIN_FORK_URL_SEPOLIA=https://rpc.sepolia.org` (or another HTTPS Sepolia URL) so `fork-url` skips Alchemy.
 
-1. **Preferred:** In **Alchemy dashboard**, adjust the app/key so **non-browser / server** JSON-RPC is allowed (disable strict origin allowlist or add rules for Foundry/anvil — product UI varies by plan).
-2. **Without an Alchemy key:** unset / omit `ALCHEMY_API_KEY` and `VITE_ALCHEMY_RPC_KEY` for fork-only use, then set e.g. `TESTCHAIN_FORK_URL_SEPOLIA=https://rpc.sepolia.org` — `fork-url` will use that fallback.
-3. Use another provider’s Sepolia HTTPS URL in `TESTCHAIN_FORK_URL_SEPOLIA` the same way (still only used when no Alchemy key is present).
-
-`fork-url` resolution is **Alchemy first** whenever a key exists in env.
-
-If an RPC URL with a secret was leaked, **rotate the key** in the provider dashboard.
+If a URL with a secret leaked, **rotate the key**.

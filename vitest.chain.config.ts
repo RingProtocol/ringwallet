@@ -12,6 +12,11 @@ for (const [key, value] of Object.entries(env)) {
 }
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(root, 'src'),
+    },
+  },
   test: {
     include: ['test/chain/**/*.spec.ts'],
     environment: 'node',
