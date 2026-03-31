@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { chainRegistry } from '../registry'
-import { ChainFamily } from '../../../models/ChainType'
-import '../evm/evmPlugin'
-import './tronPlugin'
+import { chainRegistry } from '@/services/chainplugins/registry'
+import { ChainFamily } from '@/models/ChainType'
+import '@/services/chainplugins/evm/evmPlugin'
+import '@/services/chainplugins/tron/tronPlugin'
 
 const KNOWN_SEED = new Uint8Array(
-  Buffer.from('fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2', 'hex'),
+  Buffer.from(
+    'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
+    'hex'
+  )
 )
 
 describe('TronPlugin — deriveAccounts', () => {
@@ -39,11 +42,11 @@ describe('TronPlugin — deriveAccounts', () => {
 
   it('different indices produce different addresses', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 5)
-    const unique = new Set(accounts.map(a => a.address))
+    const unique = new Set(accounts.map((a) => a.address))
     expect(unique.size).toBe(5)
   })
 
-  it('uses BIP44 m/44\'/195\'/0\'/0/{i} derivation paths', () => {
+  it("uses BIP44 m/44'/195'/0'/0/{i} derivation paths", () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 3)
     accounts.forEach((a, i) => {
       expect(a.path).toBe(`m/44'/195'/0'/0/${i}`)
@@ -58,7 +61,9 @@ describe('TronPlugin — deriveAccounts', () => {
 
   it('Tron address is NOT the same as EVM address for same seed', () => {
     const tron = plugin.deriveAccounts(KNOWN_SEED, 1)
-    const evm = chainRegistry.get(ChainFamily.EVM)!.deriveAccounts(KNOWN_SEED, 1)
+    const evm = chainRegistry
+      .get(ChainFamily.EVM)!
+      .deriveAccounts(KNOWN_SEED, 1)
     expect(tron[0].address).not.toBe(evm[0].address)
   })
 

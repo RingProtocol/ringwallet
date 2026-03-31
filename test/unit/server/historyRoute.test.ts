@@ -14,12 +14,14 @@ vi.mock('@/server/history', () => ({
   validateAddress: historyMocks.mockValidateAddress,
 }))
 
-import { GET, OPTIONS } from '../../app/api/v1/history/route'
+import { GET, OPTIONS } from '../../../app/api/v1/history/route'
 
 describe('/api/v1/history route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    historyMocks.mockGetCorsHeaders.mockReturnValue({ 'access-control-allow-origin': 'http://localhost:3003' })
+    historyMocks.mockGetCorsHeaders.mockReturnValue({
+      'access-control-allow-origin': 'http://localhost:3003',
+    })
     historyMocks.mockIsOriginAllowed.mockReturnValue(true)
     historyMocks.mockValidateAddress.mockReturnValue(true)
     historyMocks.mockGetHistory.mockResolvedValue({
@@ -37,38 +39,50 @@ describe('/api/v1/history route', () => {
   })
 
   it('returns CORS headers for preflight', async () => {
-    const response = await OPTIONS(new Request('http://localhost:3000/api/v1/history', {
-      method: 'OPTIONS',
-      headers: {
-        origin: 'http://localhost:3003',
-      },
-    }))
-
-    expect(response.status).toBe(204)
-    expect(historyMocks.mockIsOriginAllowed).toHaveBeenCalledWith('http://localhost:3003')
-    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:3003')
-  })
-
-  it('fetches history payload for a valid request', async () => {
-    const response = await GET(new Request(
-      'http://localhost:3000/api/v1/history?address=0x1111111111111111111111111111111111111111&chainId=1&limit=8&pending=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      {
+    const response = await OPTIONS(
+      new Request('http://localhost:3000/api/v1/history', {
+        method: 'OPTIONS',
         headers: {
           origin: 'http://localhost:3003',
         },
-      },
-    ))
+      })
+    )
+
+    expect(response.status).toBe(204)
+    expect(historyMocks.mockIsOriginAllowed).toHaveBeenCalledWith(
+      'http://localhost:3003'
+    )
+    expect(response.headers.get('access-control-allow-origin')).toBe(
+      'http://localhost:3003'
+    )
+  })
+
+  it('fetches history payload for a valid request', async () => {
+    const response = await GET(
+      new Request(
+        'http://localhost:3000/api/v1/history?address=0x1111111111111111111111111111111111111111&chainId=1&limit=8&pending=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        {
+          headers: {
+            origin: 'http://localhost:3003',
+          },
+        }
+      )
+    )
 
     const payload = await response.json()
 
     expect(response.status).toBe(200)
-    expect(historyMocks.mockIsOriginAllowed).toHaveBeenCalledWith('http://localhost:3003')
+    expect(historyMocks.mockIsOriginAllowed).toHaveBeenCalledWith(
+      'http://localhost:3003'
+    )
     expect(historyMocks.mockValidateAddress).toHaveBeenCalled()
     expect(historyMocks.mockGetHistory).toHaveBeenCalledWith({
       address: '0x1111111111111111111111111111111111111111',
       chainId: '1',
       limit: 8,
-      pendingHashes: ['0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+      pendingHashes: [
+        '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      ],
     })
     expect(payload).toEqual({
       transactions: [

@@ -1,22 +1,35 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { addToken, getTokenList, removeToken } from './tokenStorage'
+import { addToken, getTokenList, removeToken } from '@/utils/tokenStorage'
 
 // ─── Mock safeStorage ────────────────────────────────────────────────────
 
 const store: Record<string, string> = {}
 
-vi.mock('./safeStorage', () => ({
+vi.mock('@/utils/safeStorage', () => ({
   safeGetItem: (key: string) => store[key] ?? null,
-  safeSetItem: (key: string, value: string) => { store[key] = value },
-  safeRemoveItem: (key: string) => { delete store[key] },
+  safeSetItem: (key: string, value: string) => {
+    store[key] = value
+  },
+  safeRemoveItem: (key: string) => {
+    delete store[key]
+  },
 }))
 
 const WALLET = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-const USDC = { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', name: 'USD Coin', decimals: 6 }
-const DAI  = { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI',  name: 'Dai',      decimals: 18 }
+const USDC = {
+  address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  symbol: 'USDC',
+  name: 'USD Coin',
+  decimals: 6,
+}
+const DAI = {
+  address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+  symbol: 'DAI',
+  name: 'Dai',
+  decimals: 18,
+}
 
 beforeEach(() => {
-  // Clear the in-memory store between tests
   Object.keys(store).forEach((k) => delete store[k])
 })
 
@@ -56,8 +69,8 @@ describe('tokenStorage with numeric chainId (EVM)', () => {
   })
 
   it('chains with different numeric IDs have separate lists', () => {
-    addToken(WALLET, 1, USDC)      // Ethereum
-    addToken(WALLET, 137, DAI)     // Polygon
+    addToken(WALLET, 1, USDC) // Ethereum
+    addToken(WALLET, 137, DAI) // Polygon
     expect(getTokenList(WALLET, 1)).toHaveLength(1)
     expect(getTokenList(WALLET, 137)).toHaveLength(1)
     expect(getTokenList(WALLET, 1)[0].symbol).toBe('USDC')
@@ -69,7 +82,12 @@ describe('tokenStorage with numeric chainId (EVM)', () => {
 
 describe('tokenStorage with string chainId (Solana)', () => {
   const SOL_ADDR = '5B7yRcuHQggbidX5X3JiZjyaKgufvq8AhC9W7WRFZpQD'
-  const SPL_TOKEN = { address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', symbol: 'USDC', name: 'USD Coin', decimals: 6 }
+  const SPL_TOKEN = {
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+  }
 
   it('returns empty array for a fresh Solana address', () => {
     expect(getTokenList(SOL_ADDR, 'solana-mainnet')).toEqual([])
@@ -81,8 +99,8 @@ describe('tokenStorage with string chainId (Solana)', () => {
   })
 
   it('string and numeric chainIds are stored separately', () => {
-    addToken(WALLET, 1, USDC)                         // EVM Ethereum
-    addToken(SOL_ADDR, 'solana-mainnet', SPL_TOKEN)   // Solana
+    addToken(WALLET, 1, USDC) // EVM Ethereum
+    addToken(SOL_ADDR, 'solana-mainnet', SPL_TOKEN) // Solana
     expect(getTokenList(WALLET, 1)).toHaveLength(1)
     expect(getTokenList(SOL_ADDR, 'solana-mainnet')).toHaveLength(1)
     // Cross-check: no bleed between chains

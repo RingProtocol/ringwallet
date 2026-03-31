@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getHistory } from './history'
+import { getHistory } from '@/server/history'
 
 const ORIGINAL_ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 const ORIGINAL_ETHERSCAN_API_BASE_URL = process.env.ETHERSCAN_API_BASE_URL

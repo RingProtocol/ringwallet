@@ -1,4 +1,4 @@
-# Chain integration tests (`test/chain`)
+# EVM chain integration tests (`test/evmchain`)
 
 Fork-based EVM checks with **Anvil** + an upstream Sepolia RPC (often Alchemy). More detail: `documents/testchain/`.
 
@@ -17,7 +17,7 @@ Fork-based EVM checks with **Anvil** + an upstream Sepolia RPC (often Alchemy). 
 | 2    | **A**    | `anvil --fork-url "<paste URL>" --port 8545` | **Keep this running.** Not a fork? Stop any plain `anvil` on 8545 first        |
 | 3    | B        | `yarn test:chain:doctor`                     | Optional — `.env.test` + `anvil` on PATH                                       |
 | 4    | B        | `yarn test:chain:wait-anvil`                 | Optional — confirms chainId is Sepolia (`11155111`), not plain Anvil (`31337`) |
-| 5    | B        | `yarn test:chain`                            | Runs Vitest on `test/chain/**/*.spec.ts`                                       |
+| 5    | B        | `yarn test:chain`                            | Runs Vitest on `test/evmchain/**/*.spec.ts` (Anvil + Sepolia fork)             |
 
 **Vitest:** type **only** `yarn test:chain`. Extra tokens after it become [filename filters](https://vitest.dev/guide/filtering) → _No test files found_.
 
@@ -30,12 +30,14 @@ TESTCHAIN_RPC_URL=http://127.0.0.1:8546 yarn test:chain
 ## Layout
 
 ```
-test/chain/
+test/evmchain/
   chains/           # Per-network profiles (extend here)
   lib/              # env, JSON-RPC helpers
   cli/run.mjs       # doctor | fork-url | wait-anvil
   *.spec.ts         # Vitest specs
 ```
+
+Bitcoin / Solana / Tron public-RPC checks live in **`test/multichain`** (`yarn test:multichain`).
 
 ## Adding another network
 
@@ -45,7 +47,7 @@ test/chain/
 
 ## CI
 
-Default `yarn test` does **not** include `test/chain`. Add a job that starts Anvil + runs `yarn test:chain` when you want this in CI.
+Default `yarn test` does **not** include `test/evmchain` or `test/multichain`. Wire Anvil + `yarn test:chain` and/or `yarn test:multichain` in CI when ready.
 
 ## Troubleshooting
 

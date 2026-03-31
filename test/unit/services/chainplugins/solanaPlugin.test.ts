@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { chainRegistry } from '../registry'
-import { ChainFamily } from '../../../models/ChainType'
-import './solanaPlugin'
+import { chainRegistry } from '@/services/chainplugins/registry'
+import { ChainFamily } from '@/models/ChainType'
+import '@/services/chainplugins/solana/solanaPlugin'
 
 const KNOWN_SEED = new Uint8Array(
-  Buffer.from('fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2', 'hex'),
+  Buffer.from(
+    'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
+    'hex'
+  )
 )
 
 describe('SolanaPlugin — deriveAccounts', () => {
@@ -30,7 +33,9 @@ describe('SolanaPlugin — deriveAccounts', () => {
 
   it('matches the pre-computed reference address at index=0 (SLIP-0010 Test Vector 2)', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 1)
-    expect(accounts[0].address).toBe('5B7yRcuHQggbidX5X3JiZjyaKgufvq8AhC9W7WRFZpQD')
+    expect(accounts[0].address).toBe(
+      '5B7yRcuHQggbidX5X3JiZjyaKgufvq8AhC9W7WRFZpQD'
+    )
   })
 
   it('is deterministic — same seed always gives same addresses', () => {
@@ -44,11 +49,11 @@ describe('SolanaPlugin — deriveAccounts', () => {
 
   it('different indices produce different addresses', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 5)
-    const unique = new Set(accounts.map(a => a.address))
+    const unique = new Set(accounts.map((a) => a.address))
     expect(unique.size).toBe(5)
   })
 
-  it('uses SLIP-0010 m/44\'/501\'/{i}\'/0\' derivation paths', () => {
+  it("uses SLIP-0010 m/44'/501'/{i}'/0' derivation paths", () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 3)
     accounts.forEach((a, i) => {
       expect(a.path).toBe(`m/44'/501'/${i}'/0'`)

@@ -24,14 +24,22 @@ export function ensureTestEnv(): void {
 }
 
 /**
- * API key for Alchemy fork URLs (Node / CLI only).
- * Falls back to VITE_ALCHEMY_RPC_KEY so one key works for app + tests.
+ * Same key resolution as `getAlchemyApiKey` but does not throw (for optional test URLs).
  */
-export function getAlchemyApiKey(): string {
+export function tryGetAlchemyApiKey(): string | null {
   ensureTestEnv()
   const key =
     process.env.ALCHEMY_API_KEY?.trim() ||
     process.env.VITE_ALCHEMY_RPC_KEY?.trim()
+  return key || null
+}
+
+/**
+ * API key for Alchemy fork URLs (Node / CLI only).
+ * Falls back to VITE_ALCHEMY_RPC_KEY so one key works for app + tests.
+ */
+export function getAlchemyApiKey(): string {
+  const key = tryGetAlchemyApiKey()
   if (!key) {
     throw new Error(
       'Missing ALCHEMY_API_KEY (or VITE_ALCHEMY_RPC_KEY). Add it to .env.test — see documents/testchain/env.test.example'

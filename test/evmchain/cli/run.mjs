@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Step-by-step helpers for test/chain (no TS runner required).
- * Usage: node test/chain/cli/run.mjs <command> [args]
+ * Step-by-step helpers for test/evmchain (no TS runner required).
+ * Usage: node test/evmchain/cli/run.mjs <command> [args]
  */
 
 import { spawnSync } from 'child_process'
@@ -36,7 +36,7 @@ loadDotenvFile(path.join(repoRoot, '.env.test'))
 loadDotenvFile(path.join(repoRoot, '.env'))
 
 /**
- * Per-chain metadata — keep in sync with test/chain/chains/*.ts
+ * Per-chain metadata — keep in sync with test/evmchain/chains/*.ts
  * wait-anvil checks eth_chainId matches `expectedChainId` (catches plain Anvil 31337).
  */
 const CHAINS = {
@@ -108,7 +108,7 @@ function cmdForkUrl(chain = 'sepolia') {
     )
   } else {
     console.error(
-      'Set ALCHEMY_API_KEY / VITE_ALCHEMY_RPC_KEY in .env.test, or TESTCHAIN_FORK_URL_SEPOLIA=https://… (see test/chain/README.md)'
+      'Set ALCHEMY_API_KEY / VITE_ALCHEMY_RPC_KEY in .env.test, or TESTCHAIN_FORK_URL_SEPOLIA=https://… (see test/evmchain/README.md)'
     )
     process.exit(1)
   }
@@ -187,14 +187,14 @@ async function cmdWaitAnvil(chain = 'sepolia') {
 }
 
 function printHelp() {
-  console.log(`test/chain CLI (run from repo root)
+  console.log(`test/evmchain CLI (run from repo root)
 
   yarn test:chain:doctor              — .env.test + anvil
   yarn test:chain:fork-url           — print Sepolia fork URL (stdout)
   yarn test:chain:fork-url base-sep  — (when added) other chains
   yarn test:chain:wait-anvil         — Anvil must run first in another terminal; then wait for RPC + correct chainId
 
-Or: node test/chain/cli/run.mjs <command>
+Or: node test/evmchain/cli/run.mjs <command>
 `)
 }
 

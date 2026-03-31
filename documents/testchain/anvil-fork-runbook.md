@@ -3,7 +3,7 @@
 ## 前置
 
 - 安装 [Foundry](https://book.getfoundry.sh/getting-started/installation)（含 `anvil`）。
-- `.env.test` 中配置 `ALCHEMY_API_KEY`，或仅配置 **`TESTCHAIN_FORK_URL_SEPOLIA`**（见 `test/chain/README.md` 的 403 / origin 说明 — Alchemy 常把浏览器 key 限制来源，Anvil 会 403）。
+- `.env.test` 中配置 `ALCHEMY_API_KEY`，或仅配置 **`TESTCHAIN_FORK_URL_SEPOLIA`**（见 `test/evmchain/README.md` 的 403 / origin 说明 — Alchemy 常把浏览器 key 限制来源，Anvil 会 403）。
 
 ## Alchemy 403（origin not on whitelist）
 

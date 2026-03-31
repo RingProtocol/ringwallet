@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GET } from '../../app/api/v1/dapps/route'
+import { GET } from '../../../app/api/v1/dapps/route'
 
 const ORIGINAL_DAPP_URL = process.env.VITE_DAPP_URL
 const ORIGINAL_DAPP_TOKEN = process.env.DAPP_TOKEN
-const TEST_DAPP_URL = process.env.VITE_DAPP_URL?.trim() || 'https://example.com/exec'
+const TEST_DAPP_URL =
+  process.env.VITE_DAPP_URL?.trim() || 'https://example.com/exec'
 const TEST_DAPP_TOKEN = process.env.DAPP_TOKEN?.trim() || 'secret-token'
 
 describe('/api/v1/dapps GET', () => {
@@ -47,19 +48,23 @@ describe('/api/v1/dapps GET', () => {
           headers: {
             'content-type': 'application/json',
           },
-        },
-      ),
+        }
+      )
     )
 
     vi.stubGlobal('fetch', fetchMock)
 
-    const response = await GET(new Request('http://localhost:3000/api/v1/dapps?testdapp=abc123'))
+    const response = await GET(
+      new Request('http://localhost:3000/api/v1/dapps?testdapp=abc123')
+    )
     const payload = await response.json()
     const [calledUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
     const upstreamUrl = new URL(String(calledUrl))
 
     expect(response.status).toBe(200)
-    expect(upstreamUrl.origin + upstreamUrl.pathname).toBe(new URL(TEST_DAPP_URL).origin + new URL(TEST_DAPP_URL).pathname)
+    expect(upstreamUrl.origin + upstreamUrl.pathname).toBe(
+      new URL(TEST_DAPP_URL).origin + new URL(TEST_DAPP_URL).pathname
+    )
     expect(upstreamUrl.searchParams.get('secret')).toBe(TEST_DAPP_TOKEN)
     expect(upstreamUrl.searchParams.get('testdapp')).toBe('abc123')
     expect(init).toMatchObject({

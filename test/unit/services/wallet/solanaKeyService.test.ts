@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { ethers } from 'ethers'
-import { SolanaKeyService } from './wallet/solanaKeyService'
-import { WalletType } from '../models/WalletType'
+import { SolanaKeyService } from '@/services/wallet/solanaKeyService'
+import { WalletType } from '@/models/WalletType'
 
 // ─── Test seeds ──────────────────────────────────────────────────────────────
 
 // SLIP-0010 Test Vector 2 (32 bytes, non-trivial pattern)
 const KNOWN_SEED = Buffer.from(
   'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
-  'hex',
+  'hex'
 )
 
 // ─── TC-SOL-KEY-01 · Deterministic derivation ─────────────────────────────
@@ -23,8 +23,14 @@ describe('TC-SOL-KEY-01: deterministic address derivation', () => {
   })
 
   it('always produces the same address for the same seed + index', () => {
-    const a1 = SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58()
-    const a2 = SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58()
+    const a1 = SolanaKeyService.deriveKeypair(
+      KNOWN_SEED,
+      0
+    ).publicKey.toBase58()
+    const a2 = SolanaKeyService.deriveKeypair(
+      KNOWN_SEED,
+      0
+    ).publicKey.toBase58()
     expect(a1).toBe(a2)
   })
 
@@ -32,13 +38,18 @@ describe('TC-SOL-KEY-01: deterministic address derivation', () => {
     // Reference value computed with ed25519-hd-key + @solana/web3.js,
     // path m/44'/501'/0'/0'  — cross-check with Phantom wallet for extra confidence.
     const expected = '5B7yRcuHQggbidX5X3JiZjyaKgufvq8AhC9W7WRFZpQD'
-    const address = SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58()
+    const address = SolanaKeyService.deriveKeypair(
+      KNOWN_SEED,
+      0
+    ).publicKey.toBase58()
     expect(address).toBe(expected)
   })
 
   it('index=1 reference address is stable', () => {
     const expected = 'Gd9D9tDexM6UpsQqCwTyQKvSZdNCGFxNzPRGaxMn9hu9'
-    expect(SolanaKeyService.deriveKeypair(KNOWN_SEED, 1).publicKey.toBase58()).toBe(expected)
+    expect(
+      SolanaKeyService.deriveKeypair(KNOWN_SEED, 1).publicKey.toBase58()
+    ).toBe(expected)
   })
 })
 
@@ -53,7 +64,10 @@ describe('TC-SOL-KEY-02: multi-account isolation', () => {
   })
 
   it('index=0 address is reproducible after batch derivation', () => {
-    const single = SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58()
+    const single = SolanaKeyService.deriveKeypair(
+      KNOWN_SEED,
+      0
+    ).publicKey.toBase58()
     const batch = SolanaKeyService.deriveWallets(KNOWN_SEED, 5)
     expect(batch[0].address).toBe(single)
   })
@@ -106,7 +120,10 @@ describe('TC-SOL-KEY-04: invalid masterSeed handling', () => {
 
   it('accepts an all-zero 32-byte seed (technically valid)', () => {
     const zeroSeed = new Uint8Array(32)
-    const address = SolanaKeyService.deriveKeypair(zeroSeed, 0).publicKey.toBase58()
+    const address = SolanaKeyService.deriveKeypair(
+      zeroSeed,
+      0
+    ).publicKey.toBase58()
     expect(address).toMatch(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/)
   })
 })
@@ -129,7 +146,10 @@ describe('TC-SOL-ADDR-01: isValidAddress', () => {
     ['System Program', '11111111111111111111111111111111'],
     ['Native SOL Token Mint', 'So11111111111111111111111111111111111111112'],
     ['USDC Mint', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'],
-    ['derived address', SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58()],
+    [
+      'derived address',
+      SolanaKeyService.deriveKeypair(KNOWN_SEED, 0).publicKey.toBase58(),
+    ],
   ]
 
   const invalid = [

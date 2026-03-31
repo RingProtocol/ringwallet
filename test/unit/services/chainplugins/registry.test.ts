@@ -1,9 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY } from './index'
-import { ChainFamily } from '../../models/ChainType'
+import {
+  chainRegistry,
+  BITCOIN_TESTNET_ACCOUNTS_KEY,
+} from '@/services/chainplugins/index'
+import { ChainFamily } from '@/models/ChainType'
 
 const KNOWN_SEED = new Uint8Array(
-  Buffer.from('fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2', 'hex'),
+  Buffer.from(
+    'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
+    'hex'
+  )
 )
 
 describe('ChainPluginRegistry — registration', () => {
@@ -44,7 +50,7 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
 
   it('all families produce unique addresses (no cross-family collision)', () => {
     const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
-    const addresses = Object.values(all).map(arr => arr[0].address)
+    const addresses = Object.values(all).map((arr) => arr[0].address)
     const unique = new Set(addresses)
     expect(unique.size).toBe(addresses.length)
   })
@@ -52,7 +58,9 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
   it('each family uses the correct address format', () => {
     const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
     expect(all[ChainFamily.EVM][0].address).toMatch(/^0x/)
-    expect(all[ChainFamily.Solana][0].address).toMatch(/^[1-9A-HJ-NP-Za-km-z]+$/)
+    expect(all[ChainFamily.Solana][0].address).toMatch(
+      /^[1-9A-HJ-NP-Za-km-z]+$/
+    )
     expect(all[ChainFamily.Bitcoin][0].address).toMatch(/^bc1q/)
     expect(all[BITCOIN_TESTNET_ACCOUNTS_KEY][0].address).toMatch(/^tb1q/)
     expect(all[ChainFamily.Tron][0].address).toMatch(/^T/)

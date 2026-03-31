@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { ethers } from 'ethers'
-import { BitcoinKeyService } from './wallet/bitcoinKeyService'
-import { BitcoinService } from './bitcoinService'
-import { SolanaKeyService } from './wallet/solanaKeyService'
-import { WalletType } from '../models/WalletType'
+import { BitcoinKeyService } from '@/services/wallet/bitcoinKeyService'
+import { BitcoinService } from '@/services/bitcoinService'
+import { SolanaKeyService } from '@/services/wallet/solanaKeyService'
+import { WalletType } from '@/models/WalletType'
 
 // ─── Test seeds ──────────────────────────────────────────────────────────────
 
@@ -391,9 +391,6 @@ describe('TC-BTC-BALANCE: address stats balance lookup', () => {
 // ─── TC-BTC-UTXO · Coin selection (unit-level) ─────────────────────────────
 
 describe('TC-BTC-UTXO: coin selection logic', () => {
-  // These tests exercise the coin-selection and change logic by mocking fetch
-  // inside BitcoinService.buildAndSignTransaction.
-
   const MOCK_SEED = KNOWN_SEED
   const address = BitcoinKeyService.deriveAccountNode(
     MOCK_SEED,
@@ -407,7 +404,6 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
   ) => {
     const service = new BitcoinService('https://mock.api', false)
 
-    // Mock fetch for UTXOs and fee estimates
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (url: string | URL | Request) => {
       const urlStr = typeof url === 'string' ? url : url.toString()
@@ -454,7 +450,7 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
       expect(txHex).toBeTruthy()
       expect(typeof txHex).toBe('string')
       expect(fee).toBeGreaterThan(0)
-      expect(fee).toBeLessThan(5000) // reasonable for 2 sat/vB
+      expect(fee).toBeLessThan(5000)
     } finally {
       cleanup()
     }
@@ -500,7 +496,6 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
   })
 
   it('change below dust threshold is folded into fee', async () => {
-    // 10_600 sats UTXO, send 10_000 sats — change would be tiny
     const { service, cleanup } = makeMockService([
       { txid: 'c'.repeat(64), vout: 0, value: 10_600 },
     ])
@@ -515,7 +510,6 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
         feeRate: 1,
       })
       expect(txHex).toBeTruthy()
-      // Fee should be close to 600 sats (the remainder), since change < dust
       expect(fee).toBe(600)
     } finally {
       cleanup()
@@ -537,8 +531,6 @@ describe('TC-BTC-UTXO: coin selection logic', () => {
         feeRate: 2,
       })
       expect(txHex).toBeTruthy()
-      // With 100k input, 50k send, and ~220 sats fee at 2 sat/vB,
-      // the change (~49780) is well above 546 dust
       expect(fee).toBeLessThan(1000)
       expect(fee).toBeGreaterThan(0)
     } finally {
@@ -610,9 +602,7 @@ describe('TC-BTC-PSBT: PSBT signature verification', () => {
         feeRate: 5,
       })
 
-      // Valid hex string
       expect(txHex).toMatch(/^[0-9a-f]+$/i)
-      // Minimum realistic raw tx length
       expect(txHex.length).toBeGreaterThan(100)
     } finally {
       globalThis.fetch = originalFetch

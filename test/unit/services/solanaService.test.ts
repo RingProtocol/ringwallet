@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { SolanaService } from './solanaService'
-import { SolanaKeyService } from './wallet/solanaKeyService'
+import { SolanaService } from '@/services/solanaService'
+import { SolanaKeyService } from '@/services/wallet/solanaKeyService'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 
@@ -15,29 +15,18 @@ const mockRequestAirdrop = vi.fn()
 // We intercept at the class level so Transaction / PublicKey etc. still work.
 vi.mock('@solana/web3.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@solana/web3.js')>()
-  return {
-    ...actual,
-    Connection: vi.fn().mockImplementation(() => ({
-      getBalance: mockGetBalance,
-      getLatestBlockhash: mockGetLatestBlockhash,
-      sendTransaction: mockSendTransaction,
-      confirmTransaction: mockConfirmTransaction,
-      requestAirdrop: mockRequestAirdrop,
-    })),
-  }
-})
-
-// Transaction.getEstimatedFee is called on an instance; mock the prototype.
-vi.mock('@solana/web3.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@solana/web3.js')>()
   class MockTransaction {
     recentBlockhash?: string
     feePayer?: unknown
     constructor(opts?: { recentBlockhash?: string; feePayer?: unknown }) {
       if (opts) Object.assign(this, opts)
     }
-    add() { return this }
-    async getEstimatedFee() { return mockGetEstimatedFee() }
+    add() {
+      return this
+    }
+    async getEstimatedFee() {
+      return mockGetEstimatedFee()
+    }
   }
   return {
     ...actual,
@@ -57,7 +46,7 @@ vi.mock('@solana/web3.js', async (importOriginal) => {
 const DEVNET_RPC = 'https://api.devnet.solana.com'
 const TEST_SEED = Buffer.from(
   'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
-  'hex',
+  'hex'
 )
 const keypair = SolanaKeyService.deriveKeypair(TEST_SEED, 0)
 const address = keypair.publicKey.toBase58()
@@ -130,11 +119,11 @@ describe('TC-SOL-TX-01: sendSOL', () => {
 describe('TC-SOL-TX-02: sendSOL error handling', () => {
   it('throws when the RPC rejects (simulated insufficient funds)', async () => {
     mockSendTransaction.mockRejectedValue(
-      new Error('Transaction simulation failed: insufficient lamports'),
+      new Error('Transaction simulation failed: insufficient lamports')
     )
     const service = new SolanaService(DEVNET_RPC)
     await expect(service.sendSOL(keypair, address, 99999)).rejects.toThrow(
-      /insufficient/i,
+      /insufficient/i
     )
   })
 
@@ -145,7 +134,7 @@ describe('TC-SOL-TX-02: sendSOL error handling', () => {
     })
     const service = new SolanaService(DEVNET_RPC)
     await expect(service.sendSOL(keypair, address, 0.001)).rejects.toThrow(
-      /Transaction failed/,
+      /Transaction failed/
     )
   })
 })
@@ -178,7 +167,7 @@ describe('TC-SOL-RPC-02: requestAirdrop', () => {
     await service.requestAirdrop(address, 1)
     expect(mockRequestAirdrop).toHaveBeenCalledWith(
       expect.objectContaining({ toBase58: expect.any(Function) }),
-      1_000_000_000,
+      1_000_000_000
     )
   })
 })

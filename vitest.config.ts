@@ -18,7 +18,7 @@ export default defineConfig({
     // so no Vite node-polyfills plugin is needed here.
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts', 'app/**/*.test.ts'],
+    include: ['test/unit/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
