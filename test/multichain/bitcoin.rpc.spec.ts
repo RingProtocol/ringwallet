@@ -26,11 +26,10 @@ describe.skipIf(skipMultichainIntegration)(
           probe.kind === 'esplora'
             ? `Set TEST_BITCOIN_INDEXER_URL or ensure Esplora base is reachable (${probe.baseUrl}).`
             : `Alchemy Bitcoin JSON-RPC failed (${probe.rpcUrl}).`
-        const err = new Error(
-          `${hint} ${e instanceof Error ? e.message : String(e)}`
+        throw new Error(
+          `${hint} ${e instanceof Error ? e.message : String(e)}`,
+          { cause: e }
         )
-        ;(err as Error & { cause?: unknown }).cause = e
-        throw err
       }
     })
 

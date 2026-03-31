@@ -171,10 +171,9 @@ export async function fetchBitcoinTipHeight(
     const a = last instanceof Error ? last.message : String(last)
     const b =
       fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)
-    const err = new Error(
-      `Alchemy Bitcoin (${probe.rpcUrl}) failed after retries (${a}); Esplora fallback (${esploraFallback}) failed (${b})`
+    throw new Error(
+      `Alchemy Bitcoin (${probe.rpcUrl}) failed after retries (${a}); Esplora fallback (${esploraFallback}) failed (${b})`,
+      { cause: fallbackErr }
     )
-    ;(err as Error & { cause?: unknown }).cause = fallbackErr
-    throw err
   }
 }

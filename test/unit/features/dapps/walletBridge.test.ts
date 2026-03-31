@@ -4,9 +4,10 @@ vi.mock('@/i18n', () => ({
   tGlobal: vi.fn((key: string) => key),
 }))
 
-const windowListeners = new Map<string, EventListener>()
+type DomEventHandler = (evt: Event) => void
+const windowListeners = new Map<string, DomEventHandler>()
 vi.stubGlobal('window', {
-  addEventListener: vi.fn((event: string, handler: EventListener) => {
+  addEventListener: vi.fn((event: string, handler: DomEventHandler) => {
     windowListeners.set(event, handler)
   }),
   removeEventListener: vi.fn((event: string) => {
