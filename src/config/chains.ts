@@ -46,10 +46,10 @@ const ENV: Record<string, ChainEnvConfig> = {
     factoryAddress: env('VITE_FACTORY_POLYGON'),
   },
   'solana-mainnet': {
-    rpc: `https://api.mainnet-beta.solana.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: `https://solana-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   'solana-devnet': {
-    rpc: `https://api.devnet.solana.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: `https://solana-devnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
   // May be Esplora base URL or Alchemy `https://bitcoin-mainnet.g.alchemy.com/v2/<key>` — UTXO reads still use Esplora fallback in BitcoinService.
   'bitcoin-mainnet': {
