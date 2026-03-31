@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
-import { getPrimaryRpcUrl } from '../models/ChainType'
+import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
+import { ChainFamily, getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import './BalanceDisplay.css'
@@ -20,6 +21,8 @@ const BalanceDisplay: React.FC = () => {
     isSolanaChain,
     isBitcoinChain,
   } = useAuth()
+  const isEvmChain =
+    activeChain?.family === ChainFamily.EVM || !activeChain?.family
   const [balance, setBalance] = useState('0.0000')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -62,7 +65,7 @@ const BalanceDisplay: React.FC = () => {
         } finally {
           setIsLoading(false)
         }
-      } else {
+      } else if (isEvmChain) {
         if (!activeWallet) return
         setIsLoading(true)
         try {
@@ -76,12 +79,18 @@ const BalanceDisplay: React.FC = () => {
         } finally {
           setIsLoading(false)
         }
+      } else {
+        setBalance('0.0000')
       }
     }
 
-    fetchBalance()
-    const interval = setInterval(fetchBalance, 15000)
-    return () => clearInterval(interval)
+    if (isBitcoinChain || isSolanaChain || isEvmChain) {
+      fetchBalance()
+      const interval = setInterval(fetchBalance, BALANCE_POLL_INTERVAL_MS)
+      return () => clearInterval(interval)
+    }
+
+    void fetchBalance()
   }, [
     activeWallet,
     activeSolanaWallet,
@@ -89,6 +98,7 @@ const BalanceDisplay: React.FC = () => {
     activeChain,
     isSolanaChain,
     isBitcoinChain,
+    isEvmChain,
   ])
 
   if (!activeAccount) return null

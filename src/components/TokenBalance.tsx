@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
@@ -159,7 +160,7 @@ const TokenBalance: React.FC = () => {
     }
 
     fetchBitcoinBalances()
-    const interval = setInterval(fetchBitcoinBalances, 15000)
+    const interval = setInterval(fetchBitcoinBalances, BALANCE_POLL_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [activeBitcoinWallet, activeChain, isBitcoinChain])
 
@@ -198,7 +199,7 @@ const TokenBalance: React.FC = () => {
     }
 
     fetchSolanaBalances()
-    const interval = setInterval(fetchSolanaBalances, 15000)
+    const interval = setInterval(fetchSolanaBalances, BALANCE_POLL_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [activeSolanaWallet, activeChain, isSolanaChain])
 
@@ -269,7 +270,7 @@ const TokenBalance: React.FC = () => {
     }
 
     fetchEVMBalances()
-    const interval = setInterval(fetchEVMBalances, 15000)
+    const interval = setInterval(fetchEVMBalances, BALANCE_POLL_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [activeWallet, activeChain, importedTokens, isEvmChain])
 
