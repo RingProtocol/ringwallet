@@ -4,6 +4,10 @@ import TransactionHistory from './TransactionHistory'
 import DAppsPage from '../features/dapps/components/DAppsPage'
 import './MultiTabs.css'
 
+interface MultiTabsProps {
+  onOpenSettings?: () => void
+}
+
 const tabs = [
   { key: 'tokens', label: 'Tokens' },
   { key: 'activity', label: 'Activity' },
@@ -14,11 +18,11 @@ function getInitialTab(): string {
   if (typeof window === 'undefined') return 'tokens'
   const p = new URLSearchParams(window.location.search)
   const t = p.get('tab')
-  if (t && tabs.some(tab => tab.key === t)) return t
+  if (t && tabs.some((tab) => tab.key === t)) return t
   return 'tokens'
 }
 
-const MultiTabs: React.FC = () => {
+const MultiTabs: React.FC<MultiTabsProps> = ({ onOpenSettings }) => {
   const [activeTab, setActiveTab] = useState(getInitialTab)
 
   return (
@@ -37,7 +41,7 @@ const MultiTabs: React.FC = () => {
       <div className="tabs-content">
         {activeTab === 'tokens' && <TokenBalance />}
         {activeTab === 'activity' && <TransactionHistory />}
-        {activeTab === 'dapps' && <DAppsPage />}
+        {activeTab === 'dapps' && <DAppsPage onOpenSettings={onOpenSettings} />}
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getPrimaryRpcUrl } from '@/models/ChainType'
 import { WalletBridge } from '../services/walletBridge'
@@ -11,22 +12,45 @@ import { useI18n } from '../../../i18n'
 interface Props {
   dapp: DAppInfo
   onBack: () => void
+  onOpenSettings?: () => void
 }
 
-const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
+const DAPP_OPEN_BODY_CLASS = 'ring-dapp-open'
+const OPEN_CHAIN_SWITCHER_EVENT = 'ring:open-chain-switcher'
+
+type OpenChainSwitcherDetail = {
+  anchorRect?: {
+    top: number
+    right: number
+    bottom: number
+    left: number
+  }
+}
+
+const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const { activeWallet, activeChain, activeChainId, CHAINS, switchChain } = useAuth()
+  const { activeWallet, activeChain, activeChainId, CHAINS, switchChain } =
+    useAuth()
   const { pendingApproval, requestApproval, approve, reject } = useApproval()
   const { t } = useI18n()
 
-  const bridge = useMemo(() => new WalletBridge({
-    getActiveAddress: () => activeWallet?.address || null,
-    getActiveChainId: () => Number(activeChainId),
-    getActiveChainRpcUrl: () => getPrimaryRpcUrl(activeChain),
-    getActivePrivateKey: () => activeWallet?.privateKey || null,
-    getChains: () => CHAINS.filter(c => typeof c.id === 'number').map(c => ({ id: c.id as number, name: c.name, rpcUrl: c.rpcUrl })),
-    switchChain: (chainId: number) => switchChain(chainId),
-  }), [])
+  const bridge = useMemo(
+    () =>
+      new WalletBridge({
+        getActiveAddress: () => activeWallet?.address || null,
+        getActiveChainId: () => Number(activeChainId),
+        getActiveChainRpcUrl: () => getPrimaryRpcUrl(activeChain),
+        getActivePrivateKey: () => activeWallet?.privateKey || null,
+        getChains: () =>
+          CHAINS.filter((c) => typeof c.id === 'number').map((c) => ({
+            id: c.id as number,
+            name: c.name,
+            rpcUrl: c.rpcUrl,
+          })),
+        switchChain: (chainId: number) => switchChain(chainId),
+      }),
+    []
+  )
 
   useEffect(() => {
     bridge.setApprovalHandler(requestApproval)
@@ -49,6 +73,13 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
     bridge.notifyChainChanged('0x' + activeChainId.toString(16))
   }, [activeChainId])
 
+  useEffect(() => {
+    document.body.classList.add(DAPP_OPEN_BODY_CLASS)
+    return () => {
+      document.body.classList.remove(DAPP_OPEN_BODY_CLASS)
+    }
+  }, [])
+
   const iframeSrc = buildDAppUrl(dapp.url)
 
   const handleRefresh = useCallback(() => {
@@ -63,30 +94,81 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
     onBack()
   }, [bridge, onBack])
 
-  return (
+  const handleOpenChainSwitcher = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const detail: OpenChainSwitcherDetail = {
+        anchorRect: {
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          left: rect.left,
+        },
+      }
+      window.dispatchEvent(
+        new CustomEvent<OpenChainSwitcherDetail>(OPEN_CHAIN_SWITCHER_EVENT, {
+          detail,
+        })
+      )
+    },
+    []
+  )
+
+  const content = (
     <div className="dapp-container">
       <div className="dapp-container__navbar">
-        <button className="dapp-container__back-btn" onClick={onBack}>←</button>
+        <button className="dapp-container__back-btn" onClick={onBack}>
+          ←
+        </button>
         <div className="dapp-container__info">
           <img
             className="dapp-container__navbar-icon"
             src={dapp.icon || undefined}
             alt=""
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
           />
           <span className="dapp-container__navbar-title">{dapp.name}</span>
         </div>
         <div className="dapp-container__navbar-actions">
-          <button className="dapp-container__action-btn" onClick={handleRefresh} title={t('refresh')}>↻</button>
-          <button className="dapp-container__action-btn" onClick={handleDisconnect} title={t('disconnect')}>✕</button>
+          <button
+            className="dapp-container__action-btn"
+            onClick={handleRefresh}
+            title={t('refresh')}
+          >
+            ↻
+          </button>
+          <button
+            className="dapp-container__action-btn"
+            onClick={handleDisconnect}
+            title={t('disconnect')}
+          >
+            ✕
+          </button>
         </div>
       </div>
 
       {activeWallet && (
         <div className="dapp-container__status-bar">
           <span className="dapp-container__status-dot" />
-          <span>{activeWallet.address.slice(0, 6)}...{activeWallet.address.slice(-4)}</span>
-          <span className="dapp-container__status-chain">{activeChain.name}</span>
+          <button
+            type="button"
+            className="dapp-container__status-address"
+            onClick={onOpenSettings}
+            title={t('account')}
+          >
+            {activeWallet.address.slice(0, 6)}...
+            {activeWallet.address.slice(-4)}
+          </button>
+          <button
+            type="button"
+            className="dapp-container__status-chain"
+            onClick={handleOpenChainSwitcher}
+            title="Switch chain"
+          >
+            {activeChain.name}
+          </button>
         </div>
       )}
 
@@ -108,6 +190,12 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
       )}
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return content
+  }
+
+  return createPortal(content, document.body)
 }
 
 export default DAppContainer

@@ -22,7 +22,27 @@
   right: 12px;
   display: flex;
   gap: 10px;
+  justify-content: flex-end;
   z-index: 1000;
+}
+
+.header-actions:has(.chain-switcher-container) {
+  left: 12px;
+  justify-content: space-between;
+}
+
+body.ring-dapp-open .header-actions .chain-switcher-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .header-actions .menu-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .header-actions {
+  left: auto;
+  justify-content: flex-end;
+  z-index: 2600;
 }
 
 .app:has(.card--guest) {

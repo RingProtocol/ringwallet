@@ -4,6 +4,10 @@ import DAppContainer from './DAppContainer'
 import type { DAppInfo } from '../types/dapp'
 import './DApps.css'
 
+interface DAppsPageProps {
+  onOpenSettings?: () => void
+}
+
 function getTestIndex(): number | null {
   if (typeof window === 'undefined') return null
   const p = new URLSearchParams(window.location.search)
@@ -13,25 +17,29 @@ function getTestIndex(): number | null {
   return isNaN(n) ? null : n
 }
 
-const DAppsPage: React.FC = () => {
+const DAppsPage: React.FC<DAppsPageProps> = ({ onOpenSettings }) => {
   const [activeDApp, setActiveDApp] = useState<DAppInfo | null>(null)
   const [testFired, setTestFired] = useState(false)
 
-  const onDAppsReady = useCallback((dapps: DAppInfo[]) => {
-    if (testFired) return
-    const idx = getTestIndex()
-    if (idx === null) return
-    if (idx < 0 || idx >= dapps.length) return
-    setTestFired(true)
-    const target = dapps[idx]
-    setTimeout(() => setActiveDApp(target), 5000)
-  }, [testFired])
+  const onDAppsReady = useCallback(
+    (dapps: DAppInfo[]) => {
+      if (testFired) return
+      const idx = getTestIndex()
+      if (idx === null) return
+      if (idx < 0 || idx >= dapps.length) return
+      setTestFired(true)
+      const target = dapps[idx]
+      setTimeout(() => setActiveDApp(target), 5000)
+    },
+    [testFired]
+  )
 
   if (activeDApp) {
     return (
       <DAppContainer
         dapp={activeDApp}
         onBack={() => setActiveDApp(null)}
+        onOpenSettings={onOpenSettings}
       />
     )
   }
