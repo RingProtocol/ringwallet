@@ -26,7 +26,7 @@ function AppContent() {
       <div className={`card ${!isLoggedIn ? 'card--guest' : ''}`}>
         {isLoggedIn && <BalanceDisplay />}
         {isLoggedIn && <TransactionActions />}
-        {isLoggedIn && <MultiTabs />}
+        {isLoggedIn && <MultiTabs onOpenSettings={() => setDrawerOpen(true)} />}
 
         {!isLoggedIn && (
           <div className="card--guest-logo-wrap">

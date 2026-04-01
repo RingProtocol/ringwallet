@@ -33,7 +33,9 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.dapp-list__featured::-webkit-scrollbar { display: none; }
+.dapp-list__featured::-webkit-scrollbar {
+  display: none;
+}
 
 .dapp-featured-card {
   display: flex;
@@ -42,11 +44,17 @@
   gap: 6px;
   padding: 12px 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.08),
+    rgba(118, 75, 162, 0.08)
+  );
   border: 1px solid rgba(102, 126, 234, 0.15);
   cursor: pointer;
   min-width: 80px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 .dapp-featured-card:active {
   transform: scale(0.96);
@@ -75,7 +83,9 @@
   margin-bottom: 10px;
   scrollbar-width: none;
 }
-.dapp-list__categories::-webkit-scrollbar { display: none; }
+.dapp-list__categories::-webkit-scrollbar {
+  display: none;
+}
 
 .dapp-category-btn {
   padding: 6px 14px;
@@ -128,7 +138,9 @@
 }
 
 @keyframes dapp-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .dapp-list__error {
@@ -164,7 +176,9 @@
   cursor: pointer;
   text-align: left;
   width: 100%;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
 .dapp-card:active {
@@ -294,10 +308,31 @@
   background: #4ecdc4;
 }
 
+.dapp-container__status-address {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dapp-container__status-address:hover {
+  text-decoration: underline;
+}
+
 .dapp-container__status-chain {
   margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   color: #667eea;
   font-weight: 500;
+}
+
+.dapp-container__status-chain:hover {
+  text-decoration: underline;
 }
 
 .dapp-container__iframe {
@@ -321,8 +356,12 @@
 }
 
 @keyframes approval-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .approval-dialog {
@@ -337,8 +376,12 @@
 }
 
 @keyframes approval-slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .approval-dialog__header {
@@ -465,7 +508,9 @@
   border: none;
   transition: opacity 0.15s;
 }
-.approval-btn:active { opacity: 0.8; }
+.approval-btn:active {
+  opacity: 0.8;
+}
 
 .approval-btn--reject {
   background: #f0f0f2;
