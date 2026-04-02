@@ -1,4 +1,4 @@
-import type { DAppListResponse } from '../types/dapp'
+import type { DAppInfo, DAppListResponse } from '../types/dapp'
 import { resolveClientApiUrl } from '../../../utils/apiUrl'
 
 const CACHE_KEY = 'ring_dapp_list'
@@ -47,11 +47,28 @@ function getExpiredCache(): DAppListResponse | null {
   }
 }
 
+const LOCALHOST_DAPP: DAppInfo = {
+  id: -1,
+  name: 'Localhost',
+  description: 'Local dev DApp, which run on localhost:3003',
+  url: 'http://localhost:3003',
+  icon: '',
+  chains: [],
+  category: 'dev',
+  top: 0,
+}
+
+function appendLocalhostDApp(data: DAppListResponse): DAppListResponse {
+  return { ...data, dapps: [...data.dapps, LOCALHOST_DAPP] }
+}
+
 export async function fetchDAppList(): Promise<DAppListResponse> {
   const apikey = env('VITE_TEST_API_KEY')
+  const isLocalhost = apikey === 'localhost'
+
   try {
     const url = resolveClientApiUrl('/api/v1/dapps')
-    if (apikey) {
+    if (apikey && !isLocalhost) {
       url.searchParams.set('testdapp', apikey)
     }
 
@@ -64,16 +81,21 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
     const contentType = res.headers.get('content-type') || ''
     if (!contentType.includes('application/json')) {
       const body = await res.text()
-      throw new Error(`Expected JSON but received ${contentType || 'unknown'}: ${body.slice(0, 120)}`)
+      throw new Error(
+        `Expected JSON but received ${contentType || 'unknown'}: ${body.slice(0, 120)}`
+      )
     }
 
-    const data = await res.json() as DAppListResponse
-    setCache(data)
-    return data
+    const data = (await res.json()) as DAppListResponse
+    const result = isLocalhost ? appendLocalhostDApp(data) : data
+    setCache(result)
+    return result
   } catch (err) {
     console.error('dapp list error=', err)
     const fallback = getExpiredCache()
-    if (fallback) return fallback
+    if (fallback) return isLocalhost ? appendLocalhostDApp(fallback) : fallback
+    if (isLocalhost)
+      return appendLocalhostDApp({ dapps: [], categories: [], updated_at: '' })
     throw err
   }
 }

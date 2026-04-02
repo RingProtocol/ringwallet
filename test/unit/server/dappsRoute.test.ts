@@ -9,6 +9,10 @@ const TEST_DAPP_TOKEN = process.env.DAPP_TOKEN?.trim() || 'secret-token'
 
 describe('/api/v1/dapps GET', () => {
   beforeEach(() => {
+    delete process.env.HTTPS_PROXY
+    delete process.env.https_proxy
+    delete process.env.HTTP_PROXY
+    delete process.env.http_proxy
     process.env.VITE_DAPP_URL = TEST_DAPP_URL
     process.env.DAPP_TOKEN = TEST_DAPP_TOKEN
   })
@@ -69,7 +73,7 @@ describe('/api/v1/dapps GET', () => {
     expect(upstreamUrl.searchParams.get('testdapp')).toBe('abc123')
     expect(init).toMatchObject({
       headers: { Accept: 'application/json' },
-      next: { revalidate: 300 },
+      cache: 'no-store',
     })
     expect(payload).toMatchObject({
       dapps: [

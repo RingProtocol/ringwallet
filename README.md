@@ -54,17 +54,21 @@ Then install
 yarn install
 ```
 
-Next server running on `http://localhost:3000`
+### Server deploy
 
 ```bash
-yarn install
-yarn dev
+yarn build
+yarn start
 ```
 
-Then start frontend on `http://localhost:3003`
+**`yarn start` serves a production build** (`.next`). After you change `app/api/**` or env handling, run **`yarn build`** again, then restart `yarn start`. For day-to-day API work, prefer **`yarn dev`** (no rebuild needed).
 
-```hash
-yarn vite:dev
+### Local dev
+
+The wallet UI (`apps/pwa/App.tsx`) is mounted from `app/page.tsx`, so **Next.js already serves the PWA and the API on one origin** — same idea as Vercel (one deployment, `/api/*` and the app share `http://localhost:3000` in dev).
+
+```bash
+yarn dev
 ```
 
 ---

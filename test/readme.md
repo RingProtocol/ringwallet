@@ -43,6 +43,15 @@ test/
     └── sepolia.fork.spec.ts       # Full EVM flow: derive → fund → sign → broadcast → receipt
 ```
 
+## Dev commands
+
+| Command         | What it runs                        | What you get                                             |
+| --------------- | ----------------------------------- | -------------------------------------------------------- |
+| `yarn dev`      | `next dev` (Next.js dev server)     | PWA frontend + API routes (`/api/*`) on `localhost:3000` |
+| `yarn vite:dev` | `vite` (Vite dev server, port 3003) | PWA frontend only on `localhost:3003`, **no** API routes |
+
+Use `yarn dev` for normal development — it serves everything in one origin. Use `yarn vite:dev` when you only need the frontend (e.g. pointing at a remote API or testing the Vite build in isolation).
+
 ## Three test tiers
 
 | Tier               | Command                | Config                        | Environment     | Network               | Speed |
