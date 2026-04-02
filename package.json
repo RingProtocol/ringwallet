@@ -33,7 +33,8 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "validate:staged": "lint-staged && yarn typecheck",
-    "validate:ci": "yarn typecheck && yarn test"
+    "validate:ci": "yarn typecheck && yarn test",
+    "dappsdk:minify": "node scripts/minify-dappsdk.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
