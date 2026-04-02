@@ -194,7 +194,7 @@ const LoginButton: React.FC = () => {
             {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
           </button>
           <button
-            className="login-button"
+            className="login-button login-button--secondary"
             onClick={handleCreateAccount}
             disabled={isLoading}
             style={{ width: '100%', marginTop: '8px' }}

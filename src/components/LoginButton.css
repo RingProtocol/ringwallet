@@ -27,6 +27,26 @@
   cursor: not-allowed;
 }
 
+.login-button--secondary {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.14) 0%,
+    rgba(118, 75, 162, 0.14) 100%
+  );
+  color: #5b4dc9;
+  border: 1px solid rgba(102, 126, 234, 0.35);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
+}
+
+.login-button--secondary:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.22) 0%,
+    rgba(118, 75, 162, 0.22) 100%
+  );
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.16);
+}
+
 .logout-button {
   background: #ff6b6b;
   color: white;
