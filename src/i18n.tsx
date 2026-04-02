@@ -46,8 +46,9 @@ const messages = {
     creating: 'Creating...',
     noAccountFound: 'No existing account found',
     loginTipNoPasskey:
-      'Tip: If you have no passkey, after tapping Login just close the system dialog.',
-    passkeyNeedsSecureContext: 'Passkey requires a secure context (HTTPS).',
+      'Tip: If you haven’t created a passkey before, tap “Create account”.',
+    passkeyNeedsSecureContext:
+      'Passkey only works in a secure context (HTTPS).',
     passkeyApiUnavailable:
       'Your browser does not support Passkey. Please upgrade Chrome/Edge/Safari.',
     biometricNotDetected:
@@ -236,8 +237,7 @@ const messages = {
     createAccount: '创建新账户',
     creating: '创建中...',
     noAccountFound: '未找到已有账户',
-    loginTipNoPasskey:
-      'Tip: If no passkey, after tapping Login just close the system dialog.',
+    loginTipNoPasskey: '提示：如果没有 Passkey，点击「创建账户」。',
     passkeyNeedsSecureContext: 'Passkey 需要在安全环境(HTTPS)下运行',
     passkeyApiUnavailable:
       '您的浏览器版本过低或不支持Passkey，请升级Chrome/Edge/Safari',

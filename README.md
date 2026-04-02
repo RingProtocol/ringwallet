@@ -48,38 +48,31 @@ Clone the repository:
 git clone <repo-url>
 ```
 
-Then install and start the dev server:
+Then install
+
+```bash
+yarn install
+```
+
+Next server running on `http://localhost:3000`
 
 ```bash
 yarn install
 yarn dev
 ```
 
-Then open the app in your browser and sign in with your fingerprint.
+Then start frontend on `http://localhost:3003`
 
-If you run the Vite PWA dev server on `http://localhost:3003`, keep the Next server running on `http://localhost:3000` as well. Client-side `/api/v1/*` requests are resolved to the Next server, not the Vite dev server. You can override that target explicitly with `VITE_API_BASE_URL`.
+```hash
+yarn vite:dev
+```
 
 ---
 
-## Usage Guide
+## This wallet is PWA
 
 For installation and usage instructions, visit our docs:  
 [https://docs.ring.exchange/wallet/install-pwa](https://docs.ring.exchange/wallet/install-pwa)
-
----
-
-_Own your keys. Own your future._
-
-# Debugging dapp
-
-- Apply dapp: https://forms.gle/2GXh5bAEXxpDj8gTA
-
-# Dependent Variables
-
-VITE_DAPP_URL=https://script.google.com/macros/s/AKfycbzFSlcUVztjCGIHesC0WFG-QP8MnPrfvZdKnYOTboATM7Vtgg8ExRwfo_Jlkh7Pf8FC9A/exec
-DAPP_TOKEN=
-VITE_API_BASE_URL=http://localhost:3000
-VITE_TEST_API_KEY=<Contact Ring to get>
 
 # tx history
 
@@ -87,3 +80,7 @@ VITE_TEST_API_KEY=<Contact Ring to get>
 - if transaction happen, insert a pending transaction record, poll from blockchain every 8 seconds with rpc endpoint
 - after transaction is confirmed, update the status
 - fetch from rpc when open the wallet first time.
+
+## Other info about Ring Wallet
+
+[Docs](https://docs.ring.exchange)
