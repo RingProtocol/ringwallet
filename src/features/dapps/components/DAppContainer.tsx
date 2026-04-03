@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useCallback } from 'react'
+import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getPrimaryRpcUrl } from '@/models/ChainType'
@@ -8,6 +8,7 @@ import { buildDAppUrl } from '../services/dappService'
 import ApprovalDialog from './ApprovalDialog'
 import type { DAppInfo } from '../types/dapp'
 import { useI18n } from '../../../i18n'
+import WalletMainPage from '@/components/WalletMainPage'
 
 interface Props {
   dapp: DAppInfo
@@ -28,6 +29,7 @@ type OpenChainSwitcherDetail = {
 }
 
 const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
+  const [walletOverlayOpen, setWalletOverlayOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { activeWallet, activeChain, activeChainId, CHAINS, switchChain } =
     useAuth()
@@ -90,6 +92,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
   }, [iframeSrc])
 
   const handleDisconnect = useCallback(() => {
+    setWalletOverlayOpen(false)
     bridge.notifyDisconnect()
     onBack()
   }, [bridge, onBack])
@@ -117,8 +120,18 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
   const content = (
     <div className="dapp-container">
       <div className="dapp-container__navbar">
-        <button className="dapp-container__back-btn" onClick={onBack}>
-          ←
+        <button
+          type="button"
+          className="dapp-container__wallet-home-btn"
+          onClick={() => setWalletOverlayOpen(true)}
+          title={t('wallet')}
+          aria-label={t('wallet')}
+        >
+          <img
+            src="/icons/logo.png"
+            alt=""
+            className="dapp-container__wallet-home-btn-img"
+          />
         </button>
         <div className="dapp-container__info">
           <img
@@ -195,7 +208,29 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
     return content
   }
 
-  return createPortal(content, document.body)
+  return (
+    <>
+      {createPortal(content, document.body)}
+      {walletOverlayOpen &&
+        createPortal(
+          <div className="wallet-main-overlay">
+            <div className="wallet-main-overlay__peek-panel">
+              <WalletMainPage
+                peekOverDapp
+                onClose={() => setWalletOverlayOpen(false)}
+              />
+            </div>
+            <button
+              type="button"
+              className="wallet-main-overlay__scrim"
+              onClick={() => setWalletOverlayOpen(false)}
+              aria-label={t('close')}
+            />
+          </div>,
+          document.body
+        )}
+    </>
+  )
 }
 
 export default DAppContainer

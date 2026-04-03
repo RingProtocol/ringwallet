@@ -31,15 +31,15 @@
   justify-content: space-between;
 }
 
-body.ring-dapp-open .header-actions .chain-switcher-trigger {
+body.ring-dapp-open .app > .header-actions .chain-switcher-trigger {
   display: none;
 }
 
-body.ring-dapp-open .header-actions .menu-trigger {
+body.ring-dapp-open .app > .header-actions .menu-trigger {
   display: none;
 }
 
-body.ring-dapp-open .header-actions {
+body.ring-dapp-open .app > .header-actions {
   left: auto;
   justify-content: flex-end;
   z-index: 2600;
