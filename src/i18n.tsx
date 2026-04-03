@@ -20,7 +20,7 @@ const EXPLICIT_STORAGE_KEY = 'ring_wallet_lang_explicit'
 const messages = {
   en: {
     account: 'Account',
-    switchAccount: 'Switch Account',
+    switchAccount: 'Switch wallet',
     notifications: 'Notifications',
     feedback: 'Feedback',
     about: 'About',
@@ -212,7 +212,7 @@ const messages = {
   },
   zh: {
     account: '账户',
-    switchAccount: '切换账号',
+    switchAccount: '切换地址',
     notifications: '通知设置',
     feedback: '反馈',
     about: '关于',

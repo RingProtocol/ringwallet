@@ -21,22 +21,10 @@
   margin-left: 5px;
 }
 
-.balance-label {
-  font-size: 0.9rem;
-  color: #888;
-  margin-top: 5px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.loading-text {
-  margin-left: 6px;
-  color: #ccc;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+.wallet-address {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 4px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
 }

@@ -11,6 +11,11 @@ function getEmptyBalance(isBitcoinChain: boolean): string {
   return isBitcoinChain ? '0.00000000' : '0.0000'
 }
 
+function shortenAddress(address: string): string {
+  if (address.length <= 12) return address
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
 const BalanceDisplay: React.FC = () => {
   const {
     activeWallet,
@@ -24,20 +29,22 @@ const BalanceDisplay: React.FC = () => {
   const isEvmChain =
     activeChain?.family === ChainFamily.EVM || !activeChain?.family
   const [balance, setBalance] = useState('0.0000')
-  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setBalance(getEmptyBalance(isBitcoinChain))
   }, [activeChain?.id, activeAccount?.address, isBitcoinChain])
 
   useEffect(() => {
+    const commitBalance = (next: string) => {
+      setBalance((prev) => (prev === next ? prev : next))
+    }
+
     const fetchBalance = async () => {
       const rpcUrl = getPrimaryRpcUrl(activeChain)
       if (!rpcUrl) return
 
       if (isBitcoinChain) {
         if (!activeBitcoinWallet) return
-        setIsLoading(true)
         try {
           const service = new BitcoinService(
             rpcUrl,
@@ -45,42 +52,34 @@ const BalanceDisplay: React.FC = () => {
             bitcoinForkForChain(activeChain)
           )
           const bal = await service.getBalance(activeBitcoinWallet.address)
-          setBalance(bal.toFixed(8))
+          commitBalance(bal.toFixed(8))
         } catch (error) {
           console.error('Failed to fetch Bitcoin balance:', error)
-          setBalance('0.00000000')
-        } finally {
-          setIsLoading(false)
+          commitBalance('0.00000000')
         }
       } else if (isSolanaChain) {
         if (!activeSolanaWallet) return
-        setIsLoading(true)
         try {
           const service = new SolanaService(rpcUrl)
           const bal = await service.getBalance(activeSolanaWallet.address)
-          setBalance(bal.toFixed(4))
+          commitBalance(bal.toFixed(4))
         } catch (error) {
           console.error('Failed to fetch Solana balance:', error)
-          setBalance('0.0000')
-        } finally {
-          setIsLoading(false)
+          commitBalance('0.0000')
         }
       } else if (isEvmChain) {
         if (!activeWallet) return
-        setIsLoading(true)
         try {
           const provider = new ethers.JsonRpcProvider(rpcUrl)
           const balanceWei = await provider.getBalance(activeWallet.address)
           const balanceEth = ethers.formatEther(balanceWei)
-          setBalance(parseFloat(balanceEth).toFixed(4))
+          commitBalance(parseFloat(balanceEth).toFixed(4))
         } catch (error) {
           console.error('Failed to fetch EVM balance:', error)
-          setBalance('0.0000')
-        } finally {
-          setIsLoading(false)
+          commitBalance('0.0000')
         }
       } else {
-        setBalance('0.0000')
+        commitBalance('0.0000')
       }
     }
 
@@ -111,10 +110,11 @@ const BalanceDisplay: React.FC = () => {
           <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
         </>
       </div>
-      <div className="balance-label">
-        Total Balance
-        {isLoading && <span className="loading-text">...</span>}
-      </div>
+      {activeAccount?.address && (
+        <div className="wallet-address">
+          {shortenAddress(activeAccount.address)}
+        </div>
+      )}
     </div>
   )
 }
