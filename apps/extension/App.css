@@ -49,6 +49,13 @@ body.ring-dapp-open .app > .header-actions {
   align-items: flex-start;
 }
 
+.app > .wallet-main-page {
+  flex: 1;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+}
+
 .card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);

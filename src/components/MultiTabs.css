@@ -9,6 +9,7 @@
 
 .tabs-header {
   display: flex;
+  flex-shrink: 0;
   border-bottom: 2px solid #f0f0f0;
   gap: 0;
 }
@@ -24,7 +25,9 @@
   font-weight: 600;
   color: #999;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .tab-btn:hover {
@@ -38,5 +41,8 @@
 
 .tabs-content {
   flex: 1;
-  min-height: 120px;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }

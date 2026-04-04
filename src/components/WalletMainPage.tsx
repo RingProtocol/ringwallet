@@ -50,7 +50,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
         <WalletSwitcher onOpenDrawer={() => setDrawerOpen(true)} />
       </div>
       <AccountDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <div className="card">
+      <div className="card wallet-main-page__card">
         <BalanceDisplay />
         <TransactionActions />
         <MultiTabs
