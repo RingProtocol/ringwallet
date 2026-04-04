@@ -176,6 +176,50 @@ describe('EvmRpcService — multi-URL fallback (tryRpcUrls)', () => {
     }
   })
 
+  it('waits for one RPC result before starting the next URL', async () => {
+    const service = new EvmRpcService([
+      'https://rpc-1.example.test',
+      'https://rpc-2.example.test',
+    ])
+
+    const started: string[] = []
+    let rejectFirst: (error: Error) => void = () => undefined
+    let resolveSecond: (value: string) => void = () => undefined
+
+    const promise = (
+      service as unknown as {
+        tryRpcUrls: <T>(
+          runner: (provider: unknown, rpcUrl: string) => Promise<T>
+        ) => Promise<T>
+      }
+    ).tryRpcUrls((_, rpcUrl) => {
+      started.push(rpcUrl)
+
+      if (rpcUrl.includes('rpc-1')) {
+        return new Promise<string>((_, reject) => {
+          rejectFirst = reject
+        })
+      }
+
+      return new Promise<string>((resolve) => {
+        resolveSecond = resolve
+      })
+    })
+
+    await Promise.resolve()
+    expect(started).toEqual(['https://rpc-1.example.test'])
+
+    rejectFirst(new Error('rpc-1 failed'))
+    await Promise.resolve()
+    expect(started).toEqual([
+      'https://rpc-1.example.test',
+      'https://rpc-2.example.test',
+    ])
+
+    resolveSecond('ok')
+    await expect(promise).resolves.toBe('ok')
+  })
+
   it('throws when all URLs fail', async () => {
     const service = new EvmRpcService([
       'https://dead1.example.test',

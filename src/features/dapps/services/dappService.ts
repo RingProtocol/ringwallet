@@ -59,7 +59,22 @@ const LOCALHOST_DAPP: DAppInfo = {
 }
 
 function appendLocalhostDApp(data: DAppListResponse): DAppListResponse {
+  if (
+    data.dapps.some(
+      (dapp) => dapp.id === LOCALHOST_DAPP.id || dapp.url === LOCALHOST_DAPP.url
+    )
+  ) {
+    return data
+  }
   return { ...data, dapps: [...data.dapps, LOCALHOST_DAPP] }
+}
+
+function getFallbackDAppList(isLocalhost: boolean): DAppListResponse | null {
+  const fallback = getExpiredCache()
+  if (fallback) return isLocalhost ? appendLocalhostDApp(fallback) : fallback
+  if (isLocalhost)
+    return appendLocalhostDApp({ dapps: [], categories: [], updated_at: '' })
+  return null
 }
 
 export async function fetchDAppList(): Promise<DAppListResponse> {
@@ -75,12 +90,16 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
     const res = await fetch(url.toString())
 
     if (!res.ok) {
+      const fallback = getFallbackDAppList(isLocalhost)
+      if (fallback) return fallback
       throw new Error(`HTTP ${res.status}`)
     }
 
     const contentType = res.headers.get('content-type') || ''
     if (!contentType.includes('application/json')) {
       const body = await res.text()
+      const fallback = getFallbackDAppList(isLocalhost)
+      if (fallback) return fallback
       throw new Error(
         `Expected JSON but received ${contentType || 'unknown'}: ${body.slice(0, 120)}`
       )
@@ -92,10 +111,8 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
     return result
   } catch (err) {
     console.error('dapp list error=', err)
-    const fallback = getExpiredCache()
-    if (fallback) return isLocalhost ? appendLocalhostDApp(fallback) : fallback
-    if (isLocalhost)
-      return appendLocalhostDApp({ dapps: [], categories: [], updated_at: '' })
+    const fallback = getFallbackDAppList(isLocalhost)
+    if (fallback) return fallback
     throw err
   }
 }

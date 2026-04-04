@@ -93,8 +93,10 @@ export class EvmRpcService
 
     let lastError: unknown = null
     for (const rpcUrl of orderedUrls) {
+      const provider = this.getProviderForUrl(rpcUrl)
       try {
-        const result = await runner(this.getProviderForUrl(rpcUrl), rpcUrl)
+        //this try is sequence not concurrency.
+        const result = await runner(provider, rpcUrl)
         this.markRpcUrlHealthy(rpcUrl)
         return result
       } catch (error) {

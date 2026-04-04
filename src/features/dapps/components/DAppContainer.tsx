@@ -17,18 +17,8 @@ interface Props {
 }
 
 const DAPP_OPEN_BODY_CLASS = 'ring-dapp-open'
-const OPEN_CHAIN_SWITCHER_EVENT = 'ring:open-chain-switcher'
 
-type OpenChainSwitcherDetail = {
-  anchorRect?: {
-    top: number
-    right: number
-    bottom: number
-    left: number
-  }
-}
-
-const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
+const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
   const [walletOverlayOpen, setWalletOverlayOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { activeWallet, activeChain, activeChainId, CHAINS, switchChain } =
@@ -97,26 +87,6 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
     onBack()
   }, [bridge, onBack])
 
-  const handleOpenChainSwitcher = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const detail: OpenChainSwitcherDetail = {
-        anchorRect: {
-          top: rect.top,
-          right: rect.right,
-          bottom: rect.bottom,
-          left: rect.left,
-        },
-      }
-      window.dispatchEvent(
-        new CustomEvent<OpenChainSwitcherDetail>(OPEN_CHAIN_SWITCHER_EVENT, {
-          detail,
-        })
-      )
-    },
-    []
-  )
-
   const content = (
     <div className="dapp-container">
       <div className="dapp-container__navbar">
@@ -146,7 +116,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
         </div>
         <div className="dapp-container__navbar-actions">
           <button
-            className="dapp-container__action-btn"
+            className="dapp-container__action-btn dapp-container__action-btn--refresh"
             onClick={handleRefresh}
             title={t('refresh')}
           >
@@ -162,7 +132,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
         </div>
       </div>
 
-      {activeWallet && (
+      {/* {activeWallet && (
         <div className="dapp-container__status-bar">
           <span className="dapp-container__status-dot" />
           <button
@@ -183,7 +153,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack, onOpenSettings }) => {
             {activeChain.name}
           </button>
         </div>
-      )}
+      )} */}
 
       <iframe
         ref={iframeRef}

@@ -341,6 +341,12 @@
   border-radius: 6px;
   transition: background 0.15s;
 }
+
+.dapp-container__action-btn--refresh {
+  font-size: 30px;
+  line-height: 1;
+}
+
 .dapp-container__action-btn:active {
   background: rgba(0, 0, 0, 0.06);
 }
