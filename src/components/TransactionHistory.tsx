@@ -214,6 +214,16 @@ const TransactionHistory: React.FC = () => {
     return 'ERC20'
   }
 
+  const formatDisplayValue = (value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed) return value
+
+    const [integerPart, fractionPart] = trimmed.split('.')
+    if (!fractionPart || fractionPart.length <= 4) return trimmed
+
+    return `${integerPart}.${fractionPart.slice(0, 4)}`
+  }
+
   const explorerUrl = (hash: string) =>
     `${activeChain?.explorer || 'https://etherscan.io'}/tx/${hash}`
 
@@ -259,8 +269,8 @@ const TransactionHistory: React.FC = () => {
             </div>
             <div className="tx-value">
               {tx.from.toLowerCase() === activeAccount.address.toLowerCase()
-                ? `-${tx.value}`
-                : `+${tx.value}`}{' '}
+                ? `-${formatDisplayValue(tx.value)}`
+                : `+${formatDisplayValue(tx.value)}`}{' '}
               <span className="tx-symbol">{formatAssetLabel(tx)}</span>
             </div>
           </a>

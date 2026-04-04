@@ -64,6 +64,9 @@
   font-size: 0.9rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .tx-symbol {
