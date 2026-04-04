@@ -283,22 +283,57 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6ff 100%);
+  border: 1px solid rgba(102, 126, 234, 0.18);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 10px;
+  border-radius: 12px;
   line-height: 0;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.dapp-container__wallet-home-btn:hover {
+  border-color: rgba(102, 126, 234, 0.32);
+  box-shadow: 0 8px 18px rgba(102, 126, 234, 0.16);
+  transform: translateY(-1px);
+}
+
+.dapp-container__wallet-home-btn:focus-visible {
+  outline: 2px solid rgba(102, 126, 234, 0.32);
+  outline-offset: 2px;
 }
 
 .dapp-container__wallet-home-btn:active {
-  background: rgba(102, 126, 234, 0.12);
+  background: linear-gradient(180deg, #eef2ff 0%, #e6ebff 100%);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.12);
+  transform: translateY(0);
+}
+
+.dapp-container__wallet-home-btn::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
 }
 
 .dapp-container__wallet-home-btn-img {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   display: block;
 }
