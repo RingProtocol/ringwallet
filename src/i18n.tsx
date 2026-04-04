@@ -22,6 +22,17 @@ const messages = {
     account: 'Account',
     switchAccount: 'Switch wallet',
     notifications: 'Notifications',
+    notificationsStatusEnabled: 'Enabled',
+    notificationsStatusBlocked: 'Blocked',
+    notificationsStatusUnsupported: 'Unsupported',
+    notificationsStatusTapToEnable: 'Tap to enable',
+    notificationsEnabledMessage: 'Notifications are enabled for this app.',
+    notificationsBlockedMessage:
+      'Notifications are blocked. Re-enable them in your browser or device settings.',
+    notificationsUnsupportedMessage:
+      'Notifications are not supported here. On iPhone, install the PWA to the Home Screen first.',
+    notificationsPermissionPendingMessage:
+      'Permission was not granted yet. Tap again if you want to retry.',
     feedback: 'Feedback',
     about: 'About',
     logout: 'Log out',
@@ -214,6 +225,17 @@ const messages = {
     account: '账户',
     switchAccount: '切换地址',
     notifications: '通知设置',
+    notificationsStatusEnabled: '已开启',
+    notificationsStatusBlocked: '已阻止',
+    notificationsStatusUnsupported: '不支持',
+    notificationsStatusTapToEnable: '点按开启',
+    notificationsEnabledMessage: '当前应用的通知已开启。',
+    notificationsBlockedMessage:
+      '通知已被阻止，请到浏览器或系统设置中重新开启。',
+    notificationsUnsupportedMessage:
+      '当前环境暂不支持通知。iPhone 上请先将 PWA 安装到主屏幕。',
+    notificationsPermissionPendingMessage:
+      '尚未授予通知权限，如需重试可再次点击。',
     feedback: '反馈',
     about: '关于',
     logout: '退出登录',

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily, getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import { notifyBalanceChange } from '../services/devices/notificationService'
 import './BalanceDisplay.css'
 
 function getEmptyBalance(isBitcoinChain: boolean): string {
@@ -29,13 +30,43 @@ const BalanceDisplay: React.FC = () => {
   const isEvmChain =
     activeChain?.family === ChainFamily.EVM || !activeChain?.family
   const [balance, setBalance] = useState('0.0000')
+  const observedBalanceRef = useRef<string | null>(null)
 
   useEffect(() => {
     setBalance(getEmptyBalance(isBitcoinChain))
+    observedBalanceRef.current = null
   }, [activeChain?.id, activeAccount?.address, isBitcoinChain])
 
   useEffect(() => {
-    const commitBalance = (next: string) => {
+    const commitBalance = (
+      next: string,
+      {
+        notifyOnChange = false,
+        recordObserved = true,
+      }: { notifyOnChange?: boolean; recordObserved?: boolean } = {}
+    ) => {
+      const previousObserved = observedBalanceRef.current
+
+      if (recordObserved) {
+        observedBalanceRef.current = next
+      }
+
+      if (
+        notifyOnChange &&
+        previousObserved !== null &&
+        previousObserved !== next &&
+        activeAccount?.address &&
+        activeChain
+      ) {
+        void notifyBalanceChange({
+          accountAddress: activeAccount.address,
+          chainName: activeChain.name,
+          previousBalance: previousObserved,
+          nextBalance: next,
+          symbol: activeChain.symbol || 'ETH',
+        })
+      }
+
       setBalance((prev) => (prev === next ? prev : next))
     }
 
@@ -52,20 +83,20 @@ const BalanceDisplay: React.FC = () => {
             bitcoinForkForChain(activeChain)
           )
           const bal = await service.getBalance(activeBitcoinWallet.address)
-          commitBalance(bal.toFixed(8))
+          commitBalance(bal.toFixed(8), { notifyOnChange: true })
         } catch (error) {
           console.error('Failed to fetch Bitcoin balance:', error)
-          commitBalance('0.00000000')
+          commitBalance('0.00000000', { recordObserved: false })
         }
       } else if (isSolanaChain) {
         if (!activeSolanaWallet) return
         try {
           const service = new SolanaService(rpcUrl)
           const bal = await service.getBalance(activeSolanaWallet.address)
-          commitBalance(bal.toFixed(4))
+          commitBalance(bal.toFixed(4), { notifyOnChange: true })
         } catch (error) {
           console.error('Failed to fetch Solana balance:', error)
-          commitBalance('0.0000')
+          commitBalance('0.0000', { recordObserved: false })
         }
       } else if (isEvmChain) {
         if (!activeWallet) return
@@ -73,13 +104,15 @@ const BalanceDisplay: React.FC = () => {
           const provider = new ethers.JsonRpcProvider(rpcUrl)
           const balanceWei = await provider.getBalance(activeWallet.address)
           const balanceEth = ethers.formatEther(balanceWei)
-          commitBalance(parseFloat(balanceEth).toFixed(4))
+          commitBalance(parseFloat(balanceEth).toFixed(4), {
+            notifyOnChange: true,
+          })
         } catch (error) {
           console.error('Failed to fetch EVM balance:', error)
-          commitBalance('0.0000')
+          commitBalance('0.0000', { recordObserved: false })
         }
       } else {
-        commitBalance('0.0000')
+        commitBalance('0.0000', { recordObserved: false })
       }
     }
 
@@ -94,6 +127,7 @@ const BalanceDisplay: React.FC = () => {
     activeWallet,
     activeSolanaWallet,
     activeBitcoinWallet,
+    activeAccount,
     activeChain,
     isSolanaChain,
     isBitcoinChain,

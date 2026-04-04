@@ -1,7 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import { BITCOIN_TESTNET_ACCOUNTS_KEY } from '../services/chainplugins'
+import {
+  getDeviceNotificationPermission,
+  requestDeviceNotificationPermission,
+  type DeviceNotificationPermission,
+} from '../services/devices/notificationService'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
 import { useI18n } from '../i18n'
@@ -35,6 +40,8 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  const [notificationPermission, setNotificationPermission] =
+    useState<DeviceNotificationPermission>('default')
 
   const formatAddress = (address: string) => {
     if (!address) return ''
@@ -75,6 +82,43 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
     handleClose()
   }
 
+  useEffect(() => {
+    setNotificationPermission(getDeviceNotificationPermission())
+  }, [isOpen])
+
+  const notificationSublabel =
+    notificationPermission === 'granted'
+      ? t('notificationsStatusEnabled')
+      : notificationPermission === 'denied'
+        ? t('notificationsStatusBlocked')
+        : notificationPermission === 'unsupported'
+          ? t('notificationsStatusUnsupported')
+          : t('notificationsStatusTapToEnable')
+
+  const handleNotifications = async () => {
+    setFeatureError('')
+
+    const permission = await requestDeviceNotificationPermission()
+    setNotificationPermission(permission)
+
+    if (permission === 'granted') {
+      setFeatureError(t('notificationsEnabledMessage'))
+      return
+    }
+
+    if (permission === 'denied') {
+      setFeatureError(t('notificationsBlockedMessage'))
+      return
+    }
+
+    if (permission === 'unsupported') {
+      setFeatureError(t('notificationsUnsupportedMessage'))
+      return
+    }
+
+    setFeatureError(t('notificationsPermissionPendingMessage'))
+  }
+
   const menuItems: MenuItem[] = [
     {
       key: 'switch',
@@ -86,8 +130,10 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
       key: 'notifications',
       icon: '🔔',
       label: t('notifications'),
-      action: () => {},
-      disabled: true,
+      sublabel: notificationSublabel,
+      action: () => {
+        void handleNotifications()
+      },
     },
     {
       key: 'language',
