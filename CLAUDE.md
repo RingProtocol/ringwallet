@@ -94,7 +94,7 @@ AuthContext (src/contexts/AuthContext.tsx)
 
 ### Session Persistence
 
-Login state (including `masterSeed`) is serialized to `localStorage` key `wallet_login_state` with a 24h TTL. On page reload, `AuthContext` restores from storage and re-derives all wallets. `publicKey` (COSE format) is stored separately under `new_wallet_pk_{credentialId}` for EIP-7951 signature verification.
+`masterSeed` must stay in memory only for the active browser session. `AuthContext` clears any legacy `wallet_login_state` cache on boot, does not persist login sessions, and requires a fresh Passkey/WebAuthn verification each time the app is reopened before wallets are derived again. `publicKey` (COSE format) may still be stored separately under `new_wallet_pk_{credentialId}` for EIP-7951 signature verification.
 
 ---
 

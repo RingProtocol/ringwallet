@@ -1,60 +1,69 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
-import { chainRegistry, BITCOIN_TESTNET_ACCOUNTS_KEY, type DerivedAccount } from '../services/chainplugins'
-import CharUtils from '../utils/CharUtils'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from 'react'
+import {
+  chainRegistry,
+  BITCOIN_TESTNET_ACCOUNTS_KEY,
+  type DerivedAccount,
+} from '../services/chainplugins'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS } from '../config/chains'
-import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
 export type { ChainFamily, Chain }
 
 export interface Wallet {
-  index: number;
-  address: string;
-  privateKey: string | null;
-  type: WalletType;
-  credentialId?: string;
-  path?: string;
+  index: number
+  address: string
+  privateKey: string | null
+  type: WalletType
+  credentialId?: string
+  path?: string
 }
 
 export interface UserData {
-  id: string;
-  name: string;
-  loginTime: string;
-  masterSeed?: Uint8Array | number[];
-  publicKey?: Map<number, Uint8Array> | Record<string | number, unknown> | null;
-  accountType: WalletType;
+  id: string
+  name: string
+  loginTime: string
+  masterSeed?: Uint8Array | number[]
+  publicKey?: Map<number, Uint8Array> | Record<string | number, unknown> | null
+  accountType: WalletType
 }
 
 interface AuthContextValue {
-  isLoggedIn: boolean;
-  user: UserData | null;
-  wallets: Wallet[];
-  activeWallet: Wallet | null;
-  activeWalletIndex: number;
-  switchWallet: (index: number) => void;
-  login: (userData: UserData) => Promise<void>;
-  logout: () => void;
-  CHAINS: Chain[];
-  activeChainId: number | string;
-  activeChain: Chain;
-  switchChain: (chainId: number | string) => void;
+  isLoggedIn: boolean
+  user: UserData | null
+  wallets: Wallet[]
+  activeWallet: Wallet | null
+  activeWalletIndex: number
+  switchWallet: (index: number) => void
+  login: (userData: UserData) => Promise<void>
+  logout: () => void
+  CHAINS: Chain[]
+  activeChainId: number | string
+  activeChain: Chain
+  switchChain: (chainId: number | string) => void
   /** Solana wallets — same index mapping as EVM wallets */
-  solanaWallets: Wallet[];
-  activeSolanaWallet: Wallet | null;
+  solanaWallets: Wallet[]
+  activeSolanaWallet: Wallet | null
   /** True when the currently selected chain is a Solana chain */
-  isSolanaChain: boolean;
+  isSolanaChain: boolean
   /** Bitcoin wallets — same index mapping as EVM wallets */
-  bitcoinWallets: Wallet[];
-  activeBitcoinWallet: Wallet | null;
+  bitcoinWallets: Wallet[]
+  activeBitcoinWallet: Wallet | null
   /** True when the currently selected chain is a Bitcoin chain */
-  isBitcoinChain: boolean;
+  isBitcoinChain: boolean
 
   /** All derived accounts keyed by ChainFamily. Prefer this over the per-chain arrays. */
-  accountsByFamily: Record<string, DerivedAccount[]>;
+  accountsByFamily: Record<string, DerivedAccount[]>
   /** Active account for the currently selected chain family. */
-  activeAccount: DerivedAccount | null;
+  activeAccount: DerivedAccount | null
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -79,47 +88,61 @@ function derivedAccountToWallet(account: DerivedAccount): Wallet {
   }
 }
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
-  const [accountsByFamily, setAccountsByFamily] = useState<Record<string, DerivedAccount[]>>({})
+  const [accountsByFamily, setAccountsByFamily] = useState<
+    Record<string, DerivedAccount[]>
+  >({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
-  const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS);
-  const [activeChainId, setActiveChainId] = useState<number | string>(1);
+  const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS)
+  const [activeChainId, setActiveChainId] = useState<number | string>(1)
 
   useEffect(() => {
     const fetchChains = async () => {
       try {
-        const response = await fetch('/chainid.json');
-        if (!response.ok) throw new Error('Failed to fetch chain data');
-        const data = await response.json();
+        const response = await fetch('/chainid.json')
+        if (!response.ok) throw new Error('Failed to fetch chain data')
+        const data = await response.json()
 
-        const extraChains: Chain[] = data.map((c: Record<string, unknown>) => ({
-          id: c.chainId as number,
-          name: c.name as string,
-          symbol: (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
-          family: ChainFamily.EVM,
-          rpcUrl: ((c.rpc as string[]) ?? [])
-            .map(rpc => rpc.replace('${INFURA_API_KEY}', import.meta.env.VITE_INFURA_API_KEY || ''))
-            .filter(Boolean),
-          explorer: (c.explorers as Array<{ url: string }>)?.length > 0
-            ? (c.explorers as Array<{ url: string }>)[0].url
-            : '',
-        })).filter((c: Chain) =>
-          c.rpcUrl.length > 0 &&
-          !getPrimaryRpcUrl(c).includes('${') &&
-          !DEFAULT_CHAINS.some(dc => dc.id === c.id)
-        );
+        const extraChains: Chain[] = data
+          .map((c: Record<string, unknown>) => ({
+            id: c.chainId as number,
+            name: c.name as string,
+            symbol:
+              (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
+            family: ChainFamily.EVM,
+            rpcUrl: ((c.rpc as string[]) ?? [])
+              .map((rpc) =>
+                rpc.replace(
+                  '${INFURA_API_KEY}',
+                  import.meta.env.VITE_INFURA_API_KEY || ''
+                )
+              )
+              .filter(Boolean),
+            explorer:
+              (c.explorers as Array<{ url: string }>)?.length > 0
+                ? (c.explorers as Array<{ url: string }>)[0].url
+                : '',
+          }))
+          .filter(
+            (c: Chain) =>
+              c.rpcUrl.length > 0 &&
+              !getPrimaryRpcUrl(c).includes('${') &&
+              !DEFAULT_CHAINS.some((dc) => dc.id === c.id)
+          )
 
-        setChains([...DEFAULT_CHAINS, ...extraChains]);
+        setChains([...DEFAULT_CHAINS, ...extraChains])
       } catch (error) {
-        console.error('Error loading chains:', error);
+        console.error('Error loading chains:', error)
       }
-    };
+    }
 
-    fetchChains();
-  }, []);
+    fetchChains()
+  }, [])
 
   function deriveAllFromSeed(seed: Uint8Array, count: number) {
     const all = chainRegistry.deriveAllAccounts(seed, count)
@@ -127,67 +150,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   useEffect(() => {
-    const savedChainId = safeGetItem('active_chain_id');
+    const savedChainId = safeGetItem('active_chain_id')
     if (savedChainId) {
-      const parsed = Number(savedChainId);
-      setActiveChainId(Number.isInteger(parsed) && !isNaN(parsed) ? parsed : savedChainId);
+      const parsed = Number(savedChainId)
+      setActiveChainId(
+        Number.isInteger(parsed) && !isNaN(parsed) ? parsed : savedChainId
+      )
     }
 
-    const savedLoginState = safeGetItem('wallet_login_state')
-    if (!savedLoginState) return
-
-    try {
-      const loginData = JSON.parse(savedLoginState) as { isLoggedIn: boolean; user: UserData; timestamp: number }
-      if (!loginData.isLoggedIn || !loginData.timestamp) return
-
-      const isExpired = Date.now() - loginData.timestamp > 24 * 60 * 60 * 1000
-      if (isExpired) {
-        safeRemoveItem('wallet_login_state')
-        safeRemoveItem('active_wallet_index')
-        return
-      }
-
-      if (loginData.user?.publicKey) {
-        const publicKey = loginData.user.publicKey;
-
-        const isEmptyObject = typeof publicKey === 'object' && publicKey !== null &&
-          !(publicKey instanceof Map) &&
-          Object.keys(publicKey).length === 0;
-
-        if (isEmptyObject) {
-          loginData.user.publicKey = null;
-        } else {
-          const normalizedPublicKey = CharUtils.normalizeCoseKey(publicKey as Map<number, Uint8Array>);
-          loginData.user.publicKey = normalizedPublicKey;
-        }
-
-        if (!loginData.user.publicKey && loginData.user.id) {
-          try {
-            loginData.user.publicKey = CharUtils.findPublicKeyFromStorage(loginData.user.id) ?? null;
-          } catch (e) {
-            console.warn('Failed to restore publicKey from storage:', e);
-          }
-        }
-      }
-
-      loginData.user.accountType = WalletType.EOA
-      setIsLoggedIn(true)
-      setUser(loginData.user)
-
-      if (loginData.user?.masterSeed) {
-        const seed = new Uint8Array(Object.values(loginData.user.masterSeed as unknown as Record<string, number>));
-        deriveAllFromSeed(seed, 5)
-
-        const savedIndex = safeGetItem('active_wallet_index')
-        if (savedIndex !== null) {
-          setActiveWalletIndex(parseInt(savedIndex, 10))
-        }
-      }
-    } catch (error) {
-      console.error('Error restoring login state:', error)
-      safeRemoveItem('wallet_login_state')
-      safeRemoveItem('active_wallet_index')
-    }
+    safeRemoveItem('wallet_login_state')
   }, [])
 
   const login = async (userData: UserData) => {
@@ -200,38 +171,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const seed = userData.masterSeed as Uint8Array
         deriveAllFromSeed(seed, 5)
-        setActiveWalletIndex(0)
+        const savedIndex = safeGetItem('active_wallet_index')
+        const parsedIndex = savedIndex !== null ? parseInt(savedIndex, 10) : NaN
+        const nextWalletIndex =
+          Number.isInteger(parsedIndex) && parsedIndex >= 0 && parsedIndex < 5
+            ? parsedIndex
+            : 0
+        setActiveWalletIndex(nextWalletIndex)
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
       }
     }
-
-    const userDataForStorage: Record<string, unknown> = { ...userData };
-    if (userDataForStorage.publicKey) {
-      const pk = userDataForStorage.publicKey;
-      if (pk instanceof Map ||
-        (typeof pk === 'object' &&
-          pk !== null &&
-          !(pk as { _type?: string })._type)) {
-        const storageFormat = CharUtils.coseKeyToStorage(pk as Map<number, Uint8Array>);
-        if (storageFormat) {
-          userDataForStorage.publicKey = storageFormat;
-          DbgLog.log('✅ Public Key converted to storage format');
-        } else {
-          console.warn('⚠️ Failed to convert publicKey to storage format; skipping save to avoid serialization errors');
-          delete userDataForStorage.publicKey;
-        }
-      } else {
-        DbgLog.log('✅ Public Key is already in storage format');
-      }
-    }
-
-    const loginState = {
-      isLoggedIn: true,
-      user: userDataForStorage,
-      timestamp: Date.now()
-    }
-    safeSetItem('wallet_login_state', JSON.stringify(loginState))
+    safeRemoveItem('wallet_login_state')
   }
 
   const logout = () => {
@@ -240,7 +191,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccountsByFamily({})
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
-    safeRemoveItem('active_wallet_index')
   }
 
   const switchWallet = (index: number) => {
@@ -252,42 +202,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const switchChain = (chainId: number | string) => {
-    const chain = CHAINS.find(c => c.id === chainId);
+    const chain = CHAINS.find((c) => c.id === chainId)
     if (chain) {
-      setActiveChainId(chainId);
-      safeSetItem('active_chain_id', chainId.toString());
+      setActiveChainId(chainId)
+      safeSetItem('active_chain_id', chainId.toString())
     }
   }
 
-  const activeChain = CHAINS.find(c => c.id === activeChainId) || CHAINS[0]
+  const activeChain = CHAINS.find((c) => c.id === activeChainId) || CHAINS[0]
   const isSolanaChain = activeChain?.family === ChainFamily.Solana
   const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
 
   // Backward-compatible per-family wallet arrays (derived from accountsByFamily)
   const wallets = useMemo(
     () => (accountsByFamily[ChainFamily.EVM] ?? []).map(derivedAccountToWallet),
-    [accountsByFamily],
+    [accountsByFamily]
   )
   const solanaWallets = useMemo(
-    () => (accountsByFamily[ChainFamily.Solana] ?? []).map(derivedAccountToWallet),
-    [accountsByFamily],
+    () =>
+      (accountsByFamily[ChainFamily.Solana] ?? []).map(derivedAccountToWallet),
+    [accountsByFamily]
   )
   const bitcoinWallets = useMemo(() => {
     const isBtcTestnet =
-      activeChain?.family === ChainFamily.Bitcoin && activeChain.network === 'testnet'
-    const key = isBtcTestnet ? BITCOIN_TESTNET_ACCOUNTS_KEY : ChainFamily.Bitcoin
+      activeChain?.family === ChainFamily.Bitcoin &&
+      activeChain.network === 'testnet'
+    const key = isBtcTestnet
+      ? BITCOIN_TESTNET_ACCOUNTS_KEY
+      : ChainFamily.Bitcoin
     return (accountsByFamily[key] ?? []).map(derivedAccountToWallet)
   }, [accountsByFamily, activeChain])
 
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
-  const activeSolanaWallet = solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
-  const activeBitcoinWallet = bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
+  const activeSolanaWallet =
+    solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
+  const activeBitcoinWallet =
+    bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
 
   const activeAccount = useMemo(() => {
     const family = activeChain?.family
     if (!family) return null
     if (family === ChainFamily.Bitcoin && activeChain.network === 'testnet') {
-      return (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[activeWalletIndex] ?? null
+      return (
+        (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[
+          activeWalletIndex
+        ] ?? null
+      )
     }
     const accounts = accountsByFamily[family] ?? []
     return accounts[activeWalletIndex] ?? null
@@ -316,9 +276,5 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     activeAccount,
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -108,11 +108,11 @@ anvil --fork-url "$FORK_URL_ARBITRUM_SEPOLIA" --port 8546 &
 
 ## 8. 推荐分层
 
-| 层级     | 工具              | 内容                                                                                   |
-| -------- | ----------------- | -------------------------------------------------------------------------------------- |
-| 链上逻辑 | Vitest + ethers   | Fork 由 `anvil` 提供；脚本 funding、ERC20、A→B 转账、receipt                           |
-| UI       | Playwright        | E2E 注入会话（如 `masterSeed` / `wallet_login_state`）；RPC 指本地；断言余额与交易列表 |
-| CI       | GitHub Actions 等 | 安装 Foundry → 起 `anvil` → 等端口就绪 → 跑测试                                        |
+| 层级     | 工具              | 内容                                                                                                                   |
+| -------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 链上逻辑 | Vitest + ethers   | Fork 由 `anvil` 提供；脚本 funding、ERC20、A→B 转账、receipt                                                           |
+| UI       | Playwright        | E2E 通过 WebAuthn/Passkey mock 完成登录；不要注入 `masterSeed` 或 `wallet_login_state`；RPC 指本地；断言余额与交易列表 |
+| CI       | GitHub Actions 等 | 安装 Foundry → 起 `anvil` → 等端口就绪 → 跑测试                                                                        |
 
 PR 可只跑 **1～2 条 fork**（如 Sepolia + 一条 L2 testnet）；nightly 再扩矩阵。
 
