@@ -110,8 +110,22 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
               viewBox="0 0 20 20"
               className="dapp-container__wallet-home-badge-icon"
             >
-              <path d="M10 2.4a.8.8 0 0 1 .8.8v4.6h.6V5.6a.8.8 0 1 1 1.6 0v2.2h.6V6.6a.8.8 0 1 1 1.6 0v2.56a2.6 2.6 0 0 1-.24 1.1l-1.48 3.28A2.6 2.6 0 0 1 11.51 15H9.73a2.6 2.6 0 0 1-2.12-1.1L5.6 11.08a.8.8 0 0 1 1.28-.96l1.52 1.88V3.2a.8.8 0 0 1 .8-.8Z" />
-              <path d="M6.1 5.6a.8.8 0 0 1 1.13 0l.52.52a.8.8 0 1 1-1.13 1.13l-.52-.52a.8.8 0 0 1 0-1.13Zm7.67 0a.8.8 0 0 1 1.13 1.13l-.52.52a.8.8 0 1 1-1.13-1.13l.52-.52ZM10 4.2a.8.8 0 0 1-.8-.8v-.8a.8.8 0 1 1 1.6 0v.8a.8.8 0 0 1-.8.8Z" />
+              <path
+                d="M9.1 2.55a1 1 0 0 1 1 1v4.08h.58V5.74a.94.94 0 1 1 1.88 0v1.89h.56V6.56a.94.94 0 1 1 1.88 0v2.72c0 .58-.12 1.15-.35 1.68l-1.3 2.97A2.44 2.44 0 0 1 11.11 15.4H9.86c-.83 0-1.62-.37-2.14-1.01l-2.2-2.73a.86.86 0 0 1 1.34-1.08l1.44 1.72V3.55a1 1 0 0 1 1-1Z"
+                fill="#fff"
+                stroke="rgba(31, 41, 55, 0.8)"
+                strokeWidth="0.95"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12.7 3.1l.66-.66M14.22 4.3h.93M12.98 5.65l.66.66"
+                fill="none"
+                stroke="rgba(31, 41, 55, 0.72)"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </span>
         </button>
