@@ -58,8 +58,6 @@ const LoginButton: React.FC = () => {
     masterSeed: Uint8Array | null
     publicKey: Map<number, Uint8Array> | null
   }) => {
-    DbgLog.log('[login]credential=', credential)
-
     if (!credential.masterSeed) {
       setError(t('cannotRestoreSeed'))
       return
