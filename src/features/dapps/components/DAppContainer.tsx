@@ -102,6 +102,18 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
             alt=""
             className="dapp-container__wallet-home-btn-img"
           />
+          <span
+            className="dapp-container__wallet-home-badge"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 20 20"
+              className="dapp-container__wallet-home-badge-icon"
+            >
+              <path d="M10 2.4a.8.8 0 0 1 .8.8v4.6h.6V5.6a.8.8 0 1 1 1.6 0v2.2h.6V6.6a.8.8 0 1 1 1.6 0v2.56a2.6 2.6 0 0 1-.24 1.1l-1.48 3.28A2.6 2.6 0 0 1 11.51 15H9.73a2.6 2.6 0 0 1-2.12-1.1L5.6 11.08a.8.8 0 0 1 1.28-.96l1.52 1.88V3.2a.8.8 0 0 1 .8-.8Z" />
+              <path d="M6.1 5.6a.8.8 0 0 1 1.13 0l.52.52a.8.8 0 1 1-1.13 1.13l-.52-.52a.8.8 0 0 1 0-1.13Zm7.67 0a.8.8 0 0 1 1.13 1.13l-.52.52a.8.8 0 1 1-1.13-1.13l.52-.52ZM10 4.2a.8.8 0 0 1-.8-.8v-.8a.8.8 0 1 1 1.6 0v.8a.8.8 0 0 1-.8.8Z" />
+            </svg>
+          </span>
         </button>
         <div className="dapp-container__info">
           <img
