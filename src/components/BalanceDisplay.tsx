@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ethers } from 'ethers'
 import { useAuth } from '../contexts/AuthContext'
 import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily, getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import './BalanceDisplay.css'
 
@@ -101,10 +101,9 @@ const BalanceDisplay: React.FC = () => {
       } else if (isEvmChain) {
         if (!activeWallet) return
         try {
-          const provider = new ethers.JsonRpcProvider(rpcUrl)
-          const balanceWei = await provider.getBalance(activeWallet.address)
-          const balanceEth = ethers.formatEther(balanceWei)
-          commitBalance(parseFloat(balanceEth).toFixed(4), {
+          const evmService = RpcService.fromChain(activeChain).getEvmService()
+          const bal = await evmService.getFormattedBalance(activeWallet.address)
+          commitBalance(parseFloat(bal).toFixed(4), {
             notifyOnChange: true,
           })
         } catch (error) {
