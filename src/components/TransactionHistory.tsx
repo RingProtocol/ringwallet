@@ -18,11 +18,70 @@ import {
 } from '../features/history/types'
 import RpcService from '../services/rpc/rpcService'
 import { resolveClientApiUrl } from '../utils/apiUrl'
+import { addToken, getTokenList } from '../utils/tokenStorage'
+import { resolveTokenMetadata } from '../services/tokenMetadataResolver'
 
 const PENDING_POLL_INTERVAL_MS = 8 * 1000
 
 function logError(...args: unknown[]): void {
   globalThis.console.error(...args)
+}
+
+async function discoverTokensFromHistory(
+  transactions: TxRecord[],
+  chainId: string | number,
+  walletAddress: string,
+  chain: { family?: ChainFamily; rpcUrl: string[] }
+): Promise<void> {
+  if (chain.family === ChainFamily.Bitcoin) return
+
+  const tokenTxs = transactions.filter(
+    (tx) => tx.assetType === 'token' && tx.assetAddress
+  )
+  if (tokenTxs.length === 0) return
+
+  const knownAddresses = new Set(
+    getTokenList(walletAddress, chainId).map((t) => t.address.toLowerCase())
+  )
+
+  // Collect unique new token addresses with their best-available hints
+  const newTokenMap = new Map<
+    string,
+    { symbol?: string; name?: string; decimals?: number }
+  >()
+  for (const tx of tokenTxs) {
+    const addr = tx.assetAddress!.toLowerCase()
+    if (knownAddresses.has(addr) || newTokenMap.has(addr)) continue
+    newTokenMap.set(addr, {
+      symbol: tx.assetSymbol,
+      name: tx.assetName,
+      decimals: tx.assetDecimals,
+    })
+  }
+  if (newTokenMap.size === 0) return
+
+  const results = await Promise.allSettled(
+    [...newTokenMap.entries()].map(async ([addr, hints]) => {
+      const meta = await resolveTokenMetadata(
+        chain.family,
+        addr,
+        chain.rpcUrl,
+        hints,
+      )
+      if (!meta) return false
+      addToken(walletAddress, chainId, {
+        address: addr,
+        symbol: meta.symbol,
+        name: meta.name,
+        decimals: meta.decimals,
+      })
+      return true
+    })
+  )
+
+  if (results.some((r) => r.status === 'fulfilled' && r.value)) {
+    window.dispatchEvent(new CustomEvent('ring:tokens-updated'))
+  }
 }
 
 const TransactionHistory: React.FC = () => {
@@ -97,6 +156,12 @@ const TransactionHistory: React.FC = () => {
         const payload = (await response.json()) as HistoryApiResponse
         updateTransactions((current) =>
           mergeTransactions(current, payload.transactions)
+        )
+        void discoverTokensFromHistory(
+          payload.transactions,
+          chainId,
+          address,
+          activeChain
         )
       } catch (error) {
         logError('[TransactionHistory] Failed to fetch history:', error)

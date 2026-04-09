@@ -95,6 +95,17 @@ function publicKeyToTronAddress(compressedPubKey: string): string {
   return toBase58Check(payload)
 }
 
+/**
+ * Convert a Tron Base58Check address (T-prefix) to a 0x-prefixed hex address
+ * usable with EVM-compatible JSON-RPC endpoints.
+ */
+export function tronAddressToHex(tronAddress: string): string {
+  const decoded = decodeBase58(tronAddress)
+  // 21 bytes payload (0x41 + 20-byte address) + 4 bytes checksum = 25 bytes
+  const addressBytes = decoded.slice(1, 21)
+  return '0x' + Array.from(addressBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 class TronChainPlugin implements ChainPlugin {
   readonly family = ChainFamily.Tron
 

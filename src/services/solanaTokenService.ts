@@ -4,6 +4,7 @@ import {
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
   getAccount,
+  getMint,
   TokenAccountNotFoundError,
 } from '@solana/spl-token';
 
@@ -44,6 +45,14 @@ export class SolanaTokenService {
       if (err instanceof TokenAccountNotFoundError) return true;
       throw err;
     }
+  }
+
+  /**
+   * Fetch on-chain mint info (decimals) for an SPL token.
+   */
+  async getTokenMetadata(mint: string): Promise<{ decimals: number }> {
+    const mintInfo = await getMint(this.connection, new PublicKey(mint))
+    return { decimals: mintInfo.decimals }
   }
 
   /**

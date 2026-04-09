@@ -27,9 +27,15 @@ export class RpcService {
     return `${String(family)}::${rpcUrls}`
   }
 
+  private static readonly EVM_COMPATIBLE_FAMILIES = new Set([
+    ChainFamily.EVM,
+    ChainFamily.Tron,
+  ])
+
   getEvmService(): EvmRpcService {
-    if (this.chain?.family && this.chain.family !== ChainFamily.EVM) {
-      throw new Error(`RPC service for ${String(this.chain.family)} is not implemented`);
+    const family = this.chain?.family
+    if (family && !RpcService.EVM_COMPATIBLE_FAMILIES.has(family)) {
+      throw new Error(`RPC service for ${String(family)} is not implemented`);
     }
 
     const rpcUrls = this.chain?.rpcUrl?.filter(Boolean) ?? []

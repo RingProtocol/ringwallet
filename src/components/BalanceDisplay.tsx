@@ -4,6 +4,7 @@ import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily, getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import { tronAddressToHex } from '../services/chainplugins/tron/tronPlugin'
 import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import './BalanceDisplay.css'
@@ -29,6 +30,7 @@ const BalanceDisplay: React.FC = () => {
   } = useAuth()
   const isEvmChain =
     activeChain?.family === ChainFamily.EVM || !activeChain?.family
+  const isTronChain = activeChain?.family === ChainFamily.Tron
   const [balance, setBalance] = useState('0.0000')
   const observedBalanceRef = useRef<string | null>(null)
 
@@ -110,12 +112,25 @@ const BalanceDisplay: React.FC = () => {
           console.error('Failed to fetch EVM balance:', error)
           commitBalance('0.0000', { recordObserved: false })
         }
+      } else if (isTronChain) {
+        if (!activeAccount) return
+        try {
+          const evmService = RpcService.fromChain(activeChain).getEvmService()
+          const hexAddr = tronAddressToHex(activeAccount.address)
+          const bal = await evmService.getFormattedBalance(hexAddr)
+          commitBalance(parseFloat(bal).toFixed(4), {
+            notifyOnChange: true,
+          })
+        } catch (error) {
+          console.error('Failed to fetch Tron balance:', error)
+          commitBalance('0.0000', { recordObserved: false })
+        }
       } else {
         commitBalance('0.0000', { recordObserved: false })
       }
     }
 
-    if (isBitcoinChain || isSolanaChain || isEvmChain) {
+    if (isBitcoinChain || isSolanaChain || isEvmChain || isTronChain) {
       fetchBalance()
       const interval = setInterval(fetchBalance, BALANCE_POLL_INTERVAL_MS)
       return () => clearInterval(interval)
@@ -131,6 +146,7 @@ const BalanceDisplay: React.FC = () => {
     isSolanaChain,
     isBitcoinChain,
     isEvmChain,
+    isTronChain,
   ])
 
   if (!activeAccount) return null

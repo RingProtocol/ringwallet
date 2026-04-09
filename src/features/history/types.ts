@@ -11,6 +11,7 @@ export interface TxRecord {
   assetSymbol?: string
   assetName?: string
   assetAddress?: string
+  assetDecimals?: number
   assetType?: 'native' | 'token'
 }
 

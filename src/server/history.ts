@@ -242,6 +242,7 @@ function mapEtherscanTokenTransfers(
       assetName: tx.tokenName?.trim() || undefined,
       assetSymbol: tx.tokenSymbol?.trim() || undefined,
       assetAddress: tx.contractAddress?.trim() || undefined,
+      assetDecimals: normalizedDecimals,
     } satisfies TxRecord
   })
 }
@@ -312,15 +313,78 @@ async function fetchEvmPendingTransactions(
   }
 }
 
-function extractSolanaTransfer(
-  record: Awaited<ReturnType<Connection['getParsedTransactions']>>[number],
-  address: string
-): {
+interface SolanaTransferResult {
   from: string
   to: string
   value: string
-} {
+  assetType?: 'native' | 'token'
+  assetAddress?: string
+  assetDecimals?: number
+}
+
+function extractSolanaTransfer(
+  record: Awaited<ReturnType<Connection['getParsedTransactions']>>[number],
+  address: string
+): SolanaTransferResult {
   const instructions = record?.transaction.message.instructions ?? []
+
+  // First pass: look for SPL token transfers (transferChecked / transfer)
+  for (const instruction of instructions) {
+    if (!('parsed' in instruction)) continue
+    const parsedInstruction = instruction as ParsedInstruction
+    const programId = parsedInstruction.programId?.toBase58?.()
+    const parsedType = parsedInstruction.parsed?.type as string | undefined
+    const info = parsedInstruction.parsed?.info as
+      | Record<string, unknown>
+      | undefined
+    if (!info) continue
+
+    const isSplToken =
+      programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+
+    if (isSplToken && (parsedType === 'transferChecked' || parsedType === 'transfer')) {
+      const from =
+        typeof info.authority === 'string'
+          ? info.authority
+          : typeof info.source === 'string'
+            ? info.source
+            : address
+      const to =
+        typeof info.destination === 'string'
+          ? info.destination
+          : address
+
+      const tokenAmount = info.tokenAmount as
+        | { uiAmountString?: string; decimals?: number }
+        | undefined
+
+      let value: string
+      let decimals: number | undefined
+
+      if (tokenAmount?.uiAmountString) {
+        value = tokenAmount.uiAmountString
+        decimals = tokenAmount.decimals
+      } else if (typeof info.amount === 'string') {
+        value = info.amount
+      } else {
+        continue
+      }
+
+      const mint =
+        typeof info.mint === 'string' ? info.mint : undefined
+
+      return {
+        from,
+        to,
+        value,
+        assetType: 'token',
+        assetAddress: mint,
+        assetDecimals: decimals,
+      }
+    }
+  }
+
+  // Second pass: native SOL transfers
   for (const instruction of instructions) {
     if (!('parsed' in instruction)) continue
     const parsedInstruction = instruction as ParsedInstruction
@@ -349,14 +413,11 @@ function extractSolanaTransfer(
           : null
 
     if (rawValue !== null) {
-      return {
-        from,
-        to,
-        value: formatUnits(rawValue, 9),
-      }
+      return { from, to, value: formatUnits(rawValue, 9) }
     }
   }
 
+  // Fallback: compute delta from pre/post balances
   const accountKeys = record?.transaction.message.accountKeys ?? []
   const ownerIndex = accountKeys.findIndex(
     (key) => key.pubkey.toBase58() === address
@@ -369,11 +430,7 @@ function extractSolanaTransfer(
   const signer =
     accountKeys.find((key) => key.signer)?.pubkey.toBase58() ?? address
 
-  return {
-    from: signer,
-    to: address,
-    value: formatUnits(delta, 9),
-  }
+  return { from: signer, to: address, value: formatUnits(delta, 9) }
 }
 
 async function fetchSolanaHistory(
@@ -394,7 +451,7 @@ async function fetchSolanaHistory(
   return signatures.map((signature, index) => {
     const parsed = transactions[index]
     const transfer = extractSolanaTransfer(parsed, address)
-    return {
+    const record: TxRecord = {
       hash: signature.signature,
       from: transfer.from,
       to: transfer.to,
@@ -402,6 +459,12 @@ async function fetchSolanaHistory(
       timestamp: signature.blockTime ?? Math.floor(Date.now() / 1000),
       status: signature.err ? 'failed' : 'confirmed',
     }
+    if (transfer.assetType === 'token') {
+      record.assetType = 'token'
+      record.assetAddress = transfer.assetAddress
+      record.assetDecimals = transfer.assetDecimals
+    }
+    return record
   })
 }
 
@@ -450,25 +513,84 @@ async function fetchBitcoinHistory(
   return payload.slice(0, limit).map((tx) => mapBitcoinHistory(tx, address))
 }
 
+interface TronTrc20Transfer {
+  transaction_id: string
+  block_timestamp: number
+  from: string
+  to: string
+  value: string
+  token_info?: {
+    symbol?: string
+    name?: string
+    decimals?: number
+    address?: string
+  }
+}
+
+async function fetchTronTrc20Transfers(
+  baseUrl: string,
+  address: string,
+  limit: number,
+): Promise<TxRecord[]> {
+  try {
+    const response = await fetch(
+      `${baseUrl}/v1/accounts/${address}/transactions/trc20?limit=${limit}`,
+      {
+        headers: { accept: 'application/json' },
+        next: { revalidate: 60 },
+      },
+    )
+    if (!response.ok) return []
+
+    const payload = (await response.json()) as {
+      data?: TronTrc20Transfer[]
+    }
+
+    return (payload.data ?? []).slice(0, limit).map((item) => {
+      const decimals = item.token_info?.decimals ?? 6
+      return {
+        id: `${item.transaction_id}:${item.token_info?.address ?? ''}:${item.from}:${item.to}`,
+        hash: item.transaction_id,
+        from: item.from ?? address,
+        to: item.to ?? address,
+        value: formatUnits(parseBigInt(item.value), decimals),
+        timestamp: Math.floor((item.block_timestamp ?? Date.now()) / 1000),
+        status: 'confirmed' as const,
+        assetType: 'token' as const,
+        assetSymbol: item.token_info?.symbol,
+        assetName: item.token_info?.name,
+        assetAddress: item.token_info?.address,
+        assetDecimals: item.token_info?.decimals,
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
 async function fetchTronHistory(
   chain: Chain,
   address: string,
   limit: number
 ): Promise<TxRecord[]> {
   const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
-  const response = await fetch(
-    `${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`,
-    {
-      headers: { accept: 'application/json' },
-      next: { revalidate: 60 },
-    }
-  )
 
-  if (!response.ok) {
-    throw new Error(`Tron history request failed with ${response.status}`)
+  const [nativeResponse, trc20Transfers] = await Promise.all([
+    fetch(
+      `${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`,
+      {
+        headers: { accept: 'application/json' },
+        next: { revalidate: 60 },
+      },
+    ),
+    fetchTronTrc20Transfers(baseUrl, address, limit),
+  ])
+
+  if (!nativeResponse.ok) {
+    throw new Error(`Tron history request failed with ${nativeResponse.status}`)
   }
 
-  const payload = (await response.json()) as {
+  const payload = (await nativeResponse.json()) as {
     data?: Array<{
       txID: string
       block_timestamp: number
@@ -487,7 +609,7 @@ async function fetchTronHistory(
     }>
   }
 
-  return (payload.data ?? []).slice(0, limit).map((item) => {
+  const nativeTxs: TxRecord[] = (payload.data ?? []).slice(0, limit).map((item) => {
     const transfer = item.raw_data?.contract?.[0]?.parameter?.value
     return {
       hash: item.txID,
@@ -502,6 +624,10 @@ async function fetchTronHistory(
         : 'confirmed',
     }
   })
+
+  return [...nativeTxs, ...trc20Transfers]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, limit)
 }
 
 async function fetchCosmosHistory(
