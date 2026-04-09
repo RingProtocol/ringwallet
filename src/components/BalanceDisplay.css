@@ -19,6 +19,10 @@
   color: #666;
   font-weight: 500;
   margin-left: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
 }
 
 .wallet-address {

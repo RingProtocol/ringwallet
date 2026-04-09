@@ -14,6 +14,7 @@ import {
   type TokenInfo as StoredTokenInfo,
 } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
+import ChainIcon from './ChainIcon'
 import './TokenBalance.css'
 import { useI18n } from '../i18n'
 
@@ -206,7 +207,7 @@ const TokenBalance: React.FC = () => {
               const tokenService = new SolanaTokenService(connection)
               const balance = await tokenService.getTokenBalance(
                 activeSolanaWallet.address,
-                t.address,
+                t.address
               )
               return {
                 symbol: t.symbol,
@@ -348,7 +349,7 @@ const TokenBalance: React.FC = () => {
               const formatted = await evmRpcService.getFormattedTokenBalance(
                 hexToken,
                 hexWallet,
-                t.decimals,
+                t.decimals
               )
               return {
                 symbol: t.symbol,
@@ -400,7 +401,8 @@ const TokenBalance: React.FC = () => {
     if (importedTokens.length === 0) return
 
     setTokens((current) => {
-      const nativeToken = current.find((t) => t.isNative) ??
+      const nativeToken =
+        current.find((t) => t.isNative) ??
         buildPlaceholderTokens(activeChain, false, false)[0]
       if (!nativeToken) return current
 
@@ -441,9 +443,17 @@ const TokenBalance: React.FC = () => {
             className="token-row"
           >
             <div className="token-icon-wrap">
-              <span className="token-icon-placeholder">
-                {token.symbol.charAt(0)}
-              </span>
+              {token.isNative && activeChain?.icon ? (
+                <ChainIcon
+                  icon={activeChain.icon}
+                  symbol={token.symbol}
+                  size={38}
+                />
+              ) : (
+                <span className="token-icon-placeholder">
+                  {token.symbol.charAt(0)}
+                </span>
+              )}
             </div>
             <div className="token-info">
               <span className="token-symbol">{token.symbol}</span>

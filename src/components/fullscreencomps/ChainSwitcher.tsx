@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth, type Chain } from '../../contexts/AuthContext'
-import { ChainFamily } from '../../models/ChainType'
 import { FEATURED_CHAIN_IDS, FEATURED_TESTNET_IDS } from '../../config/chains'
 import { safeGetItem, safeSetItem } from '../../utils/safeStorage'
+import ChainIcon from '../ChainIcon'
 import './ChainSwitcher.css'
 
 const USER_CHAINS_KEY = 'user_added_chain_ids'
@@ -146,12 +146,6 @@ const ChainSwitcher: React.FC = () => {
     )
   }
 
-  const chainIcon = (chain: Chain): string => {
-    if (chain.family === ChainFamily.Solana) return '◎'
-    if (chain.family === ChainFamily.Bitcoin) return '₿'
-    return '⬡'
-  }
-
   const featuredIds =
     activeTab === 'testnet' ? FEATURED_TESTNET_IDS : FEATURED_CHAIN_IDS
 
@@ -214,7 +208,13 @@ const ChainSwitcher: React.FC = () => {
   return (
     <div className="chain-switcher-container" ref={containerRef}>
       <div className="chain-switcher-trigger" onClick={toggleDropdown}>
-        <div className="chain-icon">{chainIcon(activeChain)}</div>
+        <div className="chain-icon">
+          <ChainIcon
+            icon={activeChain.icon}
+            symbol={activeChain.symbol}
+            size={20}
+          />
+        </div>
         <div className="chain-info">
           <span className="chain-name">{activeChain.name}</span>
         </div>
@@ -320,7 +320,13 @@ const ChainSwitcher: React.FC = () => {
                       onClick={() => handleSelect(chain.id)}
                     >
                       <div className="option-row">
-                        <span className="option-icon">{chainIcon(chain)}</span>
+                        <span className="option-icon">
+                          <ChainIcon
+                            icon={chain.icon}
+                            symbol={chain.symbol}
+                            size={18}
+                          />
+                        </span>
                         <span className="option-name">{chain.name}</span>
                         <span className="option-actions">
                           {chain.id === activeChain.id && (
@@ -350,7 +356,13 @@ const ChainSwitcher: React.FC = () => {
                     onClick={(e) => handleAddChain(chain.id, e)}
                   >
                     <div className="option-row">
-                      <span className="option-icon">{chainIcon(chain)}</span>
+                      <span className="option-icon">
+                        <ChainIcon
+                          icon={chain.icon}
+                          symbol={chain.symbol}
+                          size={18}
+                        />
+                      </span>
                       <span className="option-name">{chain.name}</span>
                       <span className="add-chain-icon">+</span>
                     </div>

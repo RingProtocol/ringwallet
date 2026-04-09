@@ -13,7 +13,7 @@ import {
 } from '../services/chainplugins'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
-import { DEFAULT_CHAINS } from '../config/chains'
+import { DEFAULT_CHAINS, NATIVE_COIN_ICON } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
 export type { ChainFamily, Chain }
@@ -109,25 +109,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const data = await response.json()
 
         const extraChains: Chain[] = data
-          .map((c: Record<string, unknown>) => ({
-            id: c.chainId as number,
-            name: c.name as string,
-            symbol:
-              (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH',
-            family: ChainFamily.EVM,
-            rpcUrl: ((c.rpc as string[]) ?? [])
-              .map((rpc) =>
-                rpc.replace(
-                  '${INFURA_API_KEY}',
-                  import.meta.env.VITE_INFURA_API_KEY || ''
+          .map((c: Record<string, unknown>) => {
+            const symbol =
+              (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH'
+            return {
+              id: c.chainId as number,
+              name: c.name as string,
+              symbol,
+              icon: NATIVE_COIN_ICON[symbol],
+              family: ChainFamily.EVM,
+              rpcUrl: ((c.rpc as string[]) ?? [])
+                .map((rpc) =>
+                  rpc.replace(
+                    '${INFURA_API_KEY}',
+                    import.meta.env.VITE_INFURA_API_KEY || ''
+                  )
                 )
-              )
-              .filter(Boolean),
-            explorer:
-              (c.explorers as Array<{ url: string }>)?.length > 0
-                ? (c.explorers as Array<{ url: string }>)[0].url
-                : '',
-          }))
+                .filter(Boolean),
+              explorer:
+                (c.explorers as Array<{ url: string }>)?.length > 0
+                  ? (c.explorers as Array<{ url: string }>)[0].url
+                  : '',
+            }
+          })
           .filter(
             (c: Chain) =>
               c.rpcUrl.length > 0 &&

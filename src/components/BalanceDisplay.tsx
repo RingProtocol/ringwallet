@@ -7,6 +7,7 @@ import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
 import { tronAddressToHex } from '../services/chainplugins/tron/tronPlugin'
 import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
+import ChainIcon from './ChainIcon'
 import './BalanceDisplay.css'
 
 function getEmptyBalance(isBitcoinChain: boolean): string {
@@ -154,10 +155,15 @@ const BalanceDisplay: React.FC = () => {
   return (
     <div className="balance-display">
       <div className="balance-amount">
-        <>
-          {balance}{' '}
-          <span className="currency-symbol">{activeChain.symbol || 'ETH'}</span>
-        </>
+        {balance}{' '}
+        <span className="currency-symbol">
+          <ChainIcon
+            icon={activeChain.icon}
+            symbol={activeChain.symbol || 'ETH'}
+            size={20}
+          />
+          {activeChain.symbol || 'ETH'}
+        </span>
       </div>
       {activeAccount?.address && (
         <div className="wallet-address">

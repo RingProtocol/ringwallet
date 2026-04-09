@@ -25,7 +25,10 @@
 }
 
 .chain-icon {
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .chain-info {
@@ -212,6 +215,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .option-name {
