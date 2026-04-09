@@ -258,7 +258,6 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   196, // X Layer
   999, // Hyperliquid L1
   9745, // Plasma
-  6342, // MegaETH Testnet
   2000, // Dogechain
 ]
 
@@ -272,6 +271,7 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   195, // X Layer Testnet
   998, // Hyperliquid Testnet
   9746, // Plasma Testnet
+  6342, // MegaETH Testnet
   568, // Dogechain Testnet
 ]
 
