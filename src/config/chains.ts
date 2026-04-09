@@ -142,9 +142,54 @@ function rpcUrl(chainId: string | number): string[] {
   return flattenRpcValues(ENV[key]?.rpc, RPC_FALLBACK[key])
 }
 
-// ─── Native coin icons ───
+// ─── Chain & coin icons ───
 
-/** Symbol → icon path for native coins. Used by DEFAULT_CHAINS and dynamic chain loading. */
+/** Chain ID → icon path. Each chain gets its own recognizable logo. */
+const CHAIN_ICON: Record<string | number, string> = {
+  // ── EVM mainnets ──
+  1: '/icons/chains/eth.svg',
+  10: '/icons/chains/optimism.svg',
+  42161: '/icons/chains/arbitrum.svg',
+  8453: '/icons/chains/base.svg',
+  137: '/icons/chains/polygon.svg',
+  324: '/icons/chains/zksync.svg',
+  59144: '/icons/chains/linea.svg',
+  534352: '/icons/chains/scroll.svg',
+  56: '/icons/chains/bnb.svg',
+  43114: '/icons/chains/avax.svg',
+  250: '/icons/chains/ftm.svg',
+  42220: '/icons/chains/celo.svg',
+  100: '/icons/chains/xdai.svg',
+  1284: '/icons/chains/glmr.svg',
+  5000: '/icons/chains/mnt.svg',
+  1101: '/icons/chains/polygon.svg', // Polygon zkEVM
+  81457: '/icons/chains/blast.svg',
+  7777777: '/icons/chains/zora.svg',
+  196: '/icons/chains/okb.svg',
+  999: '/icons/chains/hype.svg',
+  9745: '/icons/chains/xpl.svg',
+  6342: '/icons/chains/eth.svg', // MegaETH (ETH native)
+  2000: '/icons/chains/doge.svg',
+  // ── EVM testnets ──
+  11155111: '/icons/chains/eth.svg', // Sepolia
+  43113: '/icons/chains/avax.svg', // Fuji
+  195: '/icons/chains/okb.svg', // X Layer Testnet
+  998: '/icons/chains/hype.svg', // Hyperliquid Testnet
+  9746: '/icons/chains/xpl.svg', // Plasma Testnet
+  568: '/icons/chains/doge.svg', // Dogechain Testnet
+  // ── Non-EVM ──
+  'bitcoin-mainnet': '/icons/chains/btc.svg',
+  'bitcoin-testnet': '/icons/chains/btc.svg',
+  'bitcoin-testnet3': '/icons/chains/btc.svg',
+  'solana-mainnet': '/icons/chains/sol.svg',
+  'solana-devnet': '/icons/chains/sol.svg',
+  'tron-mainnet': '/icons/chains/trx.svg',
+  'tron-shasta': '/icons/chains/trx.svg',
+  'cosmos-hub': '/icons/chains/atom.svg',
+  'provenance-mainnet': '/icons/chains/hash.svg',
+}
+
+/** Symbol → icon path fallback for dynamic chains loaded from chainid.json. */
 export const NATIVE_COIN_ICON: Record<string, string> = {
   ETH: '/icons/chains/eth.svg',
   BTC: '/icons/chains/btc.svg',
@@ -153,6 +198,7 @@ export const NATIVE_COIN_ICON: Record<string, string> = {
   TRX: '/icons/chains/trx.svg',
   ATOM: '/icons/chains/atom.svg',
   POL: '/icons/chains/pol.svg',
+  MATIC: '/icons/chains/polygon.svg',
   AVAX: '/icons/chains/avax.svg',
   BNB: '/icons/chains/bnb.svg',
   FTM: '/icons/chains/ftm.svg',
@@ -167,6 +213,18 @@ export const NATIVE_COIN_ICON: Record<string, string> = {
   DOGE: '/icons/chains/doge.svg',
   HASH: '/icons/chains/hash.svg',
   SepoliaETH: '/icons/chains/eth.svg',
+}
+
+/** Resolve icon for a chain by ID, falling back to symbol-based lookup. */
+export function resolveChainIcon(
+  id: string | number,
+  symbol?: string
+): string | undefined {
+  return CHAIN_ICON[id] ?? (symbol ? NATIVE_COIN_ICON[symbol] : undefined)
+}
+
+function chainIcon(id: string | number): string | undefined {
+  return CHAIN_ICON[id]
 }
 
 // ─── Chain definitions ───
@@ -222,7 +280,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 1,
     name: 'Ethereum Mainnet',
     symbol: 'ETH',
-    icon: NATIVE_COIN_ICON['ETH'],
+    icon: chainIcon(1),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(1),
     explorer: 'https://etherscan.io',
@@ -234,7 +292,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 11155111,
     name: 'Sepolia Testnet',
     symbol: 'SepoliaETH',
-    icon: NATIVE_COIN_ICON['SepoliaETH'],
+    icon: chainIcon(11155111),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(11155111),
     explorer: 'https://sepolia.etherscan.io',
@@ -246,7 +304,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 10,
     name: 'Optimism',
     symbol: 'ETH',
-    icon: NATIVE_COIN_ICON['ETH'],
+    icon: chainIcon(10),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(10),
     explorer: 'https://optimistic.etherscan.io',
@@ -258,7 +316,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 42161,
     name: 'Arbitrum One',
     symbol: 'ETH',
-    icon: NATIVE_COIN_ICON['ETH'],
+    icon: chainIcon(42161),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(42161),
     explorer: 'https://arbiscan.io',
@@ -270,7 +328,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 137,
     name: 'Polygon',
     symbol: 'POL',
-    icon: NATIVE_COIN_ICON['POL'],
+    icon: chainIcon(137),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(137),
     explorer: 'https://polygonscan.com',
@@ -282,7 +340,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'solana-mainnet',
     name: 'Solana',
     symbol: 'SOL',
-    icon: NATIVE_COIN_ICON['SOL'],
+    icon: chainIcon('solana-mainnet'),
     family: ChainFamily.Solana,
     cluster: 'mainnet-beta',
     rpcUrl: rpcUrl('solana-mainnet'),
@@ -292,7 +350,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'solana-devnet',
     name: 'Solana Devnet',
     symbol: 'SOL',
-    icon: NATIVE_COIN_ICON['SOL'],
+    icon: chainIcon('solana-devnet'),
     family: ChainFamily.Solana,
     cluster: 'devnet',
     rpcUrl: rpcUrl('solana-devnet'),
@@ -302,7 +360,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'bitcoin-mainnet',
     name: 'Bitcoin',
     symbol: 'BTC',
-    icon: NATIVE_COIN_ICON['BTC'],
+    icon: chainIcon('bitcoin-mainnet'),
     family: ChainFamily.Bitcoin,
     rpcUrl: rpcUrl('bitcoin-mainnet'),
     explorer: 'https://mempool.space',
@@ -313,7 +371,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'bitcoin-testnet',
     name: 'Bitcoin Testnet4',
     symbol: 'tBTC',
-    icon: NATIVE_COIN_ICON['tBTC'],
+    icon: chainIcon('bitcoin-testnet'),
     family: ChainFamily.Bitcoin,
     rpcUrl: rpcUrl('bitcoin-testnet'),
     explorer: 'https://mempool.space/testnet4',
@@ -324,7 +382,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'bitcoin-testnet3',
     name: 'Bitcoin Testnet3',
     symbol: 'tBTC',
-    icon: NATIVE_COIN_ICON['tBTC'],
+    icon: chainIcon('bitcoin-testnet3'),
     family: ChainFamily.Bitcoin,
     rpcUrl: rpcUrl('bitcoin-testnet3'),
     explorer: 'https://mempool.space/testnet',
@@ -336,7 +394,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'tron-mainnet',
     name: 'Tron',
     symbol: 'TRX',
-    icon: NATIVE_COIN_ICON['TRX'],
+    icon: chainIcon('tron-mainnet'),
     family: ChainFamily.Tron,
     rpcUrl: rpcUrl('tron-mainnet'),
     explorer: 'https://tronscan.org',
@@ -345,7 +403,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'tron-shasta',
     name: 'Tron Shasta Testnet',
     symbol: 'TRX',
-    icon: NATIVE_COIN_ICON['TRX'],
+    icon: chainIcon('tron-shasta'),
     family: ChainFamily.Tron,
     rpcUrl: rpcUrl('tron-shasta'),
     explorer: 'https://shasta.tronscan.org',
@@ -355,7 +413,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'cosmos-hub',
     name: 'Cosmos Hub',
     symbol: 'ATOM',
-    icon: NATIVE_COIN_ICON['ATOM'],
+    icon: chainIcon('cosmos-hub'),
     family: ChainFamily.Cosmos,
     rpcUrl: rpcUrl('cosmos-hub'),
     explorer: 'https://www.mintscan.io/cosmos',
@@ -366,7 +424,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 'provenance-mainnet',
     name: 'Provenance',
     symbol: 'HASH',
-    icon: NATIVE_COIN_ICON['HASH'],
+    icon: chainIcon('provenance-mainnet'),
     family: ChainFamily.Cosmos,
     rpcUrl: rpcUrl('provenance-mainnet'),
     explorer: 'https://explorer.provenance.io',
@@ -378,7 +436,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 43114,
     name: 'Avalanche C-Chain',
     symbol: 'AVAX',
-    icon: NATIVE_COIN_ICON['AVAX'],
+    icon: chainIcon(43114),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(43114),
     explorer: 'https://snowscan.xyz',
@@ -387,7 +445,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 43113,
     name: 'Avalanche Fuji Testnet',
     symbol: 'AVAX',
-    icon: NATIVE_COIN_ICON['AVAX'],
+    icon: chainIcon(43113),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(43113),
     explorer: 'https://testnet.snowscan.xyz',
@@ -397,7 +455,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 196,
     name: 'X Layer',
     symbol: 'OKB',
-    icon: NATIVE_COIN_ICON['OKB'],
+    icon: chainIcon(196),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(196),
     explorer: 'https://www.oklink.com/xlayer',
@@ -406,7 +464,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 195,
     name: 'X Layer Testnet',
     symbol: 'OKB',
-    icon: NATIVE_COIN_ICON['OKB'],
+    icon: chainIcon(195),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(195),
     explorer: 'https://www.oklink.com/xlayer-test',
@@ -416,7 +474,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 999,
     name: 'Hyperliquid L1',
     symbol: 'HYPE',
-    icon: NATIVE_COIN_ICON['HYPE'],
+    icon: chainIcon(999),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(999),
     explorer: 'https://hypurrscan.io',
@@ -425,7 +483,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 998,
     name: 'Hyperliquid Testnet',
     symbol: 'HYPE',
-    icon: NATIVE_COIN_ICON['HYPE'],
+    icon: chainIcon(998),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(998),
     explorer: '',
@@ -435,7 +493,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 9745,
     name: 'Plasma',
     symbol: 'XPL',
-    icon: NATIVE_COIN_ICON['XPL'],
+    icon: chainIcon(9745),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(9745),
     explorer: 'https://plasmascan.to',
@@ -444,7 +502,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 9746,
     name: 'Plasma Testnet',
     symbol: 'XPL',
-    icon: NATIVE_COIN_ICON['XPL'],
+    icon: chainIcon(9746),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(9746),
     explorer: 'https://testnet.plasmascan.to',
@@ -454,7 +512,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 6342,
     name: 'MegaETH Testnet',
     symbol: 'ETH',
-    icon: NATIVE_COIN_ICON['ETH'],
+    icon: chainIcon(6342),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(6342),
     explorer: '',
@@ -464,7 +522,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 2000,
     name: 'Dogechain',
     symbol: 'DOGE',
-    icon: NATIVE_COIN_ICON['DOGE'],
+    icon: chainIcon(2000),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(2000),
     explorer: 'https://explorer.dogechain.dog',
@@ -473,7 +531,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     id: 568,
     name: 'Dogechain Testnet',
     symbol: 'DOGE',
-    icon: NATIVE_COIN_ICON['DOGE'],
+    icon: chainIcon(568),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(568),
     explorer: '',

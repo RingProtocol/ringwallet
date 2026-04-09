@@ -13,7 +13,7 @@ import {
 } from '../services/chainplugins'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
-import { DEFAULT_CHAINS, NATIVE_COIN_ICON } from '../config/chains'
+import { DEFAULT_CHAINS, resolveChainIcon } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
 export type { ChainFamily, Chain }
@@ -112,11 +112,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           .map((c: Record<string, unknown>) => {
             const symbol =
               (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH'
+            const chainId = c.chainId as number
             return {
-              id: c.chainId as number,
+              id: chainId,
               name: c.name as string,
               symbol,
-              icon: NATIVE_COIN_ICON[symbol],
+              icon: resolveChainIcon(chainId, symbol),
               family: ChainFamily.EVM,
               rpcUrl: ((c.rpc as string[]) ?? [])
                 .map((rpc) =>
