@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js'
+import { Connection } from '@solana/web3.js'
 import { ChainFamily } from '../models/ChainType'
 import { tronAddressToHex } from './chainplugins/tron/tronPlugin'
 import EvmRpcService from './rpc/evmRpcService'
@@ -30,7 +30,7 @@ function isComplete(hints?: TokenMetadataHints): hints is TokenMetadataResult {
 async function resolveEvm(
   address: string,
   rpcUrls: string[],
-  hints?: TokenMetadataHints,
+  hints?: TokenMetadataHints
 ): Promise<TokenMetadataResult> {
   if (isComplete(hints)) return hints
   const service = new EvmRpcService(rpcUrls)
@@ -40,7 +40,7 @@ async function resolveEvm(
 async function resolveSolana(
   mintAddress: string,
   rpcUrls: string[],
-  hints?: TokenMetadataHints,
+  hints?: TokenMetadataHints
 ): Promise<TokenMetadataResult> {
   if (isComplete(hints)) return hints
 
@@ -65,7 +65,7 @@ export async function resolveTokenMetadata(
   family: ChainFamily | undefined,
   address: string,
   rpcUrls: string[],
-  hints?: TokenMetadataHints,
+  hints?: TokenMetadataHints
 ): Promise<TokenMetadataResult | null> {
   if (isComplete(hints)) return hints
 
