@@ -11,6 +11,7 @@ import '../TransactionActions.css'
 
 interface SmartAccountSendFormProps {
   onClose: () => void
+  initialToken?: import('./types').SendTokenOption
 }
 
 const isEIP7951Tx = (tx: SignedTx): tx is EIP7951Result =>
@@ -18,6 +19,7 @@ const isEIP7951Tx = (tx: SignedTx): tx is EIP7951Result =>
 
 const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
   onClose,
+  initialToken,
 }) => {
   const {
     activeWallet,
@@ -45,7 +47,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     setIsBroadcasting,
     resetForm,
     copyToClipboard,
-  } = useSendForm()
+  } = useSendForm(initialToken)
 
   if (!activeWallet) return null
 

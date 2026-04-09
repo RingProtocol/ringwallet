@@ -61,7 +61,11 @@ function buildPlaceholderTokens(
   ]
 }
 
-const TokenBalance: React.FC = () => {
+interface TokenBalanceProps {
+  onTokenSend?: (token: DisplayTokenInfo) => void
+}
+
+const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
   const {
     activeWallet,
     activeSolanaWallet,
@@ -440,7 +444,12 @@ const TokenBalance: React.FC = () => {
         tokens.map((token) => (
           <div
             key={token.isNative ? 'native' : token.address}
-            className="token-row"
+            className={`token-row${!token.isNative && onTokenSend ? ' token-row--clickable' : ''}`}
+            onClick={
+              !token.isNative && onTokenSend
+                ? () => onTokenSend(token)
+                : undefined
+            }
           >
             <div className="token-icon-wrap">
               {token.isNative && activeChain?.icon ? (

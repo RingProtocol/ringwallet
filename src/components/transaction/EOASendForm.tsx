@@ -11,9 +11,10 @@ import { emitPendingTransaction } from '../../features/history/client'
 
 interface EOASendFormProps {
   onClose: () => void
+  initialToken?: import('./types').SendTokenOption
 }
 
-const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
+const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
   const { t } = useI18n()
   const {
     activeWallet,
@@ -41,7 +42,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose }) => {
     setIsBroadcasting,
     resetForm,
     copyToClipboard,
-  } = useSendForm()
+  } = useSendForm(initialToken)
 
   if (!activeWallet) return null
 

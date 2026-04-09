@@ -50,6 +50,14 @@
   background: #fafafa;
 }
 
+.token-row--clickable {
+  cursor: pointer;
+}
+
+.token-row--clickable:hover {
+  background: rgba(102, 126, 234, 0.06);
+}
+
 .token-icon-wrap {
   flex-shrink: 0;
 }
@@ -115,7 +123,13 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }

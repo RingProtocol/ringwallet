@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
+import type { SendTokenOption } from './transaction/types'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -31,7 +32,15 @@ function getMoonPayCurrencyCode(
   return 'eth'
 }
 
-const TransactionActions: React.FC = () => {
+interface TransactionActionsProps {
+  initialToken?: SendTokenOption
+  onSendFormClosed?: () => void
+}
+
+const TransactionActions: React.FC<TransactionActionsProps> = ({
+  initialToken,
+  onSendFormClosed,
+}) => {
   const {
     isLoggedIn,
     activeWallet,
@@ -42,6 +51,16 @@ const TransactionActions: React.FC = () => {
   } = useAuth()
   const [showSend, setShowSend] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
+  const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
+    undefined
+  )
+
+  useEffect(() => {
+    if (initialToken) {
+      setSendToken(initialToken)
+      setShowSend(true)
+    }
+  }, [initialToken])
 
   if (!isLoggedIn) return null
   if (!activeAccount) return null
@@ -65,14 +84,23 @@ const TransactionActions: React.FC = () => {
     ? 'Set VITE_MOONPAY_API_KEY to enable MoonPay'
     : 'Buy crypto with MoonPay'
 
+  const handleCloseSend = () => {
+    setShowSend(false)
+    setSendToken(undefined)
+    onSendFormClosed?.()
+  }
+
   const renderSendForm = () => {
-    if (isBitcoinChain)
-      return <BitcoinSendForm onClose={() => setShowSend(false)} />
-    if (isSolanaChain)
-      return <SolanaSendForm onClose={() => setShowSend(false)} />
+    if (isBitcoinChain) return <BitcoinSendForm onClose={handleCloseSend} />
+    if (isSolanaChain) return <SolanaSendForm onClose={handleCloseSend} />
     if (isSmartAccount)
-      return <SmartAccountSendForm onClose={() => setShowSend(false)} />
-    return <EOASendForm onClose={() => setShowSend(false)} />
+      return (
+        <SmartAccountSendForm
+          onClose={handleCloseSend}
+          initialToken={sendToken}
+        />
+      )
+    return <EOASendForm onClose={handleCloseSend} initialToken={sendToken} />
   }
 
   const handleMoonPayClick = () => {

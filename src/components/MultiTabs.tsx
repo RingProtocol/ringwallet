@@ -8,6 +8,12 @@ interface MultiTabsProps {
   onOpenSettings?: () => void
   /** Hide DApps tab (e.g. wallet peek over an open DApp). */
   hideDAppsTab?: boolean
+  onTokenSend?: (token: {
+    symbol: string
+    name: string
+    address?: string
+    decimals?: number
+  }) => void
 }
 
 const TAB_DEFS = [
@@ -28,6 +34,7 @@ function getInitialTab(hideDAppsTab: boolean): string {
 const MultiTabs: React.FC<MultiTabsProps> = ({
   onOpenSettings,
   hideDAppsTab = false,
+  onTokenSend,
 }) => {
   const visibleTabs = useMemo(
     () =>
@@ -53,7 +60,7 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
         ))}
       </div>
       <div className="tabs-content">
-        {activeTab === 'tokens' && <TokenBalance />}
+        {activeTab === 'tokens' && <TokenBalance onTokenSend={onTokenSend} />}
         {activeTab === 'activity' && <TransactionHistory />}
         {activeTab === 'dapps' && !hideDAppsTab && (
           <DAppsPage onOpenSettings={onOpenSettings} />
