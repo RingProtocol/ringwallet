@@ -8,8 +8,20 @@ import DAppsPage from '@/features/dapps/components/DAppsPage'
 import '@/features/dapps/components/DApps.css'
 
 const MOCK_CHAINS: Chain[] = [
-  { id: 1, name: 'Ethereum', symbol: 'ETH', rpcUrl: ['https://eth.llamarpc.com'], explorer: 'https://etherscan.io' },
-  { id: 11155111, name: 'Sepolia', symbol: 'SepoliaETH', rpcUrl: ['https://rpc.sepolia.org'], explorer: 'https://sepolia.etherscan.io' },
+  {
+    id: 1,
+    name: 'Ethereum',
+    symbol: 'ETH',
+    rpcUrl: ['https://eth.llamarpc.com'],
+    explorer: 'https://etherscan.io',
+  },
+  {
+    id: 11155111,
+    name: 'Sepolia',
+    symbol: 'SepoliaETH',
+    rpcUrl: ['https://rpc.sepolia.org'],
+    explorer: 'https://sepolia.etherscan.io',
+  },
 ]
 
 const MOCK_WALLET: Wallet = {
@@ -45,6 +57,9 @@ const mockAuth = {
   bitcoinWallets: [],
   activeBitcoinWallet: null,
   isBitcoinChain: false,
+  dogecoinWallets: [],
+  activeDogecoinWallet: null,
+  isDogecoinChain: false,
   accountsByFamily: {},
   activeAccount: null,
 }
@@ -52,10 +67,31 @@ const mockAuth = {
 export default function TestDAppsPage() {
   return (
     <AuthContext__TEST_ONLY.Provider value={mockAuth}>
-      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '8px 16px', background: '#1a1a2e', color: '#fff', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 480,
+          margin: '0 auto',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div
+          style={{
+            padding: '8px 16px',
+            background: '#1a1a2e',
+            color: '#fff',
+            fontSize: 13,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <span>DApps Test Mode</span>
-          <span style={{ opacity: 0.5, fontSize: 11 }}>mock auth · 0xd8dA...6045</span>
+          <span style={{ opacity: 0.5, fontSize: 11 }}>
+            mock auth · 0xd8dA...6045
+          </span>
         </div>
         <div style={{ flex: 1, overflow: 'auto' }}>
           <DAppsPage />

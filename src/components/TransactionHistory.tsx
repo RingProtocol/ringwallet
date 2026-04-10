@@ -35,7 +35,11 @@ async function discoverTokensFromHistory(
   walletAddress: string,
   chain: { family?: ChainFamily; rpcUrl: string[] }
 ): Promise<void> {
-  if (chain.family === ChainFamily.Bitcoin) return
+  if (
+    chain.family === ChainFamily.Bitcoin ||
+    chain.family === ChainFamily.Dogecoin
+  )
+    return
 
   const tokenTxs = transactions.filter(
     (tx) => tx.assetType === 'token' && tx.assetAddress

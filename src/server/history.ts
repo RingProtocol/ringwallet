@@ -342,7 +342,10 @@ function extractSolanaTransfer(
     const isSplToken =
       programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
 
-    if (isSplToken && (parsedType === 'transferChecked' || parsedType === 'transfer')) {
+    if (
+      isSplToken &&
+      (parsedType === 'transferChecked' || parsedType === 'transfer')
+    ) {
       const from =
         typeof info.authority === 'string'
           ? info.authority
@@ -350,9 +353,7 @@ function extractSolanaTransfer(
             ? info.source
             : address
       const to =
-        typeof info.destination === 'string'
-          ? info.destination
-          : address
+        typeof info.destination === 'string' ? info.destination : address
 
       const tokenAmount = info.tokenAmount as
         | { uiAmountString?: string; decimals?: number }
@@ -370,8 +371,7 @@ function extractSolanaTransfer(
         continue
       }
 
-      const mint =
-        typeof info.mint === 'string' ? info.mint : undefined
+      const mint = typeof info.mint === 'string' ? info.mint : undefined
 
       return {
         from,
@@ -530,7 +530,7 @@ interface TronTrc20Transfer {
 async function fetchTronTrc20Transfers(
   baseUrl: string,
   address: string,
-  limit: number,
+  limit: number
 ): Promise<TxRecord[]> {
   try {
     const response = await fetch(
@@ -538,7 +538,7 @@ async function fetchTronTrc20Transfers(
       {
         headers: { accept: 'application/json' },
         next: { revalidate: 60 },
-      },
+      }
     )
     if (!response.ok) return []
 
@@ -576,13 +576,10 @@ async function fetchTronHistory(
   const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
 
   const [nativeResponse, trc20Transfers] = await Promise.all([
-    fetch(
-      `${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`,
-      {
-        headers: { accept: 'application/json' },
-        next: { revalidate: 60 },
-      },
-    ),
+    fetch(`${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`, {
+      headers: { accept: 'application/json' },
+      next: { revalidate: 60 },
+    }),
     fetchTronTrc20Transfers(baseUrl, address, limit),
   ])
 
@@ -609,21 +606,23 @@ async function fetchTronHistory(
     }>
   }
 
-  const nativeTxs: TxRecord[] = (payload.data ?? []).slice(0, limit).map((item) => {
-    const transfer = item.raw_data?.contract?.[0]?.parameter?.value
-    return {
-      hash: item.txID,
-      from: transfer?.owner_address ?? address,
-      to: transfer?.to_address ?? address,
-      value: formatUnits(BigInt(transfer?.amount ?? 0), 6),
-      timestamp: Math.floor((item.block_timestamp ?? Date.now()) / 1000),
-      status: item.ret?.some(
-        (result) => result.contractRet && result.contractRet !== 'SUCCESS'
-      )
-        ? 'failed'
-        : 'confirmed',
-    }
-  })
+  const nativeTxs: TxRecord[] = (payload.data ?? [])
+    .slice(0, limit)
+    .map((item) => {
+      const transfer = item.raw_data?.contract?.[0]?.parameter?.value
+      return {
+        hash: item.txID,
+        from: transfer?.owner_address ?? address,
+        to: transfer?.to_address ?? address,
+        value: formatUnits(BigInt(transfer?.amount ?? 0), 6),
+        timestamp: Math.floor((item.block_timestamp ?? Date.now()) / 1000),
+        status: item.ret?.some(
+          (result) => result.contractRet && result.contractRet !== 'SUCCESS'
+        )
+          ? 'failed'
+          : 'confirmed',
+      }
+    })
 
   return [...nativeTxs, ...trc20Transfers]
     .sort((a, b) => b.timestamp - a.timestamp)
@@ -706,6 +705,8 @@ async function fetchHistoryByFamily(
         transactions: await fetchBitcoinHistory(chain, address, limit),
         source: 'bitcoin-indexer',
       }
+    case ChainFamily.Dogecoin:
+      return { transactions: [], source: 'none' }
     case ChainFamily.Tron:
       return {
         transactions: await fetchTronHistory(chain, address, limit),

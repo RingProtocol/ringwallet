@@ -4,6 +4,7 @@ import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily, getPrimaryRpcUrl } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import { DogecoinService } from '../services/dogecoinService'
 import { tronAddressToHex } from '../services/chainplugins/tron/tronPlugin'
 import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
@@ -11,8 +12,11 @@ import ChainIcon from './ChainIcon'
 import './BalanceDisplay.css'
 import { TESTID } from './testids'
 
-function getEmptyBalance(isBitcoinChain: boolean): string {
-  return isBitcoinChain ? '0.00000000' : '0.0000'
+function getEmptyBalance(
+  isBitcoinChain: boolean,
+  isDogecoinChain: boolean
+): string {
+  return isBitcoinChain || isDogecoinChain ? '0.00000000' : '0.0000'
 }
 
 function shortenAddress(address: string): string {
@@ -25,10 +29,12 @@ const BalanceDisplay: React.FC = () => {
     activeWallet,
     activeSolanaWallet,
     activeBitcoinWallet,
+    activeDogecoinWallet,
     activeChain,
     activeAccount,
     isSolanaChain,
     isBitcoinChain,
+    isDogecoinChain,
   } = useAuth()
   const isEvmChain =
     activeChain?.family === ChainFamily.EVM || !activeChain?.family
@@ -37,9 +43,9 @@ const BalanceDisplay: React.FC = () => {
   const observedBalanceRef = useRef<string | null>(null)
 
   useEffect(() => {
-    setBalance(getEmptyBalance(isBitcoinChain))
+    setBalance(getEmptyBalance(isBitcoinChain, isDogecoinChain))
     observedBalanceRef.current = null
-  }, [activeChain?.id, activeAccount?.address, isBitcoinChain])
+  }, [activeChain?.id, activeAccount?.address, isBitcoinChain, isDogecoinChain])
 
   useEffect(() => {
     const commitBalance = (
@@ -92,6 +98,19 @@ const BalanceDisplay: React.FC = () => {
           console.error('Failed to fetch Bitcoin balance:', error)
           commitBalance('0.00000000', { recordObserved: false })
         }
+      } else if (isDogecoinChain) {
+        if (!activeDogecoinWallet) return
+        try {
+          const service = new DogecoinService(
+            rpcUrl,
+            activeChain.network === 'testnet'
+          )
+          const bal = await service.getBalance(activeDogecoinWallet.address)
+          commitBalance(bal.toFixed(8), { notifyOnChange: true })
+        } catch (error) {
+          console.error('Failed to fetch Dogecoin balance:', error)
+          commitBalance('0.00000000', { recordObserved: false })
+        }
       } else if (isSolanaChain) {
         if (!activeSolanaWallet) return
         try {
@@ -132,7 +151,13 @@ const BalanceDisplay: React.FC = () => {
       }
     }
 
-    if (isBitcoinChain || isSolanaChain || isEvmChain || isTronChain) {
+    if (
+      isBitcoinChain ||
+      isDogecoinChain ||
+      isSolanaChain ||
+      isEvmChain ||
+      isTronChain
+    ) {
       fetchBalance()
       const interval = setInterval(fetchBalance, BALANCE_POLL_INTERVAL_MS)
       return () => clearInterval(interval)
@@ -143,10 +168,12 @@ const BalanceDisplay: React.FC = () => {
     activeWallet,
     activeSolanaWallet,
     activeBitcoinWallet,
+    activeDogecoinWallet,
     activeAccount,
     activeChain,
     isSolanaChain,
     isBitcoinChain,
+    isDogecoinChain,
     isEvmChain,
     isTronChain,
   ])

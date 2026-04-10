@@ -79,6 +79,7 @@ export async function resolveTokenMetadata(
     case ChainFamily.Tron:
       return resolveEvm(tronAddressToHex(address), rpcUrls, hints)
     case ChainFamily.Bitcoin:
+    case ChainFamily.Dogecoin:
     case ChainFamily.Cosmos:
     default:
       return null

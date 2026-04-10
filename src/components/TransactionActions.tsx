@@ -7,6 +7,7 @@ import {
   SmartAccountSendForm,
   SolanaSendForm,
   BitcoinSendForm,
+  DogecoinSendForm,
   ReceiveDialog,
 } from './transaction'
 import './TransactionActions.css'
@@ -16,10 +17,12 @@ const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 
 function getMoonPayCurrencyCode(
   isBitcoinChain: boolean,
+  isDogecoinChain: boolean,
   isSolanaChain: boolean,
   chainName?: string
 ): string | null {
   if (isBitcoinChain) return 'btc'
+  if (isDogecoinChain) return 'doge'
   if (isSolanaChain) return 'sol'
 
   const normalizedChainName = chainName?.toLowerCase() ?? ''
@@ -49,6 +52,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     activeChain,
     isSolanaChain,
     isBitcoinChain,
+    isDogecoinChain,
   } = useAuth()
   const [showSend, setShowSend] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
@@ -69,6 +73,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
   const isSmartAccount =
     !isSolanaChain &&
     !isBitcoinChain &&
+    !isDogecoinChain &&
     activeWallet?.type === WalletType.SmartContract
   const receiveAddress = activeAccount.address
   const moonPayApiKey = import.meta.env.VITE_MOONPAY_API_KEY?.trim()
@@ -76,6 +81,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     import.meta.env.VITE_MOONPAY_BASE_URL?.trim() || DEFAULT_MOONPAY_BASE_URL
   const moonPayCurrencyCode = getMoonPayCurrencyCode(
     isBitcoinChain,
+    isDogecoinChain,
     isSolanaChain,
     activeChain?.name
   )
@@ -93,6 +99,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
 
   const renderSendForm = () => {
     if (isBitcoinChain) return <BitcoinSendForm onClose={handleCloseSend} />
+    if (isDogecoinChain) return <DogecoinSendForm onClose={handleCloseSend} />
     if (isSolanaChain) return <SolanaSendForm onClose={handleCloseSend} />
     if (isSmartAccount)
       return (

@@ -6,6 +6,7 @@ import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { SolanaService } from '../services/solanaService'
 import { SolanaTokenService } from '../services/solanaTokenService'
 import { BitcoinService, bitcoinForkForChain } from '../services/bitcoinService'
+import { DogecoinService } from '../services/dogecoinService'
 import { tronAddressToHex } from '../services/chainplugins/tron/tronPlugin'
 import RpcService from '../services/rpc/rpcService'
 import {
@@ -30,7 +31,8 @@ interface DisplayTokenInfo {
 function buildPlaceholderTokens(
   activeChain: Chain | null | undefined,
   isSolanaChain: boolean,
-  isBitcoinChain: boolean
+  isBitcoinChain: boolean,
+  isDogecoinChain: boolean
 ): DisplayTokenInfo[] {
   if (!activeChain) return []
 
@@ -38,6 +40,17 @@ function buildPlaceholderTokens(
     return [
       {
         symbol: activeChain.symbol || 'BTC',
+        name: activeChain.name,
+        balance: '--',
+        isNative: true,
+      },
+    ]
+  }
+
+  if (isDogecoinChain) {
+    return [
+      {
+        symbol: activeChain.symbol || 'DOGE',
         name: activeChain.name,
         balance: '--',
         isNative: true,
@@ -70,20 +83,27 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
     activeWallet,
     activeSolanaWallet,
     activeBitcoinWallet,
+    activeDogecoinWallet,
     activeChain,
     activeAccount,
     isSolanaChain,
     isBitcoinChain,
+    isDogecoinChain,
   } = useAuth()
   const { t } = useI18n()
   const isEvmChain =
     activeChain?.family === ChainFamily.EVM || !activeChain?.family
   const [tokens, setTokens] = useState<DisplayTokenInfo[]>(() =>
-    buildPlaceholderTokens(activeChain, isSolanaChain, isBitcoinChain)
+    buildPlaceholderTokens(
+      activeChain,
+      isSolanaChain,
+      isBitcoinChain,
+      isDogecoinChain
+    )
   )
   const [isLoading, setIsLoading] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const supportsTokens = !isBitcoinChain
+  const supportsTokens = !isBitcoinChain && !isDogecoinChain
   const [importedTokens, setImportedTokens] = useState<StoredTokenInfo[]>(() =>
     activeAccount && activeChain && supportsTokens
       ? getTokenList(activeAccount.address, activeChain.id)
@@ -117,7 +137,12 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
     }
 
     setTokens(
-      buildPlaceholderTokens(activeChain, isSolanaChain, isBitcoinChain)
+      buildPlaceholderTokens(
+        activeChain,
+        isSolanaChain,
+        isBitcoinChain,
+        isDogecoinChain
+      )
     )
   }, [
     activeChain?.id,
@@ -125,6 +150,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
     activeChain?.symbol,
     activeAccount?.address,
     isBitcoinChain,
+    isDogecoinChain,
     isSolanaChain,
   ])
 
@@ -184,6 +210,51 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
     const interval = setInterval(fetchBitcoinBalances, BALANCE_POLL_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [activeBitcoinWallet, activeChain, isBitcoinChain])
+
+  // Dogecoin balance fetching
+  useEffect(() => {
+    if (!isDogecoinChain) return
+    const rpcUrl = getPrimaryRpcUrl(activeChain)
+    if (!activeDogecoinWallet || !rpcUrl) return
+
+    const fetchDogecoinBalances = async () => {
+      setIsLoading(true)
+      try {
+        const service = new DogecoinService(
+          rpcUrl,
+          activeChain.network === 'testnet'
+        )
+        const bal = await service.getBalance(activeDogecoinWallet.address)
+        setTokens([
+          {
+            symbol: activeChain.symbol || 'DOGE',
+            name: activeChain.name,
+            balance: bal.toFixed(8),
+            isNative: true,
+          },
+        ])
+      } catch (error) {
+        console.error('Failed to fetch Dogecoin balances:', error)
+        setTokens([
+          {
+            symbol: activeChain.symbol || 'DOGE',
+            name: activeChain.name,
+            balance: '0.00000000',
+            isNative: true,
+          },
+        ])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDogecoinBalances()
+    const interval = setInterval(
+      fetchDogecoinBalances,
+      BALANCE_POLL_INTERVAL_MS
+    )
+    return () => clearInterval(interval)
+  }, [activeDogecoinWallet, activeChain, isDogecoinChain])
 
   // Solana balance fetching
   useEffect(() => {
@@ -407,7 +478,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
     setTokens((current) => {
       const nativeToken =
         current.find((t) => t.isNative) ??
-        buildPlaceholderTokens(activeChain, false, false)[0]
+        buildPlaceholderTokens(activeChain, false, false, false)[0]
       if (!nativeToken) return current
 
       const tokenEntries: DisplayTokenInfo[] = importedTokens.map((t) => ({

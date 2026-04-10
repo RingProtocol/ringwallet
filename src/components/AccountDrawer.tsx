@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
-import { BITCOIN_TESTNET_ACCOUNTS_KEY } from '../services/chainplugins'
+import {
+  BITCOIN_TESTNET_ACCOUNTS_KEY,
+  DOGECOIN_TESTNET_ACCOUNTS_KEY,
+} from '../services/chainplugins'
 import {
   getDeviceNotificationPermission,
   requestDeviceNotificationPermission,
@@ -285,11 +288,18 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                   <div className="drawer-wallet-list">
                     {(() => {
                       const family = activeChain?.family
-                      const key =
+                      let key: string = family ?? ChainFamily.EVM
+                      if (
                         family === ChainFamily.Bitcoin &&
                         activeChain?.network === 'testnet'
-                          ? BITCOIN_TESTNET_ACCOUNTS_KEY
-                          : (family ?? ChainFamily.EVM)
+                      ) {
+                        key = BITCOIN_TESTNET_ACCOUNTS_KEY
+                      } else if (
+                        family === ChainFamily.Dogecoin &&
+                        activeChain?.network === 'testnet'
+                      ) {
+                        key = DOGECOIN_TESTNET_ACCOUNTS_KEY
+                      }
                       return accountsByFamily[key] ?? []
                     })().map((wallet, index) => (
                       <div

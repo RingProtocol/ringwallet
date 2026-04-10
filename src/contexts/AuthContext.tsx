@@ -9,6 +9,7 @@ import React, {
 import {
   chainRegistry,
   BITCOIN_TESTNET_ACCOUNTS_KEY,
+  DOGECOIN_TESTNET_ACCOUNTS_KEY,
   type DerivedAccount,
 } from '../services/chainplugins'
 import { WalletType } from '../models/WalletType'
@@ -59,6 +60,11 @@ interface AuthContextValue {
   activeBitcoinWallet: Wallet | null
   /** True when the currently selected chain is a Bitcoin chain */
   isBitcoinChain: boolean
+  /** Dogecoin wallets — same index mapping as EVM wallets */
+  dogecoinWallets: Wallet[]
+  activeDogecoinWallet: Wallet | null
+  /** True when the currently selected chain is a Dogecoin chain */
+  isDogecoinChain: boolean
 
   /** All derived accounts keyed by ChainFamily. Prefer this over the per-chain arrays. */
   accountsByFamily: Record<string, DerivedAccount[]>
@@ -217,6 +223,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const activeChain = CHAINS.find((c) => c.id === activeChainId) || CHAINS[0]
   const isSolanaChain = activeChain?.family === ChainFamily.Solana
   const isBitcoinChain = activeChain?.family === ChainFamily.Bitcoin
+  const isDogecoinChain = activeChain?.family === ChainFamily.Dogecoin
 
   // Backward-compatible per-family wallet arrays (derived from accountsByFamily)
   const wallets = useMemo(
@@ -237,12 +244,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       : ChainFamily.Bitcoin
     return (accountsByFamily[key] ?? []).map(derivedAccountToWallet)
   }, [accountsByFamily, activeChain])
+  const dogecoinWallets = useMemo(() => {
+    const isDogeTestnet =
+      activeChain?.family === ChainFamily.Dogecoin &&
+      activeChain.network === 'testnet'
+    const key = isDogeTestnet
+      ? DOGECOIN_TESTNET_ACCOUNTS_KEY
+      : ChainFamily.Dogecoin
+    return (accountsByFamily[key] ?? []).map(derivedAccountToWallet)
+  }, [accountsByFamily, activeChain])
 
   const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null
   const activeSolanaWallet =
     solanaWallets.length > 0 ? solanaWallets[activeWalletIndex] : null
   const activeBitcoinWallet =
     bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
+  const activeDogecoinWallet =
+    dogecoinWallets.length > 0 ? dogecoinWallets[activeWalletIndex] : null
 
   const activeAccount = useMemo(() => {
     const family = activeChain?.family
@@ -250,6 +268,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (family === ChainFamily.Bitcoin && activeChain.network === 'testnet') {
       return (
         (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[
+          activeWalletIndex
+        ] ?? null
+      )
+    }
+    if (family === ChainFamily.Dogecoin && activeChain.network === 'testnet') {
+      return (
+        (accountsByFamily[DOGECOIN_TESTNET_ACCOUNTS_KEY] ?? [])[
           activeWalletIndex
         ] ?? null
       )
@@ -277,6 +302,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     bitcoinWallets,
     activeBitcoinWallet,
     isBitcoinChain,
+    dogecoinWallets,
+    activeDogecoinWallet,
+    isDogecoinChain,
     accountsByFamily,
     activeAccount,
   }

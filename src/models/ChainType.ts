@@ -4,6 +4,7 @@ export enum ChainFamily {
   Bitcoin = 'bitcoin',
   Tron = 'tron',
   Cosmos = 'cosmos',
+  Dogecoin = 'dogecoin',
 }
 
 export interface Chain {

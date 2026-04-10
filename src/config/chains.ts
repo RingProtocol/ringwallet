@@ -100,6 +100,8 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
     'https://api.trongrid.io/jsonrpc',
   ],
   'tron-shasta': ['https://api.shasta.trongrid.io/jsonrpc'],
+  'dogecoin-mainnet': ['https://doge1.trezor.io'],
+  'dogecoin-testnet': ['https://doge1.trezor.io'],
   'cosmos-hub': ['https://cosmos-rpc.publicnode.com'],
   'provenance-mainnet': ['https://api.provenance.io'],
   '43114': [
@@ -185,6 +187,8 @@ const CHAIN_ICON: Record<string | number, string> = {
   'solana-devnet': '/icons/chains/sol.svg',
   'tron-mainnet': '/icons/chains/trx.svg',
   'tron-shasta': '/icons/chains/trx.svg',
+  'dogecoin-mainnet': '/icons/chains/doge.svg',
+  'dogecoin-testnet': '/icons/chains/doge.svg',
   'cosmos-hub': '/icons/chains/atom.svg',
   'provenance-mainnet': '/icons/chains/hash.svg',
 }
@@ -233,6 +237,7 @@ function chainIcon(id: string | number): string | undefined {
 // BTC + SOL first, then Ethereum, then popular L2s and L1s.
 export const FEATURED_CHAIN_IDS: (number | string)[] = [
   'bitcoin-mainnet',
+  'dogecoin-mainnet',
   'solana-mainnet',
   'tron-mainnet',
   'cosmos-hub',
@@ -264,6 +269,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'bitcoin-testnet',
   'bitcoin-testnet3',
+  'dogecoin-testnet',
   'solana-devnet',
   'tron-shasta',
   11155111, // Sepolia
@@ -516,6 +522,27 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(6342),
     explorer: '',
+  },
+  // ─── Dogecoin L1 ───
+  {
+    id: 'dogecoin-mainnet',
+    name: 'Dogecoin',
+    symbol: 'DOGE',
+    icon: chainIcon('dogecoin-mainnet'),
+    family: ChainFamily.Dogecoin,
+    rpcUrl: rpcUrl('dogecoin-mainnet'),
+    explorer: 'https://dogechain.info',
+    network: 'mainnet',
+  },
+  {
+    id: 'dogecoin-testnet',
+    name: 'Dogecoin Testnet',
+    symbol: 'tDOGE',
+    icon: chainIcon('dogecoin-testnet'),
+    family: ChainFamily.Dogecoin,
+    rpcUrl: rpcUrl('dogecoin-testnet'),
+    explorer: 'https://dogechain.info',
+    network: 'testnet',
   },
   // ─── Dogechain ───
   {
