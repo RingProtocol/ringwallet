@@ -100,8 +100,8 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
     'https://api.trongrid.io/jsonrpc',
   ],
   'tron-shasta': ['https://api.shasta.trongrid.io/jsonrpc'],
-  'dogecoin-mainnet': ['https://doge1.trezor.io'],
-  'dogecoin-testnet': ['https://doge1.trezor.io'],
+  'dogecoin-mainnet': ['https://api.blockcypher.com/v1/doge/main'],
+  'dogecoin-testnet': ['https://api.blockcypher.com/v1/doge/test3'],
   'cosmos-hub': ['https://cosmos-rpc.publicnode.com'],
   'provenance-mainnet': ['https://api.provenance.io'],
   '43114': [

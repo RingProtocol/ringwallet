@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import TokenBalance from './TokenBalance'
 import TransactionHistory from './TransactionHistory'
 import DAppsPage from '../features/dapps/components/DAppsPage'
+import type { DisplayToken } from '../manager/balanceTypes'
 import './MultiTabs.css'
 import { TESTID } from './testids'
 
@@ -15,6 +16,9 @@ interface MultiTabsProps {
     address?: string
     decimals?: number
   }) => void
+  tokens: DisplayToken[]
+  isLoading: boolean
+  supportsTokens: boolean
 }
 
 const TAB_TESTID: Record<string, string> = {
@@ -42,6 +46,9 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
   onOpenSettings,
   hideDAppsTab = true,
   onTokenSend,
+  tokens,
+  isLoading,
+  supportsTokens,
 }) => {
   const visibleTabs = useMemo(
     () =>
@@ -68,7 +75,14 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
         ))}
       </div>
       <div className="tabs-content">
-        {activeTab === 'tokens' && <TokenBalance onTokenSend={onTokenSend} />}
+        {activeTab === 'tokens' && (
+          <TokenBalance
+            tokens={tokens}
+            isLoading={isLoading}
+            supportsTokens={supportsTokens}
+            onTokenSend={onTokenSend}
+          />
+        )}
         {activeTab === 'activity' && <TransactionHistory />}
         {activeTab === 'dapps' && !hideDAppsTab && (
           <DAppsPage onOpenSettings={onOpenSettings} />

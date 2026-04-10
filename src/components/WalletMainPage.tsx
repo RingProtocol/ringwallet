@@ -5,6 +5,7 @@ import NativeBalance from './NativeBalance'
 import TransactionActions from './TransactionActions'
 import AccountDrawer from './AccountDrawer'
 import MultiTabs from './MultiTabs'
+import { useBalanceManager } from '../hooks/useBalanceManager'
 import type { SendTokenOption } from './transaction/types'
 import './WalletMainPage.css'
 
@@ -27,6 +28,9 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   const [pendingSendToken, setPendingSendToken] = useState<
     SendTokenOption | undefined
   >(undefined)
+
+  const { nativeBalance, tokens, isLoading, supportsTokens } =
+    useBalanceManager()
 
   const handleTokenSend = useCallback(
     (token: {
@@ -79,7 +83,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
       </div>
       <AccountDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <div className="card wallet-main-page__card">
-        <NativeBalance />
+        <NativeBalance balance={nativeBalance} />
         <TransactionActions
           initialToken={pendingSendToken}
           onSendFormClosed={() => setPendingSendToken(undefined)}
@@ -88,6 +92,9 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           onOpenSettings={() => setDrawerOpen(true)}
           hideDAppsTab={peekOverDapp}
           onTokenSend={handleTokenSend}
+          tokens={tokens}
+          isLoading={isLoading}
+          supportsTokens={supportsTokens}
         />
       </div>
       {footer}

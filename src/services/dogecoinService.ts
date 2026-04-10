@@ -9,29 +9,35 @@ import {
 bitcoin.initEccLib(ecc)
 
 const SATS_PER_DOGE = 100_000_000
-const DUST_THRESHOLD = 100_000 // 0.001 DOGE — Dogecoin dust is higher than Bitcoin
+const DUST_THRESHOLD = 100_000 // 0.001 DOGE
 
-/**
- * Blockbook API response for /api/v2/address/<addr>?details=basic
- */
-interface BlockbookAddressBasic {
-  balance: string
-  unconfirmedBalance: string
+/** BlockCypher /addrs/{addr}/balance response. */
+interface BlockCypherBalance {
+  final_balance: number
 }
 
-/**
- * Blockbook UTXO format from /api/v2/utxo/<addr>
- */
-interface BlockbookUtxo {
-  txid: string
-  vout: number
-  value: string
+/** BlockCypher /addrs/{addr}?unspentOnly=true response. */
+interface BlockCypherAddress {
+  txrefs?: BlockCypherTxRef[]
+}
+
+interface BlockCypherTxRef {
+  tx_hash: string
+  tx_output_n: number
+  value: number
+  spent: boolean
   confirmations: number
 }
 
+interface Utxo {
+  txid: string
+  vout: number
+  value: number
+}
+
 /**
- * DogecoinService — UTXO management, balance queries, tx building, and broadcast
- * for the Dogecoin L1 network. Uses the Blockbook REST API format.
+ * DogecoinService — balance, UTXOs, tx building, and broadcast
+ * for the Dogecoin L1 network via BlockCypher REST API.
  */
 export class DogecoinService {
   private apiBase: string
@@ -55,7 +61,6 @@ export class DogecoinService {
     }
   }
 
-  /** Fetch JSON from the Blockbook API. */
   private async fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await fetch(`${this.apiBase}${path}`, init)
     if (!res.ok) {
@@ -73,24 +78,29 @@ export class DogecoinService {
   /** Balance in koinu (satoshi equivalent). */
   async getBalanceSats(address: string): Promise<number> {
     this.assertAddress(address)
-    const data = await this.fetchApi<BlockbookAddressBasic>(
-      `/api/v2/address/${address}?details=basic`
+    const data = await this.fetchApi<BlockCypherBalance>(
+      `/addrs/${address}/balance`
     )
-    const confirmed = parseInt(data.balance || '0', 10)
-    const unconfirmed = parseInt(data.unconfirmedBalance || '0', 10)
-    return Math.max(0, confirmed + unconfirmed)
+    return Math.max(0, data.final_balance ?? 0)
   }
 
-  /** Get UTXOs for an address via Blockbook. */
-  async getUtxos(address: string): Promise<BlockbookUtxo[]> {
+  /** Get UTXOs for an address. */
+  async getUtxos(address: string): Promise<Utxo[]> {
     this.assertAddress(address)
-    return this.fetchApi<BlockbookUtxo[]>(`/api/v2/utxo/${address}`)
+    const data = await this.fetchApi<BlockCypherAddress>(
+      `/addrs/${address}?unspentOnly=true&limit=50`
+    )
+    return (data.txrefs ?? [])
+      .filter((ref) => !ref.spent)
+      .map((ref) => ({
+        txid: ref.tx_hash,
+        vout: ref.tx_output_n,
+        value: ref.value,
+      }))
   }
 
-  /** Default fee rate in sat/byte. Dogecoin has very low fees. */
+  /** Default fee rate in sat/byte. */
   async getFeeRate(): Promise<number> {
-    // Dogecoin recommended minimum relay fee: 0.01 DOGE/kB = 1000 sat/kB = 1 sat/byte
-    // Use a conservative 10 sat/byte for fast confirmation
     return 10
   }
 
@@ -116,16 +126,13 @@ export class DogecoinService {
     const signer = deriveNode(masterSeed, this.isTestnet, addressIndex)
     if (!signer.privateKey) throw new Error('Missing private key')
 
-    // Sort by value descending
-    const sorted = [...utxos].sort(
-      (a, b) => parseInt(b.value) - parseInt(a.value)
-    )
+    const sorted = [...utxos].sort((a, b) => b.value - a.value)
 
-    const selected: BlockbookUtxo[] = []
+    const selected: Utxo[] = []
     let totalIn = 0
     for (const u of sorted) {
       selected.push(u)
-      totalIn += parseInt(u.value)
+      totalIn += u.value
       if (totalIn >= amountSats + Math.ceil(feeRate * 300)) break
     }
 
@@ -151,9 +158,8 @@ export class DogecoinService {
       BigInt(amountSats)
     )
 
-    // Estimate fee: P2PKH ~148 bytes/input + ~34 bytes/output + 10 overhead
-    const hasChange = true
-    const outputCount = hasChange ? 2 : 1
+    // P2PKH ~148 bytes/input + ~34 bytes/output + 10 overhead
+    const outputCount = 2
     const vBytes = 10 + selected.length * 148 + outputCount * 34
     const feeEstimate = Math.ceil(feeRate * vBytes)
 
@@ -173,7 +179,6 @@ export class DogecoinService {
       }
     }
 
-    // Sign all inputs (P2PKH)
     for (let i = 0; i < selected.length; i++) {
       const prevOutScript = bitcoin.address.toOutputScript(
         fromAddress,
@@ -202,14 +207,14 @@ export class DogecoinService {
     return { txHex, fee: actualFee }
   }
 
-  /** Broadcast a raw transaction hex via Blockbook. Returns txid. */
+  /** Broadcast a raw transaction hex. Returns txid. */
   async broadcast(txHex: string): Promise<string> {
-    const data = await this.fetchApi<{ result: string }>('/api/v2/sendtx/', {
+    const data = await this.fetchApi<{ tx: { hash: string } }>('/txs/push', {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: txHex,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tx: txHex }),
     })
-    return data.result
+    return data.tx.hash
   }
 
   static satsToDoge(sats: number): string {

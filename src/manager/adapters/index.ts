@@ -1,0 +1,6 @@
+import './evmBalanceAdapter'
+import './solanaBalanceAdapter'
+import './bitcoinBalanceAdapter'
+import './dogecoinBalanceAdapter'
+import './tronBalanceAdapter'
+import './cosmosBalanceAdapter'
