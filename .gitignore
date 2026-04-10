@@ -10,3 +10,7 @@ dist-extension
 .venv
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright
+playwright-report/
+test-results/
