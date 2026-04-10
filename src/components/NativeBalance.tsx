@@ -9,7 +9,7 @@ import { tronAddressToHex } from '../services/chainplugins/tron/tronPlugin'
 import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import ChainIcon from './ChainIcon'
-import './BalanceDisplay.css'
+import './NativeBalance.css'
 import { TESTID } from './testids'
 
 function getEmptyBalance(
@@ -24,7 +24,7 @@ function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-const BalanceDisplay: React.FC = () => {
+const NativeBalance: React.FC = () => {
   const {
     activeWallet,
     activeSolanaWallet,
@@ -202,4 +202,4 @@ const BalanceDisplay: React.FC = () => {
   )
 }
 
-export default BalanceDisplay
+export default NativeBalance

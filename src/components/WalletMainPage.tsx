@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import WalletSwitcher from './WalletSwitcher'
 import ChainSwitcher from './fullscreencomps/ChainSwitcher'
-import BalanceDisplay from './BalanceDisplay'
+import NativeBalance from './NativeBalance'
 import TransactionActions from './TransactionActions'
 import AccountDrawer from './AccountDrawer'
 import MultiTabs from './MultiTabs'
@@ -20,7 +20,7 @@ export interface WalletMainPageProps {
 const WalletMainPage: React.FC<WalletMainPageProps> = ({
   footer,
   onClose,
-  peekOverDapp = false,
+  peekOverDapp = true,
   className,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -79,7 +79,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
       </div>
       <AccountDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <div className="card wallet-main-page__card">
-        <BalanceDisplay />
+        <NativeBalance />
         <TransactionActions
           initialToken={pendingSendToken}
           onSendFormClosed={() => setPendingSendToken(undefined)}

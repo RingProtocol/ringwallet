@@ -40,7 +40,7 @@ function getInitialTab(hideDAppsTab: boolean): string {
 
 const MultiTabs: React.FC<MultiTabsProps> = ({
   onOpenSettings,
-  hideDAppsTab = false,
+  hideDAppsTab = true,
   onTokenSend,
 }) => {
   const visibleTabs = useMemo(
