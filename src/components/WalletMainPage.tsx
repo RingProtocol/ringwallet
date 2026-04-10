@@ -35,16 +35,19 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
       address?: string
       decimals?: number
     }) => {
-      if (!token.address || token.decimals == null) return
-      setPendingSendToken({
-        type: 'erc20',
-        token: {
-          address: token.address,
-          symbol: token.symbol,
-          name: token.name,
-          decimals: token.decimals,
-        },
-      })
+      if (token.address && token.decimals != null) {
+        setPendingSendToken({
+          type: 'erc20',
+          token: {
+            address: token.address,
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+          },
+        })
+      } else {
+        setPendingSendToken({ type: 'native', symbol: token.symbol })
+      }
     },
     []
   )

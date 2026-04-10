@@ -427,7 +427,6 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
   return (
     <div className="token-balance-list">
       <div className="token-list-header">
-        <span className="token-list-title">{t('assets')}</span>
         {isEvmChain && (
           <button
             type="button"
@@ -444,12 +443,8 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ onTokenSend }) => {
         tokens.map((token) => (
           <div
             key={token.isNative ? 'native' : token.address}
-            className={`token-row${!token.isNative && onTokenSend ? ' token-row--clickable' : ''}`}
-            onClick={
-              !token.isNative && onTokenSend
-                ? () => onTokenSend(token)
-                : undefined
-            }
+            className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
+            onClick={onTokenSend ? () => onTokenSend(token) : undefined}
           >
             <div className="token-icon-wrap">
               {token.isNative && activeChain?.icon ? (

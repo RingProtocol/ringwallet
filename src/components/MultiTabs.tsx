@@ -17,7 +17,7 @@ interface MultiTabsProps {
 }
 
 const TAB_DEFS = [
-  { key: 'tokens', label: 'Tokens' },
+  { key: 'tokens', label: 'Assets' },
   { key: 'activity', label: 'Activity' },
   { key: 'dapps', label: 'DApps' },
 ] as const

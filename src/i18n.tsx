@@ -148,7 +148,7 @@ const messages = {
     importing: 'Importing...',
     noTokensFound: 'No tokens found',
     noTransactions: 'No transactions yet',
-    tokensTab: 'Tokens',
+    tokensTab: 'Assets',
     activityTab: 'Activity',
     dappsTab: 'DApps',
     all: 'All',
