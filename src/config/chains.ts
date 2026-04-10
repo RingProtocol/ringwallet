@@ -122,7 +122,7 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
     'https://rpc01-sg.dogechain.dog',
     'https://rpc.ankr.com/dogechain',
   ],
-  '568': ['https://rpc-testnet.dogechain.dog'],
+  '568': ['https://rpc-testnet.dogechain.dog', 'https://568.rpc.thirdweb.com'],
 }
 
 function flattenRpcValues(
@@ -534,6 +534,6 @@ export const DEFAULT_CHAINS: Chain[] = [
     icon: chainIcon(568),
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(568),
-    explorer: '',
+    explorer: 'https://explorer-testnet.dogechain.dog',
   },
 ]
