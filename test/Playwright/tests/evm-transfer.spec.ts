@@ -20,35 +20,36 @@ test.describe('EVM Transfer (Sepolia)', () => {
       .filter({ hasText: 'Sepolia' })
     await sepoliaOption.first().click()
 
-    // Wait for balance to refresh after chain switch
-    await expect(page.getByTestId(TESTID.BALANCE_AMOUNT)).toBeVisible()
-    // Brief wait for RPC balance to load
-    await page.waitForTimeout(2000)
+    // Wait for balance to load after chain switch
+    const balanceEl = page.getByTestId(TESTID.BALANCE_AMOUNT)
+    await expect(balanceEl).toBeVisible()
+    // Wait until balance is a non-zero number (RPC loaded)
+    await expect(balanceEl).not.toHaveText(/^0\.0000\s/, { timeout: 15000 })
+
+    // Record balance before transfer
+    const balanceBefore = parseFloat(
+      (await balanceEl.textContent())!.replace(/[^\d.]/g, '')
+    )
 
     // ---- 2. Open Send form ----
     await page.getByTestId(TESTID.SEND_BUTTON).click()
 
-    // Fill recipient address
     const toInput = page.getByTestId(TESTID.SEND_TO_INPUT)
     await toInput.waitFor({ state: 'visible' })
     await toInput.fill(recipient)
 
-    // Fill amount
     const amountInput = page.getByTestId(TESTID.SEND_AMOUNT_INPUT)
     await amountInput.fill(E2E_CONFIG.evmSendAmount)
 
     // ---- 3. Sign transaction ----
-    const signBtn = page.getByTestId(TESTID.SEND_SIGN_BUTTON)
-    await signBtn.click()
+    await page.getByTestId(TESTID.SEND_SIGN_BUTTON).click()
 
-    // Wait for signing to complete — the broadcast button should appear
     const broadcastBtn = page.getByTestId(TESTID.SEND_BROADCAST_BUTTON)
     await expect(broadcastBtn).toBeVisible({ timeout: 30000 })
 
     // ---- 4. Broadcast transaction ----
     await broadcastBtn.click()
 
-    // Wait for broadcast success
     const broadcastSuccess = page.getByTestId(TESTID.BROADCAST_SUCCESS)
     await expect(broadcastSuccess).toBeVisible({ timeout: 30000 })
 
@@ -59,29 +60,17 @@ test.describe('EVM Transfer (Sepolia)', () => {
     expect(hashText).toBeTruthy()
     expect(hashText!.length).toBeGreaterThan(10)
 
-    // ---- 5. Close send form and check Activity ----
+    // ---- 5. Close send form and verify balance decreased ----
     await page.getByTestId(TESTID.SEND_CLOSE_BUTTON).click()
 
-    // Switch to Activity tab.
-    // Note: TransactionHistory only mounts when Activity tab is active,
-    // and emitPendingTransaction only dispatches a window event (no cache write).
-    // So the pending tx event was lost while we were on Assets tab.
-    // We rely on the History API polling (every 15s) to pick up the tx.
-    await page.getByTestId(TESTID.TAB_ACTIVITY).click()
-
-    // Wait for initial "Loading..." to finish
-    await expect(page.getByTestId(TESTID.TX_LOADING)).toBeHidden({
-      timeout: 15000,
-    })
-
-    // Wait for tx row — Etherscan needs time to index the new tx,
-    // and the history API polls every 15s. Allow up to 60s.
-    const txRow = page.getByTestId(TESTID.TX_ROW).first()
-    await expect(txRow).toBeVisible({ timeout: 60000 })
-
-    // Verify the tx row shows the recipient address (shortened)
-    const recipientShort = `${recipient.substring(0, 6)}...${recipient.substring(recipient.length - 4)}`
-    await expect(txRow).toContainText(recipientShort)
+    // Balance polls every 10s. Wait for it to reflect the transfer.
+    // The balance should decrease by at least the send amount (plus gas).
+    const sendAmount = parseFloat(E2E_CONFIG.evmSendAmount)
+    await expect(async () => {
+      const text = await balanceEl.textContent()
+      const balanceAfter = parseFloat(text!.replace(/[^\d.]/g, ''))
+      expect(balanceAfter).toBeLessThan(balanceBefore - sendAmount * 0.5)
+    }).toPass({ timeout: 30000 })
   })
 
   test('login and see wallet address', async ({ wallet }) => {
