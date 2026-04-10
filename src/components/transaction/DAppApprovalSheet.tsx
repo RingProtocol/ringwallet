@@ -215,7 +215,6 @@ const DAppApprovalSheet: React.FC<DAppApprovalSheetProps> = ({
 
   return (
     <TransactionSheet
-      onClose={onReject}
       variant="sheet"
       contentClassName="transaction-request__sheet"
     >

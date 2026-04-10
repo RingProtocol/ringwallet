@@ -172,6 +172,18 @@
   background: #eee;
 }
 
+.field-error {
+  color: #e53e3e;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.fee-hint {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 6px;
+}
+
 .error-text {
   color: #e53e3e;
   font-size: 0.9rem;

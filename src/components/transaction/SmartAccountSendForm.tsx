@@ -5,7 +5,7 @@ import EvmWalletService, {
 } from '../../services/wallet/EvmWalletService'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
-import TransactionSheet from './TransactionSheet'
+import SendFormLayout from './SendFormLayout'
 import type { SignedTx } from './types'
 import '../TransactionActions.css'
 
@@ -107,15 +107,14 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     }
   }
 
-  return (
-    <TransactionSheet onClose={handleClose}>
-      <h3>Send Transaction</h3>
-      <div className="current-wallet-hint">
-        From: Wallet #{activeWallet.index + 1} (
-        {activeWallet.address.substring(0, 6)}...
-        {activeWallet.address.substring(activeWallet.address.length - 4)})
-      </div>
+  const walletHint = `From: Wallet #${activeWallet.index + 1} (${activeWallet.address.substring(0, 6)}...${activeWallet.address.substring(activeWallet.address.length - 4)})`
 
+  return (
+    <SendFormLayout
+      title="Send Transaction"
+      walletHint={walletHint}
+      error={error}
+    >
       <SendFormFields
         toAddress={toAddress}
         onToAddressChange={setToAddress}
@@ -127,8 +126,6 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
         amountLabel={amountLabel}
         nativeSymbol={activeChain?.symbol || 'ETH'}
       />
-
-      {error && <div className="error-text">{error}</div>}
 
       <div className="modal-actions">
         <button
@@ -216,7 +213,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
           )}
         </div>
       )}
-    </TransactionSheet>
+    </SendFormLayout>
   )
 }
 

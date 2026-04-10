@@ -2,14 +2,12 @@ import React from 'react'
 import '../TransactionActions.css'
 
 interface TransactionSheetProps {
-  onClose: () => void
   children: React.ReactNode
   variant?: 'modal' | 'sheet'
   contentClassName?: string
 }
 
 const TransactionSheet: React.FC<TransactionSheetProps> = ({
-  onClose,
   children,
   variant = 'modal',
   contentClassName,
@@ -22,7 +20,6 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
       ]
         .filter(Boolean)
         .join(' ')}
-      onClick={onClose}
     >
       <div
         className={[

@@ -4,7 +4,7 @@ import EvmWalletService from '../../services/wallet/EvmWalletService'
 import PasskeyService from '../../services/account/passkeyService'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
-import TransactionSheet from './TransactionSheet'
+import SendFormLayout from './SendFormLayout'
 import '../TransactionActions.css'
 import { useI18n } from '../../i18n'
 import { emitPendingTransaction } from '../../features/history/client'
@@ -110,15 +110,14 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
     }
   }
 
-  return (
-    <TransactionSheet onClose={handleClose}>
-      <h3>Send Transaction</h3>
-      <div className="current-wallet-hint">
-        From: Wallet #{activeWallet.index + 1} (
-        {activeWallet.address.substring(0, 6)}...
-        {activeWallet.address.substring(activeWallet.address.length - 4)})
-      </div>
+  const walletHint = `From: Wallet #${activeWallet.index + 1} (${activeWallet.address.substring(0, 6)}...${activeWallet.address.substring(activeWallet.address.length - 4)})`
 
+  return (
+    <SendFormLayout
+      title="Send Transaction"
+      walletHint={walletHint}
+      error={error}
+    >
       <SendFormFields
         toAddress={toAddress}
         onToAddressChange={setToAddress}
@@ -130,8 +129,6 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
         amountLabel={amountLabel}
         nativeSymbol={activeChain?.symbol || 'ETH'}
       />
-
-      {error && <div className="error-text">{error}</div>}
 
       <div className="modal-actions">
         <button
@@ -197,7 +194,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
           )}
         </div>
       )}
-    </TransactionSheet>
+    </SendFormLayout>
   )
 }
 
