@@ -10,6 +10,7 @@ import {
   ReceiveDialog,
 } from './transaction'
 import './TransactionActions.css'
+import { TESTID } from './testids'
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 
@@ -121,12 +122,14 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
         <button
           className="action-btn send-btn"
           onClick={() => setShowSend(true)}
+          data-testid={TESTID.SEND_BUTTON}
         >
           📤 Send
         </button>
         <button
           className="action-btn receive-btn"
           onClick={() => setShowReceive(true)}
+          data-testid={TESTID.RECEIVE_BUTTON}
         >
           📥 Receive
         </button>

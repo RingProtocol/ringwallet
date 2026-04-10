@@ -7,6 +7,7 @@ import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'
 import '../TransactionActions.css'
 import { useI18n } from '../../i18n'
+import { TESTID } from '../testids'
 import { emitPendingTransaction } from '../../features/history/client'
 
 interface EOASendFormProps {
@@ -135,10 +136,15 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
           onClick={handleSign}
           disabled={isLoading || !toAddress}
           className="primary-btn"
+          data-testid={TESTID.SEND_SIGN_BUTTON}
         >
           {isLoading ? 'Signing...' : 'Sign Transaction'}
         </button>
-        <button onClick={handleClose} className="secondary-btn">
+        <button
+          onClick={handleClose}
+          className="secondary-btn"
+          data-testid={TESTID.SEND_CLOSE_BUTTON}
+        >
           Close
         </button>
       </div>
@@ -164,6 +170,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
                 onClick={handleBroadcast}
                 className="primary-btn broadcast-btn"
                 disabled={isBroadcasting}
+                data-testid={TESTID.SEND_BROADCAST_BUTTON}
               >
                 {isBroadcasting
                   ? 'Broadcasting...'
@@ -173,11 +180,14 @@ const EOASendForm: React.FC<EOASendFormProps> = ({ onClose, initialToken }) => {
           </div>
 
           {broadcastHash && (
-            <div className="broadcast-success">
+            <div
+              className="broadcast-success"
+              data-testid={TESTID.BROADCAST_SUCCESS}
+            >
               <h4>🎉 Transaction Submitted!</h4>
               <p>
                 Tx Hash:{' '}
-                <span className="hash-text">
+                <span className="hash-text" data-testid={TESTID.BROADCAST_HASH}>
                   {broadcastHash.substring(0, 10)}...
                   {broadcastHash.substring(broadcastHash.length - 8)}
                 </span>

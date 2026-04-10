@@ -3,6 +3,7 @@ import TokenBalance from './TokenBalance'
 import TransactionHistory from './TransactionHistory'
 import DAppsPage from '../features/dapps/components/DAppsPage'
 import './MultiTabs.css'
+import { TESTID } from './testids'
 
 interface MultiTabsProps {
   onOpenSettings?: () => void
@@ -14,6 +15,12 @@ interface MultiTabsProps {
     address?: string
     decimals?: number
   }) => void
+}
+
+const TAB_TESTID: Record<string, string> = {
+  tokens: TESTID.TAB_ASSETS,
+  activity: TESTID.TAB_ACTIVITY,
+  dapps: TESTID.TAB_DAPPS,
 }
 
 const TAB_DEFS = [
@@ -54,6 +61,7 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
             key={tab.key}
             className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.key)}
+            data-testid={TAB_TESTID[tab.key]}
           >
             {tab.label}
           </button>

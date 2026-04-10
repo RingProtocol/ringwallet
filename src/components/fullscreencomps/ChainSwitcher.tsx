@@ -3,6 +3,7 @@ import { useAuth, type Chain } from '../../contexts/AuthContext'
 import { FEATURED_CHAIN_IDS, FEATURED_TESTNET_IDS } from '../../config/chains'
 import { safeGetItem, safeSetItem } from '../../utils/safeStorage'
 import ChainIcon from '../ChainIcon'
+import { TESTID } from '../testids'
 import './ChainSwitcher.css'
 
 const USER_CHAINS_KEY = 'user_added_chain_ids'
@@ -207,7 +208,11 @@ const ChainSwitcher: React.FC = () => {
 
   return (
     <div className="chain-switcher-container" ref={containerRef}>
-      <div className="chain-switcher-trigger" onClick={toggleDropdown}>
+      <div
+        className="chain-switcher-trigger"
+        onClick={toggleDropdown}
+        data-testid={TESTID.CHAIN_SWITCHER_TRIGGER}
+      >
         <div className="chain-icon">
           <ChainIcon
             icon={activeChain.icon}
@@ -253,6 +258,7 @@ const ChainSwitcher: React.FC = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="chain-search-input"
+                    data-testid={TESTID.CHAIN_SEARCH_INPUT}
                     onClick={(e) => e.stopPropagation()}
                   />
                   <button
@@ -304,6 +310,7 @@ const ChainSwitcher: React.FC = () => {
                     e.stopPropagation()
                     setActiveTab('testnet')
                   }}
+                  data-testid={TESTID.CHAIN_TAB_TESTNET}
                 >
                   Testnet
                 </button>
@@ -318,6 +325,8 @@ const ChainSwitcher: React.FC = () => {
                       key={chain.id}
                       className={`chain-option ${chain.id === activeChain.id ? 'active' : ''}`}
                       onClick={() => handleSelect(chain.id)}
+                      data-testid={TESTID.CHAIN_OPTION}
+                      data-chain-id={chain.id}
                     >
                       <div className="option-row">
                         <span className="option-icon">

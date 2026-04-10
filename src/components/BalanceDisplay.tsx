@@ -9,6 +9,7 @@ import { RpcService } from '../services/rpc/rpcService'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import ChainIcon from './ChainIcon'
 import './BalanceDisplay.css'
+import { TESTID } from './testids'
 
 function getEmptyBalance(isBitcoinChain: boolean): string {
   return isBitcoinChain ? '0.00000000' : '0.0000'
@@ -154,7 +155,7 @@ const BalanceDisplay: React.FC = () => {
 
   return (
     <div className="balance-display">
-      <div className="balance-amount">
+      <div className="balance-amount" data-testid={TESTID.BALANCE_AMOUNT}>
         {balance}{' '}
         <span className="currency-symbol">
           <ChainIcon
@@ -166,7 +167,7 @@ const BalanceDisplay: React.FC = () => {
         </span>
       </div>
       {activeAccount?.address && (
-        <div className="wallet-address">
+        <div className="wallet-address" data-testid={TESTID.WALLET_ADDRESS}>
           {shortenAddress(activeAccount.address)}
         </div>
       )}

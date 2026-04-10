@@ -7,6 +7,7 @@ import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import './LoginButton.css'
 import { useI18n } from '../i18n'
+import { TESTID } from './testids'
 
 const LoginButton: React.FC = () => {
   const { isLoggedIn, login } = useAuth()
@@ -188,6 +189,7 @@ const LoginButton: React.FC = () => {
             onClick={handlePasskeyLogin}
             disabled={isLoading}
             style={{ width: '100%' }}
+            data-testid={TESTID.LOGIN_BUTTON}
           >
             {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
           </button>
@@ -196,6 +198,7 @@ const LoginButton: React.FC = () => {
             onClick={handleCreateAccount}
             disabled={isLoading}
             style={{ width: '100%', marginTop: '8px' }}
+            data-testid={TESTID.CREATE_ACCOUNT_BUTTON}
           >
             {isCreatingAccount ? t('creating') : t('createAccount')}
           </button>

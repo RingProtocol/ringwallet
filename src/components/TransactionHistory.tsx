@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import './TransactionHistory.css'
 import { useI18n } from '../i18n'
+import { TESTID } from './testids'
 import { ChainFamily } from '../models/ChainType'
 import {
   HISTORY_EVENT_NAME,
@@ -306,11 +307,13 @@ const TransactionHistory: React.FC = () => {
   if (!activeAccount) return null
 
   return (
-    <div className="tx-history">
+    <div className="tx-history" data-testid={TESTID.TX_HISTORY}>
       {isLoading ? (
-        <div className="tx-loading">{t('loading')}</div>
+        <div className="tx-loading" data-testid={TESTID.TX_LOADING}>
+          {t('loading')}
+        </div>
       ) : transactions.length === 0 ? (
-        <div className="tx-empty">
+        <div className="tx-empty" data-testid={TESTID.TX_EMPTY}>
           <span className="tx-empty-icon">📭</span>
           <span>{t('noTransactions')}</span>
         </div>
@@ -322,6 +325,7 @@ const TransactionHistory: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="tx-row"
+            data-testid={TESTID.TX_ROW}
           >
             <div className="tx-direction">
               {tx.from.toLowerCase() === activeAccount.address.toLowerCase()

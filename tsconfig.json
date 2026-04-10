@@ -36,6 +36,7 @@
     "test/unit",
     "test/evmchain",
     "test/multichain",
+    "test/playwright",
     "vite-env.d.ts",
     "next-env.d.ts",
     ".next/types/**/*.ts",

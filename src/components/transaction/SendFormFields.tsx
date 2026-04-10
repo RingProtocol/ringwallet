@@ -1,16 +1,17 @@
-import React from 'react';
-import type { SendTokenOption } from './types';
+import React from 'react'
+import type { SendTokenOption } from './types'
+import { TESTID } from '../testids'
 
 interface SendFormFieldsProps {
-  toAddress: string;
-  onToAddressChange: (value: string) => void;
-  selectedToken: SendTokenOption;
-  onTokenChange: (value: SendTokenOption) => void;
-  tokenOptions: SendTokenOption[];
-  amount: string;
-  onAmountChange: (value: string) => void;
-  amountLabel: string;
-  nativeSymbol: string;
+  toAddress: string
+  onToAddressChange: (value: string) => void
+  selectedToken: SendTokenOption
+  onTokenChange: (value: SendTokenOption) => void
+  tokenOptions: SendTokenOption[]
+  amount: string
+  onAmountChange: (value: string) => void
+  amountLabel: string
+  nativeSymbol: string
 }
 
 const SendFormFields: React.FC<SendFormFieldsProps> = ({
@@ -33,19 +34,27 @@ const SendFormFields: React.FC<SendFormFieldsProps> = ({
         onChange={(e) => onToAddressChange(e.target.value)}
         placeholder="0x..."
         className="input-field"
+        data-testid={TESTID.SEND_TO_INPUT}
       />
     </div>
     <div className="form-group">
       <label>Token:</label>
       <select
-        value={selectedToken.type === 'native' ? 'native' : selectedToken.token.address}
+        value={
+          selectedToken.type === 'native'
+            ? 'native'
+            : selectedToken.token.address
+        }
+        data-testid={TESTID.SEND_TOKEN_SELECT}
         onChange={(e) => {
-          const v = e.target.value;
+          const v = e.target.value
           if (v === 'native') {
-            onTokenChange({ type: 'native', symbol: nativeSymbol });
+            onTokenChange({ type: 'native', symbol: nativeSymbol })
           } else {
-            const t = tokenOptions.find((o) => o.type === 'erc20' && o.token.address === v);
-            if (t && t.type === 'erc20') onTokenChange(t);
+            const t = tokenOptions.find(
+              (o) => o.type === 'erc20' && o.token.address === v
+            )
+            if (t && t.type === 'erc20') onTokenChange(t)
           }
         }}
         className="input-field token-select"
@@ -68,9 +77,10 @@ const SendFormFields: React.FC<SendFormFieldsProps> = ({
         onChange={(e) => onAmountChange(e.target.value)}
         placeholder="0.0"
         className="input-field"
+        data-testid={TESTID.SEND_AMOUNT_INPUT}
       />
     </div>
   </>
-);
+)
 
-export default SendFormFields;
+export default SendFormFields
