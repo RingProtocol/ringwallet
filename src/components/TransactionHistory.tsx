@@ -22,6 +22,7 @@ import { addToken, getTokenList } from '../utils/tokenStorage'
 import { resolveTokenMetadata } from '../services/tokenMetadataResolver'
 
 const PENDING_POLL_INTERVAL_MS = 8 * 1000
+const HISTORY_POLL_INTERVAL_MS = 15 * 1000
 
 function logError(...args: unknown[]): void {
   globalThis.console.error(...args)
@@ -66,7 +67,7 @@ async function discoverTokensFromHistory(
         chain.family,
         addr,
         chain.rpcUrl,
-        hints,
+        hints
       )
       if (!meta) return false
       addToken(walletAddress, chainId, {
@@ -216,10 +217,7 @@ const TransactionHistory: React.FC = () => {
 
     if (cached.transactions.some((tx) => tx.status === 'pending')) {
       void fetchHistoryFromChain()
-      return
     }
-
-    void fetchHistoryFromAPI(false)
   }, [
     activeChain,
     address,
@@ -238,6 +236,19 @@ const TransactionHistory: React.FC = () => {
 
     return () => window.clearInterval(timer)
   }, [activeChain, address, fetchHistoryFromChain, transactions])
+
+  // Poll history API: immediately on mount, then every 15s
+  useEffect(() => {
+    if (!activeChain || !address) return
+
+    void fetchHistoryFromAPI(false)
+
+    const timer = window.setInterval(() => {
+      void fetchHistoryFromAPI(false)
+    }, HISTORY_POLL_INTERVAL_MS)
+
+    return () => window.clearInterval(timer)
+  }, [activeChain, address, fetchHistoryFromAPI])
 
   useEffect(() => {
     if (!activeChain || !address) return
