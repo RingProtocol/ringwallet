@@ -1,5 +1,5 @@
-import type { ChainFamily, Chain } from '../models/ChainType'
-import type { TokenInfo } from '../utils/tokenStorage'
+import type { ChainFamily, Chain } from '../../models/ChainType'
+import type { TokenInfo } from '../../utils/tokenStorage'
 
 export interface TokenBalanceResult {
   symbol: string

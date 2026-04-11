@@ -1,25 +1,20 @@
-import { Connection } from '@solana/web3.js'
-import {
-  ChainFamily,
-  getPrimaryRpcUrl,
-  type Chain,
-} from '../../models/ChainType'
-import { SolanaService } from '../../services/rpc/solanaService'
-import { SolanaTokenService } from '../../services/rpc/solanaTokenService'
-import type { TokenInfo } from '../../utils/tokenStorage'
+import { ChainFamily, type Chain } from '../../../models/ChainType'
+import { tronAddressToHex } from '../../../services/chainplugins/tron/tronPlugin'
+import { RpcService } from '../../../services/rpc/rpcService'
+import type { TokenInfo } from '../../../utils/tokenStorage'
 import type { BalanceAdapter, TokenBalanceResult } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'
 
 const adapter: BalanceAdapter = {
-  family: ChainFamily.Solana,
+  family: ChainFamily.Tron,
   displayDecimals: 4,
   supportsTokens: true,
 
   async fetchNativeBalance(address: string, chain: Chain): Promise<string> {
-    const rpcUrl = getPrimaryRpcUrl(chain)
-    const service = new SolanaService(rpcUrl)
-    const bal = await service.getBalance(address)
-    return bal.toFixed(4)
+    const evmService = RpcService.fromChain(chain).getEvmService()
+    const hexAddr = tronAddressToHex(address)
+    const raw = await evmService.getFormattedBalance(hexAddr)
+    return parseFloat(raw).toFixed(4)
   },
 
   async fetchTokenBalances(
@@ -27,18 +22,22 @@ const adapter: BalanceAdapter = {
     chain: Chain,
     tokens: TokenInfo[]
   ): Promise<TokenBalanceResult[]> {
-    const rpcUrl = getPrimaryRpcUrl(chain)
-    const connection = new Connection(rpcUrl, 'confirmed')
-    const tokenService = new SolanaTokenService(connection)
+    const evmService = RpcService.fromChain(chain).getEvmService()
+    const hexWallet = tronAddressToHex(address)
 
     return Promise.all(
       tokens.map(async (t) => {
         try {
-          const balance = await tokenService.getTokenBalance(address, t.address)
+          const hexToken = tronAddressToHex(t.address)
+          const formatted = await evmService.getFormattedTokenBalance(
+            hexToken,
+            hexWallet,
+            t.decimals
+          )
           return {
             symbol: t.symbol,
             name: t.name,
-            balance: parseFloat(balance).toFixed(4),
+            balance: parseFloat(formatted).toFixed(4),
             address: t.address,
             decimals: t.decimals,
           }

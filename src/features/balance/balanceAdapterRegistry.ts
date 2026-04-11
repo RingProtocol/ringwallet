@@ -1,4 +1,4 @@
-import type { ChainFamily } from '../models/ChainType'
+import type { ChainFamily } from '../../models/ChainType'
 import type { BalanceAdapter } from './balanceTypes'
 
 class BalanceAdapterRegistry {

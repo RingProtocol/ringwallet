@@ -1,5 +1,5 @@
-import { ChainFamily, type Chain } from '../models/ChainType'
-import type { TokenInfo } from '../utils/tokenStorage'
+import { ChainFamily, type Chain } from '../../models/ChainType'
+import type { TokenInfo } from '../../utils/tokenStorage'
 import type { DisplayToken } from './balanceTypes'
 import { balanceAdapterRegistry } from './balanceAdapterRegistry'
 import './adapters'

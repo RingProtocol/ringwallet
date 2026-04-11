@@ -2,11 +2,11 @@ import {
   ChainFamily,
   getPrimaryRpcUrl,
   type Chain,
-} from '../../models/ChainType'
+} from '../../../models/ChainType'
 import {
   BitcoinService,
   bitcoinForkForChain,
-} from '../../services/rpc/bitcoinService'
+} from '../../../services/rpc/bitcoinService'
 import type { BalanceAdapter, TokenBalanceResult } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'
 
