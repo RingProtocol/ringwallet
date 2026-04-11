@@ -220,6 +220,19 @@ export const NATIVE_COIN_ICON: Record<string, string> = {
 }
 
 /** Resolve icon for a chain by ID, falling back to symbol-based lookup. */
+/**
+ * Cosmos chain variants with different coinType / addressPrefix.
+ * The registry uses this to derive separate account sets per variant.
+ */
+export const COSMOS_CHAIN_VARIANTS: {
+  key: string
+  coinType: number
+  addressPrefix: string
+}[] = [
+  { key: 'cosmos', coinType: 118, addressPrefix: 'cosmos' },
+  { key: 'provenance', coinType: 505, addressPrefix: 'pb' },
+]
+
 export function resolveChainIcon(
   id: string | number,
   symbol?: string

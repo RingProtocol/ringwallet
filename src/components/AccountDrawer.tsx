@@ -4,7 +4,9 @@ import { ChainFamily } from '../models/ChainType'
 import {
   BITCOIN_TESTNET_ACCOUNTS_KEY,
   DOGECOIN_TESTNET_ACCOUNTS_KEY,
+  cosmosAccountsKey,
 } from '../services/chainplugins'
+import { COSMOS_CHAIN_VARIANTS } from '../config/chains'
 import {
   getDeviceNotificationPermission,
   requestDeviceNotificationPermission,
@@ -299,6 +301,14 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                         activeChain?.network === 'testnet'
                       ) {
                         key = DOGECOIN_TESTNET_ACCOUNTS_KEY
+                      } else if (
+                        family === ChainFamily.Cosmos &&
+                        activeChain?.addressPrefix
+                      ) {
+                        const variant = COSMOS_CHAIN_VARIANTS.find(
+                          (v) => v.addressPrefix === activeChain.addressPrefix
+                        )
+                        if (variant) key = cosmosAccountsKey(variant.key)
                       }
                       return accountsByFamily[key] ?? []
                     })().map((wallet, index) => (

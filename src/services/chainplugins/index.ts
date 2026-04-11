@@ -9,6 +9,7 @@ export {
   chainRegistry,
   BITCOIN_TESTNET_ACCOUNTS_KEY,
   DOGECOIN_TESTNET_ACCOUNTS_KEY,
+  cosmosAccountsKey,
 } from './registry'
 
 import './evm/evmPlugin'

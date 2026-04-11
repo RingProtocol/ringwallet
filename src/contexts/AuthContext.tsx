@@ -10,8 +10,10 @@ import {
   chainRegistry,
   BITCOIN_TESTNET_ACCOUNTS_KEY,
   DOGECOIN_TESTNET_ACCOUNTS_KEY,
+  cosmosAccountsKey,
   type DerivedAccount,
 } from '../services/chainplugins'
+import { COSMOS_CHAIN_VARIANTS } from '../config/chains'
 import { WalletType } from '../models/WalletType'
 import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS, resolveChainIcon } from '../config/chains'
@@ -278,6 +280,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           activeWalletIndex
         ] ?? null
       )
+    }
+    if (family === ChainFamily.Cosmos && activeChain.addressPrefix) {
+      const variant = COSMOS_CHAIN_VARIANTS.find(
+        (v) => v.addressPrefix === activeChain.addressPrefix
+      )
+      if (variant) {
+        return (
+          (accountsByFamily[cosmosAccountsKey(variant.key)] ?? [])[
+            activeWalletIndex
+          ] ?? null
+        )
+      }
     }
     const accounts = accountsByFamily[family] ?? []
     return accounts[activeWalletIndex] ?? null

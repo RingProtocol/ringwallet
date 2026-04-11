@@ -1,10 +1,16 @@
 import { ChainFamily } from '../../models/ChainType'
+import { COSMOS_CHAIN_VARIANTS } from '../../config/chains'
 import type { ChainPlugin, DerivedAccount } from './types'
 
 /** Second slot for Bitcoin testnet (m/44'/1'/…); mainnet stays under `ChainFamily.Bitcoin`. */
 export const BITCOIN_TESTNET_ACCOUNTS_KEY = 'bitcoin_testnet' as const
 /** Second slot for Dogecoin testnet; mainnet stays under `ChainFamily.Dogecoin`. */
 export const DOGECOIN_TESTNET_ACCOUNTS_KEY = 'dogecoin_testnet' as const
+
+/** Key for Cosmos chain variant accounts (e.g. 'cosmos_cosmos', 'cosmos_provenance'). */
+export function cosmosAccountsKey(variantKey: string): string {
+  return `cosmos_${variantKey}`
+}
 
 class ChainPluginRegistry {
   private plugins = new Map<ChainFamily, ChainPlugin>()
@@ -45,19 +51,27 @@ class ChainPluginRegistry {
           result[BITCOIN_TESTNET_ACCOUNTS_KEY] = plugin.deriveAccounts(
             masterSeed,
             count,
-            {
-              isTestnet: true,
-            }
+            { isTestnet: true }
           )
         }
         if (family === ChainFamily.Dogecoin) {
           result[DOGECOIN_TESTNET_ACCOUNTS_KEY] = plugin.deriveAccounts(
             masterSeed,
             count,
-            {
-              isTestnet: true,
-            }
+            { isTestnet: true }
           )
+        }
+        if (family === ChainFamily.Cosmos) {
+          for (const variant of COSMOS_CHAIN_VARIANTS) {
+            result[cosmosAccountsKey(variant.key)] = plugin.deriveAccounts(
+              masterSeed,
+              count,
+              {
+                coinType: variant.coinType,
+                addressPrefix: variant.addressPrefix,
+              }
+            )
+          }
         }
       } catch (e) {
         console.error(`[ChainRegistry] Failed to derive ${family} accounts:`, e)
