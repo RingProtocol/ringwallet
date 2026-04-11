@@ -4,7 +4,7 @@ import {
   getNetwork,
   deriveNode,
   isValidDogecoinAddress,
-} from './chainplugins/dogecoin/dogecoinPlugin'
+} from '../chainplugins/dogecoin/dogecoinPlugin'
 
 bitcoin.initEccLib(ecc)
 

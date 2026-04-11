@@ -3,7 +3,7 @@ import { Connection } from '@solana/web3.js'
 import {
   SolanaTokenService,
   ATA_CREATION_FEE_SOL,
-} from '@/services/solanaTokenService'
+} from '@/services/rpc/solanaTokenService'
 import { SolanaKeyService } from '@/services/chainplugins/solana/solanaPlugin'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import TokenBalance from './TokenBalance'
 import TransactionHistory from './TransactionHistory'
 import DAppsPage from '../features/dapps/components/DAppsPage'
-import type { DisplayToken } from '../manager/balanceTypes'
+import type { DisplayToken } from '../balance/balanceTypes'
 import './MultiTabs.css'
 import { TESTID } from './testids'
 

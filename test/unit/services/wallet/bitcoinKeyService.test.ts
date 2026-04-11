@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ethers } from 'ethers'
 import { BitcoinKeyService } from '@/services/chainplugins/bitcoin/bitcoinPlugin'
-import { BitcoinService } from '@/services/bitcoinService'
+import { BitcoinService } from '@/services/rpc/bitcoinService'
 import { SolanaKeyService } from '@/services/chainplugins/solana/solanaPlugin'
 import { WalletType } from '@/models/WalletType'
 

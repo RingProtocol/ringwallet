@@ -20,7 +20,7 @@ import {
 import RpcService from '../services/rpc/rpcService'
 import { resolveClientApiUrl } from '../utils/apiUrl'
 import { addToken, getTokenList } from '../utils/tokenStorage'
-import { resolveTokenMetadata } from '../services/tokenMetadataResolver'
+import { resolveTokenMetadata } from '../services/rpc/tokenMetadataResolver'
 
 const PENDING_POLL_INTERVAL_MS = 8 * 1000
 const HISTORY_POLL_INTERVAL_MS = 15 * 1000

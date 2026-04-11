@@ -4,8 +4,8 @@ import {
   getPrimaryRpcUrl,
   type Chain,
 } from '../../models/ChainType'
-import { SolanaService } from '../../services/solanaService'
-import { SolanaTokenService } from '../../services/solanaTokenService'
+import { SolanaService } from '../../services/rpc/solanaService'
+import { SolanaTokenService } from '../../services/rpc/solanaTokenService'
 import type { TokenInfo } from '../../utils/tokenStorage'
 import type { BalanceAdapter, TokenBalanceResult } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'

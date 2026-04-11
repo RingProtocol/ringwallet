@@ -6,7 +6,7 @@ import {
 import {
   BitcoinService,
   bitcoinForkForChain,
-} from '../../services/bitcoinService'
+} from '../../services/rpc/bitcoinService'
 import type { BalanceAdapter, TokenBalanceResult } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'
 

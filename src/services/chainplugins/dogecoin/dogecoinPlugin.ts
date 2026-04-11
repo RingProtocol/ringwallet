@@ -130,7 +130,7 @@ class DogecoinChainPlugin implements ChainPlugin {
       )
     }
 
-    const { DogecoinService } = await import('../../dogecoinService')
+    const { DogecoinService } = await import('../../rpc/dogecoinService')
     const service = new DogecoinService(req.rpcUrl, isTestnet)
     const amountSats = Math.round(parseFloat(req.amount) * 1e8)
     const feeRate = opts.feeRate as number | undefined
@@ -151,7 +151,7 @@ class DogecoinChainPlugin implements ChainPlugin {
     signed: SignResult,
     rpcUrl: string
   ): Promise<string> {
-    const { DogecoinService } = await import('../../dogecoinService')
+    const { DogecoinService } = await import('../../rpc/dogecoinService')
     const isTestnet = rpcUrl.includes('testnet')
     const service = new DogecoinService(rpcUrl, isTestnet)
     return service.broadcast(signed.rawTx)

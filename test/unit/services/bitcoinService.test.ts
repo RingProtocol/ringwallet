@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   bitcoinForkForChain,
   inferBitcoinForkFromRpcUrl,
-} from '@/services/bitcoinService'
+} from '@/services/rpc/bitcoinService'
 
 // ─── bitcoinForkForChain ────────────────────────────────────────────────
 

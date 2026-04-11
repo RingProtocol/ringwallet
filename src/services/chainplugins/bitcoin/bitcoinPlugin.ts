@@ -199,7 +199,7 @@ class BitcoinChainPlugin implements ChainPlugin {
     }
 
     const { BitcoinService, bitcoinForkForChain } =
-      await import('../../bitcoinService')
+      await import('../../rpc/bitcoinService')
 
     const service = new BitcoinService(
       req.rpcUrl,
@@ -226,7 +226,7 @@ class BitcoinChainPlugin implements ChainPlugin {
     rpcUrl: string
   ): Promise<string> {
     const { BitcoinService, inferBitcoinForkFromRpcUrl } =
-      await import('../../bitcoinService')
+      await import('../../rpc/bitcoinService')
     const isTestnet = rpcUrl.includes('testnet')
     const service = new BitcoinService(
       rpcUrl,

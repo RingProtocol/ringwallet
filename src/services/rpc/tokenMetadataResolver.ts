@@ -1,7 +1,7 @@
 import { Connection } from '@solana/web3.js'
-import { ChainFamily } from '../models/ChainType'
-import { tronAddressToHex } from './chainplugins/tron/tronPlugin'
-import EvmRpcService from './rpc/evmRpcService'
+import { ChainFamily } from '../../models/ChainType'
+import { tronAddressToHex } from '../chainplugins/tron/tronPlugin'
+import EvmRpcService from './evmRpcService'
 import { SolanaTokenService } from './solanaTokenService'
 
 export interface TokenMetadataResult {

@@ -4,9 +4,9 @@ import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily } from '../models/ChainType'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
-import { balanceAdapterRegistry } from '../manager/balanceAdapterRegistry'
-import { fetchAllBalances, emptyBalance } from '../manager/balanceManager'
-import type { DisplayToken } from '../manager/balanceTypes'
+import { balanceAdapterRegistry } from '../balance/balanceAdapterRegistry'
+import { fetchAllBalances, emptyBalance } from '../balance/balanceManager'
+import type { DisplayToken } from '../balance/balanceTypes'
 
 export interface BalanceState {
   nativeBalance: string

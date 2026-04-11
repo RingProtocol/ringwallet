@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { addToken } from '../utils/tokenStorage'
-import type { DisplayToken } from '../manager/balanceTypes'
+import type { DisplayToken } from '../balance/balanceTypes'
 import ImportTokenDialog from './ImportTokenDialog'
 import ChainIcon from './ChainIcon'
 import './TokenBalance.css'

@@ -3,7 +3,7 @@ import {
   getPrimaryRpcUrl,
   type Chain,
 } from '../../models/ChainType'
-import { DogecoinService } from '../../services/dogecoinService'
+import { DogecoinService } from '../../services/rpc/dogecoinService'
 import type { BalanceAdapter, TokenBalanceResult } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'
 

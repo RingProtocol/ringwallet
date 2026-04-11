@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js'
 import {
   getAssociatedTokenAddress,
   createTransferInstruction,
@@ -6,10 +6,10 @@ import {
   getAccount,
   getMint,
   TokenAccountNotFoundError,
-} from '@solana/spl-token';
+} from '@solana/spl-token'
 
 /** Approximate SOL cost to create a new Associated Token Account. */
-export const ATA_CREATION_FEE_SOL = 0.00203928;
+export const ATA_CREATION_FEE_SOL = 0.00203928
 
 export class SolanaTokenService {
   constructor(private connection: Connection) {}
@@ -19,14 +19,14 @@ export class SolanaTokenService {
    * Returns '0' if the Associated Token Account does not exist yet.
    */
   async getTokenBalance(owner: string, mint: string): Promise<string> {
-    const ownerPubkey = new PublicKey(owner);
-    const mintPubkey = new PublicKey(mint);
-    const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
+    const ownerPubkey = new PublicKey(owner)
+    const mintPubkey = new PublicKey(mint)
+    const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey)
     try {
-      const balance = await this.connection.getTokenAccountBalance(ata);
-      return balance.value.uiAmountString ?? '0';
+      const balance = await this.connection.getTokenAccountBalance(ata)
+      return balance.value.uiAmountString ?? '0'
     } catch {
-      return '0';
+      return '0'
     }
   }
 
@@ -35,15 +35,15 @@ export class SolanaTokenService {
    * If not, the sender will need to pay ~0.002 SOL to create it.
    */
   async recipientNeedsATA(recipient: string, mint: string): Promise<boolean> {
-    const ownerPubkey = new PublicKey(recipient);
-    const mintPubkey = new PublicKey(mint);
-    const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey);
+    const ownerPubkey = new PublicKey(recipient)
+    const mintPubkey = new PublicKey(mint)
+    const ata = await getAssociatedTokenAddress(mintPubkey, ownerPubkey)
     try {
-      await getAccount(this.connection, ata);
-      return false;
+      await getAccount(this.connection, ata)
+      return false
     } catch (err) {
-      if (err instanceof TokenAccountNotFoundError) return true;
-      throw err;
+      if (err instanceof TokenAccountNotFoundError) return true
+      throw err
     }
   }
 
@@ -64,25 +64,31 @@ export class SolanaTokenService {
     senderKeypair: Keypair,
     recipient: string,
     mint: string,
-    amount: bigint,
+    amount: bigint
   ): Promise<string> {
-    const mintPubkey = new PublicKey(mint);
-    const recipientPubkey = new PublicKey(recipient);
+    const mintPubkey = new PublicKey(mint)
+    const recipientPubkey = new PublicKey(recipient)
 
-    const senderATA = await getAssociatedTokenAddress(mintPubkey, senderKeypair.publicKey);
-    const recipientATA = await getAssociatedTokenAddress(mintPubkey, recipientPubkey);
+    const senderATA = await getAssociatedTokenAddress(
+      mintPubkey,
+      senderKeypair.publicKey
+    )
+    const recipientATA = await getAssociatedTokenAddress(
+      mintPubkey,
+      recipientPubkey
+    )
 
     const { blockhash, lastValidBlockHeight } =
-      await this.connection.getLatestBlockhash('confirmed');
+      await this.connection.getLatestBlockhash('confirmed')
 
     const transaction = new Transaction({
       recentBlockhash: blockhash,
       feePayer: senderKeypair.publicKey,
-    });
+    })
 
     // Create recipient ATA if it doesn't exist
     try {
-      await getAccount(this.connection, recipientATA);
+      await getAccount(this.connection, recipientATA)
     } catch (err) {
       if (err instanceof TokenAccountNotFoundError) {
         transaction.add(
@@ -90,11 +96,11 @@ export class SolanaTokenService {
             senderKeypair.publicKey, // payer
             recipientATA,
             recipientPubkey,
-            mintPubkey,
-          ),
-        );
+            mintPubkey
+          )
+        )
       } else {
-        throw err;
+        throw err
       }
     }
 
@@ -103,16 +109,18 @@ export class SolanaTokenService {
         senderATA,
         recipientATA,
         senderKeypair.publicKey,
-        amount,
-      ),
-    );
+        amount
+      )
+    )
 
-    const signature = await this.connection.sendTransaction(transaction, [senderKeypair]);
+    const signature = await this.connection.sendTransaction(transaction, [
+      senderKeypair,
+    ])
     await this.connection.confirmTransaction(
       { signature, blockhash, lastValidBlockHeight },
-      'confirmed',
-    );
+      'confirmed'
+    )
 
-    return signature;
+    return signature
   }
 }

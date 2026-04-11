@@ -5,7 +5,7 @@ import PasskeyService from '../../services/account/passkeyService'
 import {
   BitcoinService,
   bitcoinForkForChain,
-} from '../../services/bitcoinService'
+} from '../../services/rpc/bitcoinService'
 import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
 import SendFormLayout from './SendFormLayout'
 import '../TransactionActions.css'
