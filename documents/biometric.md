@@ -7,16 +7,16 @@ When `isUserVerifyingPlatformAuthenticatorAvailable()` returns `false`, the devi
 ## 1. Core Principle
 
 ```
-优先引导开启生物识别 → 若设备不支持则降级引导开启屏幕锁 → 屏幕锁是最低要求
+Prioritize booting to enable biometrics → If the device does not support it, downgrade booting to enable screen lock → Screen lock is the minimum requirement
 ```
 
-WebAuthn `userVerification: "required"` 只需要设备拥有**任意一种**用户验证方式即可工作：
+WebAuthn `userVerification: "required"` only requires the device to have **any** user verification method to work:
 
-- Face ID / 面容识别
-- Touch ID / 指纹识别
-- 屏幕锁 PIN / 密码 / 图案
+- Face ID / facial recognition
+- Touch ID / fingerprint recognition
+- Screen lock PIN/password/pattern
 
-所以屏幕锁（PIN/密码）是合法的兜底方案，Passkey 在此模式下完全可用。
+So screen lock (PIN/password) is a legal cover-up solution, and Passkey is fully usable in this mode.
 
 ---
 
@@ -25,27 +25,27 @@ WebAuthn `userVerification: "required"` 只需要设备拥有**任意一种**用
 ```
 LoginButton
   └─ checkAvailabilityGuard()
-       ├─ isUVPAAAvailable === true  → 正常登录流程
-       └─ isUVPAAAvailable === false → 显示 <BiometricGuide />
-                                         ├─ 检测平台 (iOS / Android / Desktop)
-                                         ├─ 显示对应的开启步骤
-                                         ├─ 提供"重新检测"按钮
-                                         └─ 展示屏幕锁兜底说明
+├─ isUVPAAAvailable === true → Normal login process
+└─ isUVPAAAvailable === false → show <BiometricGuide />
+├─ Detection Platform (iOS / Android / Desktop)
+├─ Show the corresponding opening steps
+├─ Provide "Retest" button
+└─ Show screen lock instructions
 ```
 
-### 组件结构
+### Component structure
 
-| 组件                           | 职责                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------- |
-| `BiometricGuide.tsx`           | 独立引导组件，根据平台展示对应步骤                                                |
-| `platformDetect.ts` (工具函数) | 检测当前设备平台 (iOS / Android / Desktop)                                        |
-| `LoginButton.tsx`              | 当 `isUVPAAAvailable === false` 时渲染 `<BiometricGuide />`，替代当前的纯文字报错 |
+| Components                             | Responsibilities                                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `BiometricGuide.tsx`                   | Independent guidance component, showing corresponding steps according to the platform                        |
+| `platformDetect.ts` (utility function) | Detect current device platform (iOS / Android / Desktop)                                                     |
+| `LoginButton.tsx`                      | Render `<BiometricGuide />` when `isUVPAAAvailable === false`, replacing the current plain text error report |
 
 ---
 
 ## 3. Platform Detection
 
-在 `src/utils/platformDetect.ts` 中提供：
+Available in `src/utils/platformDetect.ts`:
 
 ```typescript
 export type Platform = 'ios' | 'android' | 'desktop'
@@ -62,47 +62,47 @@ export function detectPlatform(): Platform {
 
 ## 4. Guide Content by Platform
 
-### 4.1 iOS — 开启 Face ID / Touch ID
+### 4.1 iOS — Enable Face ID / Touch ID
 
-**主引导（生物识别）：**
+**Master Boot (Biometric):**
 
-1. 打开 **设置**
-2. 进入 **面容 ID 与密码**（或 **触控 ID 与密码**）
-3. 输入锁屏密码
-4. 开启 **面容 ID**（或 **指纹**）
-5. 返回本应用，点击 **重新检测**
+1. Open **Settings**
+2. Enter **Face ID & Passcode** (or **Touch ID & Passcode**)
+3. Enter the lock screen password
+4. Turn on **Face ID** (or **Fingerprint**)
+5. Return to this application and click **Retest**
 
-**兜底引导（屏幕锁）：**
+**Secure guide (screen lock):**
 
-> 如果您的设备不支持面容 ID 或触控 ID，只需确保设置了锁屏密码即可：
-> 设置 → 面容 ID 与密码 → 开启密码
+> If your device doesn't support Face ID or Touch ID, just make sure you set a screen lock password:
+> Settings → Face ID & Passcode → Turn on passcode
 
-### 4.2 Android — 开启指纹 / 面部识别
+### 4.2 Android — Enable fingerprint/face recognition
 
-**主引导（生物识别）：**
+**Master Boot (Biometric):**
 
-1. 打开 **设置**
-2. 搜索 **生物识别** 或进入 **安全 → 生物识别**
-3. 设置 **指纹** 或 **面部识别**
-4. 按提示完成录入
-5. 返回本应用，点击 **重新检测**
+1. Open **Settings**
+2. Search for **Biometrics** or go to **Security → Biometrics**
+3. Set up **Fingerprint** or **Face ID**
+4. Follow the prompts to complete the entry
+5. Return to this application and click **Retest**
 
-**兜底引导（屏幕锁）：**
+**Secure guide (screen lock):**
 
-> 如果您的设备不支持生物识别，只需设置屏幕锁即可：
-> 设置 → 安全 → 屏幕锁定 → 选择 PIN / 密码 / 图案
+> If your device doesn't support biometrics, just set a screen lock:
+> Settings → Security → Screen lock → Select PIN/password/pattern
 
 ### 4.3 Desktop (macOS / Windows)
 
 **macOS：**
 
-- 系统设置 → 触控 ID 与密码 → 添加指纹
-- 兜底：确保已设置登录密码（系统设置 → 用户与群组）
+- System Settings → Touch ID & Passcode → Add Fingerprint
+- Don’t worry: make sure you have set a login password (System Settings → Users & Groups)
 
 **Windows：**
 
-- 设置 → 账户 → 登录选项 → Windows Hello → 设置指纹或面部
-- 兜底：确保已设置 PIN（设置 → 账户 → 登录选项 → PIN）
+- Settings → Accounts → Sign-in options → Windows Hello → Set up fingerprint or face
+- One-size-fits-all: Make sure you have a PIN set up (Settings → Accounts → Sign-in options → PIN)
 
 ---
 
@@ -112,54 +112,56 @@ export function detectPlatform(): Platform {
 
 ```typescript
 interface BiometricGuideProps {
-  onRetry: () => void // 重新检测按钮的回调，重新调用 checkAvailabilityGuard
-  isChecking: boolean // 是否正在重新检测中
+  onRetry: () => void // Re-detect the callback of the button and call checkAvailabilityGuard again
+  isChecking: boolean // Whether it is being rechecked
 }
 ```
 
-### UI 结构
+### UI structure
 
 ```
 ┌─────────────────────────────────────────┐
-│  ⚠️ 需要开启设备验证                       │
+│ ⚠️ Need to turn on device verification │
 │                                         │
-│  您的设备尚未开启生物识别或屏幕锁，            │
-│  无法使用 Passkey 登录。                   │
-│  请按以下步骤开启：                         │
+│ Your device does not have biometrics or screen lock turned on, │
+│ Unable to log in using Passkey.                   │
+│ Please follow the steps below to turn it on: │
 │                                         │
-│  ── 推荐：开启生物识别 ──                   │
-│  1. 打开 设置                             │
-│  2. 进入 面容 ID 与密码                    │
+│ ── Recommended: Turn on biometrics ── │
+│ 1. Open Settings │
+│ 2. Enter Face ID and Password │
 │  3. ...                                 │
 │                                         │
-│  ── 或者：开启屏幕锁（最低要求）──            │
-│  如果您的设备不支持生物识别，                  │
-│  设置一个屏幕锁密码也可以使用。               │
-│  设置 → 面容 ID 与密码 → 开启密码           │
+│── Or: Turn on screen lock (minimum requirement)── │
+│ If your device does not support biometrics, │
+│ Setting a screen lock password is also available.               │
+│ Settings → Face ID & Passcode → Turn on passcode │
 │                                         │
-│  [ 🔄 我已开启，重新检测 ]                  │
+│ [ 🔄 I have turned it on, check again ] │
 └─────────────────────────────────────────┘
 ```
 
-### 样式要点
+### Style points
 
-- 整体用 `info` 色调（蓝色边框 `#bae6fd`，浅蓝底 `#f0f9ff`），不用红色（红色意味着错误，这里是引导）
-- "推荐"标签用浅紫/蓝标签强调
-- "兜底"部分用灰色折叠区域或较低视觉权重，避免喧宾夺主
-- 步骤编号加粗，关键词（如 **设置**、**面容 ID**）加粗
-- "重新检测"按钮放在最底部，使用主按钮样式
+- Use the `info` color tone overall (blue border `#bae6fd`, light blue background `#f0f9ff`), without red (red means error, here is the guide)
+- "Recommended" label highlighted with light purple/blue label
+- Use gray folding area or lower visual weight for the "bottom" part to avoid overestimating the focus.
+- Step numbers are bolded, keywords (such as **Settings**, **Face ID**) are bolded
+- The "Recheck" button is placed at the bottom, using the main button style
 
 ---
 
 ## 6. LoginButton Integration
 
-修改 `LoginButton.tsx` 中 `checkAvailabilityGuard` 失败时的行为：
+Modify the behavior when `checkAvailabilityGuard` fails in `LoginButton.tsx`:
 
 **Before (current):**
 
 ```typescript
 if (!availability.isUVPAAAvailable) {
-  setError('您的设备未启用生物识别(指纹/面容)或屏幕锁，无法使用Passkey')
+  setError(
+    'Your device does not have biometrics (fingerprint/face) or screen lock enabled, Passkey cannot be used'
+  )
   return false
 }
 ```
@@ -168,24 +170,24 @@ if (!availability.isUVPAAAvailable) {
 
 ```typescript
 if (!availability.isUVPAAAvailable) {
-  setShowBiometricGuide(true) // 新增 state，控制显示 BiometricGuide
+  setShowBiometricGuide(true) //Add new state to control the display of BiometricGuide
   return false
 }
 ```
 
-在 JSX 中，当 `showBiometricGuide === true` 时渲染 `<BiometricGuide />`，替代登录按钮区域。用户点击"重新检测"后：
+In JSX, when `showBiometricGuide === true` renders `<BiometricGuide />`, replacing the login button area. After the user clicks "Redetect":
 
-1. 重新调用 `PasskeyService.checkAvailability()`
-2. 若通过 → `setShowBiometricGuide(false)`，恢复登录按钮
-3. 若仍不通过 → 保持引导页，提示"仍未检测到，请确认已完成设置"
+1. Call `PasskeyService.checkAvailability()` again
+2. If → `setShowBiometricGuide(false)` is passed, restore the login button
+3. If it still fails → Keep the boot page and prompt "Not detected yet, please confirm that the settings have been completed"
 
-注意：重新检测时需清除 `PasskeyService` 的 `#supportCache`，或新增一个 `clearCache()` 静态方法。
+Note: When re-detecting, you need to clear the `#supportCache` of `PasskeyService`, or add a `clearCache()` static method.
 
 ---
 
 ## 7. PasskeyService Changes
 
-在 `passkeyService.ts` 中新增：
+Added in `passkeyService.ts`:
 
 ```typescript
 static clearSupportCache(): void {
@@ -193,25 +195,25 @@ static clearSupportCache(): void {
 }
 ```
 
-在重新检测时调用，确保不会返回过期的缓存结果。
+Called upon redetection to ensure that expired cached results are not returned.
 
 ---
 
 ## 8. Edge Cases
 
-| 场景                           | 处理                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------ |
-| 用户开启了屏幕锁但没有生物识别 | 正常工作。`isUVPAAAvailable` 会返回 `true`，Passkey 使用 PIN 验证              |
-| 用户跟着步骤开启后返回 App     | 点"重新检测"触发重新检测。PWA 在后台可能已更新状态，但保险起见仍需手动重新检测 |
-| 桌面浏览器无任何认证器         | 引导安装系统级认证（如 macOS 登录密码、Windows Hello PIN）                     |
-| 用户反复检测仍失败             | 第二次失败后增加提示："如果问题持续，请尝试重启浏览器后再试"                   |
-| 企业管理设备禁用了生物识别     | 无法解决，提示用户联系 IT 管理员                                               |
+| Scene                                                            | Processing                                                                                                                                                       |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User has screen lock on but no biometrics                        | Works fine. `isUVPAAAvailable` will return `true`, Passkey uses PIN verification                                                                                 |
+| The user returns to the App after following the steps to open it | Click "Re-Detect" to trigger re-detection. The PWA may have updated status in the background, but it still needs to be rechecked manually to be on the safe side |
+| Desktop browsers without any authenticator                       | Guided installation of system-level authentication (such as macOS login password, Windows Hello PIN)                                                             |
+| The user still fails to test repeatedly                          | Add a prompt after the second failure: "If the problem persists, please try restarting the browser and try again"                                                |
+| Enterprise management device has biometrics disabled             | Unable to resolve, prompt user to contact IT administrator                                                                                                       |
 
 ---
 
 ## 9. Implementation Checklist
 
-1. `src/utils/platformDetect.ts` — 平台检测工具函数
-2. `src/components/BiometricGuide.tsx` + `BiometricGuide.css` — 引导组件
-3. `src/services/passkeyService.ts` — 新增 `clearSupportCache()`
-4. `src/components/LoginButton.tsx` — 集成 `showBiometricGuide` state 和 `<BiometricGuide />`
+1. `src/utils/platformDetect.ts` — platform detection tool function
+2. `src/components/BiometricGuide.tsx` + `BiometricGuide.css` — Bootstrap component
+3. `src/services/passkeyService.ts` — added `clearSupportCache()`
+4. `src/components/LoginButton.tsx` — Integrate `showBiometricGuide` state and `<BiometricGuide />`

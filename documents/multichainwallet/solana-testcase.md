@@ -1,428 +1,429 @@
-# Solana 钱包集成测试用例
+# Solana wallet integration test case
 
-> 测试环境：Solana Devnet
-> 框架：Vitest（单元/集成测试）+ Playwright（E2E）
+> Test environment: Solana Devnet
+> Framework: Vitest (unit/integration testing) + Playwright (E2E)
 
 ---
 
-## TC-SOL-KEY: 密钥派生测试
+## TC-SOL-KEY: Key derivation test
 
-### TC-SOL-KEY-01：标准路径派生地址
+### TC-SOL-KEY-01: Standard path derived address
 
-**目标**：验证 SLIP-0010/Ed25519 派生结果与标准钱包一致
+**Goal**: Verify that SLIP-0010/Ed25519 derivation results are consistent with standard wallets
 
-**前置条件**：已知 masterSeed 和对应的 Phantom 钱包地址（用于交叉验证）
+**Precondition**: known masterSeed and corresponding Phantom wallet address (for cross-validation)
 
-**输入**：
+**enter**:
 
 ```ts
-// 已知测试向量（与 Phantom 默认派生路径 m/44'/501'/0'/0' 对应）
+// Known test vector (corresponds to Phantom's default derivation path m/44'/501'/0'/0')
 const masterSeed = Buffer.from(
   'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
   'hex'
 )
 ```
 
-**步骤**：
+**step**:
 
-1. 调用 `SolanaKeyService.deriveKeypair(masterSeed, 0)`
-2. 取 `keypair.publicKey.toBase58()`
-3. 与已知测试向量地址对比
+1. Call `SolanaKeyService.deriveKeypair(masterSeed, 0)`
+2. Get `keypair.publicKey.toBase58()`
+3. Compare with known test vector address
 
-**预期结果**：
+**Expected results**:
 
-- 输出 Base58 地址（32-44 字符，不含 `0x` 前缀）
-- 与 Phantom 在相同 seed 下 index=0 的地址完全一致
+- Output Base58 address (32-44 characters, without `0x` prefix)
+- Exactly the same address as Phantom's index=0 under the same seed
 
-**通过标准**：地址完全匹配
-
----
-
-### TC-SOL-KEY-02：多账户派生隔离性
-
-**目标**：不同 index 派生出不同地址，且确定性可复现
-
-**步骤**：
-
-1. 使用相同 `masterSeed`，分别派生 index 0, 1, 2, 3, 4
-2. 验证五个地址两两不同
-3. 重复派生 index 0，验证与第一次完全相同
-
-**预期结果**：
-
-- 5 个地址全部不同
-- index=0 两次派生结果 100% 一致
+**PASSING CRITERIA**: Address exactly matches
 
 ---
 
-### TC-SOL-KEY-03：EVM 与 Solana 密钥隔离
+### TC-SOL-KEY-02: Multi-account derived isolation
 
-**目标**：同一 masterSeed 派生的 EVM 私钥和 Solana 私钥完全独立
+**Goal**: Different indexes derive different addresses, and they are reproducible with certainty.
 
-**步骤**：
+**step**:
 
-1. 从 masterSeed 派生 EVM 地址（BIP44 路径 `m/44'/60'/0'/0/0`）
-2. 从 masterSeed 派生 Solana 地址（SLIP-0010 路径 `m/44'/501'/0'/0'`）
-3. 验证两者对应的私钥字节不同
+1. Use the same `masterSeed` to derive index 0, 1, 2, 3, 4 respectively.
+2. Verify that two of the five addresses are different
+3. Repeat the derivation of index 0 and verify that it is exactly the same as the first time.
 
-**预期结果**：EVM 私钥 ≠ Solana 私钥，无任何字节重合
+**Expected results**:
 
----
-
-### TC-SOL-KEY-04：非法 masterSeed 处理
-
-**目标**：输入异常 seed 时应有明确错误，不应静默失败
-
-**步骤**：
-
-1. 传入空 `Uint8Array(0)`
-2. 传入长度不足 16 字节的 seed
-3. 传入全零 32 字节（`Uint8Array(32).fill(0)`）
-
-**预期结果**：
-
-- 前两种情况：抛出明确错误（如 `InvalidSeedLength`）
-- 全零 seed：技术上有效，应正常派生（但在业务层应警告，因这不应发生在真实用户场景）
+- 5 addresses all different
+- index=0, the two derivation results are 100% consistent
 
 ---
 
-## TC-SOL-ADDR: 地址验证测试
+### TC-SOL-KEY-03: EVM and Solana key isolation
 
-### TC-SOL-ADDR-01：有效 Solana 地址校验
+**Goal**: EVM private keys and Solana private keys derived from the same masterSeed are completely independent
 
-**步骤**：将以下地址传入 `isValidSolanaAddress()` 函数
+**step**:
 
-**输入/预期**：
+1. Derive EVM address from masterSeed (BIP44 path `m/44'/60'/0'/0/0`)
+2. Derive Solana address from masterSeed (SLIP-0010 path `m/44'/501'/0'/0'`)
+3. Verify that the corresponding private key bytes of the two are different
 
-| 地址                                                        | 预期     | 说明                  |
-| ----------------------------------------------------------- | -------- | --------------------- |
-| `11111111111111111111111111111111`                          | ✅ true  | System Program 地址   |
-| `So11111111111111111111111111111111111111112`               | ✅ true  | Native SOL Token Mint |
-| `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`              | ✅ true  | USDC Mint             |
-| `0x1234567890abcdef...`                                     | ❌ false | EVM 格式地址          |
-| `invalid-address-string`                                    | ❌ false | 随机字符串            |
-| `""`                                                        | ❌ false | 空字符串              |
-| `AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` (45 chars) | ❌ false | 过长                  |
+**Expected results**: EVM private key ≠ Solana private key, no byte overlap
 
 ---
 
-### TC-SOL-ADDR-02：发送表单地址输入验证
+### TC-SOL-KEY-04: Illegal masterSeed processing
 
-**步骤**：
+**Goal**: There should be clear errors when entering exception seeds and should not fail silently
 
-1. 在 Solana 链下打开发送表单
-2. 在 `recipient` 输入框输入 EVM 地址（`0x...`）
-3. 验证错误提示文本
-4. 清空并输入合法 Solana 地址
-5. 验证错误消失，金额输入框可用
+**step**:
 
-**预期结果**：
+1. Pass in empty `Uint8Array(0)`
+2. Pass in a seed whose length is less than 16 bytes
+3. Pass in all zeros 32 bytes (`Uint8Array(32).fill(0)`)
 
-- 输入 EVM 地址时显示"请输入有效的 Solana 地址"
-- 输入合法 Solana 地址后错误消失
+**Expected results**:
 
----
-
-## TC-SOL-BAL: 余额查询测试
-
-### TC-SOL-BAL-01：SOL 余额查询（Devnet）
-
-**前置条件**：持有一个 Devnet 地址，已通过 Faucet 充值 1 SOL
-
-**步骤**：
-
-1. 初始化 `SolanaService('https://api.devnet.solana.com')`
-2. 调用 `getBalance(address)`
-3. 同时在 [Solscan Devnet](https://solscan.io/?cluster=devnet) 查询相同地址
-
-**预期结果**：
-
-- 返回值为正数，单位为 SOL（如 `1.0` 或 `0.99...`）
-- 与 Solscan 显示余额误差 < 0.001 SOL（因 Faucet 可能有精度差异）
+- The first two cases: throw an explicit error (such as `InvalidSeedLength`)
+- All-zero seed: technically valid, should be derived normally (but should be warned at the business layer, as this should not happen in real user scenarios)
 
 ---
 
-### TC-SOL-BAL-02：零余额地址查询
+## TC-SOL-ADDR: Address verification test
 
-**步骤**：
+### TC-SOL-ADDR-01: Valid Solana address verification
 
-1. 生成一个全新的 Solana 地址（从未充值过）
-2. 调用 `getBalance(newAddress)`
+**Step**: Pass the following address into the `isValidSolanaAddress()` function
 
-**预期结果**：返回 `0`，不抛出异常
+**Input/Expected**:
 
----
-
-### TC-SOL-BAL-03：SPL Token 余额查询
-
-**前置条件**：地址持有 Devnet USDC（通过 Devnet Faucet 获取）
-
-**步骤**：
-
-1. 调用 `SolanaTokenService.getTokenBalance(address, USDC_DEVNET_MINT)`
-2. 与链上数据对比
-
-**预期结果**：返回正确的 USDC 金额字符串（如 `"10.5"`）
+| Address                                              | Expectation | Description            |
+| ---------------------------------------------------- | ----------- | ---------------------- |
+| `11111111111111111111111111111111`                   | ✅ true     | System Program Address |
+| `So11111111111111111111111111111111111111112`        | ✅ true     | Native SOL Token Mint  |
+| `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`       | ✅ true     | USDC Mint              |
+| `0x1234567890abcdef...`                              | ❌ false    | EVM format address     |
+| `invalid-address-string`                             | ❌ false    | random string          |
+| `""`                                                 | ❌ false    | empty string           |
+| `AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` (45 chars) | ❌ false    | Too long               |
 
 ---
 
-### TC-SOL-BAL-04：SPL Token 无 ATA 地址查询
+### TC-SOL-ADDR-02: Send form address input validation
 
-**步骤**：
+**step**:
 
-1. 使用一个**从未持有**该 Token 的地址
-2. 调用 `getTokenBalance(addressWithoutATA, mint)`
+1. Open the sending form under the Solana chain
+2. Enter the EVM address (`0x...`) in the `recipient` input box
+3. Verify error message text
+4. Clear and enter a valid Solana address
+5. The verification error disappears and the amount input box is available.
 
-**预期结果**：返回 `"0"`，不抛出异常（ATA 不存在应作为零余额处理）
+**Expected results**:
 
----
-
-## TC-SOL-TX: 交易测试（Devnet）
-
-### TC-SOL-TX-01：SOL 转账全流程
-
-**前置条件**：
-
-- 发送方在 Devnet 持有 ≥ 0.01 SOL
-- 接收方为新地址
-
-**步骤**：
-
-1. 记录发送方和接收方初始余额
-2. 调用 `solanaService.sendSOL(senderKeypair, recipient, 0.001)`
-3. 等待交易确认（`confirmed` 级别）
-4. 查询两方余额
-
-**预期结果**：
-
-- 返回 88 字符的 Base58 交易签名
-- 接收方余额增加 `0.001 SOL`
-- 发送方余额减少 `0.001 + fee（约 0.000005）SOL`
-- 签名在 Solscan Devnet 上可查询到状态为 `Success`
+- "Please enter a valid Solana address" is displayed when entering the EVM address
+- The error disappears after entering a valid Solana address
 
 ---
 
-### TC-SOL-TX-02：余额不足时转账失败
+## TC-SOL-BAL: Balance query test
 
-**步骤**：
+### TC-SOL-BAL-01: SOL balance query (Devnet)
 
-1. 使用一个仅有 `0.000005 SOL`（只够 fee，不够转账）的地址
-2. 尝试发送 `0.001 SOL`
+**Prerequisites**: Hold a Devnet address and have deposited 1 SOL through Faucet
 
-**预期结果**：
+**step**:
 
-- 抛出错误，错误信息包含余额不足的说明
-- 不提交交易到链上（preflight 阶段拦截）
+1. Initialize `SolanaService('https://api.devnet.solana.com')`
+2. Call `getBalance(address)`
+3. At the same time, query the same address in [Solscan Devnet](https://solscan.io/?cluster=devnet)
 
----
+**Expected results**:
 
-### TC-SOL-TX-03：费用预估
-
-**步骤**：
-
-1. 构造一笔 SOL 转账交易（不签名、不广播）
-2. 调用 `estimateFee(sender, recipient, 100000)`
-
-**预期结果**：
-
-- 返回费用估算值，单位为 SOL
-- 值约为 `0.000005 SOL`（5000 lamports）
-- 结果为正数，类型为 `number`
+- The return value is a positive number, the unit is SOL (such as `1.0` or `0.99...`)
+- Display balance error with Solscan < 0.001 SOL (there may be accuracy differences due to Faucet)
 
 ---
 
-### TC-SOL-TX-04：SPL Token 转账（ATA 已存在）
+### TC-SOL-BAL-02: Zero balance address query
 
-**前置条件**：发送方和接收方都已有 USDC ATA，发送方持有 ≥ 1 USDC
+**step**:
 
-**步骤**：
+1. Generate a brand new Solana address (never recharged)
+2. Call `getBalance(newAddress)`
 
-1. 调用 `sendToken(senderKeypair, recipient, USDC_DEVNET_MINT, 100000n)` (0.1 USDC，6位小数)
-2. 等待交易确认
-
-**预期结果**：
-
-- 接收方 USDC 增加 `0.1`
-- 发送方 USDC 减少 `0.1`
-- 发送方 SOL 减少约 `0.000005`（仅 tx fee，无 ATA 创建费）
+**Expected result**: Return `0`, no exception is thrown
 
 ---
 
-### TC-SOL-TX-05：SPL Token 转账（需创建接收方 ATA）
+### TC-SOL-BAL-03: SPL Token balance inquiry
 
-**前置条件**：
+**Prerequisite**: The address holds Devnet USDC (obtained through Devnet Faucet)
 
-- 发送方持有 USDC，ATA 已存在
-- 接收方从未持有 USDC（无 ATA）
-- 发送方 SOL 余额 ≥ 0.003 SOL
+**step**:
 
-**步骤**：
+1. Call `SolanaTokenService.getTokenBalance(address, USDC_DEVNET_MINT)`
+2. Comparison with on-chain data
 
-1. 确认接收方 USDC ATA 不存在
-2. 调用 `sendToken(...)`
-3. 确认交易成功
-
-**预期结果**：
-
-- 交易内包含两条指令：`createAssociatedTokenAccount` + `transfer`
-- 接收方 USDC ATA 自动创建
-- 发送方 SOL 额外扣除约 `0.002 SOL`（ATA 租金）
-- UI 提前告知用户需要支付 ATA 创建费用
+**Expected result**: Return the correct USDC amount string (such as `"10.5"`)
 
 ---
 
-### TC-SOL-TX-06：无效接收地址的转账
+### TC-SOL-BAL-04: SPL Token without ATA address query
 
-**步骤**：
+**step**:
 
-1. 在发送表单中输入一个 EVM 地址（`0xAbCd...`）
-2. 点击发送
+1. Use an address that has never held the Token.
+2. Call `getTokenBalance(addressWithoutATA, mint)`
 
-**预期结果**：
-
-- 表单校验阶段（客户端）拦截，不调用 `sendTransaction`
-- 显示错误提示"无效的 Solana 地址"
+**Expected result**: Return `"0"`, no exception is thrown (the absence of ATA should be treated as a zero balance)
 
 ---
 
-## TC-SOL-CHAIN: 链切换测试
+## TC-SOL-TX: Transaction Test (Devnet)
 
-### TC-SOL-CHAIN-01：EVM → Solana 链切换
+### TC-SOL-TX-01: The whole process of SOL transfer
 
-**步骤**：
+**Prerequisites**:
 
-1. 当前选中 Ethereum Mainnet
-2. 打开链切换组件（ChainSwitcher）
-3. 选择 Solana Mainnet
+- The sender holds ≥ 0.01 SOL in Devnet
+- The recipient is a new address
 
-**预期结果**：
+**step**:
 
-- 链图标更新为 Solana
-- 余额显示变为 SOL 单位
-- 发送按钮可用，发送表单显示 Solana 地址校验规则
-- 浏览历史按钮链接指向 Solscan
+1. Record the initial balance of the sender and receiver
+2. Call `solanaService.sendSOL(senderKeypair, recipient, 0.001)`
+3. Wait for transaction confirmation (`confirmed` level)
+4. Check the balance of two parties
 
----
+**Expected results**:
 
-### TC-SOL-CHAIN-02：Solana → EVM 链切换
-
-**步骤**：
-
-1. 当前选中 Solana Devnet
-2. 切换到 Arbitrum One
-
-**预期结果**：
-
-- 余额恢复为 ETH 单位
-- 发送表单恢复 EVM 地址校验规则（`0x...`）
-- RPC 请求不再发向 Solana 节点
+- Returns an 88-character Base58 transaction signature
+- The receiver's balance increases by `0.001 SOL`
+- The sender's balance is reduced by `0.001 + fee (approximately 0.000005) SOL`
+- The status of the signature can be queried on Solscan Devnet as `Success`
 
 ---
 
-### TC-SOL-CHAIN-03：Solana Mainnet ↔ Devnet 切换
+### TC-SOL-TX-02: Transfer failed when balance is insufficient
 
-**步骤**：
+**step**:
 
-1. 从 Solana Mainnet 切换到 Solana Devnet
+1. Use an address with only `0.000005 SOL` (just enough for fee, not enough for transfer)
+2. Try sending `0.001 SOL`
 
-**预期结果**：
+**Expected results**:
 
-- RPC 切换到 `https://api.devnet.solana.com`
-- 余额重新查询（Devnet 余额与 Mainnet 不同）
-- 链标签显示"Solana Devnet"
-
----
-
-## TC-SOL-WALLET: 多钱包测试
-
-### TC-SOL-WALLET-01：多账户派生地址唯一性
-
-**前置条件**：已登录，可通过"添加账户"派生新 Solana 钱包
-
-**步骤**：
-
-1. 查看账户列表中的 Solana 地址（index 0）
-2. 添加第二个 Solana 账户（index 1）
-
-**预期结果**：
-
-- 两个账户的 Solana 地址完全不同
-- 两个账户的 EVM 地址也完全不同
-- 切换账户后余额展示对应改变
+- Throw an error, the error message contains a description of insufficient balance
+- Do not submit transactions to the chain (preflight stage interception)
 
 ---
 
-### TC-SOL-WALLET-02：重新登录后地址一致性
+### TC-SOL-TX-03: Cost estimate
 
-**步骤**：
+**step**:
 
-1. 记录当前登录状态下 Solana index=0 地址
-2. 退出登录（清空内存 seed）
-3. 使用相同 Passkey 重新登录
-4. 查看 Solana index=0 地址
+1. Construct a SOL transfer transaction (no signature, no broadcast)
+2. Call `estimateFee(sender, recipient, 100000)`
 
-**预期结果**：重新登录后地址与退出前完全一致（确定性派生）
+**Expected results**:
 
----
-
-## TC-SOL-RPC: RPC 稳定性测试
-
-### TC-SOL-RPC-01：RPC 超时处理
-
-**步骤**：
-
-1. 模拟 RPC 请求超时（可通过设置极短 timeout 或断网）
-2. 触发余额查询
-
-**预期结果**：
-
-- 余额显示加载中（loading 状态）
-- 超时后显示错误提示"网络请求失败，请重试"
-- 不显示 NaN 或 undefined
+- Returns cost estimate in SOL
+- Value is approximately `0.000005 SOL` (5000 lamports)
+- The result is a positive number of type `number`
 
 ---
 
-### TC-SOL-RPC-02：Devnet Faucet 集成
+### TC-SOL-TX-04: SPL Token transfer (ATA already exists)
 
-> 仅用于开发环境验证，不作为生产功能测试
+**Precondition**: Both the sender and the receiver already have USDC ATA, and the sender holds ≥ 1 USDC
 
-**步骤**：
+**step**:
 
-1. 在 Devnet 模式下，调用 `requestAirdrop(address, 1)`
-2. 等待确认
-3. 查询余额
+1. Call `sendToken(senderKeypair, recipient, USDC_DEVNET_MINT, 100000n)` (0.1 USDC, 6 decimal places)
+2. Wait for transaction confirmation
 
-**预期结果**：余额增加 1 SOL
+**Expected results**:
+
+- Receiver USDC increases by `0.1`
+- Sender USDC decreases by `0.1`
+- Sender SOL reduced by approximately `0.000005` (only tx fee, no ATA creation fee)
 
 ---
 
-## 测试执行说明
+### TC-SOL-TX-05: SPL Token transfer (recipient ATA needs to be created)
 
-### 单元测试（Vitest）
+**Prerequisites**:
 
-适用范围：TC-SOL-KEY-_, TC-SOL-ADDR-_
+- The sender holds USDC and ATA already exists
+- The recipient never held USDC (no ATA)
+- Sender SOL balance ≥ 0.003 SOL
+
+**step**:
+
+1. Confirm that the recipient USDC ATA does not exist
+2. Call `sendToken(...)`
+3. Confirm the transaction is successful
+
+**Expected results**:
+
+- The transaction contains two instructions: `createAssociatedTokenAccount` + `transfer`
+- Receiver USDC ATA automatically created
+- Sender SOL additional deduction of approximately `0.002 SOL` (ATA rental)
+- The UI informs users in advance that they need to pay the ATA creation fee
+
+---
+
+### TC-SOL-TX-06: Transfer with invalid receiving address
+
+**step**:
+
+1. Enter an EVM address (`0xAbCd...`) in the send form
+2. Click Send
+
+**Expected results**:
+
+- Intercept during the form verification phase (client) and do not call `sendTransaction`
+- Display error message "Invalid Solana address"
+
+---
+
+## TC-SOL-CHAIN: Chain switching test
+
+### TC-SOL-CHAIN-01: EVM → Solana chain switching
+
+**step**:
+
+1. Currently selected Ethereum Mainnet
+2. Open the chain switch component (ChainSwitcher)
+3. Select Solana Mainnet
+
+**Expected results**:
+
+-Chain icon updated to Solana
+
+- Balance display changes to SOL units
+- The send button is available and the send form displays Solana address verification rules
+- Browsing history button links to Solscan
+
+---
+
+### TC-SOL-CHAIN-02: Solana → EVM chain switching
+
+**step**:
+
+1. Solana Devnet is currently selected
+2. Switch to Arbitrum One
+
+**Expected results**:
+
+- Balance reverted to ETH units
+- Send form to restore EVM address verification rules (`0x...`)
+- RPC requests are no longer sent to Solana nodes
+
+---
+
+### TC-SOL-CHAIN-03: Solana Mainnet ↔ Devnet switching
+
+**step**:
+
+1. Switch from Solana Mainnet to Solana Devnet
+
+**Expected results**:
+
+- RPC switch to `https://api.devnet.solana.com`
+- Balance re-query (Devnet balance is different from Mainnet)
+- Chain label shows "Solana Devnet"
+
+---
+
+## TC-SOL-WALLET: Multi-wallet test
+
+### TC-SOL-WALLET-01: Uniqueness of multi-account derived addresses
+
+**Prerequisite**: Log in, you can derive a new Solana wallet through "Add Account"
+
+**step**:
+
+1. View the Solana address (index 0) in the account list
+2. Add a second Solana account (index 1)
+
+**Expected results**:
+
+- The two accounts have completely different Solana addresses
+  -The EVM addresses of the two accounts are also completely different
+- The balance display will change accordingly after switching accounts.
+
+---
+
+### TC-SOL-WALLET-02: Address consistency after re-login
+
+**step**:
+
+1. Record the address of Solana index=0 in the current login state
+2. Log out (clear memory seed)
+3. Log in again using the same Passkey
+4. View Solana index=0 address
+
+**Expected results**: The address after logging in again is exactly the same as before logging out (deterministic derivation)
+
+---
+
+## TC-SOL-RPC: RPC stability test
+
+### TC-SOL-RPC-01: RPC timeout processing
+
+**step**:
+
+1. Simulate RPC request timeout (you can set a very short timeout or disconnect the network)
+2. Trigger balance inquiry
+
+**Expected results**:
+
+- The balance display is loading (loading status)
+- After timeout, an error message "Network request failed, please try again" is displayed.
+- Do not display NaN or undefined
+
+---
+
+### TC-SOL-RPC-02: Devnet Faucet Integration
+
+> Only used for development environment verification, not as a production functional test
+
+**step**:
+
+1. In Devnet mode, call `requestAirdrop(address, 1)`
+2. Wait for confirmation
+3. Check balance
+
+**Expected results**: Balance increased by 1 SOL
+
+---
+
+## Test execution instructions
+
+### Unit Test (Vitest)
+
+Scope of application: TC-SOL-KEY-_, TC-SOL-ADDR-_
 
 ```bash
 yarn test --grep "solana"
 ```
 
-### 集成测试（Devnet）
+### Integration testing (Devnet)
 
-适用范围：TC-SOL-BAL-_, TC-SOL-TX-_
+Scope of application: TC-SOL-BAL-_, TC-SOL-TX-_
 
-需要配置 Devnet Faucet 账户，执行前先运行 Faucet 充值脚本。
+A Devnet Faucet account needs to be configured, and the Faucet recharge script needs to be run before execution.
 
 ```bash
-# 给测试账户充值
+# Recharge the test account
 yarn test:devnet:fund
 
-# 运行 Devnet 集成测试
+#Run Devnet integration tests
 yarn test:integration --grep "solana"
 ```
 
-### E2E 测试（Playwright）
+### E2E Testing (Playwright)
 
-适用范围：TC-SOL-CHAIN-_, TC-SOL-WALLET-_
+Scope of application: TC-SOL-CHAIN-_, TC-SOL-WALLET-_
 
 ```bash
 yarn test:e2e --grep "solana"
@@ -430,19 +431,19 @@ yarn test:e2e --grep "solana"
 
 ---
 
-## 测试数据参考
+## Test data reference
 
 ```typescript
-// Devnet 常用地址与 Mint
+// Devnet common addresses and Mint
 export const TEST_ADDRESSES = {
   // Devnet USDC Mint
   USDC_DEVNET_MINT: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
-  // System Program（用于地址有效性测试）
+  // System Program (for address validity testing)
   SYSTEM_PROGRAM: '11111111111111111111111111111111',
   // Token Program
   TOKEN_PROGRAM: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 }
 
-// 测试使用的 masterSeed（仅用于测试，不含真实资产）
-export const TEST_SEED = new Uint8Array(32).fill(1) // 全1字节测试种子
+// masterSeed used for testing (only for testing, no real assets included)
+export const TEST_SEED = new Uint8Array(32).fill(1) // Full 1-byte test seed
 ```

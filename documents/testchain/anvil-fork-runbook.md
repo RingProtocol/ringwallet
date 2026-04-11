@@ -1,23 +1,23 @@
-# Anvil Fork 运行手册（简版）
+# Anvil Fork Operation Manual (Simplified Version)
 
-## 前置
+## Prefix
 
-- 安装 [Foundry](https://book.getfoundry.sh/getting-started/installation)（含 `anvil`）。
-- `.env.test` 中配置 `ALCHEMY_API_KEY`，或仅配置 **`TESTCHAIN_FORK_URL_SEPOLIA`**（见 `test/evmchain/README.md` 的 403 / origin 说明 — Alchemy 常把浏览器 key 限制来源，Anvil 会 403）。
+- Install [Foundry](https://book.getfoundry.sh/getting-started/installation) (contains `anvil`).
+- Configure `ALCHEMY_API_KEY` in `.env.test`, or only configure **`TESTCHAIN_FORK_URL_SEPOLIA`** (see the 403/origin description of `test/evmchain/README.md` - Alchemy often limits browser key sources, Anvil will 403).
 
 ## Alchemy 403（origin not on whitelist）
 
-优先在 **Alchemy 控制台** 为该 key 放行服务端/CLI（或放宽来源限制）。  
-若暂时不用 Alchemy 做 fork：从 `.env.test` **去掉** `ALCHEMY_API_KEY` / `VITE_ALCHEMY_RPC_KEY`，仅保留 `TESTCHAIN_FORK_URL_SEPOLIA=https://rpc.sepolia.org`，再 `yarn test:chain:fork-url`（无 key 时才会用该 URL）。
+Preferably release the server/CLI (or relax source restrictions) for this key in the **Alchemy Console**.
+If you do not need to fork Alchemy temporarily: **Remove** `ALCHEMY_API_KEY` / `VITE_ALCHEMY_RPC_KEY` from `.env.test`, keep only `TESTCHAIN_FORK_URL_SEPOLIA=https://rpc.sepolia.org`, and then `yarn test:chain:fork-url` (this URL will be used when there is no key).
 
-## 启动单链分叉
+## Start single chain fork
 
 ```bash
 set -a && source .env.test && set +a
 anvil --fork-url "https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}" --port 8545
 ```
 
-固定分叉块（可复现、减负载）：
+Fixed fork block (reproducible, load-reducing):
 
 ```bash
 anvil --fork-url "https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}" \
@@ -25,16 +25,16 @@ anvil --fork-url "https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}" \
   --port 8545
 ```
 
-## 验证
+## verify
 
 ```bash
 cast chain-id --rpc-url http://127.0.0.1:8545
-# 期望与 Sepolia 一致：11155111
+# Expect the same as Sepolia: 11155111
 ```
 
-## 用默认账户给某地址转 native
+## Use the default account to transfer an address to native
 
-将 `TO` 换成钱包推导出的测试地址，`KEY` 为 Anvil 打印的第一账户私钥：
+Replace `TO` with the test address derived by the wallet, and `KEY` with the first account private key printed by Anvil:
 
 ```bash
 cast send --rpc-url http://127.0.0.1:8545 \
@@ -43,14 +43,14 @@ cast send --rpc-url http://127.0.0.1:8545 \
   "$TO"
 ```
 
-## ERC20 最小流程（概念）
+## ERC20 minimum process (concept)
 
-1. `forge create` 或脚本部署 `TestToken`（带 `mint`）。
-2. `cast send` 调用 `mint(0xYourAddr, 1000000000000000000000)`。
-3. 钱包添加 token 合约地址后查 `balanceOf`。
+1. `forge create` or script deploy `TestToken` (with `mint`).
+2. `cast send` calls `mint(0xYourAddr, 1000000000000000000000)`.
+3. Check `balanceOf` after adding the token contract address to the wallet.
 
-具体 Solidity / 脚本可放在 `scripts/testchain/`（待实现）。
+Specific Solidity/scripts can be placed in `scripts/testchain/` (to be implemented).
 
-## 停止
+## stop
 
-前台 `Ctrl+C`；后台 `pkill anvil` 或记录 pid 后 `kill`。
+Foreground `Ctrl+C`; background `pkill anvil` or record pid and then `kill`.

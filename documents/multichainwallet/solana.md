@@ -1,71 +1,71 @@
-# Solana 钱包集成方案
+# Solana Wallet Integration Solution
 
-## 项目现状分析
+## Project status analysis
 
-当前钱包架构：
+Current wallet architecture:
 
-- **框架**: React + TypeScript + Next.js
-- **EVM 交互**: ethers.js v6
-- **密钥管理**: Passkey + 自定义 32 字节 masterSeed（嵌入 WebAuthn userHandle）
-- **HD 派生**: `ethers.HDNodeWallet.fromSeed()` → secp256k1，路径 `m/44'/60'/0'/0/${i}`
-- **账户类型**: EOA + 智能合约钱包 (ERC-4337/EIP-7951)
-- **现有链**: Ethereum, Optimism, Arbitrum, Polygon
+- **Framework**: React + TypeScript + Next.js
+- **EVM Interaction**: ethers.js v6
+- **Key Management**: Passkey + custom 32-byte masterSeed (embedded WebAuthn userHandle)
+- **HD derived**: `ethers.HDNodeWallet.fromSeed()` → secp256k1, path `m/44'/60'/0'/0/${i}`
+- **Account Type**: EOA + Smart Contract Wallet (ERC-4337/EIP-7951)
+- **Existing Chains**: Ethereum, Optimism, Arbitrum, Polygon
 
-**核心约束（用户要求）：**
+**Core constraints (user requirements):**
 
-1. **不依赖自建服务器** — 使用公共/第三方 RPC 节点，无需运营 Solana 节点
-2. **不依赖第三方钱包 App** — 完全自托管，不依赖 Phantom/Solflare 等插件钱包
-
----
-
-## 方案选型评估
-
-### ~~方案二：Wallet-Adapter~~ ❌ 不符合要求
-
-需要用户安装外部钱包，与"不依赖第三方钱包 App"约束直接冲突。**直接排除。**
-
-### ~~方案三：Solana Mobile Wallet Adapter~~ ❌ 不符合要求
-
-主要针对原生移动端，不适合 PWA 自托管场景。**直接排除。**
-
-### 方案四：轻量级 RPC 封装 ⚠️ 不推荐
-
-纯手写 JSON-RPC 封装的问题：
-
-- Solana 交易序列化格式复杂（包含 Header、Instruction、AccountKeys、Signatures）
-- SPL Token ATA 地址计算涉及 Program Derived Address (PDA) 逻辑
-- VersionedTransaction / AddressLookupTable 更难手动处理
-- 极易引入安全漏洞，维护成本极高
-
-**不推荐自建底层。**
-
-### ✅ 推荐方案：`@solana/web3.js` v1 + 自托管密钥派生
+1. **Does not rely on self-built servers** - Use public/third-party RPC nodes, no need to operate Solana nodes
+2. **Does not rely on third-party wallet App** — Completely self-hosted, does not rely on plug-in wallets such as Phantom/Solflare
 
 ---
 
-## 推荐方案：Solana Web3.js v1 + 分层架构
+## Solution selection evaluation
 
-### 选型理由
+### ~~Option 2: Wallet-Adapter~~ ❌ Does not meet the requirements
 
-| 维度               | 评估                                        |
-| ------------------ | ------------------------------------------- |
-| 不依赖外部钱包 App | ✅ 完全自托管，私钥从 masterSeed 本地派生   |
-| 不依赖自建服务器   | ✅ 使用公共 RPC / 免费第三方 RPC            |
-| 功能完整           | ✅ 支持 SOL 转账、SPL Token、交易历史       |
-| 安全性             | ✅ 官方库经审计，生态最成熟                 |
-| 维护成本           | ✅ 与 ethers.js 并列的官方库                |
-| 包体积             | ⚠️ ~500KB gzipped，可通过 tree-shaking 优化 |
+Users are required to install an external wallet, which directly conflicts with the "not relying on third-party wallet App" constraint. **Exclude directly. **
 
-> **注意 v1 vs v2**：`@solana/web3.js` v2（即 `@solana/kit`）是全新模块化 API，
-> 树摇更彻底，但截至 2026 年生态工具支持仍不完整。建议先用 v1，待生态稳定后迁移。
+### ~~Option 3: Solana Mobile Wallet Adapter~~ ❌ Does not meet the requirements
 
-### 架构图
+It is mainly aimed at native mobile terminals and is not suitable for PWA self-hosting scenarios. **Exclude directly. **
+
+### Solution 4: Lightweight RPC encapsulation ⚠️ Not recommended
+
+Problems with purely handwritten JSON-RPC encapsulation:
+
+- Solana transaction serialization format is complex (including Header, Instruction, AccountKeys, Signatures)
+- SPL Token ATA address calculation involves Program Derived Address (PDA) logic
+- VersionedTransaction / AddressLookupTable are harder to handle manually
+- It is easy to introduce security vulnerabilities and the maintenance cost is extremely high
+
+**It is not recommended to build your own ground floor. **
+
+### ✅ Recommended solution: `@solana/web3.js` v1 + self-hosted key derivation
+
+---
+
+## Recommended solution: Solana Web3.js v1 + layered architecture
+
+### Reasons for selection
+
+| Dimensions                           | Assessment                                                                  |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| Does not rely on external wallet App | ✅ Fully self-hosted, private keys are derived locally from masterSeed      |
+| Does not rely on self-built servers  | ✅ Use public RPC / free third-party RPC                                    |
+| Fully functional                     | ✅ Supports SOL transfer, SPL Token, transaction history                    |
+| Security                             | ✅ The official database has been audited and has the most mature ecosystem |
+| Maintenance cost                     | ✅ Official library alongside ethers.js                                     |
+| Package size                         | ⚠️ ~500KB gzipped, can be optimized by tree-shaking                         |
+
+> **Note v1 vs v2**: `@solana/web3.js` v2 (i.e. `@solana/kit`) is a new modular API,
+> Tree shaking is more thorough, but eco-tool support is still incomplete as of 2026. It is recommended to use v1 first and migrate after the ecosystem is stable.
+
+### Architecture diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    UI 层 (React Components)                   │
+│ UI Layer (React Components) │
 ├─────────────────────────────────────────────────────────────┤
-│               Chain Abstraction Layer (新增)                   │
+│Chain Abstraction Layer (new) │
 │         ChainFamily: EVM | Solana | ...                       │
 ├──────────────────────────┬──────────────────────────────────┤
 │  EVMService (ethers.js)  │  SolanaService (@solana/web3.js)  │
@@ -77,41 +77,41 @@
 
 ---
 
-## 关键技术问题与修订
+## Key technical issues and revisions
 
-### 1. ⚠️ 密钥派生修订（原方案有缺陷）
+### 1. ⚠️ Key derivation revision (the original solution is defective)
 
-原方案使用 `@noble/curves/ed25519` 但未说明如何做 SLIP-0010 派生。
+The original solution uses `@noble/curves/ed25519` but does not explain how to derive SLIP-0010.
 
-**Solana 密钥派生规范：**
+**Solana Key Derivation Specification:**
 
-- 曲线：**Ed25519**（不同于 EVM 的 secp256k1）
-- 规范：**SLIP-0010**（Ed25519 只支持硬化派生，所有路径节点都加 `'`）
-- 路径：`m/44'/501'/index'/0'`（index 为账户索引）
+- Curve: **Ed25519** (different from EVM's secp256k1)
+- Specification: **SLIP-0010** (Ed25519 only supports hardened derivation, add `''` to all path nodes)
+- Path: `m/44'/501'/index'/0'' (index is the account index)
 
-**正确实现：使用 `ed25519-hd-key`**
+**Correct implementation: use `ed25519-hd-key`**
 
 ```typescript
-// 依赖
+// dependency
 // yarn add ed25519-hd-key
-// (内部使用 @noble/ed25519 实现 SLIP-0010)
+// (Internally using @noble/ed25519 to implement SLIP-0010)
 
 import { derivePath } from 'ed25519-hd-key'
 import { Keypair } from '@solana/web3.js'
 
 export class SolanaKeyService {
   /**
-   * 从 masterSeed 派生 Solana Keypair
-   * masterSeed: 32 字节，来自 Passkey userHandle
-   * index: 账户索引，默认 0
+   * Derive Solana Keypair from masterSeed
+   * masterSeed: 32 bytes from Passkey userHandle
+   * index: account index, default 0
    */
   static deriveKeypair(masterSeed: Uint8Array, index = 0): Keypair {
-    // ed25519-hd-key 需要 hex 格式的 seed
+    // ed25519-hd-key requires seed in hex format
     const seedHex = Buffer.from(masterSeed).toString('hex')
-    // SLIP-0010 路径：所有节点必须硬化（Ed25519 限制）
+    // SLIP-0010 Path: All nodes must be hardened (Ed25519 restriction)
     const path = `m/44'/501'/${index}'/0'`
     const { key } = derivePath(path, seedHex)
-    // Keypair.fromSeed 接受 32 字节私钥，内部自动计算公钥
+    // Keypair.fromSeed accepts a 32-byte private key and automatically calculates the public key internally
     return Keypair.fromSeed(Uint8Array.from(key))
   }
 
@@ -121,25 +121,25 @@ export class SolanaKeyService {
 }
 ```
 
-> **关键区别**：原文档路径 `m/44'/501'/0'/${index}'` 有误，
-> 正确的 Solana BIP44 标准路径是 `m/44'/501'/${index}'/0'`，
-> 与 Phantom、Solflare 等主流钱包保持一致（相同 seed 派生出相同地址）。
+> **Key difference**: The original document path `m/44'/501'/0'/${index}'` is wrong,
+> The correct Solana BIP44 standard path is `m/44'/501'/${index}'/0'`,
+> Consistent with mainstream wallets such as Phantom and Solflare (the same seed derives the same address).
 
 ---
 
-### 2. ✅ RPC 节点选择（无自建服务器）
+### 2. ✅ RPC node selection (no self-built server)
 
-原方案中 `solana-api.projectserum.com`（Serum）已关闭。修订为以下选项：
+In the original plan, `solana-api.projectserum.com` (Serum) has been closed. Revised to the following options:
 
-| 提供商           | 免费额度        | Mainnet URL                                   | 备注           |
-| ---------------- | --------------- | --------------------------------------------- | -------------- |
-| **Helius**       | 100万 Credit/月 | `https://mainnet.helius-rpc.com/?api-key=KEY` | 推荐，速率宽松 |
-| **QuickNode**    | 5000万次/月     | QuickNode 控制台                              | 免费套餐       |
-| **Ankr**         | 无限制（公共）  | `https://rpc.ankr.com/solana`                 | 免费，有波动   |
-| **官方公共节点** | 有速率限制      | `https://api.mainnet-beta.solana.com`         | 开发/降级备用  |
-| **Devnet**       | 无限制          | `https://api.devnet.solana.com`               | 仅测试         |
+| Provider                 | Free Credit            | Mainnet URL                                   | Notes                         |
+| ------------------------ | ---------------------- | --------------------------------------------- | ----------------------------- |
+| **Helius**               | 1 million Credit/month | `https://mainnet.helius-rpc.com/?api-key=KEY` | Recommended, easy rate        |
+| **QuickNode**            | 50 million times/month | QuickNode Console                             | Free Plan                     |
+| **Ankr**                 | Unlimited (Public)     | `https://rpc.ankr.com/solana`                 | Free, subject to fluctuations |
+| **Official Public Node** | Rate limited           | `https://api.mainnet-beta.solana.com`         | Development/Downgrade backup  |
+| **Devnet**               | Unlimited              | `https://api.devnet.solana.com`               | Testing only                  |
 
-**推荐配置方式（`.env`）：**
+**Recommended configuration method (`.env`):**
 
 ```env
 VITE_SOLANA_MAINNET_RPC=https://mainnet.helius-rpc.com/?api-key=YOUR_FREE_KEY
@@ -148,9 +148,9 @@ VITE_SOLANA_DEVNET_RPC=https://api.devnet.solana.com
 
 ---
 
-### 3. ✅ 交易构造修订（加入 blockhash 处理）
+### 3. ✅ Transaction structure revision (added blockhash processing)
 
-原方案缺少 `getLatestBlockhash()` 和确认策略。Solana 交易有 ~150 个 slot（约 1 分钟）的有效期，需正确处理。
+The original solution lacks `getLatestBlockhash()` and confirmation strategy. Solana transactions have a validity period of ~150 slots (~1 minute) and need to be processed correctly.
 
 ```typescript
 // src/services/solanaService.ts
@@ -171,14 +171,14 @@ export class SolanaService {
     this.connection = new Connection(rpcUrl, 'confirmed')
   }
 
-  // 查询 SOL 余额（单位：SOL）
+  // Query SOL balance (unit: SOL)
   async getBalance(address: string): Promise<number> {
     const pubkey = new PublicKey(address)
     const lamports = await this.connection.getBalance(pubkey)
     return lamports / LAMPORTS_PER_SOL
   }
 
-  // 发送 SOL（带完整 blockhash 处理）
+  // Send SOL (with full blockhash processing)
   async sendSOL(
     senderKeypair: Keypair,
     recipient: string,
@@ -204,7 +204,7 @@ export class SolanaService {
       { skipPreflight: false, preflightCommitment: 'confirmed' }
     )
 
-    // 使用 blockhash 策略确认（比 signature-only 更可靠）
+    // Confirm using blockhash strategy (more reliable than signature-only)
     const result = await this.connection.confirmTransaction(
       { signature, blockhash, lastValidBlockHeight },
       'confirmed'
@@ -217,7 +217,7 @@ export class SolanaService {
     return signature
   }
 
-  // 预估交易费用（单位：SOL）
+  // Estimated transaction fee (unit: SOL)
   async estimateFee(
     senderPubkey: PublicKey,
     recipient: string,
@@ -242,7 +242,7 @@ export class SolanaService {
 
 ---
 
-### 4. ✅ SPL Token 修订（ATA 创建成本说明）
+### 4. ✅ SPL Token revision (ATA creation cost description)
 
 ```typescript
 import {
@@ -264,14 +264,14 @@ export class SolanaTokenService {
       const balance = await this.connection.getTokenAccountBalance(ata)
       return balance.value.uiAmountString ?? '0'
     } catch {
-      return '0' // ATA 不存在 = 余额为 0
+      return '0' // ATA does not exist = balance is 0
     }
   }
 
   /**
-   * 发送 SPL Token
-   * 注意：如果收款方没有 ATA，发送方需支付 ATA 创建费用（约 0.002 SOL）
-   * 这笔费用由发送方的 SOL 余额支付，需在 UI 层提示用户
+   * Send SPL Token
+   *Note: If the payee does not have an ATA, the sender needs to pay the ATA creation fee (approximately 0.002 SOL)
+   * This fee is paid by the sender's SOL balance and needs to be prompted to the user at the UI layer
    */
   async sendToken(
     senderKeypair: Keypair,
@@ -299,14 +299,14 @@ export class SolanaTokenService {
       feePayer: senderKeypair.publicKey,
     })
 
-    // 检查收款方 ATA 是否存在，不存在则添加创建指令
+    // Check whether the payee ATA exists. If it does not exist, add a create instruction.
     try {
       await getAccount(this.connection, recipientATA)
     } catch (err) {
       if (err instanceof TokenAccountNotFoundError) {
         transaction.add(
           createAssociatedTokenAccountInstruction(
-            senderKeypair.publicKey, // 付款方
+            senderKeypair.publicKey, // Payer
             recipientATA,
             recipientPubkey,
             mintPubkey
@@ -341,32 +341,32 @@ export class SolanaTokenService {
 
 ---
 
-### 5. ✅ 签名流程说明（Passkey 与 Solana 的关系）
+### 5. ✅ Signature process description (relationship between Passkey and Solana)
 
-> **重要澄清**：Passkey（WebAuthn）使用 P-256 (secp256r1) 曲线，**无法直接签名 Solana 交易**。
-> Solana 要求 Ed25519 签名。
+> **Important clarification**: Passkey (WebAuthn) uses the P-256 (secp256r1) curve and **cannot directly sign Solana transactions**.
+> Solana asked for Ed25519's signature.
 
-实际签名流程：
+Actual signing process:
 
 ```
-用户触发发送
+User triggers sending
      ↓
-PasskeyService.verifyIdentity()   ← 生物识别身份验证（防止未授权操作）
+PasskeyService.verifyIdentity() ← Biometric authentication (prevents unauthorized operations)
      ↓
-AuthContext 中的 masterSeed       ← 从登录时的 Passkey userHandle 恢复
+masterSeed in AuthContext ← restored from Passkey userHandle on login
      ↓
-SolanaKeyService.deriveKeypair(masterSeed, index)   ← SLIP-0010/Ed25519 派生
+SolanaKeyService.deriveKeypair(masterSeed, index) ← SLIP-0010/Ed25519 Derived
      ↓
-Keypair.sign(transaction)         ← Ed25519 签名 Solana 交易
+Keypair.sign(transaction) ← Ed25519 Signature Solana Transaction
      ↓
-connection.sendTransaction()      ← 广播到 RPC 节点
+connection.sendTransaction() ← Broadcast to RPC node
 ```
 
-私钥在内存中实时派生、用完即丢，**永不持久化**，与现有 EVM 流程保持一致。
+The private key is derived in real time in memory, is lost after use, and is never persisted, consistent with the existing EVM process.
 
 ---
 
-### 6. Chain 接口扩展
+### 6. Chain interface extension
 
 ```typescript
 // src/models/ChainType.ts
@@ -375,20 +375,20 @@ export enum ChainFamily {
   Solana = 'solana',
 }
 
-// 修改 Chain 接口（原 AuthContext.tsx 中定义，id 为 number 是 EVM 专用）
+// Modify the Chain interface (originally defined in AuthContext.tsx, the id is number and is exclusive to EVM)
 export interface Chain {
-  id: number | string // EVM: chainId (number) | Solana: 'solana-mainnet' 等
+  id: number | string // EVM: chainId (number) | Solana: 'solana-mainnet' etc.
   name: string
   symbol: string
   family: ChainFamily
   rpcUrl: string
   explorer: string
-  // EVM 专有
+  // EVM proprietary
   chainId?: number
   bundlerUrl?: string
   entryPoint?: string
   factoryAddress?: string
-  // Solana 专有
+  // Solana exclusive
   cluster?: 'mainnet-beta' | 'devnet' | 'testnet'
 }
 
@@ -418,60 +418,60 @@ export const SOLANA_CHAINS: Chain[] = [
 
 ---
 
-## 依赖清单
+## Dependency list
 
 ```bash
-# Solana 核心 SDK
+# Solana Core SDK
 yarn add @solana/web3.js @solana/spl-token
 
-# Ed25519 SLIP-0010 HD 派生（专门为 Solana 路径设计）
+#Ed25519 SLIP-0010 HD derivative (designed specifically for Solana paths)
 yarn add ed25519-hd-key
 ```
 
-> **为什么用 `ed25519-hd-key` 而非 `@noble/curves`？**
-> `@noble/curves` 只提供 Ed25519 椭圆曲线运算，不包含 SLIP-0010 派生逻辑。
-> `ed25519-hd-key` 完整实现了 SLIP-0010 规范，与 Phantom/Solflare 路径兼容，
-> 内部也使用 `@noble/ed25519`。
+> **Why use `ed25519-hd-key` instead of `@noble/curves`? **
+> `@noble/curves` only provides Ed25519 elliptic curve operations and does not contain SLIP-0010 derivation logic.
+> `ed25519-hd-key` fully implements the SLIP-0010 specification and is compatible with the Phantom/Solflare path.
+> Also uses `@noble/ed25519` internally.
 
 ---
 
-## 实施步骤（修订版）
+## Implementation steps (revised version)
 
-### Phase 1: 密钥与 RPC 基础（1 周）
+### Phase 1: Keys and RPC Basics (1 week)
 
-1. 安装依赖：`@solana/web3.js`, `@solana/spl-token`, `ed25519-hd-key`
-2. 实现 `SolanaKeyService`（SLIP-0010 Ed25519 派生，路径验证）
-3. 实现 `SolanaService`（Connection 管理、余额查询、SOL 转账）
-4. 扩展 `Chain` 接口，添加 `ChainFamily` 枚举
-5. 配置 RPC 环境变量（Helius 免费账户）
+1. Install dependencies: `@solana/web3.js`, `@solana/spl-token`, `ed25519-hd-key`
+2. Implement `SolanaKeyService` (derived from SLIP-0010 Ed25519, path verification)
+3. Implement `SolanaService` (Connection management, balance query, SOL transfer)
+4. Extend the `Chain` interface and add the `ChainFamily` enumeration
+5. Configure RPC environment variables (Helius free account)
 
-### Phase 2: UI 集成（1 周）
+### Phase 2: UI Integration (1 week)
 
-1. 更新 `ChainSwitcher` — 支持显示 Solana 链，EVM/Solana 分组
-2. 更新 `BalanceDisplay` — 根据 `chain.family` 分流调用
-3. 更新 `TokenBalance` — SPL Token 列表查询
-4. 更新发送表单 — Solana 地址校验（Base58, 32-44 字符）
-5. 更新 `AuthContext` — 支持 Solana Wallet 类型
+1. Update `ChainSwitcher` - support displaying Solana chain, EVM/Solana grouping
+2. Update `BalanceDisplay` — offload calls based on `chain.family`
+3. Update `TokenBalance` — SPL Token list query
+4. Update sending form - Solana address verification (Base58, 32-44 characters)
+5. Update `AuthContext` — support Solana Wallet type
 
-### Phase 3: SPL Token 与高级功能（1 周）
+### Phase 3: SPL Token and Advanced Features (1 week)
 
-1. `SolanaTokenService` — 实现完整 SPL Token 转账（含 ATA 检查）
-2. UI 提示 ATA 创建费用（~0.002 SOL）
-3. Token 列表：集成 [Jupiter Token List](https://token.jup.ag/strict) 或 Solana Token Registry
-4. 交易历史：调用 `connection.getSignaturesForAddress()` 解析
+1. `SolanaTokenService` — implements complete SPL Token transfer (including ATA check)
+2. UI prompts ATA creation fee (~0.002 SOL)
+3. Token list: Integrate [Jupiter Token List](https://token.jup.ag/strict) or Solana Token Registry
+4. Transaction history: call `connection.getSignaturesForAddress()` to resolve
 
-### Phase 4: 测试与优化（1 周）
+### Phase 4: Testing and Optimization (1 week)
 
-1. 单元测试：密钥派生、地址验证
-2. Devnet 集成测试：Faucet → 转账 → 查询
-3. 网络切换测试：Mainnet ↔ Devnet
-4. 包体积优化：按需导入 `@solana/web3.js` 子路径
+1. Unit testing: key derivation, address verification
+2. Devnet integration test: Faucet → Transfer → Query
+3. Network switching test: Mainnet ↔ Devnet
+4. Package size optimization: import `@solana/web3.js` sub-path on demand
 
 ---
 
-## 关键注意事项
+## Key Notes
 
-### 地址格式校验
+### Address format verification
 
 ```typescript
 import { PublicKey } from '@solana/web3.js'
@@ -485,10 +485,10 @@ function isValidSolanaAddress(address: string): boolean {
   }
 }
 // EVM: 0x + 40 hex chars
-// Solana: Base58, 32-44 chars, 不以 0x 开头
+// Solana: Base58, 32-44 chars, not starting with 0x
 ```
 
-### Devnet 空投（开发测试用）
+### Devnet airdrop (for development and testing)
 
 ```typescript
 async function requestAirdrop(address: string, solAmount = 1): Promise<void> {
@@ -504,44 +504,44 @@ async function requestAirdrop(address: string, solAmount = 1): Promise<void> {
 }
 ```
 
-### 交易费用说明
+### Transaction fee description
 
-| 操作                         | 大约费用                        |
-| ---------------------------- | ------------------------------- |
-| SOL 转账                     | ~0.000005 SOL（5000 lamports）  |
-| SPL Token 转账（ATA 已存在） | ~0.000005 SOL                   |
-| SPL Token 转账（需创建 ATA） | ~0.002 SOL（ATA 租金）          |
-| Devnet/Testnet               | 与 Mainnet 相同结构，但使用空投 |
-
----
-
-## 方案对比总结（最终版）
-
-| 特性               | Web3.js v1 ✅  | Wallet-Adapter ❌   | 自定义 RPC ❌ |
-| ------------------ | -------------- | ------------------- | ------------- |
-| 不依赖外部钱包 App | ✅             | ❌（需 Phantom 等） | ✅            |
-| 不依赖自建服务器   | ✅（公共 RPC） | ✅                  | ✅            |
-| 功能完整           | ✅             | 部分                | 需大量手写    |
-| 包体积             | ~500KB gz      | 较小                | 极小          |
-| 安全性             | ✅ 官方审计    | ✅                  | ⚠️ 自建风险   |
-| 开发维护成本       | 低             | 低（不适用）        | 极高          |
+| Operation                                  | Approximate Cost                              |
+| ------------------------------------------ | --------------------------------------------- |
+| SOL Transfer                               | ~0.000005 SOL (5000 lamports)                 |
+| SPL Token transfer (ATA already exists)    | ~0.000005 SOL                                 |
+| SPL Token transfer (requires creating ATA) | ~0.002 SOL (ATA rent)                         |
+| Devnet/Testnet                             | Same structure as Mainnet, but using airdrops |
 
 ---
 
-## 结论
+## Scheme comparison summary (final version)
 
-**最终推荐**：`@solana/web3.js` v1 + `ed25519-hd-key` + 公共 RPC（Helius 免费套餐）
+| Features                             | Web3.js v1 ✅     | Wallet-Adapter ❌           | Custom RPC ❌                 |
+| ------------------------------------ | ----------------- | --------------------------- | ----------------------------- |
+| Does not rely on external wallet App | ✅                | ❌ (requires Phantom, etc.) | ✅                            |
+| Does not rely on self-built servers  | ✅ (Public RPC)   | ✅                          | ✅                            |
+| Fully functional                     | ✅                | Partial                     | Requires a lot of handwriting |
+| Package size                         | ~500KB gz         | Small                       | Very small                    |
+| Security                             | ✅ Official audit | ✅                          | ⚠️ Self-built risks           |
+| Development and maintenance costs    | Low               | Low (not applicable)        | Very high                     |
 
-**满足要求**：
+---
 
-- ✅ 无自建服务器：使用 Helius/Ankr/官方公共 RPC
-- ✅ 无第三方钱包：私钥完全从 masterSeed 本地派生，Ed25519 签名在浏览器内完成
-- ✅ 完全自托管：私钥仅在内存中存在，依赖 Passkey 生物识别保护 masterSeed
+## in conclusion
 
-**预计工作量**：3-4 周（较原方案缩短，因方向更明确）
+**Final recommendation**: `@solana/web3.js` v1 + `ed25519-hd-key` + public RPC (Helius free tier)
 
-**主要风险**：
+**Meets Requirements**:
 
-1. `masterSeed` 只有 32 字节（非标准 BIP39 64 字节），需验证 `ed25519-hd-key` 兼容性
-2. `Chain` 接口 `id: number` 改为 `number | string` 需检查所有使用处
-3. Solana ATA 创建费用 UX 需要明确告知用户
+- ✅ No self-built server: use Helius/Ankr/official public RPC
+- ✅ No third-party wallet: private keys are completely derived locally from masterSeed, and Ed25519 signing is done in the browser
+- ✅ Fully self-hosted: private keys only exist in memory, relying on Passkey biometric protection masterSeed
+
+**Estimated workload**: 3-4 weeks (shorter than the original plan because the direction is clearer)
+
+**Main Risks**:
+
+1. `masterSeed` is only 32 bytes (non-standard BIP39 64 bytes) and needs to be verified for `ed25519-hd-key` compatibility
+2. Change the `Chain` interface `id: number` to `number | string` and check all uses.
+3. Solana ATA creation fee UX needs to be clearly informed to users

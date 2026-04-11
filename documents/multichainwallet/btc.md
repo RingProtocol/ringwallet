@@ -1,84 +1,87 @@
-# Bitcoin 钱包集成方案
+#Bitcoin Wallet Integration Solution
 
-> 目标：在 **不新增自建服务器**、**不依赖第三方钱包 App**、**密钥完全本地托管** 的前提下，为 Ring Wallet 增加 Bitcoin 主网（后续可扩展 Testnet）的基础转账能力。
-
----
-
-## 1. 项目与约束回顾（对齐 Solana 方案）
-
-全局约束（同 `CLAUDE.md` 与 Solana 方案）：
-
-- 无自建后端依赖：只能使用公共 / 第三方提供的 RPC / HTTP API，钱包核心能力不能依赖自有服务器。
-- 无第三方钱包依赖：不允许依赖 MetaMask / Phantom / UniSat 等外部钱包 App 或扩展。
-- 私钥永不出浏览器：密钥由 `masterSeed` 在本地内存派生，仅用于签名，不持久化、不上传。
-- 唯一认证入口是 Passkey：所有高风险操作（转账、签名）必须经过 `PasskeyService.verifyIdentity()`。
-
-Bitcoin 特有约束：
-
-- UTXO 模型：与 EVM/Solana 的账户模型不同，需要本地管理 UTXO 集、找零地址、手续费与找零计算。
-- 多地址管理：典型 HD 钱包会使用多接收地址（gap limit），需要设计简化版的地址扫描策略。
-- 网络接口：行业没有统一的“JSON-RPC over HTTP + Web3 SDK”标准，多数为各家自定义 REST/WS API。
+> Goal: Add the basic transfer capabilities of the Bitcoin mainnet (Testnet can be expanded in the future) to Ring Wallet under the premise of **not adding a new self-built server**, **not relying on third-party wallet apps**, and **keys being completely hosted locally**.
 
 ---
 
-## 2. 方案选型评估
+## 1. Project and Constraint Review (Aligning Solana Solution)
 
-### 2.1 密钥与地址类型
+Global constraints (same as `CLAUDE.md` and Solana scheme):
 
-Bitcoin 生态主流地址类型：
+- No self-built backend dependencies: only RPC/HTTP APIs provided by public/third parties can be used, and the core capabilities of the wallet cannot rely on its own servers.
+- No third-party wallet dependencies: No reliance on external wallet apps or extensions such as MetaMask / Phantom / UniSat is allowed.
+- The private key never leaves the browser: the key is derived in local memory by `masterSeed` and is only used for signing. It is not persisted or uploaded.
+- The only authentication entrance is Passkey: all high-risk operations (transfers, signatures) must go through `PasskeyService.verifyIdentity()`.
 
-- P2PKH（`1...`）：传统地址，手续费高，已不推荐。
-- P2SH-P2WPKH（`3...`）：兼容型 SegWit。
-- P2WPKH（Bech32，`bc1q...`）：原生 SegWit，当前主流。
-- P2TR（Taproot，`bc1p...`）：更先进的脚本能力与隐私。
+Bitcoin-specific constraints:
 
-**当前阶段建议：仅支持 P2WPKH 原生 SegWit 地址**，原因：
-
-- 与大部分现代钱包兼容，手续费相对更低，生态支持成熟。
-- 实现复杂度明显低于完整 Taproot / Miniscript 支持。
-
-### 2.2 SDK / 库选型
-
-候选方案：
-
-1. 纯手写序列化与签名 ❌
-   - 需实现交易序列化（varint、script、witness 等），极易出错。
-   - 对安全性要求极高，不符合当前人力成本。
-
-2. 使用 `bitcoinjs-lib` + BIP32/BIP39 ✅（推荐）
-   - 行业内事实标准库，支持 P2WPKH / P2TR / PSBT 等。
-   - 可搭配 `bip32` 或内置 BIP32 实现，从 `masterSeed` 派生 secp256k1 私钥。
-
-3. 直接依赖第三方“托管钱包 SDK” ❌
-   - 可能要求在服务端托管助记词或私钥，违反自托管约束。
-
-**结论：**
-
-- 使用 `bitcoinjs-lib` + `bip32` + 浏览器内加密安全随机源。
-- 仅复用 `masterSeed`（32 字节）作为 HD seed 的输入，不额外引入 BIP39 助记词。
+- UTXO model: Different from the EVM/Solana account model, it requires local management of UTXO sets, change addresses, handling fees, and change calculations.
+  -Multiple address management: A typical HD wallet will use multiple receiving addresses (gap limit), and a simplified version of the address scanning strategy needs to be designed.
+- Network interface: There is no unified "JSON-RPC over HTTP + Web3 SDK" standard in the industry, and most of them are customized REST/WS APIs by each company.
 
 ---
 
-## 3. 密钥派生与地址生成设计
+## 2. Solution selection evaluation
 
-### 3.1 HD 路径与 ChainFamily 扩展
+### 2.1 Key and address types
 
-参考 BIP44 标准：
+Bitcoin ecosystem mainstream address types:
 
-- 币种类型（coin type）：Bitcoin = `0'`
-- 标准路径：`m / 44' / 0' / account' / change / address_index`
+- P2PKH (`1...`): Traditional address, high handling fee, no longer recommended.
+- P2SH-P2WPKH (`3...`): SegWit compatible.
+- P2WPKH (Bech32, `bc1q...`): native SegWit, currently mainstream.
+- P2TR (Taproot, `bc1p...`): More advanced scripting capabilities and privacy.
 
-在 Ring Wallet 中，为简化：
+**Recommendation at this stage: Only P2WPKH native SegWit address is supported**, reason:
 
-- 固定 `account = 0'`
-- `change = 0`：外部地址（接收）
-- `address_index = i`：i 为地址索引
+- Compatible with most modern wallets, with relatively lower handling fees and mature ecological support.
+- Implementation complexity is significantly lower than full Taproot/Miniscript support.
 
-最终路径：
+### 2.2 SDK/Library Selection
+
+Candidates:
+
+1. Pure handwriting serialization and signature ❌
+
+- Transaction serialization (varint, script, witness, etc.) needs to be implemented, which is extremely error-prone.
+- The safety requirements are extremely high and do not meet the current labor costs.
+
+2. Use `bitcoinjs-lib` + BIP32/BIP39 ✅ (recommended)
+
+- De facto standard library in the industry, supporting P2WPKH / P2TR / PSBT, etc.
+- Can be used with `bip32` or the built-in BIP32 implementation to derive the secp256k1 private key from `masterSeed`.
+
+3. Directly rely on third-party "hosted wallet SDK" ❌
+
+- May require mnemonic phrases or private keys to be hosted on the server, violating self-hosting constraints.
+
+**in conclusion:**
+
+- Use `bitcoinjs-lib` + `bip32` + in-browser cryptographically secure random source.
+- Only reuse `masterSeed` (32 bytes) as the input of HD seed, without introducing additional BIP39 mnemonic words.
+
+---
+
+## 3. Key derivation and address generation design
+
+### 3.1 HD Path with ChainFamily Extension
+
+Refer to BIP44 standard:
+
+- Coin type: Bitcoin = `0''
+- Standard path: `m/44'/0'/account'/change/address_index`
+
+In Ring Wallet, to simplify:
+
+- Fixed `account = 0'`
+- `change=0`: external address (receiving)
+- `address_index = i`: i is the address index
+
+Final path:
 
 - `m/44'/0'/0'/0/i`
 
-在 `src/models/ChainType.ts` 中扩展：
+Expand in `src/models/ChainType.ts`:
 
 ```typescript
 export enum ChainFamily {
@@ -88,7 +91,7 @@ export enum ChainFamily {
 }
 ```
 
-`Chain` 接口增加 Bitcoin 专有字段（示意，实际以现有代码为准）：
+The `Chain` interface adds Bitcoin-specific fields (indicative, actual code shall prevail):
 
 ```typescript
 export interface Chain {
@@ -96,14 +99,14 @@ export interface Chain {
   name: string
   symbol: string
   family: ChainFamily
-  rpcUrl: string // 对 Bitcoin，可表示 REST API 基础 URL
+  rpcUrl: string // For Bitcoin, it can represent the REST API base URL
   explorer: string
-  // Bitcoin 专有
+  // Bitcoin exclusive
   network?: 'mainnet' | 'testnet' | 'signet' | 'regtest'
 }
 ```
 
-Bitcoin 链配置示例（放入 `src/constants/chains.ts`）：
+Bitcoin chain configuration example (put into `src/constants/chains.ts`):
 
 ```typescript
 export const BITCOIN_CHAINS: Chain[] = [
@@ -113,7 +116,7 @@ export const BITCOIN_CHAINS: Chain[] = [
     symbol: 'BTC',
     family: ChainFamily.Bitcoin,
     rpcUrl:
-      process.env.NEXT_PUBLIC_BITCOIN_API ?? 'https://blockstream.info/api', // 默认公共 API，仅作为兜底
+      process.env.NEXT_PUBLIC_BITCOIN_API ?? 'https://blockstream.info/api', // Default public API, only as a guide
     explorer: 'https://mempool.space',
     network: 'mainnet',
   },
@@ -131,17 +134,17 @@ export const BITCOIN_CHAINS: Chain[] = [
 ]
 ```
 
-### 3.2 从 masterSeed 派生 Bitcoin 私钥与地址
+### 3.2 Derive Bitcoin private key and address from masterSeed
 
-约束：`masterSeed` 由 Passkey userHandle 提供，长度为 32 字节。
+Constraints: `masterSeed` is provided by Passkey userHandle and is 32 bytes long.
 
-实现思路：
+Implementation ideas:
 
-- 将 `masterSeed` 视为 HD seed（BIP32 允许 128–512 bit 输入）。
-- 使用 `bip32` 从 seed 生成根节点，然后按 BIP44 路径派生子私钥。
-- 使用 `bitcoinjs-lib` 生成 P2WPKH 地址。
+- Treat `masterSeed` as HD seed (BIP32 allows 128–512 bit input).
+- Use `bip32` to generate the root node from seed, and then derive the child private key according to the BIP44 path.
+- Use `bitcoinjs-lib` to generate P2WPKH addresses.
 
-伪代码（`src/services/bitcoinKeyService.ts`）：
+Pseudocode (`src/services/bitcoinKeyService.ts`):
 
 ```typescript
 import * as bitcoin from 'bitcoinjs-lib'
@@ -183,40 +186,40 @@ export class BitcoinKeyService {
 }
 ```
 
-> 与 Solana 一致：私钥仅在内存中存在，用完即丢弃。不写入 IndexedDB / LocalStorage / 服务器。
+> Consistent with Solana: the private key only exists in memory and is discarded after use. Does not write to IndexedDB/LocalStorage/server.
 
 ---
 
-## 4. UTXO 与交易构造
+## 4. UTXO and transaction structure
 
-### 4.1 网络接口与数据来源
+### 4.1 Network interface and data source
 
-不自建服务器前提下，可使用的公共 / 免费 API：
+Public/free APIs that can be used without building your own server:
 
 - **Blockstream API**（REST）：`https://blockstream.info/api`
-  - `GET /address/:addr/utxo`：查询地址 UTXO。
-  - `GET /fee-estimates`：手续费估算。
-  - `POST /tx`：广播原始交易（hex）。
-- 其他备选：mempool.space API（兼容 Blockstream 风格）、Alchemy Bitcoin（若推出）、第三方 Free-tier。
+- `GET /address/:addr/utxo`: Query address UTXO.
+- `GET /fee-estimates`: Fee estimates.
+- `POST /tx`: Broadcast the raw transaction (hex).
+- Other alternatives: mempool.space API (compatible with Blockstream style), Alchemy Bitcoin (if launched), third-party Free-tier.
 
-配置方式（`.env`）：
+Configuration method (`.env`):
 
 ```env
 NEXT_PUBLIC_BITCOIN_API=https://blockstream.info/api
 NEXT_PUBLIC_BITCOIN_TESTNET_API=https://blockstream.info/testnet/api
 ```
 
-> 若未来担心中心化依赖，可在 `src/server/` 中增加可选代理层，但 Bitcoin 核心能力不得强依赖该代理。
+> If you are worried about centralized dependence in the future, you can add an optional proxy layer to `src/server/`, but Bitcoin core capabilities must not rely heavily on this proxy.
 
-### 4.2 BitcoinService 设计
+### 4.2 BitcoinService Design
 
-职责：
+Responsibilities:
 
-- 查询 UTXO：给定地址，调用 REST API 获取当前 UTXO 集。
-- 手续费估算：根据 API 的 feerate（sat/vByte）与交易大小估算手续费。
-- 构造与签名交易：根据目标金额、手续费率与 UTXO，构造 P2WPKH 交易并签名。
+- Query UTXO: Given an address, call the REST API to get the current UTXO set.
+- Handling fee estimation: Handling fee is estimated based on API feerate (sat/vByte) and transaction size.
+  -Construct and sign transaction: Construct and sign the P2WPKH transaction based on the target amount, handling rate and UTXO.
 
-伪代码（`src/services/bitcoinService.ts`）：
+Pseudocode (`src/services/bitcoinService.ts`):
 
 ```typescript
 import * as bitcoin from 'bitcoinjs-lib'
@@ -245,12 +248,12 @@ export class BitcoinService {
     const { data } = await axios.get<Record<string, number>>(
       `${this.apiBase}/fee-estimates`
     )
-    // 选择“中等优先级” fee rate，例如 3 blocks target
+    // Select "medium priority" fee rate, for example 3 blocks target
     return data['3'] ?? data['6'] ?? 5 // sat/vByte
   }
 
   /**
-   * 构造并签名 P2WPKH 交易
+   * Construct and sign P2WPKH transaction
    */
   async buildAndSignTransaction(params: {
     fromAddress: string
@@ -268,7 +271,7 @@ export class BitcoinService {
 
     const feeRate = await this.getFeeRate()
 
-    // 选币策略：简单的“累加直到够用”，后续可扩展 BnB/Knapsack
+    // Coin selection strategy: simple "accumulate until enough", which can be expanded later BnB/Knapsack
     let selected: Utxo[] = []
     let totalIn = 0
     for (const u of utxos) {
@@ -280,7 +283,7 @@ export class BitcoinService {
 
     const psbt = new bitcoin.Psbt({ network: this.network })
 
-    // 添加输入（P2WPKH）
+    //Add input (P2WPKH)
     for (const u of selected) {
       psbt.addInput({
         hash: u.txid,
@@ -292,22 +295,22 @@ export class BitcoinService {
       })
     }
 
-    // 先假设“无找零”估算一个上限手续费
+    // First assume "no change" to estimate an upper limit of handling fees
     psbt.addOutput({
       address: toAddress,
       value: amountSats,
     })
 
-    const vBytesEstimate = psbt.__CACHE.__TX.virtualSize() ?? 200 // 兜底估算
+    const vBytesEstimate = psbt.__CACHE.__TX.virtualSize() ?? 200 // A rough estimate
     const feeEstimate = Math.ceil(feeRate * vBytesEstimate)
 
     const change = totalIn - amountSats - feeEstimate
     const dustThreshold = 546 // sat
 
-    // 如果找零大于 dust，则添加找零输出，否则将找零计入手续费
+    // If the change is greater than dust, add the change output, otherwise the change will be included in the handling fee
     if (change >= dustThreshold) {
       psbt.addOutput({
-        address: fromAddress, // 简化：找零回同一地址，后续可用 changeIndex
+        address: fromAddress, // Simplified: return the change to the same address, which can be used later with changeIndex
         value: change,
       })
     }
@@ -336,46 +339,46 @@ export class BitcoinService {
 }
 ```
 
-> 与 Solana 一致：构造和签名都在前端完成，后端（如果存在）仅可用作“可选代理”转发。
+> Consistent with Solana: construction and signing are done on the frontend, the backend (if present) can only be used as "optional proxy" forwarding.
 
 ---
 
-## 5. 签名流程与 Passkey 集成
+## 5. Signature process integrated with Passkey
 
-Bitcoin 签名流程与 EVM、Solana 保持统一模式：
+The Bitcoin signature process maintains a unified model with EVM and Solana:
 
 ```
-用户点击“发送 BTC”
+User clicks "Send BTC"
         ↓
-PasskeyService.verifyIdentity()         // 生物识别 / 安全验证
+PasskeyService.verifyIdentity() // Biometric / Security Verification
         ↓
-从 AuthContext 恢复 masterSeed         // 登录时从 Passkey userHandle 解出
+Restore masterSeed from AuthContext // Detach from Passkey userHandle when logging in
         ↓
-BitcoinKeyService.deriveAccountNode()   // BIP32 / secp256k1 派生，生成私钥与地址
+BitcoinKeyService.deriveAccountNode() // BIP32 / secp256k1 derived, generate private key and address
         ↓
-BitcoinService.buildAndSignTransaction  // 构造 P2WPKH 交易并签名
+BitcoinService.buildAndSignTransaction // Construct P2WPKH transaction and sign
         ↓
-BitcoinService.broadcast                // 向公共 API 广播 txHex
+BitcoinService.broadcast // Broadcast txHex to the public API
 ```
 
-关键原则：
+Key principles:
 
-- Passkey 不直接参与 Bitcoin 签名（曲线不同：P-256 vs secp256k1），只作为“解锁 masterSeed 的门锁”。
-- masterSeed 与 Bitcoin 私钥永不上传网络。
+- Passkey is not directly involved in Bitcoin signatures (different curves: P-256 vs secp256k1), but only serves as a "door lock to unlock masterSeed".
+- masterSeed and Bitcoin private keys are never uploaded to the network.
 
 ---
 
-## 6. UI 与链抽象集成
+## 6. UI and chain abstraction integration
 
-### 6.1 Chain 抽象
+### 6.1 Chain Abstraction
 
-UI 层通过 `chain.family` 分流：
+The UI layer is branched through `chain.family`:
 
-- `evm`：使用 EVMService（ethers.js）。
-- `solana`：使用 SolanaService（@solana/web3.js）。
-- `bitcoin`：使用 BitcoinService（自定义）。
+- `evm`: Use EVMService (ethers.js).
+- `solana`: Use SolanaService (@solana/web3.js).
+- `bitcoin`: Use BitcoinService (custom).
 
-示例（伪代码）：
+Example (pseudocode):
 
 ```typescript
 switch (chain.family) {
@@ -388,117 +391,130 @@ switch (chain.family) {
 }
 ```
 
-`BitcoinSendForm` 需要：
+`BitcoinSendForm` requires:
 
-- 地址格式校验：Bech32，`bc1q...` / `tb1q...`，不以 `0x` 开头。
-- 金额单位切换：UI 显示 BTC（如 `0.001 BTC`），内部换算成 satoshi（`1 BTC = 1e8 sats`）。
-- 手续费提示：展示预估费用（`fee (sat) ≈ vBytes * sat/vByte`），允许用户选择“慢 / 中 / 快”。
+- Address format verification: Bech32, `bc1q...` / `tb1q...`, does not start with `0x`.
+- Amount unit switching: UI displays BTC (such as `0.001 BTC`), which is converted internally to satoshi (`1 BTC = 1e8 sats`).
+- Fee prompt: Displays the estimated fee (`fee (sat) ≈ vBytes * sat/vByte`), allowing users to choose "slow/medium/fast".
 
-### 6.2 余额与交易历史
+### 6.2 Balance and Transaction History
 
-- 余额：通过 UTXO 累加得到 `sum(utxo.value)`，转换成 BTC 显示。
-- 交易历史：使用公共 API（如 Blockstream 的 `/address/:addr/txs`），解析出：
-  - 收款 / 付款标记（根据输入/输出是否包含本钱包地址）。
-  - 金额与时间、确认数。
-
----
-
-## 7. DApp 集成考虑（预留）
-
-与 EVM/Solana 不同，Bitcoin 生态缺乏统一的“浏览器内 DApp 标准”（不存在 EIP-1193 等价物）。短期内：
-
-- **不** 提供通用 Bitcoin DApp provider 注入。
-- 如需支持特定 Bitcoin DApp，可在 `walletBridge` 中为 BTC 扩展少量专用方法（如 `btc_getAddresses`、`btc_signPsbt`），后续按需设计。
-
-本阶段 BTC 集成聚焦：
-
-- 余额展示
-- 地址展示与复制 / 收款二维码
-- 基础发送功能（P2WPKH 转账）
+- Balance: `sum(utxo.value)` is obtained by accumulating UTXO and converted into BTC for display.
+- Transaction history: Use public API (such as Blockstream's `/address/:addr/txs`) to parse out:
+- Receipt/payment mark (depending on whether the input/output contains this wallet address).
+- Amount, time, and number of confirmations.
 
 ---
 
-## 8. 依赖清单
+## 7. DApp integration considerations (reserved)
+
+Unlike EVM/Solana, the Bitcoin ecosystem lacks a unified "in-browser DApp standard" (no EIP-1193 equivalent exists). In the short term:
+
+- **NO** provide universal Bitcoin DApp provider injection.
+- If you need to support specific Bitcoin DApp, you can extend a small number of special methods for BTC in `walletBridge` (such as `btc_getAddresses`, `btc_signPsbt`), and then design them as needed.
+
+The focus of BTC integration at this stage is:
+
+- Balance display
+- Address display and copy / payment QR code
+- Basic sending function (P2WPKH transfer)
+
+---
+
+## 8. Dependency list
 
 ```bash
-# Bitcoin 核心与地址/脚本支持
+# Bitcoin Core with address/script support
 yarn add bitcoinjs-lib bip32 tiny-secp256k1
 
-# HTTP 客户端（如果项目已有 axios，可复用）
+# HTTP client (if the project already has axios, it can be reused)
 yarn add axios
 ```
 
-注意：
+Notice:
 
-- `bitcoinjs-lib` 需要 `tiny-secp256k1` 作为曲线实现，需显式安装。
-- 若包体积压力过大，可通过动态 import 和 Tree Shaking 减少首屏负载。
-
----
-
-## 9. 实施步骤与里程碑
-
-### Phase 1：密钥与链基础（约 1 周）
-
-1. 扩展 `ChainFamily` 与 `Chain` 接口，增加 Bitcoin 相关配置与常量。
-2. 实现 `BitcoinKeyService`（从 masterSeed → P2WPKH 地址）。
-3. 在账户详情页中添加 BTC 地址展示与复制功能。
-
-### Phase 2：UTXO 与转账（约 1–1.5 周）
-
-1. 集成公共 Bitcoin API，完成 UTXO 查询与余额计算。
-2. 实现 `BitcoinService.buildAndSignTransaction` 与 `broadcast`。
-3. 新增 `BitcoinSendForm`，支持：
-   - 输入目标地址与金额。
-   - 手续费预估与展示。
-   - Passkey 验证 + 广播。
-
-### Phase 3：交易历史与 Testnet（约 1 周）
-
-1. 集成地址交易历史查询，并在 UI 中展示：
-   - 收款 / 付款 / 手续费信息。
-2. 增加 Bitcoin Testnet 支持：
-   - Testnet 地址前缀 `tb1q...`。
-   - Testnet API 与浏览器链接。
-3. 文档与用户教育（解释 UTXO / 手续费 / 交易确认）。
-
-### Phase 4：优化与安全审计（约 1 周）
-
-1. 单元测试：
-   - HD 派生路径正确性。
-   - 地址格式验证。
-   - 手续费与找零计算。
-2. 前端防御：
-   - 防止多次点击造成重复广播。
-   - 清晰的错误提示（余额不足、手续费过低、API 不可用）。
-3. 包体积与性能优化（按需 Lazy-load Bitcoin 模块）。
+- `bitcoinjs-lib` requires `tiny-secp256k1` as a curve implementation, needs to be installed explicitly.
+- If the package volume pressure is too high, dynamic import and Tree Shaking can be used to reduce the load on the first screen.
 
 ---
 
-## 10. 风险与注意事项
+## 9. Implementation steps and milestones
 
-1. **公共 API 中心化风险**
-   - 依赖 Blockstream / mempool.space 等第三方服务。
-   - 缓解：支持多 API 配置、错误时自动降级到备选 API。
+### Phase 1: Key and chain basics (about 1 week)
 
-2. **UTXO 与找零复杂度**
-   - 初期使用简单选币策略，可能导致 UTXO 过度碎片化。
-   - 后续可增加更智能的 Coin Selection（BnB / Knapsack 等）。
+1. Extend the `ChainFamily` and `Chain` interfaces and add Bitcoin-related configurations and constants.
+2. Implement `BitcoinKeyService` (from masterSeed → P2WPKH address).
+3. Add BTC address display and copy functions to the account details page.
 
-3. **masterSeed 长度与标准差异**
-   - 本项目的 `masterSeed` 不是标准 BIP39 种子，但 BIP32 规范允许任意 128–512 bit 输入。
-   - 需要通过测试验证：相同 masterSeed 在多设备上可确定性生成相同 BTC 地址。
+### Phase 2: UTXO and transfer (about 1–1.5 weeks)
 
-4. **地址扫描与 gap limit**
-   - 当前方案简化为单地址（或少量地址）模式。
-   - 若未来支持多接收地址，需要设计“地址扫描深度”与 gap limit 以避免遗漏余额。
+1. Integrate the public Bitcoin API to complete UTXO query and balance calculation.
+2. Implement `BitcoinService.buildAndSignTransaction` and `broadcast`.
+3. Added `BitcoinSendForm`, supporting:
+
+- Enter the target address and amount.
+- Estimation and display of handling fees.
+- Passkey verification + broadcast.
+
+### Phase 3: Transaction History and Testnet (about 1 week)
+
+1. Integrate address transaction history query and display it in the UI:
+
+- Collection/payment/fee information.
+
+2. Add Bitcoin Testnet support:
+
+- Testnet address prefix `tb1q...`.
+- Testnet API and browser linking.
+
+3. Documentation and user education (explanation of UTXO/handling fees/transaction confirmation).
+
+### Phase 4: Optimization and security audit (about 1 week)
+
+1. Unit testing:
+
+- HD derivation path correctness.
+- Address format verification.
+- Calculation of handling fees and change.
+
+2. Front-end defense:
+
+- Prevent repeated broadcasts caused by multiple clicks.
+- Clear error messages (insufficient balance, low handling fee, API unavailable).
+
+3. Package size and performance optimization (Lazy-load Bitcoin module on demand).
 
 ---
 
-## 结论
+## 10. Risks and Precautions
 
-- **推荐技术路线**：`bitcoinjs-lib` + `bip32` + 公共 Bitcoin API（如 Blockstream）。
-- **满足核心约束**：
-  - ✅ 无自建服务器：所有查询与广播均走公共/免费 API。
-  - ✅ 无第三方钱包：完全自托管，从 `masterSeed` 本地派生 secp256k1 私钥。
-  - ✅ 私钥仅在浏览器内存中存在，所有签名操作在客户端完成。
-  - ✅ 认证统一由 Passkey 驱动，Bitcoin 与 EVM/Solana 使用同一登录态与 masterSeed。
+1. **Public API Centralization Risk**
+
+- Depends on third-party services such as Blockstream/mempool.space.
+- Mitigation: Supports multi-API configuration and automatically downgrades to alternative APIs when errors occur.
+
+2. **UTXO and change complexity**
+
+- Using a simple currency selection strategy in the early stage may lead to excessive fragmentation of UTXO.
+- More intelligent Coin Selection (BnB/Knapsack, etc.) can be added in the future.
+
+3. **MasterSeed length and standard difference**
+
+- This project's `masterSeed` is not a standard BIP39 seed, but the BIP32 specification allows arbitrary 128–512 bit input.
+- Need to verify through testing: the same masterSeed can deterministically generate the same BTC address on multiple devices.
+
+4. **Address scanning and gap limit**
+
+- The current solution is simplified to single address (or small number of addresses) mode.
+- If multiple receiving addresses are supported in the future, "address scan depth" and gap limit need to be designed to avoid missing balances.
+
+---
+
+## in conclusion
+
+- **Recommended technical route**: `bitcoinjs-lib` + `bip32` + public Bitcoin API (such as Blockstream).
+- **Satisfy core constraints**:
+- ✅ No self-built server: all queries and broadcasts use public/free API.
+- ✅ No third-party wallet: fully self-hosted, locally derived secp256k1 private key from `masterSeed`.
+- ✅ The private key only exists in the browser memory, and all signing operations are completed on the client side.
+- ✅ Authentication is uniformly driven by Passkey, and Bitcoin and EVM/Solana use the same login state and masterSeed.

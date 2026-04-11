@@ -1,20 +1,20 @@
-# 多链钱包插件架构设计
+# Multi-chain wallet plug-in architecture design
 
-> 本文档描述 Ring Wallet 的多链账户生成 & 签名架构重构方案，
-> 目标是支持 100+ 条链的同时保持代码结构清晰。
+> This document describes Ring Wallet’s multi-chain account generation & signature architecture reconstruction plan.
+> The goal is to support 100+ chains while keeping the code structure clear.
 
 ---
 
-## 1. 现状问题
+## 1. Current situation problem
 
-当前架构中，每条链家族（EVM / Solana / Bitcoin）的密钥派生和签名逻辑分散在独立的 Service 文件中，
-且 `AuthContext` 直接硬编码了对每个 Service 的调用：
+In the current architecture, the key derivation and signature logic of each chain family (EVM/Solana/Bitcoin) are scattered in independent Service files.
+And `AuthContext` directly hardcodes the call to each Service:
 
 ```typescript
 AuthContext.tsx
-├── import WalletService          (EVM 派生)
-├── import SolanaKeyService       (Solana 派生)
-├── import BitcoinKeyService      (Bitcoin 派生)
+├── import WalletService (EVM derived)
+├── import SolanaKeyService (Solana derived)
+├── import BitcoinKeyService (Bitcoin derived)
 │
 ├── login()
 │   ├── WalletService.deriveWallets(seed, 5)
@@ -26,19 +26,19 @@ AuthContext.tsx
 └── state: bitcoinWallets[]       (Bitcoin)
 ```
 
-**问题：**
+**question:**
 
-- 每新增一条链家族，都要修改 `AuthContext`（加 import、加 state、加 derive 调用）
-- 各 Service 的接口不统一（`DerivedWallet` vs `DerivedSolanaWallet` vs `DerivedBitcoinWallet`）
-- 无法用统一的方式遍历/操作所有链的钱包
+- Every time a new chain family is added, `AuthContext` must be modified (add import, add state, add derive call)
+- The interfaces of each Service are not unified (`DerivedWallet` vs `DerivedSolanaWallet` vs `DerivedBitcoinWallet`)
+- Wallets that cannot traverse/operate all chains in a unified way
 
 ---
 
-## 2. 目标架构：主框架 + 链插件
+## 2. Target architecture: main framework + chain plug-in
 
 ```
                         ┌──────────────────────┐
-                        │ ChainPluginRegistry  │  ← 注册中心（单例）
+│ ChainPluginRegistry │ ← Registration Center (single case)
                         │                      │
                         │  register(plugin)     │
                         │  get(family)          │
@@ -48,86 +48,86 @@ AuthContext.tsx
      ┌──────────┬──────────┬───────┼────────┬──────────┐
      │          │          │       │        │          │
   ┌──▼───┐  ┌──▼────┐  ┌──▼──┐ ┌─▼──┐  ┌──▼───┐     ...
-  │ EVM  │  │Solana │  │ BTC │ │Tron│  │Cosmos│  未来的链
+│ EVM │ │Solana │ │ BTC │ │Tron│ │Cosmos│ The chain of the future
   └──┬───┘  └──┬────┘  └──┬──┘ └─┬──┘  └──┬───┘
      │         │          │      │         │
   ethers.js  web3.js  bitcoinjs  ethers  bip32+bech32
 ```
 
-### 核心原则
+### Core Principles
 
-1. **统一接口** — 所有链插件实现同一个 `ChainPlugin` 接口
-2. **自注册** — 每个插件文件导出时自动注册到 Registry
-3. **AuthContext 不感知链细节** — 只通过 Registry 操作，不直接 import 链 Service
-4. **底层 Service 保留** — 插件作为适配层，委托给现有的 KeyService / Service 实现
+1. **Unified Interface** — All chain plug-ins implement the same `ChainPlugin` interface
+2. **Self-registration** — Each plug-in file is automatically registered to the Registry when exported
+3. **AuthContext is not aware of chain details** - only operates through the Registry and does not directly import the chain Service
+4. **Underlying Service reserved** — The plug-in serves as an adaptation layer and is delegated to the existing KeyService/Service implementation
 
 ---
 
-## 3. 统一接口定义
+## 3. Unified interface definition
 
-### 3.1 DerivedAccount — 统一账户类型
+### 3.1 DerivedAccount — Unified account type
 
 ```typescript
 interface DerivedAccount {
-  index: number // 账户序号 (0, 1, 2, ...)
-  address: string // 链上地址
-  privateKey: string // hex 编码的密钥材料 (32 bytes)
-  path: string // BIP 派生路径, e.g. "m/44'/60'/0'/0/0"
-  meta?: Record<string, unknown> // 链特定的附加字段
+  index: number //Account number (0, 1, 2, ...)
+  address: string // On-chain address
+  privateKey: string // hex encoded key material (32 bytes)
+  path: string // BIP derived path, e.g. "m/44'/60'/0'/0/0"
+  meta?: Record<string, unknown> // Chain-specific additional fields
 }
 ```
 
-`meta` 用于存放链特有数据，例如：
+`meta` is used to store chain-specific data, for example:
 
 - Bitcoin: `{ publicKey: "0x...", isTestnet: false }`
 - Cosmos: `{ publicKey: "0x...", coinType: 118, addressPrefix: "cosmos" }`
-- Tron / Solana / EVM: `{}` (无额外字段)
+- Tron / Solana / EVM: `{}` (no extra fields)
 
-### 3.2 ChainPlugin — 插件接口
+### 3.2 ChainPlugin — plug-in interface
 
 ```typescript
 interface ChainPlugin {
-  /** 链家族标识 */
+  /** Chain family identification */
   readonly family: ChainFamily
 
-  /** 从 masterSeed 派生 N 个账户。options 用于链特定参数（如 Cosmos 的 coinType/addressPrefix） */
+  /** Derive N accounts from masterSeed. options are used for chain-specific parameters (such as Cosmos’ coinType/addressPrefix) */
   deriveAccounts(
     masterSeed: Uint8Array,
     count: number,
     options?: Record<string, unknown>
   ): DerivedAccount[]
 
-  /** 验证地址格式 */
+  /** Verify address format */
   isValidAddress(address: string): boolean
 
-  /** 签署交易 */
+  /** Sign transaction */
   signTransaction(privateKey: string, request: SignRequest): Promise<SignResult>
 
-  /** 广播已签名交易 */
+  /** Broadcast signed transaction */
   broadcastTransaction(signed: SignResult, rpcUrl: string): Promise<string>
 }
 ```
 
-### 3.3 SignRequest / SignResult — 签名接口
+### 3.3 SignRequest / SignResult — Signature interface
 
 ```typescript
 interface SignRequest {
   from: string
   to: string
-  amount: string // 人类可读金额 (e.g. "0.1")
+  amount: string // human readable amount (e.g. "0.1")
   rpcUrl: string
   chainConfig: Chain
-  options?: Record<string, unknown> // 链特定选项
+  options?: Record<string, unknown> // Chain specific options
 }
 
 interface SignResult {
-  rawTx: string // 签名后的交易 (hex 或序列化格式)
-  txHash?: string // 预计算的交易哈希 (可选)
+  rawTx: string // Signed transaction (hex or serialized format)
+  txHash?: string // Precomputed transaction hash (optional)
   meta?: Record<string, unknown>
 }
 ```
 
-`options` 示例：
+`options` Example:
 
 - EVM: `{ tokenAddress: "0x...", tokenDecimals: 18 }`
 - Solana: `{ mint: "EPjFWdd5..." }` (SPL token)
@@ -136,7 +136,7 @@ interface SignResult {
 
 ---
 
-## 4. 插件注册机制
+## 4. Plug-in registration mechanism
 
 ```typescript
 class ChainPluginRegistry {
@@ -159,8 +159,8 @@ class ChainPluginRegistry {
   }
 
   /**
-   * 一次性派生所有已注册链的账户。
-   * AuthContext 在 login / restore 时调用此方法。
+   * Derive all registered chain accounts at once.
+   * AuthContext calls this method during login / restore.
    */
   deriveAllAccounts(
     masterSeed: Uint8Array,
@@ -179,15 +179,15 @@ class ChainPluginRegistry {
   }
 }
 
-// 全局单例
+//Global singleton
 export const chainRegistry = new ChainPluginRegistry()
 ```
 
 ---
 
-## 5. 插件实现示例
+## 5. Plug-in implementation example
 
-### 5.1 EVM 插件
+### 5.1 EVM plug-in
 
 ```typescript
 import { chainRegistry } from '../registry'
@@ -196,7 +196,7 @@ class EvmChainPlugin implements ChainPlugin {
   readonly family = ChainFamily.EVM
 
   deriveAccounts(masterSeed: Uint8Array, count: number): DerivedAccount[] {
-    // 委托给现有 WalletService.deriveWallets()
+    // Delegate to existing WalletService.deriveWallets()
     return WalletService.deriveWallets(masterSeed, count)
   }
 
@@ -236,146 +236,146 @@ class EvmChainPlugin implements ChainPlugin {
 chainRegistry.register(new EvmChainPlugin())
 ```
 
-### 5.2 新链接入流程
+### 5.2 New link input process
 
-以添加新链家族为例（如 TON、Aptos、SUI）：
+Take adding a new chain family as an example (such as TON, Aptos, SUI):
 
-1. 在 `ChainFamily` 枚举中添加新值（`src/models/ChainType.ts`）
-2. 创建 `src/services/chainplugins/<chain>/<chain>Plugin.ts`，实现 `ChainPlugin` 接口
-3. 文件末尾调用 `chainRegistry.register(new XxxPlugin())`
-4. 在 `src/services/chainplugins/index.ts` 中添加 `import './<chain>/<chain>Plugin'`
-5. 在 `chains.ts` 中添加链配置（主网 + 测试网）
-6. 在 `src/services/chainplugins/<chain>/` 下添加 `<chain>Plugin.test.ts` 测试用例
+1. Add new value in `ChainFamily` enumeration (`src/models/ChainType.ts`)
+2. Create `src/services/chainplugins/<chain>/<chain>Plugin.ts` and implement the `ChainPlugin` interface
+3. Call `chainRegistry.register(new XxxPlugin())` at the end of the file
+4. Add `import './<chain>/<chain>Plugin'` in `src/services/chainplugins/index.ts`
+5. Add chain configuration (mainnet + testnet) in `chains.ts`
+6. Add `<chain>Plugin.test.ts` test case under `src/services/chainplugins/<chain>/`
 
-**不需要修改 `AuthContext`。**
+**No need to modify `AuthContext`. **
 
 ---
 
-## 6. AuthContext 重构
+## 6. AuthContext Refactoring
 
-### Before (硬编码)
+### Before (hardcoded)
 
 ```typescript
-// 3 个独立 state
+// 3 independent states
 const [wallets, setWallets] = useState<Wallet[]>([])
 const [solanaWallets, setSolanaWallets] = useState<Wallet[]>([])
 const [bitcoinWallets, setBitcoinWallets] = useState<Wallet[]>([])
 
-// login() 中硬编码每条链
+//hardcode each chain in login()
 const evmWallets = WalletService.deriveWallets(seed, 5)
 const solWallets = SolanaKeyService.deriveWallets(seed, 5)
 const btcWallets = BitcoinKeyService.deriveWallets(seed, 5)
 ```
 
-### After (插件驱动)
+### After (plug-in driver)
 
 ```typescript
-// 一个统一的 map
+// A unified map
 const [accountsByFamily, setAccountsByFamily] = useState<
   Record<string, DerivedAccount[]>
 >({})
 
-// login() / restore 中统一调用
+// Called uniformly in login() / restore
 const allAccounts = chainRegistry.deriveAllAccounts(seed, 5)
 setAccountsByFamily(allAccounts)
 
-// 根据当前链获取活跃钱包
+// Get the active wallet based on the current chain
 const activeAccounts = accountsByFamily[activeChain.family] ?? []
 const activeWallet = activeAccounts[activeWalletIndex] ?? null
 ```
 
-### 兼容性
+### compatibility
 
-为保持向后兼容，`AuthContextValue` 同时暴露：
+To maintain backward compatibility, `AuthContextValue` is also exposed:
 
-- **新 API**: `accountsByFamily`, `activeAccount`
-- **旧 API** (deprecated): `wallets`, `solanaWallets`, `bitcoinWallets` — 从 `accountsByFamily` 计算得出
+- **New API**: `accountsByFamily`, `activeAccount`
+- **Old API** (deprecated): `wallets`, `solanaWallets`, `bitcoinWallets` — calculated from `accountsByFamily`
 
 ---
 
-## 7. 目录结构
+## 7. Directory structure
 
 ```
 src/services/chains/
 ├── types.ts                       # ChainPlugin, DerivedAccount, SignRequest, SignResult
-├── registry.ts                    # ChainPluginRegistry 单例
-├── registry.test.ts               # 注册中心集成测试
-├── index.ts                       # barrel export + 触发所有插件注册
+├── registry.ts # ChainPluginRegistry singleton
+├── registry.test.ts # Registration center integration test
+├── index.ts # barrel export + triggers all plug-in registrations
 ├── evm/
-│   ├── evmPlugin.ts               # EVM 插件 (ethers.js, BIP44 m/44'/60')
+│ ├── evmPlugin.ts # EVM plug-in (ethers.js, BIP44 m/44'/60')
 │   └── evmPlugin.test.ts
 ├── solana/
-│   ├── solanaPlugin.ts            # Solana 插件 (SLIP-0010, m/44'/501')
+│ ├── solanaPlugin.ts # Solana plug-in (SLIP-0010, m/44'/501')
 │   └── solanaPlugin.test.ts
 ├── bitcoin/
-│   ├── bitcoinPlugin.ts           # Bitcoin 插件 (BIP32, m/44'/0')
+│ ├── bitcoinPlugin.ts # Bitcoin plugin (BIP32, m/44'/0')
 │   └── bitcoinPlugin.test.ts
 ├── tron/
-│   ├── tronPlugin.ts              # Tron 插件 (secp256k1, m/44'/195', Base58Check)
+│ ├── tronPlugin.ts # Tron plug-in (secp256k1, m/44'/195', Base58Check)
 │   └── tronPlugin.test.ts
 └── cosmos/
-    ├── cosmosPlugin.ts            # Cosmos 插件 (secp256k1, m/44'/118', Bech32)
+├── cosmosPlugin.ts # Cosmos plug-in (secp256k1, m/44'/118', Bech32)
     └── cosmosPlugin.test.ts
 ```
 
-未来新链只需在 `src/services/chains/` 下添加子目录 + 插件文件。
+In the future, new chains only need to add subdirectories + plug-in files under `src/services/chains/`.
 
 ---
 
-## 8. 暂不实现
+## 8. Not implemented yet
 
-- **EIP-4337 智能合约钱包** — `WalletType.SmartContract` 和 `signEIP7951Transaction` 保留在 `walletService.ts` 中不纳入插件体系
-- **Token 服务** — `SolanaTokenService` 等 token 相关操作暂不纳入插件接口，后续按需扩展
-- **DApp Bridge 改造** — `WalletBridge` 暂维持现有实现
-
----
-
-## 9. 已支持的链家族 (Top 10)
-
-| 排名 | 链              | 家族    | 插件 | 密钥算法            | 派生路径            | 地址格式        | 测试网           |
-| ---- | --------------- | ------- | ---- | ------------------- | ------------------- | --------------- | ---------------- |
-| 1    | Ethereum        | EVM     | ✅   | secp256k1 (BIP32)   | m/44'/60'/0'/0/{i}  | 0x + hex20      | Sepolia          |
-| 2    | Solana          | Solana  | ✅   | Ed25519 (SLIP-0010) | m/44'/501'/{i}'/0'  | Base58          | Devnet           |
-| 3    | BNB Smart Chain | EVM     | ✅   | 同 EVM              | 同 EVM              | 同 EVM          | BSC Testnet      |
-| 4    | Tron            | Tron    | ✅   | secp256k1 (BIP32)   | m/44'/195'/0'/0/{i} | T + Base58Check | Shasta           |
-| 5    | Base            | EVM     | ✅   | 同 EVM              | 同 EVM              | 同 EVM          | Base Sepolia     |
-| 6    | Bitcoin         | Bitcoin | ✅   | secp256k1 (BIP32)   | m/44'/0'/0'/0/{i}   | bc1q (P2WPKH)   | Testnet          |
-| 7    | Arbitrum        | EVM     | ✅   | 同 EVM              | 同 EVM              | 同 EVM          | Arbitrum Sepolia |
-| 8    | Hyperliquid     | EVM     | ✅   | 同 EVM              | 同 EVM              | 同 EVM          | —                |
-| 9    | Provenance      | Cosmos  | ✅   | secp256k1 (BIP32)   | m/44'/505'/0'/0/{i} | pb1 (Bech32)    | —                |
-| 10   | Plasma          | EVM     | ✅   | 同 EVM              | 同 EVM              | 同 EVM          | —                |
-
-Cosmos 插件支持通过 `options.coinType` 和 `options.addressPrefix` 自定义派生，
-可覆盖 Cosmos Hub (118/cosmos)、Osmosis (118/osmo)、Provenance (505/pb) 等所有 Cosmos SDK 链。
+- **EIP-4337 Smart Contract Wallet** — `WalletType.SmartContract` and `signEIP7951Transaction` are retained in `walletService.ts` and are not included in the plug-in system
+- **Token Service** — Token-related operations such as `SolanaTokenService` are not included in the plug-in interface for the time being and will be expanded as needed in the future.
+- **DApp Bridge transformation** — `WalletBridge` maintains the existing implementation for now
 
 ---
 
-## 10. 迁移进度
+## 9. Supported chain families (Top 10)
 
-1. ✅ 定义 `ChainPlugin` / `DerivedAccount` 统一接口
-2. ✅ 实现 `ChainPluginRegistry`
-3. ✅ 实现 EVM / Solana / Bitcoin / Tron / Cosmos 五个插件
-4. ✅ 重构 `AuthContext` 使用 Registry 派生账户
-5. ✅ 添加 Tron / Cosmos 主网+测试网链配置
-6. ✅ 为每个插件添加独立测试用例 (90 tests, all passing)
-7. 🔜 逐步迁移 SendForm 组件使用插件签名接口
-8. 🔜 添加新链 (TON, Aptos, SUI, Starknet ...)
+| Ranking | Chain           | Family  | Plug-in | Key Algorithm       | Derivation Path     | Address Format  | Testnet          |
+| ------- | --------------- | ------- | ------- | ------------------- | ------------------- | --------------- | ---------------- |
+| 1       | Ethereum        | EVM     | ✅      | secp256k1 (BIP32)   | m/44'/60'/0'/0/{i}  | 0x + hex20      | Sepolia          |
+| 2       | Solana          | Solana  | ✅      | Ed25519 (SLIP-0010) | m/44'/501'/{i}'/0'  | Base58          | Devnet           |
+| 3       | BNB Smart Chain | EVM     | ✅      | Same as EVM         | Same as EVM         | Same as EVM     | BSC Testnet      |
+| 4       | Tron            | Tron    | ✅      | secp256k1 (BIP32)   | m/44'/195'/0'/0/{i} | T + Base58Check | Shasta           |
+| 5       | Base            | EVM     | ✅      | Same as EVM         | Same as EVM         | Same as EVM     | Base Sepolia     |
+| 6       | Bitcoin         | Bitcoin | ✅      | secp256k1 (BIP32)   | m/44'/0'/0'/0/{i}   | bc1q (P2WPKH)   | Testnet          |
+| 7       | Arbitrum        | EVM     | ✅      | Same as EVM         | Same as EVM         | Same as EVM     | Arbitrum Sepolia |
+| 8       | Hyperliquid     | EVM     | ✅      | Same as EVM         | Same as EVM         | Same as EVM     | —                |
+| 9       | Provenance      | Cosmos  | ✅      | secp256k1 (BIP32)   | m/44'/505'/0'/0/{i} | pb1 (Bech32)    | —                |
+| 10      | Plasma          | EVM     | ✅      | Same as EVM         | Same as EVM         | Same as EVM     | —                |
+
+The Cosmos plugin supports custom derivation via `options.coinType` and `options.addressPrefix`,
+Can cover all Cosmos SDK chains such as Cosmos Hub (118/cosmos), Osmosis (118/osmo), Provenance (505/pb), etc.
 
 ---
 
-## 11. 测试
+## 10. Migration progress
 
-运行所有链插件测试：
+1. ✅ Define `ChainPlugin` / `DerivedAccount` unified interface
+2. ✅ Implement `ChainPluginRegistry`
+3. ✅ Implement five plug-ins for EVM / Solana / Bitcoin / Tron / Cosmos
+4. ✅ Refactor `AuthContext` to use Registry derived account
+5. ✅ Add Tron / Cosmos mainnet + testnet chain configuration
+6. ✅ Add independent test cases for each plugin (90 tests, all passing)
+7. 🔜 Gradually migrate the SendForm component to use the plug-in signature interface
+8. 🔜 Add new chains (TON, Aptos, SUI, Starknet...)
+
+---
+
+## 11. Test
+
+Run all chain plugin tests:
 
 ```bash
 npx vitest run src/services/chains/
 ```
 
-测试覆盖：
+Test coverage:
 
-- **确定性派生** — 同一 seed 始终产生相同地址
-- **多账户隔离** — 不同 index 产生不同地址
-- **跨链隔离** — 同 seed 在不同链家族产生不同地址
-- **地址格式** — 验证各链的地址格式正确
-- **地址校验** — `isValidAddress` 正确识别合法/非法地址
-- **边界条件** — 无效 seed 的异常处理
+- **Deterministic derivation** — the same seed always produces the same address
+- **Multiple Account Isolation** — Different indexes generate different addresses
+- **Cross-chain isolation** — the same seed generates different addresses in different chain families
+- **Address Format** — Verify that the address format of each chain is correct
+- **Address verification** — `isValidAddress` correctly identifies legal/illegal addresses
+- **Boundary Condition** — Exception handling for invalid seed
