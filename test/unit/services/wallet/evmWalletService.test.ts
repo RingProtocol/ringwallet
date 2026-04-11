@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ethers } from 'ethers'
-import EvmWalletService from '@/services/wallet/EvmWalletService'
+import EvmWalletService from '@/services/chainplugins/evm/evmPlugin'
 
 vi.mock('@/utils/DbgLog', () => ({ log: vi.fn() }))
 

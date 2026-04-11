@@ -4,7 +4,7 @@ import {
   SolanaTokenService,
   ATA_CREATION_FEE_SOL,
 } from '@/services/solanaTokenService'
-import { SolanaKeyService } from '@/services/wallet/solanaKeyService'
+import { SolanaKeyService } from '@/services/chainplugins/solana/solanaPlugin'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 

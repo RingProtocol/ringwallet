@@ -2,7 +2,7 @@ import React from 'react'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import EvmWalletService, {
   type EIP7951Result,
-} from '../../services/wallet/EvmWalletService'
+} from '../../services/chainplugins/evm/evmPlugin'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'

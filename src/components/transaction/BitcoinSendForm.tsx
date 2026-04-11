@@ -6,7 +6,7 @@ import {
   BitcoinService,
   bitcoinForkForChain,
 } from '../../services/bitcoinService'
-import { BitcoinKeyService } from '../../services/wallet/bitcoinKeyService'
+import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
 import SendFormLayout from './SendFormLayout'
 import '../TransactionActions.css'
 

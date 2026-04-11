@@ -1,6 +1,6 @@
 import React from 'react'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
-import EvmWalletService from '../../services/wallet/EvmWalletService'
+import EvmWalletService from '../../services/chainplugins/evm/evmPlugin'
 import PasskeyService from '../../services/account/passkeyService'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'

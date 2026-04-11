@@ -4,7 +4,7 @@ import { chainRegistry } from '@/services/chainplugins/registry'
 import type { SignRequest } from '@/services/chainplugins/types'
 import '@/services/chainplugins/evm/evmPlugin'
 import { ChainFamily, type Chain, getPrimaryRpcUrl } from '@/models/ChainType'
-import EvmWalletService from '@/services/wallet/EvmWalletService'
+import EvmWalletService from '@/services/chainplugins/evm/evmPlugin'
 import { getChainProfile } from './chains'
 import { fetchChainId, isRpcReachable, rpcCall } from './lib/rpc'
 
