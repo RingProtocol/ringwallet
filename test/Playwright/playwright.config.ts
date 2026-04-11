@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_CONFIG } from './env'
+import { E2E_CONFIG_EVM } from './env'
 
 export default defineConfig({
   testDir: './tests',
@@ -11,7 +11,7 @@ export default defineConfig({
   timeout: 120_000,
 
   use: {
-    baseURL: E2E_CONFIG.baseUrl,
+    baseURL: E2E_CONFIG_EVM.baseUrl,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -31,7 +31,7 @@ export default defineConfig({
   // Start the dev server if not already running
   webServer: {
     command: 'yarn dev',
-    url: E2E_CONFIG.baseUrl,
+    url: E2E_CONFIG_EVM.baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },

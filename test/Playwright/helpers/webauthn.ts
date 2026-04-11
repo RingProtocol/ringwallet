@@ -1,5 +1,5 @@
 import type { CDPSession, Page } from '@playwright/test'
-import { E2E_CONFIG } from '../env'
+import { E2E_CONFIG_EVM } from '../env'
 
 /**
  * Encodes a hex string to standard base64 (with padding).
@@ -79,8 +79,11 @@ export async function setupVirtualAuthenticator(
   const credentialIdHex = 'e2e00000000000000000000000000e2e'
   const credentialId = hexToBase64(credentialIdHex)
 
-  const rpId = new URL(E2E_CONFIG.baseUrl).hostname
-  const userHandle = buildUserHandle(E2E_CONFIG.masterSeed, 'E2E_TestWallet')
+  const rpId = new URL(E2E_CONFIG_EVM.baseUrl).hostname
+  const userHandle = buildUserHandle(
+    E2E_CONFIG_EVM.masterSeed,
+    'E2E_TestWallet'
+  )
 
   await cdp.send('WebAuthn.addCredential', {
     authenticatorId,

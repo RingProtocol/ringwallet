@@ -10,7 +10,10 @@ interface ChainEnvConfig {
 }
 
 function env(key: string): string {
-  const val = (import.meta.env as Record<string, string | undefined>)[key]
+  const envObj = (import.meta as unknown as Record<string, unknown>).env as
+    | Record<string, string | undefined>
+    | undefined
+  const val = envObj?.[key]
   return val?.trim() || 'unknownalchemyapikey'
 }
 

@@ -3,7 +3,7 @@ import { TESTID } from '../../../src/components/testids'
 import { ChainFamily } from '../../../src/models/ChainType'
 import { chainRegistry } from '../../../src/services/chainplugins/registry'
 import '../../../src/services/chainplugins/evm/evmPlugin' // side-effect: registers EvmChainPlugin
-import { E2E_CONFIG } from '../env'
+import { E2E_CONFIG_EVM } from '../env'
 import {
   setupVirtualAuthenticator,
   teardownVirtualAuthenticator,
@@ -27,13 +27,15 @@ export interface WalletContext {
 export const test = base.extend<{ wallet: WalletContext }>({
   wallet: async ({ page }, use) => {
     // Derive expected addresses using project's EvmChainPlugin
-    const seedBytes = new Uint8Array(Buffer.from(E2E_CONFIG.masterSeed, 'hex'))
+    const seedBytes = new Uint8Array(
+      Buffer.from(E2E_CONFIG_EVM.masterSeed, 'hex')
+    )
     const evmPlugin = chainRegistry.get(ChainFamily.EVM)!
     const evmAccounts = evmPlugin.deriveAccounts(seedBytes, 5)
     const evmAddresses = evmAccounts.map((a) => a.address)
 
     // Navigate to app
-    await page.goto(E2E_CONFIG.baseUrl)
+    await page.goto(E2E_CONFIG_EVM.baseUrl)
 
     // Setup virtual authenticator with pre-loaded credential before clicking login
     const auth = await setupVirtualAuthenticator(page)

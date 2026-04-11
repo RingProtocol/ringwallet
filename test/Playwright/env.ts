@@ -1,45 +1,22 @@
-import { readFileSync } from 'fs'
-import { resolve, dirname } from 'path'
-import { fileURLToPath } from 'url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-/**
- * Minimal .env parser — avoids adding dotenv as a dependency.
- */
-function loadEnv(): Record<string, string> {
-  const envPath = resolve(__dirname, '../../.env')
-  try {
-    const content = readFileSync(envPath, 'utf-8')
-    const vars: Record<string, string> = {}
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#')) continue
-      const eqIndex = trimmed.indexOf('=')
-      if (eqIndex === -1) continue
-      const key = trimmed.slice(0, eqIndex).trim()
-      let value = trimmed.slice(eqIndex + 1).trim()
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1)
-      }
-      vars[key] = value
-    }
-    return vars
-  } catch {
-    return {}
-  }
+export interface EvmTestnetChainConfig {
+  chainId: number
+  chainName: string
+  sendAmount: string
 }
 
-const env = { ...loadEnv(), ...process.env }
-
-export const E2E_CONFIG = {
-  baseUrl: env.E2E_BASE_URL || 'http://localhost:3000',
+export const E2E_CONFIG_EVM = {
+  baseUrl: 'http://localhost:3000',
   masterSeed:
-    env.E2E_MASTER_SEED ||
     'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a2',
-  evmChainId: env.E2E_EVM_CHAIN_ID || '11155111',
-  evmSendAmount: env.E2E_EVM_SEND_AMOUNT || '0.0001',
+  address0: '0x9fe8b07AC19eAe1f3548D8379A534070A89Ee620',
 }
+
+export const EVM_TESTNET_CHAINS: EvmTestnetChainConfig[] = [
+  { chainId: 11155111, chainName: 'Sepolia', sendAmount: '0.0001' },
+  { chainId: 43113, chainName: 'Fuji', sendAmount: '0.001' },
+  { chainId: 195, chainName: 'X Layer', sendAmount: '0.001' },
+  { chainId: 998, chainName: 'Hyperliquid', sendAmount: '0.001' },
+  { chainId: 9746, chainName: 'Plasma', sendAmount: '0.001' },
+  { chainId: 6342, chainName: 'MegaETH', sendAmount: '0.0001' },
+  { chainId: 568, chainName: 'Dogechain Testnet', sendAmount: '0.001' },
+]
