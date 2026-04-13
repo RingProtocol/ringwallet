@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import ChainSwitcher from './fullscreencomps/ChainSwitcher'
 import NativeBalance from './NativeBalance'
 import TransactionActions from './TransactionActions'
@@ -49,33 +49,54 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   const [pendingSendToken, setPendingSendToken] = useState<
     SendTokenOption | undefined
   >(undefined)
+  const [tabAnimEnabled, setTabAnimEnabled] = useState(false)
+  const [tabTransitionDir, setTabTransitionDir] = useState<1 | -1>(1)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const tabRef = useRef<BottomTab>(bottomTab)
 
   const { nativeBalance, tokens, supportsTokens } = useBalanceManager()
 
-  const goToMore = useCallback((expandWalletList: boolean) => {
-    setMoreExpandWalletListOnOpen(expandWalletList)
-    if (expandWalletList) {
-      setMoreWalletListPulse((n) => n + 1)
-    }
-    setBottomTab('more')
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      url.searchParams.set('tab', 'more')
-      window.history.replaceState(null, '', url.toString())
-    }
-  }, [])
+  useLayoutEffect(() => {
+    scrollAreaRef.current?.scrollTo(0, 0)
+  }, [bottomTab])
 
-  const openMoreFromAddress = useCallback(() => {
-    goToMore(true)
-  }, [goToMore])
-
-  const selectTab = useCallback((tab: BottomTab) => {
+  const navigateToTab = useCallback((tab: BottomTab) => {
+    const prev = tabRef.current
+    if (prev !== tab) {
+      setTabTransitionDir(
+        TAB_QUERY_KEYS.indexOf(tab) > TAB_QUERY_KEYS.indexOf(prev) ? 1 : -1
+      )
+      setTabAnimEnabled(true)
+      tabRef.current = tab
+    }
     setBottomTab(tab)
     if (typeof window === 'undefined') return
     const url = new URL(window.location.href)
     url.searchParams.set('tab', tab)
     window.history.replaceState(null, '', url.toString())
   }, [])
+
+  const goToMore = useCallback(
+    (expandWalletList: boolean) => {
+      setMoreExpandWalletListOnOpen(expandWalletList)
+      if (expandWalletList) {
+        setMoreWalletListPulse((n) => n + 1)
+      }
+      navigateToTab('more')
+    },
+    [navigateToTab]
+  )
+
+  const openMoreFromAddress = useCallback(() => {
+    goToMore(true)
+  }, [goToMore])
+
+  const selectTab = useCallback(
+    (tab: BottomTab) => {
+      navigateToTab(tab)
+    },
+    [navigateToTab]
+  )
 
   const handleTokenSend = useCallback(
     (token: {
@@ -144,39 +165,54 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
         <header className="wallet-main-page__top-dock wallet-main-page__top-dock--collapsed wallet-main-page__top-dock--alone" />
       )}
 
-      <div className="wallet-main-page__scroll">
-        {bottomTab === 'wallet' && (
-          <div className="card wallet-main-page__card wallet-main-page__card--below-hero">
-            <div className="wallet-main-page__assets">
-              <TokenBalance
-                tokens={tokens}
-                supportsTokens={supportsTokens}
-                onTokenSend={handleTokenSend}
-              />
+      <div ref={scrollAreaRef} className="wallet-main-page__scroll">
+        <div
+          key={bottomTab}
+          className={[
+            'wallet-main-page__tab-panel',
+            tabAnimEnabled ? 'wallet-main-page__tab-panel--enter' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          style={
+            {
+              '--wallet-tab-dir': tabTransitionDir,
+            } as React.CSSProperties
+          }
+        >
+          {bottomTab === 'wallet' && (
+            <div className="card wallet-main-page__card wallet-main-page__card--below-hero">
+              <div className="wallet-main-page__assets">
+                <TokenBalance
+                  tokens={tokens}
+                  supportsTokens={supportsTokens}
+                  onTokenSend={handleTokenSend}
+                />
+              </div>
             </div>
-          </div>
-        )}
-        {bottomTab === 'activity' && (
-          <div className="card wallet-main-page__card wallet-main-page__card--activity">
-            <TransactionHistory />
-          </div>
-        )}
-        {bottomTab === 'more' && (
-          <div className="wallet-main-page__more-outer">
-            <div className="wallet-main-page__more">
-              <AccountDrawerPanel
-                active={bottomTab === 'more'}
-                expandWalletListOnOpen={moreExpandWalletListOnOpen}
-                pulseExpandWalletList={moreWalletListPulse}
-              />
-              {appVersion != null && appVersion !== '' && (
-                <footer className="wallet-main-page__more-version app-version">
-                  version:{appVersion}
-                </footer>
-              )}
+          )}
+          {bottomTab === 'activity' && (
+            <div className="card wallet-main-page__card wallet-main-page__card--activity">
+              <TransactionHistory />
             </div>
-          </div>
-        )}
+          )}
+          {bottomTab === 'more' && (
+            <div className="wallet-main-page__more-outer">
+              <div className="wallet-main-page__more">
+                <AccountDrawerPanel
+                  active={bottomTab === 'more'}
+                  expandWalletListOnOpen={moreExpandWalletListOnOpen}
+                  pulseExpandWalletList={moreWalletListPulse}
+                />
+                {appVersion != null && appVersion !== '' && (
+                  <footer className="wallet-main-page__more-version app-version">
+                    version:{appVersion}
+                  </footer>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="wallet-main-page__bottom-wrap">
