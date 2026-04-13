@@ -7,12 +7,16 @@ import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
 import { balanceAdapterRegistry } from '../features/balance/balanceAdapterRegistry'
 import {
   fetchAllBalances,
+  fetchAccountBalances,
   emptyBalance,
+  formatUsdAmount,
 } from '../features/balance/balanceManager'
 import type { DisplayToken } from '../features/balance/balanceTypes'
 
 export interface BalanceState {
   nativeBalance: string
+  /** Total portfolio value in USD (formatted), from `fetchAccountBalances` / `getAccountBalance`. */
+  totalAssetUsd: string
   tokens: DisplayToken[]
   isLoading: boolean
   supportsTokens: boolean
@@ -26,6 +30,7 @@ export function useBalanceManager(): BalanceState {
   const supportsTokens = adapter?.supportsTokens ?? false
 
   const [nativeBalance, setNativeBalance] = useState(() => emptyBalance(family))
+  const [totalAssetUsd, setTotalAssetUsd] = useState(() => formatUsdAmount('0'))
   const [tokens, setTokens] = useState<DisplayToken[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -63,6 +68,7 @@ export function useBalanceManager(): BalanceState {
   // Reset on chain/account change
   useEffect(() => {
     setNativeBalance(emptyBalance(family))
+    setTotalAssetUsd(formatUsdAmount('0'))
     setTokens([])
     observedBalanceRef.current = null
   }, [activeChain?.id, activeAccount?.address, family])
@@ -110,25 +116,35 @@ export function useBalanceManager(): BalanceState {
     const fetchBalances = async () => {
       setIsLoading(true)
       try {
-        const result = await fetchAllBalances(
-          address,
-          activeChain,
-          importedTokens
-        )
-        commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
-        setTokens(result.tokens)
-      } catch (error) {
-        console.error('Failed to fetch balances:', error)
-        const zero = emptyBalance(family)
-        commitNativeBalance(zero, { recordObserved: false })
-        setTokens([
-          {
-            symbol: activeChain.symbol || 'UNKNOWN',
-            name: activeChain.name,
-            balance: zero,
-            isNative: true,
-          },
+        const [allBal, portfolio] = await Promise.allSettled([
+          fetchAllBalances(address, activeChain, importedTokens),
+          fetchAccountBalances(address, activeChain),
         ])
+
+        if (allBal.status === 'fulfilled') {
+          const result = allBal.value
+          commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
+          setTokens(result.tokens)
+        } else {
+          console.error('Failed to fetch token balances:', allBal.reason)
+          const zero = emptyBalance(family)
+          commitNativeBalance(zero, { recordObserved: false })
+          setTokens([
+            {
+              symbol: activeChain.symbol || 'UNKNOWN',
+              name: activeChain.name,
+              balance: zero,
+              isNative: true,
+            },
+          ])
+        }
+
+        if (portfolio.status === 'fulfilled') {
+          setTotalAssetUsd(portfolio.value)
+        } else {
+          console.error('Failed to fetch portfolio USD:', portfolio.reason)
+          setTotalAssetUsd(formatUsdAmount('0'))
+        }
       } finally {
         setIsLoading(false)
       }
@@ -139,5 +155,5 @@ export function useBalanceManager(): BalanceState {
     return () => clearInterval(interval)
   }, [activeAccount, activeChain, importedTokens, family, commitNativeBalance])
 
-  return { nativeBalance, tokens, isLoading, supportsTokens }
+  return { nativeBalance, totalAssetUsd, tokens, isLoading, supportsTokens }
 }
