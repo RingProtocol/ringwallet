@@ -5,14 +5,17 @@
 
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 10px 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .action-btn {
-  padding: 12px 30px;
-  border-radius: 25px;
-  font-size: 1rem;
+  padding: 10px 18px;
+  border-radius: 22px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -20,7 +23,44 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 540px) {
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 9px 10px;
+    font-size: 0.78rem;
+    border-radius: 18px;
+    min-width: 0;
+    width: 100%;
+    gap: 4px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+  }
+}
+
+@media (min-width: 768px) {
+  .action-buttons {
+    flex-wrap: nowrap;
+    gap: 16px;
+  }
+
+  .action-btn {
+    padding: 12px 26px;
+    font-size: 1rem;
+    border-radius: 25px;
+    gap: 8px;
+    width: auto;
+  }
 }
 
 .send-btn {

@@ -22,7 +22,7 @@ const RING_SWAP_DAPP: DAppInfo = {
   id: 900_001,
   name: 'Ring',
   description: 'Ring Exchange',
-  url: 'https://dapp-test.new-interface-7vn.pages.dev',
+  url: 'https://dapp-test.new-interface-7vn.pages.dev/#/swap',
   icon: 'https://app.ring.exchange/favicon.png',
   chains: [],
   category: 'swap',

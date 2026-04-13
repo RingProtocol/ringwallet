@@ -85,40 +85,39 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
         onClick={handleClose}
         aria-label={t('close')}
       />
-      <div
-        className="dapp-popup__shell"
-        role="dialog"
-        aria-modal="true"
-        aria-label={dapp.name}
-      >
-        <div className="dapp-container">
-          <div className="dapp-container__navbar">
-            <button
-              type="button"
-              className="dapp-container__close-btn"
-              onClick={handleClose}
-            >
-              {t('close')}
-            </button>
-          </div>
-
-          <iframe
-            ref={iframeRef}
-            className="dapp-container__iframe"
-            src={iframeSrc}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-            allow="clipboard-read; clipboard-write"
-            referrerPolicy="no-referrer"
-            title={dapp.name}
-          />
-
-          {pendingApproval && (
-            <ApprovalDialog
-              request={pendingApproval}
-              onApprove={approve}
-              onReject={reject}
+      <div className="dapp-popup__column">
+        <button
+          type="button"
+          className="dapp-popup__close"
+          onClick={handleClose}
+        >
+          {t('close')}
+        </button>
+        <div
+          className="dapp-popup__shell"
+          role="dialog"
+          aria-modal="true"
+          aria-label={dapp.name}
+        >
+          <div className="dapp-container">
+            <iframe
+              ref={iframeRef}
+              className="dapp-container__iframe"
+              src={iframeSrc}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              allow="clipboard-read; clipboard-write"
+              referrerPolicy="no-referrer"
+              title={dapp.name}
             />
-          )}
+
+            {pendingApproval && (
+              <ApprovalDialog
+                request={pendingApproval}
+                onApprove={approve}
+                onReject={reject}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
