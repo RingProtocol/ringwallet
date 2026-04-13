@@ -125,11 +125,11 @@
 
 .wallet-main-page__top-dock:not(.wallet-main-page__top-dock--collapsed) {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
 }
 
-/* Compact trigger, right-aligned (dropdown still uses fixed positioning). */
+/* Compact chain trigger, top-left (dropdown still uses fixed positioning). */
 .wallet-main-page__top-dock .chain-switcher-container {
   width: min(200px, calc(100% - 8px));
   max-width: min(
