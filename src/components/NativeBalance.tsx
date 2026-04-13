@@ -1,6 +1,5 @@
 import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import ChainIcon from './ChainIcon'
 import './NativeBalance.css'
 import { TESTID } from './testids'
 
@@ -19,22 +18,14 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
   balance,
   onAddressClick,
 }) => {
-  const { activeChain, activeAccount } = useAuth()
+  const { activeAccount } = useAuth()
 
   if (!activeAccount) return null
 
   return (
     <div className="balance-display">
       <div className="balance-amount" data-testid={TESTID.BALANCE_AMOUNT}>
-        {balance}{' '}
-        <span className="currency-symbol">
-          <ChainIcon
-            icon={activeChain.icon}
-            symbol={activeChain.symbol || 'ETH'}
-            size={20}
-          />
-          {activeChain.symbol || 'ETH'}
-        </span>
+        {balance}
       </div>
       {activeAccount?.address &&
         (onAddressClick ? (

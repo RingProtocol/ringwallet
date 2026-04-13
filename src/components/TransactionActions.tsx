@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import DAppContainer from '@/features/dapps/components/DAppContainer'
+import '@/features/dapps/components/DApps.css'
+import type { DAppInfo } from '@/features/dapps/types/dapp'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { SendTokenOption } from './transaction/types'
@@ -10,8 +13,21 @@ import {
   DogecoinSendForm,
   ReceiveDialog,
 } from './transaction'
+import { useI18n } from '../i18n'
 import './TransactionActions.css'
 import { TESTID } from './testids'
+
+/** Built-in Ring Exchange swap UI (in-app via DAppContainer + WalletBridge). */
+const RING_SWAP_DAPP: DAppInfo = {
+  id: 900_001,
+  name: 'Ring',
+  description: 'Ring Exchange',
+  url: 'https://dapp-test.new-interface-7vn.pages.dev',
+  icon: 'https://app.ring.exchange/favicon.png',
+  chains: [],
+  category: 'swap',
+  top: 0,
+}
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 
@@ -54,8 +70,10 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     isBitcoinChain,
     isDogecoinChain,
   } = useAuth()
+  const { t } = useI18n()
   const [showSend, setShowSend] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
+  const [swapDappOpen, setSwapDappOpen] = useState(false)
   const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
     undefined
   )
@@ -91,6 +109,11 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     ? 'Set VITE_MOONPAY_API_KEY to enable MoonPay'
     : 'Buy crypto with MoonPay'
 
+  const canUseRingSwap = !isSolanaChain && !isBitcoinChain && !isDogecoinChain
+  const swapButtonTitle = canUseRingSwap
+    ? t('swapOpenTitle')
+    : t('swapDisabledNonEvm')
+
   const handleCloseSend = () => {
     setShowSend(false)
     setSendToken(undefined)
@@ -111,6 +134,11 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
     return <EOASendForm onClose={handleCloseSend} initialToken={sendToken} />
   }
 
+  const handleSwapClick = () => {
+    if (!canUseRingSwap) return
+    setSwapDappOpen(true)
+  }
+
   const handleMoonPayClick = () => {
     if (!moonPayApiKey || !moonPayCurrencyCode) return
 
@@ -125,6 +153,12 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
 
   return (
     <div className="transaction-actions-container">
+      {swapDappOpen && (
+        <DAppContainer
+          dapp={RING_SWAP_DAPP}
+          onBack={() => setSwapDappOpen(false)}
+        />
+      )}
       <div className="action-buttons">
         <button
           className="action-btn send-btn"
@@ -139,6 +173,16 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
           data-testid={TESTID.RECEIVE_BUTTON}
         >
           📥 Receive
+        </button>
+        <button
+          type="button"
+          className="action-btn buy-btn"
+          onClick={handleSwapClick}
+          disabled={!canUseRingSwap}
+          title={swapButtonTitle}
+          data-testid={TESTID.SWAP_BUTTON}
+        >
+          💳 Swap
         </button>
         {showMoonPayEntry && (
           <button

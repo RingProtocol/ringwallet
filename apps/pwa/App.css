@@ -5,6 +5,8 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 6px;
   position: relative;
   /* background: pink; */
@@ -31,6 +33,11 @@
 .header-actions:has(.chain-switcher-container) {
   left: 20px;
   justify-content: space-between;
+}
+
+/* Logged-in wallet shell: chain switcher only (More tab holds account menu). */
+.header-actions--wallet-main:has(.chain-switcher-container) {
+  justify-content: flex-start;
 }
 
 body.ring-dapp-open .app > .header-actions .chain-switcher-trigger {

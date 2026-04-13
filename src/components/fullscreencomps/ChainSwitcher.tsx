@@ -120,13 +120,26 @@ const ChainSwitcher: React.FC = () => {
   }, [activeChain])
 
   const toggleDropdown = () => {
-    setIsOpen(!isOpen)
-    if (!isOpen) {
-      setSearchTerm('')
-      setAddSearchTerm('')
-      setShowAddPanel(false)
-      setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
+    if (isOpen) {
+      setIsOpen(false)
       setDropdownPosition(null)
+      return
+    }
+    setSearchTerm('')
+    setAddSearchTerm('')
+    setShowAddPanel(false)
+    setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
+    setIsOpen(true)
+
+    if (containerRef.current && typeof window !== 'undefined') {
+      const rect = containerRef.current.getBoundingClientRect()
+      const menuWidth = 280
+      const viewportPadding = 12
+      const left = Math.min(
+        Math.max(viewportPadding, rect.right - menuWidth),
+        window.innerWidth - menuWidth - viewportPadding
+      )
+      setDropdownPosition({ top: rect.bottom + 8, left })
     }
   }
 

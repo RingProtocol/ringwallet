@@ -444,7 +444,9 @@
 
 .address-display {
   font-family: monospace;
-  background: #f5f5f5;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--ring-text-primary, #f3f4f6);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   padding: 10px;
   border-radius: 8px;
   word-break: break-all;

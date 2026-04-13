@@ -16,6 +16,7 @@ export const TESTID = {
   // Transaction actions
   SEND_BUTTON: 'send-button',
   RECEIVE_BUTTON: 'receive-button',
+  SWAP_BUTTON: 'swap-button',
 
   // Send form fields
   SEND_TO_INPUT: 'send-to-input',
@@ -29,9 +30,12 @@ export const TESTID = {
   BROADCAST_HASH: 'broadcast-hash',
   BROADCAST_SUCCESS: 'broadcast-success',
 
-  // Tabs
-  TAB_ASSETS: 'tab-assets',
+  // Bottom nav (main wallet shell)
+  TAB_WALLET: 'tab-wallet',
   TAB_ACTIVITY: 'tab-activity',
+  TAB_MORE: 'tab-more',
+  /** @deprecated Use TAB_WALLET; kept for older tests */
+  TAB_ASSETS: 'tab-assets',
   TAB_DAPPS: 'tab-dapps',
 
   // Activity / TransactionHistory

@@ -34,9 +34,7 @@ function AppContent() {
           <footer className="app-version">version:{VERSION}</footer>
         </>
       ) : (
-        <WalletMainPage
-          footer={<footer className="app-version">version:{VERSION}</footer>}
-        />
+        <WalletMainPage appVersion={VERSION} />
       )}
     </div>
   )
