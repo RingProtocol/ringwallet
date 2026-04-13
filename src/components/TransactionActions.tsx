@@ -57,6 +57,40 @@ interface TransactionActionsProps {
   onSendFormClosed?: () => void
 }
 
+interface ActionCircleEntryProps {
+  icon: React.ReactNode
+  label: string
+  variantClass: string
+  onClick: () => void
+  disabled?: boolean
+  title?: string
+  testId?: string
+}
+
+const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
+  icon,
+  label,
+  variantClass,
+  onClick,
+  disabled,
+  title,
+  testId,
+}) => (
+  <button
+    type="button"
+    className={`action-circle-entry ${variantClass}`}
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
+    data-testid={testId}
+  >
+    <span className="action-circle-entry__disc" aria-hidden>
+      {icon}
+    </span>
+    <span className="action-circle-entry__label">{label}</span>
+  </button>
+)
+
 const TransactionActions: React.FC<TransactionActionsProps> = ({
   initialToken,
   onSendFormClosed,
@@ -159,40 +193,40 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
           onBack={() => setSwapDappOpen(false)}
         />
       )}
-      <div className="action-buttons">
-        <button
-          className="action-btn send-btn"
+      <div className="action-buttons" role="toolbar" aria-label={t('wallet')}>
+        <ActionCircleEntry
+          variantClass="action-circle-entry--send"
+          icon="📤"
+          label={t('send')}
           onClick={() => setShowSend(true)}
-          data-testid={TESTID.SEND_BUTTON}
-        >
-          📤 Send
-        </button>
-        <button
-          className="action-btn receive-btn"
+          testId={TESTID.SEND_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--receive"
+          icon="📥"
+          label={t('receive')}
           onClick={() => setShowReceive(true)}
-          data-testid={TESTID.RECEIVE_BUTTON}
-        >
-          📥 Receive
-        </button>
-        <button
-          type="button"
-          className="action-btn buy-btn"
+          testId={TESTID.RECEIVE_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--swap"
+          icon="⇄"
+          label={t('walletActionRingSwap')}
           onClick={handleSwapClick}
           disabled={!canUseRingSwap}
           title={swapButtonTitle}
-          data-testid={TESTID.SWAP_BUTTON}
-        >
-          ⇄ RingSwap
-        </button>
+          testId={TESTID.SWAP_BUTTON}
+        />
         {showMoonPayEntry && (
-          <button
-            className="action-btn buy-btn"
+          <ActionCircleEntry
+            variantClass="action-circle-entry--buy"
+            icon="💳"
+            label={t('walletActionBuy')}
             onClick={handleMoonPayClick}
             disabled={!isMoonPayEnabled}
             title={moonPayButtonTitle}
-          >
-            💳 Buy
-          </button>
+            testId={TESTID.BUY_BUTTON}
+          />
         )}
       </div>
 

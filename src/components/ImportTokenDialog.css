@@ -4,30 +4,35 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  /* Above wallet hero (z-index 60 context), tab bar (400), drawers (~2100), send/receive modals (2000) */
+  z-index: 3200;
   backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease;
+  animation: import-token-fade-in 0.2s ease;
 }
 
 .import-token-dialog {
-  background: white;
-  padding: 30px;
+  background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.94));
+  color: var(--ring-text-primary, #f3f4f6);
+  padding: 24px 22px;
   border-radius: 20px;
   width: 90%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-  animation: scaleIn 0.2s ease;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  animation: import-token-scale-in 0.2s ease;
 }
 
 .import-token-dialog h3 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .import-token-dialog .form-group {
@@ -37,32 +42,46 @@
 
 .import-token-dialog .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--ring-text-secondary, #9ca3af);
   font-weight: 500;
 }
 
 .import-token-dialog .input-field {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
   border-radius: 10px;
   font-size: 1rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.import-token-dialog .input-field::placeholder {
+  color: var(--ring-text-muted, #6b7280);
 }
 
 .import-token-dialog .input-field:focus {
-  border-color: #667eea;
+  border-color: var(--ring-accent, #a5b4fc);
   outline: none;
 }
 
+.import-token-dialog .input-field:disabled {
+  opacity: 0.65;
+}
+
 .import-token-error {
-  color: #e53e3e;
+  color: #f87171;
   font-size: 0.85rem;
   margin-bottom: 12px;
   text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.28);
 }
 
 .import-token-actions {
@@ -88,16 +107,84 @@
   color: white;
 }
 
+.import-token-actions .primary-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
 .import-token-actions .primary-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .import-token-actions .secondary-btn {
-  background: #f0f0f0;
-  color: #555;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-secondary, #9ca3af);
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
 }
 
 .import-token-actions .secondary-btn:hover {
-  background: #e5e5e5;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  .import-token-dialog {
+    background: #fff;
+    color: #111827;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  }
+
+  .import-token-dialog h3 {
+    color: #111827;
+  }
+
+  .import-token-dialog .form-group label {
+    color: #4b5563;
+  }
+
+  .import-token-dialog .input-field {
+    background: #f9fafb;
+    color: #111827;
+    border-color: #e5e7eb;
+  }
+
+  .import-token-dialog .input-field::placeholder {
+    color: #9ca3af;
+  }
+
+  .import-token-error {
+    color: #b91c1c;
+    background: rgba(254, 226, 226, 0.9);
+    border-color: rgba(248, 113, 113, 0.45);
+  }
+
+  .import-token-actions .secondary-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #e5e7eb;
+  }
+
+  .import-token-actions .secondary-btn:hover {
+    background: #e5e7eb;
+  }
+}
+
+@keyframes import-token-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes import-token-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

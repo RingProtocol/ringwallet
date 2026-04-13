@@ -61,22 +61,24 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
             className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
             onClick={onTokenSend ? () => onTokenSend(token) : undefined}
           >
-            <div className="token-icon-wrap">
-              {token.isNative && activeChain?.icon ? (
-                <ChainIcon
-                  icon={activeChain.icon}
-                  symbol={token.symbol}
-                  size={38}
-                />
-              ) : (
-                <span className="token-icon-placeholder">
-                  {token.symbol.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="token-info">
-              <span className="token-symbol">{token.symbol}</span>
-              <span className="token-name">{token.name}</span>
+            <div className="token-row__main">
+              <div className="token-icon-wrap">
+                {token.isNative && activeChain?.icon ? (
+                  <ChainIcon
+                    icon={activeChain.icon}
+                    symbol={token.symbol}
+                    size={38}
+                  />
+                ) : (
+                  <span className="token-icon-placeholder">
+                    {token.symbol.charAt(0)}
+                  </span>
+                )}
+              </div>
+              <div className="token-info">
+                <span className="token-symbol">{token.symbol}</span>
+                <span className="token-name">{token.name}</span>
+              </div>
             </div>
             <div className="token-amount">{token.balance}</div>
           </div>

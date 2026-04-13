@@ -167,6 +167,8 @@ const messages = {
     swapOpenTitle: 'Open Ring swap',
     swapDisabledNonEvm:
       'Swap is available on Ethereum-compatible networks only',
+    walletActionRingSwap: 'RingSwap',
+    walletActionBuy: 'Buy',
     amount: 'Amount',
     address: 'Address',
     memo: 'Memo',
@@ -355,6 +357,8 @@ const messages = {
     send: '转账',
     swapOpenTitle: '打开 Ring 兑换',
     swapDisabledNonEvm: '请在以太坊兼容网络下使用兑换',
+    walletActionRingSwap: '兑换',
+    walletActionBuy: '购买',
     amount: '金额',
     address: '地址',
     memo: '备注',

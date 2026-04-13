@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ethers } from 'ethers'
 import type { Chain } from '../models/ChainType'
 import RpcService from '../services/rpc/rpcService'
@@ -77,37 +78,56 @@ const ImportTokenDialog: React.FC<ImportTokenDialogProps> = ({
 
   if (!isOpen) return null
 
-  return (
+  const content = (
     <div className="import-token-overlay" onClick={handleClose}>
-      <div className="import-token-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>{t('importTokenTitle')}</h3>
+      <div
+        className="import-token-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-token-dialog-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="import-token-dialog-title">{t('importTokenTitle')}</h3>
         <div className="form-group">
-          <label>{t('tokenAddress')}</label>
+          <label htmlFor="import-token-address-input">
+            {t('tokenAddress')}
+          </label>
           <input
+            id="import-token-address-input"
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="0x..."
             className="input-field"
             disabled={isLoading}
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </div>
         {error && <div className="import-token-error">{error}</div>}
         <div className="import-token-actions">
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={isLoading || !address.trim()}
             className="primary-btn"
           >
             {isLoading ? t('importing') : t('importToken')}
           </button>
-          <button onClick={handleClose} className="secondary-btn">
+          <button type="button" onClick={handleClose} className="secondary-btn">
             {t('cancel')}
           </button>
         </div>
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return content
+  }
+
+  return createPortal(content, document.body)
 }
 
 export default ImportTokenDialog
