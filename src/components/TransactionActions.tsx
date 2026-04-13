@@ -182,7 +182,7 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
           title={swapButtonTitle}
           data-testid={TESTID.SWAP_BUTTON}
         >
-          💳 Swap
+          ⇄ RingSwap
         </button>
         {showMoonPayEntry && (
           <button

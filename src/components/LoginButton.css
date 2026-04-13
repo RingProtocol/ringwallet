@@ -3,6 +3,35 @@
   margin-top: 56px;
 }
 
+.login-form-wrap {
+  padding: 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+}
+
+.login-form-wrap--callout {
+  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.18));
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
+}
+
+.login-no-account-msg {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--ring-accent, #a5b4fc);
+}
+
+@media (prefers-color-scheme: light) {
+  .login-form-wrap--callout {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+  }
+
+  .login-no-account-msg {
+    color: #0369a1;
+  }
+}
+
 .login-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

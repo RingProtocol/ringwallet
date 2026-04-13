@@ -166,23 +166,10 @@ const LoginButton: React.FC = () => {
         <BiometricGuide onRetry={handleBiometricRetry} isChecking={isLoading} />
       ) : (
         <div
-          style={{
-            padding: '12px',
-            background: showCreateAccount ? '#f0f9ff' : 'transparent',
-            borderRadius: '8px',
-            border: showCreateAccount ? '1px solid #bae6fd' : 'none',
-          }}
+          className={`login-form-wrap${showCreateAccount ? ' login-form-wrap--callout' : ''}`}
         >
           {showCreateAccount && (
-            <p
-              style={{
-                margin: '0 0 8px 0',
-                fontSize: '14px',
-                color: '#0369a1',
-              }}
-            >
-              {t('noAccountFound')}
-            </p>
+            <p className="login-no-account-msg">{t('noAccountFound')}</p>
           )}
           <button
             className="login-button"
