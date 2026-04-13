@@ -32,3 +32,33 @@
   font-family: monospace;
   letter-spacing: 0.5px;
 }
+
+.wallet-address--clickable {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 6px;
+  margin-inline: -6px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-family: monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: var(--ring-text-muted, #6b7280);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.wallet-address--clickable:hover {
+  color: var(--ring-accent, #a5b4fc);
+  background: rgba(165, 180, 252, 0.08);
+}
+
+.wallet-address--clickable:focus-visible {
+  outline: 2px solid var(--ring-accent, #a5b4fc);
+  outline-offset: 2px;
+}

@@ -25,11 +25,30 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   className,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerExpandWalletListOnOpen, setDrawerExpandWalletListOnOpen] =
+    useState(false)
+  const [drawerWalletListPulse, setDrawerWalletListPulse] = useState(0)
   const [pendingSendToken, setPendingSendToken] = useState<
     SendTokenOption | undefined
   >(undefined)
 
   const { nativeBalance, tokens, supportsTokens } = useBalanceManager()
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false)
+    setDrawerWalletListPulse(0)
+  }, [])
+
+  const openDrawerFromMenu = useCallback(() => {
+    setDrawerExpandWalletListOnOpen(false)
+    setDrawerOpen(true)
+  }, [])
+
+  const openDrawerFromAddress = useCallback(() => {
+    setDrawerExpandWalletListOnOpen(true)
+    setDrawerWalletListPulse((n) => n + 1)
+    setDrawerOpen(true)
+  }, [])
 
   const handleTokenSend = useCallback(
     (token: {
@@ -78,17 +97,25 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
       )}
       <div className="header-actions">
         <ChainSwitcher />
-        <WalletSwitcher onOpenDrawer={() => setDrawerOpen(true)} />
+        <WalletSwitcher onOpenDrawer={openDrawerFromMenu} />
       </div>
-      <AccountDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <AccountDrawer
+        isOpen={drawerOpen}
+        onClose={closeDrawer}
+        expandWalletListOnOpen={drawerExpandWalletListOnOpen}
+        pulseExpandWalletList={drawerWalletListPulse}
+      />
       <div className="card wallet-main-page__card">
-        <NativeBalance balance={nativeBalance} />
+        <NativeBalance
+          balance={nativeBalance}
+          onAddressClick={openDrawerFromAddress}
+        />
         <TransactionActions
           initialToken={pendingSendToken}
           onSendFormClosed={() => setPendingSendToken(undefined)}
         />
         <MultiTabs
-          onOpenSettings={() => setDrawerOpen(true)}
+          onOpenSettings={openDrawerFromMenu}
           hideDAppsTab={peekOverDapp}
           onTokenSend={handleTokenSend}
           tokens={tokens}

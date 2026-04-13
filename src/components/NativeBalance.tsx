@@ -11,9 +11,14 @@ function shortenAddress(address: string): string {
 
 interface NativeBalanceProps {
   balance: string
+  /** Opens the same account drawer as the header menu (wallet switcher). */
+  onAddressClick?: () => void
 }
 
-const NativeBalance: React.FC<NativeBalanceProps> = ({ balance }) => {
+const NativeBalance: React.FC<NativeBalanceProps> = ({
+  balance,
+  onAddressClick,
+}) => {
   const { activeChain, activeAccount } = useAuth()
 
   if (!activeAccount) return null
@@ -31,11 +36,22 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({ balance }) => {
           {activeChain.symbol || 'ETH'}
         </span>
       </div>
-      {activeAccount?.address && (
-        <div className="wallet-address" data-testid={TESTID.WALLET_ADDRESS}>
-          {shortenAddress(activeAccount.address)}
-        </div>
-      )}
+      {activeAccount?.address &&
+        (onAddressClick ? (
+          <button
+            type="button"
+            className="wallet-address wallet-address--clickable"
+            data-testid={TESTID.WALLET_ADDRESS}
+            onClick={onAddressClick}
+            aria-label="Accounts and wallets"
+          >
+            {shortenAddress(activeAccount.address)}
+          </button>
+        ) : (
+          <div className="wallet-address" data-testid={TESTID.WALLET_ADDRESS}>
+            {shortenAddress(activeAccount.address)}
+          </div>
+        ))}
     </div>
   )
 }

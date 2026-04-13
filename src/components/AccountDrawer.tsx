@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
 import {
@@ -19,6 +19,13 @@ import { useI18n } from '../i18n'
 interface AccountDrawerProps {
   isOpen: boolean
   onClose: () => void
+  /** When the drawer opens (closed → open), start with the wallet list expanded. */
+  expandWalletListOnOpen?: boolean
+  /**
+   * Increment when the user taps the home-screen address while the drawer may already be open;
+   * forces the wallet list to expand.
+   */
+  pulseExpandWalletList?: number
 }
 
 type MenuItem = {
@@ -31,13 +38,17 @@ type MenuItem = {
   hidden?: boolean
 }
 
-const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
+const AccountDrawer: React.FC<AccountDrawerProps> = ({
+  isOpen,
+  onClose,
+  expandWalletListOnOpen = false,
+  pulseExpandWalletList = 0,
+}) => {
   const {
     activeWalletIndex,
     switchWallet,
     logout,
     activeChain,
-    activeAccount,
     accountsByFamily,
   } = useAuth()
   const { lang, setLang, t } = useI18n()
@@ -47,6 +58,20 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
   const [showFeedback, setShowFeedback] = useState(false)
   const [notificationPermission, setNotificationPermission] =
     useState<DeviceNotificationPermission>('default')
+
+  const wasDrawerOpen = useRef(false)
+
+  useEffect(() => {
+    if (isOpen && !wasDrawerOpen.current) {
+      setShowWalletList(expandWalletListOnOpen)
+    }
+    wasDrawerOpen.current = isOpen
+  }, [isOpen, expandWalletListOnOpen])
+
+  useEffect(() => {
+    if (!isOpen || pulseExpandWalletList <= 0) return
+    setShowWalletList(true)
+  }, [isOpen, pulseExpandWalletList])
 
   const formatAddress = (address: string) => {
     if (!address) return ''
@@ -222,57 +247,22 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {(() => {
-          if (!activeAccount) return null
-          return (
-            <div className="drawer-account-info">
-              <div className="drawer-account-icon">🔐</div>
-              <div className="drawer-account-detail">
-                <span className="drawer-account-name">
-                  {t('wallet')} #{activeWalletIndex + 1}
-                </span>
-                <div className="drawer-account-addr-row">
-                  <span className="drawer-account-address">
-                    {formatAddress(activeAccount.address)}
-                  </span>
-                  <button
-                    className="drawer-copy-btn"
-                    onClick={(e) => copyToClipboard(e, activeAccount.address)}
-                    title={t('copy')}
-                  >
-                    📋{t('copy')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )
-        })()}
-
         {featureError && <div className="drawer-error">{featureError}</div>}
 
         <div className="drawer-menu-list">
           {menuItems
             .filter((i) => !i.hidden)
             .map((item) => (
-              <React.Fragment key={item.key}>
+              <div className="drawer-menu-section" key={item.key}>
                 <div
-                  className={`drawer-menu-item ${item.key === 'switch' && showWalletList ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
+                  className={`drawer-menu-item ${item.disabled ? 'disabled' : ''}`}
                   onClick={item.disabled ? undefined : item.action}
                 >
                   <span className="drawer-menu-icon">{item.icon}</span>
                   <span className="drawer-menu-label">
                     {item.label}
                     {item.sublabel && (
-                      <span
-                        style={{
-                          marginLeft: '6px',
-                          fontSize: '10px',
-                          color: '#94a3b8',
-                          background: '#f1f5f9',
-                          padding: '1px 6px',
-                          borderRadius: '8px',
-                        }}
-                      >
+                      <span className="drawer-menu-sublabel">
                         {item.sublabel}
                       </span>
                     )}
@@ -314,7 +304,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                     })().map((wallet, index) => (
                       <div
                         key={index}
-                        className={`drawer-wallet-option ${index === activeWalletIndex ? 'active' : ''}`}
+                        className="drawer-wallet-option"
                         onClick={() => handleSelectWallet(index)}
                       >
                         <div className="drawer-wallet-row">
@@ -341,7 +331,7 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
                     ))}
                   </div>
                 )}
-              </React.Fragment>
+              </div>
             ))}
         </div>
       </div>
