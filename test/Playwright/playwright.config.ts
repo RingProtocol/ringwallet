@@ -1,5 +1,10 @@
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig, devices } from '@playwright/test'
 import { E2E_CONFIG_EVM } from './env'
+
+/** Repo root — webServer default cwd is the config file's directory; Next must run from root. */
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 export default defineConfig({
   testDir: './tests',
@@ -9,6 +14,12 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   timeout: 120_000,
+
+  // globalSetup starts Anvil for every chain in EVM_TESTNET_CHAINS before any test runs.
+  // globalTeardown stops them afterwards.
+  // Both fire in headless (yarn test:e2e) AND UI (yarn test:e2e:ui) mode.
+  globalSetup: './global-setup.ts',
+  globalTeardown: './global-teardown.ts',
 
   use: {
     baseURL: E2E_CONFIG_EVM.baseUrl,
@@ -28,11 +39,12 @@ export default defineConfig({
     },
   ],
 
-  // Start the dev server if not already running
+  // Only the app dev server here — Anvil is managed by globalSetup/globalTeardown.
   webServer: {
     command: 'yarn dev',
     url: E2E_CONFIG_EVM.baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    cwd: repoRoot,
   },
 })

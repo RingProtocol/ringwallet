@@ -139,3 +139,16 @@ yarn test                           # Always: fast, no network
 yarn test:multichain                # Optional: needs ALCHEMY_API_KEY
 yarn test:chain                     # Optional: needs Anvil + ALCHEMY_API_KEY
 ```
+
+```bash
+Terminal 1 (keep running):
+  yarn test:e2e:anvil
+  # prints: [anvil] starting fresh local chain chainId=998 on port 8545
+  # prints: [anvil] funded 0x9fe8b07... with 100 tokens
+  # stays running...
+
+Terminal 2:
+  yarn test:e2e:ui
+  # Playwright sees anvil already on 8545 → reuseExistingServer → opens UI
+  # Click ▶ on any test to run it
+```

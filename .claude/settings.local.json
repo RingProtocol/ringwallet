@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --input-type=module <<'EOF'\n// Verify start-anvil.mjs is valid JS\nimport { readFileSync } from 'fs'\nreadFileSync\\('test/Playwright/scripts/start-anvil.mjs', 'utf8'\\)\nconsole.log\\('start-anvil.mjs: OK'\\)\nEOF)",
+      "Bash(npx tsc:*)",
+      "Bash(anvil --version 2>&1; npx playwright --version 2>&1 | head -1; node --version)",
+      "Bash(npx playwright:*)",
+      "Bash(kill -9 22343 2>/dev/null; echo \"done\")"
+    ]
+  }
+}

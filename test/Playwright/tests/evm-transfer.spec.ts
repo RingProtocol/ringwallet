@@ -56,7 +56,9 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
     expect(hashText).toBeTruthy()
     expect(hashText!.length).toBeGreaterThan(10)
 
-    // ---- 5. Close send form and verify balance decreased ----
+    // ---- 5. Close send form; assert outcome via UI balance (not RPC) ----
+    // Home balance is polled on an interval (see BALANCE_POLL_INTERVAL_MS), so allow
+    // time after broadcast for the next fetch to reflect a confirmed transfer + gas spend.
     await page.getByTestId(TESTID.SEND_CLOSE_BUTTON).click()
 
     const sendAmount = parseFloat(chain.sendAmount)
@@ -64,7 +66,7 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
       const text = await balanceEl.textContent()
       const balanceAfter = parseFloat(text!.replace(/[^\d.]/g, ''))
       expect(balanceAfter).toBeLessThan(balanceBefore - sendAmount * 0.5)
-    }).toPass({ timeout: 30000 })
+    }).toPass({ timeout: 60_000 })
   })
 }
 
