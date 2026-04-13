@@ -12,7 +12,7 @@
   margin-top: auto;
   padding: 8px;
   font-size: 11px;
-  color: #888;
+  color: var(--ring-text-muted);
   user-select: none;
 }
 
@@ -57,13 +57,13 @@ body.ring-dapp-open .app > .header-actions {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: var(--ring-bg-elevated);
+  backdrop-filter: blur(12px);
   border-radius: 16px;
   padding: 24px 16px;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--ring-border);
   width: 100%;
 }
 
@@ -95,7 +95,7 @@ body.ring-dapp-open .app > .header-actions {
 
 .subtitle {
   font-size: 1rem;
-  color: #666;
+  color: var(--ring-text-secondary);
   margin-bottom: 20px;
 }
 
@@ -114,12 +114,12 @@ body.ring-dapp-open .app > .header-actions {
 }
 
 .guest-message {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: var(--ring-accent-soft);
+  color: var(--ring-accent);
   padding: 12px;
   border-radius: 8px;
   margin: 16px 0;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(165, 180, 252, 0.28);
 }
 
 @keyframes fadeIn {

@@ -29,8 +29,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
     SendTokenOption | undefined
   >(undefined)
 
-  const { nativeBalance, tokens, isLoading, supportsTokens } =
-    useBalanceManager()
+  const { nativeBalance, tokens, supportsTokens } = useBalanceManager()
 
   const handleTokenSend = useCallback(
     (token: {
@@ -93,7 +92,6 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           hideDAppsTab={peekOverDapp}
           onTokenSend={handleTokenSend}
           tokens={tokens}
-          isLoading={isLoading}
           supportsTokens={supportsTokens}
         />
       </div>

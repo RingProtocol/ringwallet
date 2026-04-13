@@ -8,7 +8,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid #f2f2f2;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
   text-decoration: none;
   color: inherit;
   transition: background 0.15s;
@@ -19,7 +19,7 @@
 }
 
 .tx-row:hover {
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .tx-direction {
@@ -29,7 +29,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f6fa;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -44,18 +44,18 @@
 .tx-peer {
   font-weight: 500;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .tx-time {
   font-size: 0.76rem;
-  color: #999;
+  color: var(--ring-text-muted, #6b7280);
   margin-top: 2px;
 }
 
 .tx-asset {
   font-size: 0.74rem;
-  color: #777;
+  color: var(--ring-text-secondary, #9ca3af);
   margin-top: 2px;
 }
 
@@ -71,7 +71,7 @@
 
 .tx-symbol {
   font-weight: 400;
-  color: #888;
+  color: var(--ring-text-muted, #6b7280);
   font-size: 0.8rem;
 }
 
@@ -79,7 +79,7 @@
 .tx-empty {
   padding: 40px 16px;
   text-align: center;
-  color: #999;
+  color: var(--ring-text-muted, #6b7280);
   font-size: 0.9rem;
 }
 

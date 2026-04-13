@@ -29,9 +29,9 @@
 }
 
 .receive-btn {
-  background: white;
-  color: #667eea;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ring-accent, #a5b4fc);
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
 }
 
 .buy-btn {
@@ -72,7 +72,8 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--ring-bg-elevated, #1c1e26);
+  color: var(--ring-text-primary, #f3f4f6);
   padding: 30px;
   border-radius: 20px;
   width: 90%;
@@ -80,7 +81,8 @@
   max-height: 85vh;
   overflow-y: auto;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   animation: scaleIn 0.2s ease;
 }
 
@@ -98,13 +100,13 @@
 .modal-content h3 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .current-wallet-hint {
   font-size: 0.8rem;
-  color: #666;
-  background: #f5f5f5;
+  color: var(--ring-text-secondary, #9ca3af);
+  background: rgba(0, 0, 0, 0.25);
   padding: 8px;
   border-radius: 8px;
   margin-bottom: 20px;
@@ -119,22 +121,24 @@
   display: block;
   margin-bottom: 5px;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--ring-text-secondary, #9ca3af);
   font-weight: 500;
 }
 
 .input-field {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
   border-radius: 10px;
   font-size: 1rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .input-field:focus {
-  border-color: #667eea;
+  border-color: var(--ring-accent, #a5b4fc);
   outline: none;
 }
 
@@ -161,17 +165,17 @@
 }
 
 .primary-btn:disabled {
-  background: #ccc;
+  background: rgba(255, 255, 255, 0.15);
   cursor: not-allowed;
 }
 
 .secondary-btn {
-  background: #f5f5f5;
-  color: #666;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-secondary, #9ca3af);
 }
 
 .secondary-btn:hover {
-  background: #eee;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .field-error {
@@ -182,15 +186,15 @@
 
 .fee-hint {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--ring-text-muted, #6b7280);
   margin-top: 6px;
 }
 
 .error-text {
-  color: #e53e3e;
+  color: #f87171;
   font-size: 0.9rem;
   margin-top: 10px;
-  background: #fff5f5;
+  background: rgba(248, 113, 113, 0.12);
   padding: 8px;
   border-radius: 8px;
 }
@@ -198,10 +202,10 @@
 .signed-result {
   margin-top: 20px;
   text-align: left;
-  background: #f8f9fa;
+  background: rgba(0, 0, 0, 0.25);
   padding: 15px;
   border-radius: 10px;
-  border: 1px solid #eee;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
 }
 
 .signed-result h4 {
@@ -212,12 +216,13 @@
 
 .result-area {
   width: 100%;
-  border: 1px solid #ddd;
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
   border-radius: 8px;
   padding: 8px;
   font-family: monospace;
   font-size: 0.8rem;
-  background: white;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--ring-text-secondary, #9ca3af);
   margin-bottom: 10px;
   resize: vertical;
 }

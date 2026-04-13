@@ -9,14 +9,13 @@ import { useI18n } from '../i18n'
 
 interface TokenBalanceProps {
   tokens: DisplayToken[]
-  isLoading: boolean
+  isLoading?: boolean
   supportsTokens: boolean
   onTokenSend?: (token: DisplayToken) => void
 }
 
 const TokenBalance: React.FC<TokenBalanceProps> = ({
   tokens,
-  isLoading,
   supportsTokens,
   onTokenSend,
 }) => {
@@ -83,9 +82,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </div>
         ))
       )}
-      {isLoading && tokens.length > 0 && (
-        <div className="token-loading token-loading-inline">{t('loading')}</div>
-      )}
+
       {supportsTokens && (
         <ImportTokenDialog
           isOpen={showImportDialog}

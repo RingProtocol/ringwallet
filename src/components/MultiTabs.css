@@ -10,7 +10,7 @@
 .tabs-header {
   display: flex;
   flex-shrink: 0;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   gap: 0;
 }
 
@@ -23,7 +23,7 @@
   margin-bottom: -2px;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #999;
+  color: var(--ring-text-muted, #6b7280);
   cursor: pointer;
   transition:
     color 0.2s,
@@ -31,12 +31,12 @@
 }
 
 .tab-btn:hover {
-  color: #555;
+  color: var(--ring-text-secondary, #9ca3af);
 }
 
 .tab-btn.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: var(--ring-accent, #a5b4fc);
+  border-bottom-color: var(--ring-accent, #a5b4fc);
 }
 
 .tabs-content {

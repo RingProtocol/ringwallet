@@ -60,15 +60,16 @@
   justify-content: center;
   border: none;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #667eea;
+  background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.94));
+  color: var(--ring-accent, #a5b4fc);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   -webkit-tap-highlight-color: transparent;
 }
 
 .wallet-main-page__close:active {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
 }

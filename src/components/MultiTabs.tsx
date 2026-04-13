@@ -17,7 +17,6 @@ interface MultiTabsProps {
     decimals?: number
   }) => void
   tokens: DisplayToken[]
-  isLoading: boolean
   supportsTokens: boolean
 }
 
@@ -47,7 +46,6 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
   hideDAppsTab = true,
   onTokenSend,
   tokens,
-  isLoading,
   supportsTokens,
 }) => {
   const visibleTabs = useMemo(
@@ -78,7 +76,6 @@ const MultiTabs: React.FC<MultiTabsProps> = ({
         {activeTab === 'tokens' && (
           <TokenBalance
             tokens={tokens}
-            isLoading={isLoading}
             supportsTokens={supportsTokens}
             onTokenSend={onTokenSend}
           />

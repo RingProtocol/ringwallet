@@ -4,9 +4,23 @@
   box-sizing: border-box;
 }
 
+:root {
+  --ring-bg-page: #0d0f14;
+  --ring-bg-elevated: rgba(28, 30, 38, 0.94);
+  --ring-border: rgba(255, 255, 255, 0.1);
+  --ring-border-strong: rgba(255, 255, 255, 0.14);
+  --ring-text-primary: #f3f4f6;
+  --ring-text-secondary: #9ca3af;
+  --ring-text-muted: #6b7280;
+  --ring-accent: #a5b4fc;
+  --ring-accent-soft: rgba(165, 180, 252, 0.18);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: var(--ring-bg-page);
+  color: var(--ring-text-primary);
   min-height: 100vh;
   display: flex;
   align-items: center;

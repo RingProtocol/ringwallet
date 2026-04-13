@@ -1,6 +1,6 @@
 .menu-trigger {
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.94));
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   border-radius: 50%;
   width: 38px;
   height: 38px;
@@ -10,22 +10,24 @@
   justify-content: center;
   gap: 3px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .menu-trigger:hover {
-  background: #f5f6fa;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .menu-trigger:active {
-  background: #eef0f5;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .menu-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #555;
+  background: var(--ring-text-secondary, #9ca3af);
 }

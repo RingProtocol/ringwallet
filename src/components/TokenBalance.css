@@ -13,24 +13,24 @@
 .token-list-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #666;
+  color: var(--ring-text-secondary, #9ca3af);
 }
 
 .token-import-btn {
   padding: 6px 14px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #667eea;
+  color: var(--ring-accent, #a5b4fc);
   background: transparent;
-  border: 1px solid rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(165, 180, 252, 0.35);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .token-import-btn:hover {
-  background: rgba(102, 126, 234, 0.08);
-  border-color: #667eea;
+  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.12));
+  border-color: var(--ring-accent, #a5b4fc);
 }
 
 .token-row {
@@ -38,7 +38,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid #f2f2f2;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
   transition: background 0.15s;
 }
 
@@ -47,7 +47,7 @@
 }
 
 .token-row:hover {
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .token-row--clickable {
@@ -55,7 +55,7 @@
 }
 
 .token-row--clickable:hover {
-  background: rgba(102, 126, 234, 0.06);
+  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.1));
 }
 
 .token-icon-wrap {
@@ -85,12 +85,12 @@
 .token-symbol {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #1a1a2e;
+  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .token-name {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--ring-text-muted, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -99,7 +99,7 @@
 .token-amount {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--ring-text-primary, #f3f4f6);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -108,7 +108,7 @@
 .token-empty {
   padding: 30px 16px;
   text-align: center;
-  color: #999;
+  color: var(--ring-text-muted, #6b7280);
   font-size: 0.9rem;
 }
 
