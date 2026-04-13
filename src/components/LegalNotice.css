@@ -1,0 +1,17 @@
+.legal-notice {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.legal-notice a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.legal-notice a:hover {
+  text-decoration: underline;
+}

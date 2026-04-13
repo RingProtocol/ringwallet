@@ -158,6 +158,18 @@ const AccountDrawer: React.FC<AccountDrawerProps> = ({ isOpen, onClose }) => {
       label: t('about'),
       action: () => setShowAbout(true),
     },
+    {
+      key: 'terms',
+      icon: '📄',
+      label: t('termsOfService'),
+      action: () => window.open('/terms-of-service', '_blank'),
+    },
+    {
+      key: 'privacy',
+      icon: '🔒',
+      label: t('privacyPolicy'),
+      action: () => window.open('/privacy-policy', '_blank'),
+    },
     { key: 'logout', icon: '↩️', label: t('logout'), action: handleLogout },
   ]
 
