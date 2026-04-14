@@ -253,7 +253,7 @@ function chainIcon(id: string | number): string | undefined {
 // BTC + SOL first, then Ethereum, then popular L2s and L1s.
 export const FEATURED_CHAIN_IDS: (number | string)[] = [
   'bitcoin-mainnet',
-  'dogecoin-mainnet',
+  // 'dogecoin-mainnet',
   'solana-mainnet',
   'tron-mainnet',
   'cosmos-hub',
@@ -279,7 +279,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   196, // X Layer
   999, // Hyperliquid L1
   9745, // Plasma
-  2000, // Dogechain
+  // 2000, // Dogechain
 ]
 
 export const FEATURED_TESTNET_IDS: (number | string)[] = [
@@ -297,6 +297,7 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   568, // Dogechain Testnet
 ]
 
+//chain info
 export const DEFAULT_CHAINS: Chain[] = [
   {
     id: 1,

@@ -6,7 +6,11 @@ import { notifyBalanceChange } from '../services/devices/notificationService'
 import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
 import { balanceAdapterRegistry } from '../features/balance/balanceAdapterRegistry'
 import {
-  fetchAllBalances,
+  DEFAULT_CHAINS,
+  FEATURED_CHAIN_IDS,
+  FEATURED_TESTNET_IDS,
+} from '../config/chains'
+import {
   fetchAccountBalances,
   emptyBalance,
   formatUsdAmount,
@@ -112,23 +116,34 @@ export function useBalanceManager(): BalanceState {
     if (!activeAccount || !activeChain) return
 
     const address = activeAccount.address
+    const featuredIds = new Set<string | number>([
+      ...FEATURED_CHAIN_IDS,
+      ...FEATURED_TESTNET_IDS,
+    ])
+    const portfolioChains = DEFAULT_CHAINS.filter((c) => featuredIds.has(c.id))
 
     const fetchBalances = async () => {
       setIsLoading(true)
       try {
-        const [allBal, portfolio] = await Promise.allSettled([
-          fetchAllBalances(address, activeChain, importedTokens),
-          fetchAccountBalances(address, activeChain),
+        const [allBal] = await Promise.allSettled([
+          fetchAccountBalances(
+            address,
+            portfolioChains,
+            activeChain,
+            importedTokens
+          ),
         ])
 
         if (allBal.status === 'fulfilled') {
           const result = allBal.value
           commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
           setTokens(result.tokens)
+          setTotalAssetUsd(result.totalAssetUsd)
         } else {
           console.error('Failed to fetch token balances:', allBal.reason)
           const zero = emptyBalance(family)
           commitNativeBalance(zero, { recordObserved: false })
+          setTotalAssetUsd(formatUsdAmount('0'))
           setTokens([
             {
               symbol: activeChain.symbol || 'UNKNOWN',
@@ -137,13 +152,6 @@ export function useBalanceManager(): BalanceState {
               isNative: true,
             },
           ])
-        }
-
-        if (portfolio.status === 'fulfilled') {
-          setTotalAssetUsd(portfolio.value)
-        } else {
-          console.error('Failed to fetch portfolio USD:', portfolio.reason)
-          setTotalAssetUsd(formatUsdAmount('0'))
         }
       } finally {
         setIsLoading(false)
