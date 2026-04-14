@@ -79,12 +79,7 @@ const DAppContainer: React.FC<Props> = ({ dapp, onBack }) => {
 
   const content = (
     <div className="dapp-popup">
-      <button
-        type="button"
-        className="dapp-popup__backdrop"
-        onClick={handleClose}
-        aria-label={t('close')}
-      />
+      <div className="dapp-popup__backdrop" aria-hidden="true" />
       <div className="dapp-popup__column">
         <button
           type="button"
