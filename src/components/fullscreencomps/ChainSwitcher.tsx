@@ -274,7 +274,7 @@ const ChainSwitcher: React.FC = () => {
                     data-testid={TESTID.CHAIN_SEARCH_INPUT}
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <button
+                  {/* <button
                     className="add-network-btn"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -283,7 +283,7 @@ const ChainSwitcher: React.FC = () => {
                     }}
                   >
                     +
-                  </button>
+                  </button> */}
                 </div>
               ) : (
                 <div className="search-row">

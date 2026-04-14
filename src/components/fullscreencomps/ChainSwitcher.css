@@ -123,6 +123,13 @@
   border-color: var(--ring-accent, #a5b4fc);
 }
 
+@media (pointer: coarse) {
+  /* iOS Safari auto-zooms focused inputs when font-size < 16px */
+  .chain-search-input {
+    font-size: 16px;
+  }
+}
+
 .add-network-btn {
   width: 28px;
   height: 28px;
