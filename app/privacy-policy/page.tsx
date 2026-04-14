@@ -60,8 +60,15 @@ export default function PrivacyPolicyPage() {
             Ring Labs.
           </li>
           <li>
-            If you sign up for emails, Ring Labs stores your email address for
-            those communications. You can unsubscribe at any time.
+            If you use the optional fiat on-ramp feature (powered by MoonPay),
+            you will be redirected to a third-party service that is governed by
+            its own privacy policy. Ring Labs does not receive or store any
+            personal or payment data you provide to MoonPay.
+          </li>
+          <li>
+            If you contact us via email or other channels, Ring Labs stores that
+            correspondence. We do not require you to provide any personal data
+            to use the Services.
           </li>
           <li>
             Material privacy updates are reflected in an updated privacy policy.
@@ -125,9 +132,22 @@ export default function PrivacyPolicyPage() {
             </strong>{' '}
             The Wallet stores certain preferences and non-sensitive data in your
             browser&rsquo;s localStorage, including: your preferred language,
-            selected chain, COSE-format public key for signature verification,
-            and imported token addresses. This data remains on your device and
-            is not transmitted to Ring Labs servers.
+            selected chain and wallet index, COSE-format public key for
+            signature verification, imported token addresses, a cached DApp
+            directory, and transaction history cache. This data remains on your
+            device and is not transmitted to Ring Labs servers. The Wallet also
+            uses a service worker for offline caching of static application
+            assets.
+          </li>
+          <li>
+            <strong>Transaction history aggregation.</strong> When you view your
+            transaction history in the Wallet, the application may send your
+            publicly-available wallet address to our server-side API, which
+            aggregates data from third-party blockchain data services
+            (including, but not limited to, Etherscan, Blockstream,
+            mempool.space, TronGrid, and Solana RPC endpoints) to display your
+            transaction history. Your wallet address is the only data sent in
+            these requests.
           </li>
           <li>
             <strong>Device and browser information.</strong> We may collect
@@ -202,16 +222,47 @@ export default function PrivacyPolicyPage() {
         <p>We may share or disclose the data we collect:</p>
         <ul className="legal-list">
           <li>
-            <strong>With RPC providers.</strong> When you submit a blockchain
-            transaction or query, your wallet address and transaction data are
-            sent to the RPC node provider that processes the request. This is
-            inherent to how blockchain networks operate. Ring Labs does not
-            control how RPC providers handle this data.
+            <strong>With RPC and blockchain data providers.</strong> When you
+            submit a blockchain transaction or query, your wallet address and
+            transaction data are sent to the RPC node provider that processes
+            the request. The Wallet may use multiple providers depending on the
+            blockchain network, including but not limited to Alchemy, Infura,
+            and various public RPC endpoints. For transaction history, your
+            wallet address is sent to blockchain data services such as
+            Etherscan, Blockstream, mempool.space, TronGrid, and BlockCypher.
+            This is inherent to how blockchain networks and data services
+            operate. Ring Labs does not control how these providers handle your
+            data; please consult their respective privacy policies.
           </li>
           <li>
-            <strong>With service providers.</strong> We may share information
-            with our service providers and vendors to assist us in providing,
-            delivering, and improving the Services.
+            <strong>With fiat on-ramp providers.</strong> If you use the
+            optional fiat on-ramp feature, you will be redirected to MoonPay (or
+            another third-party provider) in a separate browser window. Ring
+            Labs shares only the API key, selected currency codes, and a
+            redirect URL with MoonPay. Any personal data, identity verification,
+            or payment information you provide to MoonPay is governed by{' '}
+            <a
+              href="https://www.moonpay.com/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              MoonPay&rsquo;s Privacy Policy
+            </a>
+            . Ring Labs does not receive or store any personal or payment data
+            you provide to MoonPay.
+          </li>
+          <li>
+            <strong>With feedback and survey platforms.</strong> The Wallet may
+            include embedded feedback forms powered by third-party platforms
+            (such as Tally). Any information you voluntarily submit through such
+            forms is sent directly to the third-party platform and is governed
+            by its own privacy policy. Ring Labs does not control or process
+            this data on its servers.
+          </li>
+          <li>
+            <strong>With other service providers.</strong> We may share
+            information with our service providers and vendors to assist us in
+            providing, delivering, and improving the Services.
           </li>
           <li>
             <strong>To comply with our legal obligations.</strong> We may share
@@ -245,54 +296,134 @@ export default function PrivacyPolicyPage() {
           marketing purposes whatsoever.
         </p>
 
-        <h2>Third-Party Cookies</h2>
+        <h2>Cookies and Tracking Technologies</h2>
         <p>
-          We may use services provided by Google and other third parties that
-          use tracking technology such as cookies, deviceID, and localStorage,
-          to collect information about your use of the Services and our
-          interactions with you. You can opt out of having your online activity
-          and device data collected through these third-party services,
-          including by:
+          Ring Wallet does not currently use cookies, analytics SDKs,
+          advertising pixels, or third-party tracking technologies. The Wallet
+          uses browser localStorage to store application preferences and cached
+          data locally on your device as described in the &ldquo;What We May
+          Collect&rdquo; section above. This data is not transmitted to Ring
+          Labs or any third-party analytics provider.
         </p>
-        <ul className="legal-list">
-          <li>
-            Blocking cookies in your browser by following the instructions in
-            your browser settings. For more information about cookies, including
-            how to see the cookies on your device, manage them, and delete them,
-            visit www.allaboutcookies.org.
-          </li>
-          <li>
-            Blocking or limiting the use of your advertising ID on your mobile
-            device through the device settings.
-          </li>
-          <li>
-            Using privacy plug-ins or browsers. Certain browsers and browser
-            extensions can be configured to block third-party cookies and
-            trackers.
-          </li>
-          <li>
-            Using the platform opt-out provided by Google at
-            https://adssettings.google.com. You can learn more about how Google
-            uses your information by reviewing Google&rsquo;s privacy policy at
-            https://policies.google.com/privacy.
-          </li>
-          <li>
-            Using advertising industry opt-out tools on each device or browser
-            where you use the Services, available at http://optout.aboutads.info
-            and http://optout.networkadvertising.org.
-          </li>
-        </ul>
+        <p>
+          If we introduce cookies or third-party tracking technologies in the
+          future, we will update this Policy to describe the specific
+          technologies used, their purposes, and your opt-out options.
+          Third-party DApps accessed through the Wallet&rsquo;s built-in DApp
+          browser may independently set cookies or use tracking technologies;
+          such usage is governed by those DApps&rsquo; own privacy policies.
+        </p>
 
         <h2>Third-Party Links and Sites</h2>
         <p>
           We may integrate technologies operated or controlled by other parties
           into parts of the Services. The Wallet&rsquo;s DApp browser allows you
-          to access third-party decentralized applications. Please note that
-          when you interact with these other parties, including when you access
-          DApps through the built-in browser, those parties may independently
-          collect information about you and solicit information from you. You
-          can learn more about how those parties collect and use your data by
-          consulting their privacy policies and other terms.
+          to access third-party decentralized applications, and the Wallet may
+          include embedded third-party content such as feedback forms (powered
+          by Tally or similar platforms) and fiat on-ramp services (such as
+          MoonPay). Please note that when you interact with these other parties,
+          including when you access DApps through the built-in browser, those
+          parties may independently collect information about you and solicit
+          information from you. You can learn more about how those parties
+          collect and use your data by consulting their privacy policies and
+          other terms.
+        </p>
+
+        <h2>Data Retention</h2>
+        <p>
+          Because Ring Wallet is a self-custody application that does not
+          maintain user accounts on its servers, data retention operates
+          differently from traditional web services:
+        </p>
+        <ul className="legal-list">
+          <li>
+            <strong>On-device data (localStorage).</strong> Application
+            preferences, cached transaction history, imported token lists, and
+            other locally-stored data persist on your device until you clear
+            your browser data, uninstall the application, or manually remove the
+            data. Ring Labs does not control or have access to this data.
+          </li>
+          <li>
+            <strong>Blockchain data.</strong> Transaction data recorded on
+            public blockchains is permanent and immutable. Neither Ring Labs nor
+            any other party can modify or delete on-chain data.
+          </li>
+          <li>
+            <strong>Correspondence.</strong> If you contact us via email or
+            other channels, we retain your correspondence for as long as
+            necessary to address your inquiry and for our legitimate business
+            purposes, such as legal compliance and dispute resolution.
+          </li>
+          <li>
+            <strong>Aggregated data.</strong> Aggregated, de-identified data
+            that cannot be used to identify any individual may be retained
+            indefinitely for product improvement and analytical purposes.
+          </li>
+          <li>
+            <strong>Server-side caches.</strong> Transaction history data
+            retrieved from third-party providers is temporarily cached on our
+            servers for performance purposes and is automatically purged on a
+            short time-to-live basis (typically minutes).
+          </li>
+        </ul>
+
+        <h2>Do Not Track</h2>
+        <p>
+          Some web browsers transmit &ldquo;Do Not Track&rdquo; (DNT) signals to
+          the websites and other online services with which the browser
+          communicates. There is currently no universally accepted standard for
+          how to interpret and respond to DNT signals. Because Ring Wallet does
+          not currently use cookies or third-party tracking technologies, the
+          Wallet&rsquo;s behavior does not change in response to DNT signals. If
+          we adopt tracking technologies in the future, we will update this
+          section to describe our response to DNT signals.
+        </p>
+
+        <h2>International Data Transfers</h2>
+        <p>
+          Ring Labs is based in the United States. When you use the Services,
+          certain data may be processed in the United States or other
+          jurisdictions where our service providers operate. Specifically:
+        </p>
+        <ul className="legal-list">
+          <li>
+            Your publicly-available wallet address may be sent to RPC providers
+            and blockchain data services located in various jurisdictions
+            globally.
+          </li>
+          <li>
+            If you use the optional fiat on-ramp (MoonPay), any data you provide
+            to MoonPay may be processed in accordance with MoonPay&rsquo;s data
+            transfer practices.
+          </li>
+          <li>
+            Server-side APIs may temporarily process your wallet address in the
+            jurisdiction where our hosting infrastructure is located.
+          </li>
+        </ul>
+        <p>
+          For users in the European Economic Area (EEA), United Kingdom, or
+          Switzerland, where data is transferred to a country outside the EEA
+          that has not received an adequacy decision from the European
+          Commission, we rely on appropriate safeguards such as Standard
+          Contractual Clauses (SCCs) approved by the European Commission, or we
+          ensure that the transfer is otherwise lawful under applicable data
+          protection laws.
+        </p>
+
+        <h2>Data Breach Notification</h2>
+        <p>
+          In the event of a data breach that affects your personal data, we will
+          notify you as required by applicable law. For users in the European
+          Economic Area, we will notify the relevant supervisory authority
+          within 72 hours of becoming aware of a breach, where feasible, and
+          will notify affected individuals without undue delay where the breach
+          is likely to result in a high risk to their rights and freedoms. Our
+          notification shall not be construed as an admission of fault or
+          liability. Because Ring Wallet is a self-custody application and we do
+          not store private keys, master seeds, or Passkey credentials on our
+          servers, a breach of Ring Labs&rsquo; infrastructure would not
+          compromise the cryptographic security of your wallet.
         </p>
 
         <h2>Security</h2>
@@ -374,27 +505,66 @@ export default function PrivacyPolicyPage() {
         <h2>Disclosures for European Union Data Subjects</h2>
         <p>
           We process personal data for the purposes described in the section
-          titled &ldquo;How We Use Data&rdquo; above. Our bases for processing
-          your data include: (i) you have given consent to the process to us or
-          our service providers for one or more specific purposes; (ii)
-          processing is necessary for the performance of a contract with you;
-          (iii) processing is necessary for compliance with a legal obligation;
-          and/or (iv) processing is necessary for the purposes of the legitimate
-          interests pursued by us or a third party, and your interests and
-          fundamental rights and freedoms do not override those interests.
+          titled &ldquo;How We Use Data&rdquo; above. Our legal bases for
+          processing your data under the General Data Protection Regulation
+          (&ldquo;GDPR&rdquo;) include: (i) you have given consent for one or
+          more specific purposes; (ii) processing is necessary for the
+          performance of a contract with you; (iii) processing is necessary for
+          compliance with a legal obligation; and/or (iv) processing is
+          necessary for the purposes of the legitimate interests pursued by us
+          or a third party, and your interests and fundamental rights and
+          freedoms do not override those interests.
         </p>
+        <p>Your rights under the GDPR include the right to:</p>
+        <ul className="legal-list">
+          <li>
+            <strong>Access</strong> (Art. 15) &mdash; request access to and
+            obtain a copy of your personal data;
+          </li>
+          <li>
+            <strong>Rectification</strong> (Art. 16) &mdash; request correction
+            of inaccurate or incomplete personal data;
+          </li>
+          <li>
+            <strong>Erasure</strong> (Art. 17) &mdash; request deletion of your
+            personal data (&ldquo;right to be forgotten&rdquo;);
+          </li>
+          <li>
+            <strong>Restriction of processing</strong> (Art. 18) &mdash; request
+            that we limit the processing of your personal data;
+          </li>
+          <li>
+            <strong>Data portability</strong> (Art. 20) &mdash; request your
+            personal data in a structured, commonly used, and machine-readable
+            format;
+          </li>
+          <li>
+            <strong>Object to processing</strong> (Art. 21) &mdash; object to
+            processing based on legitimate interests or for direct marketing;
+          </li>
+          <li>
+            <strong>Automated decision-making</strong> (Art. 22) &mdash; not be
+            subject to a decision based solely on automated processing that
+            produces legal effects or similarly significantly affects you (Ring
+            Wallet does not currently engage in automated decision-making);
+          </li>
+          <li>
+            <strong>Withdraw consent</strong> &mdash; where processing is based
+            on your consent, you may withdraw it at any time without affecting
+            the lawfulness of processing carried out before withdrawal;
+          </li>
+          <li>
+            <strong>Lodge a complaint</strong> (Art. 77) &mdash; lodge a
+            complaint with a supervisory authority in the EU Member State of
+            your habitual residence, place of work, or place of the alleged
+            infringement.
+          </li>
+        </ul>
         <p>
-          Your rights under the General Data Protection Regulation
-          (&ldquo;GDPR&rdquo;) include the right to (i) request access and
-          obtain a copy of your personal data, (ii) request rectification or
-          erasure of your personal data, (iii) object to or restrict the
-          processing of your personal data; and (iv) request portability of your
-          personal data. Additionally, you may withdraw your consent to our
-          collection at any time. Nevertheless, we cannot edit or delete
-          information that is stored on a particular blockchain. Information
-          such as your transaction data, blockchain wallet address, and assets
-          held by your address that may be related to the data we collect is
-          beyond our control.
+          Nevertheless, we cannot edit or delete information that is stored on a
+          particular blockchain. Information such as your transaction data,
+          blockchain wallet address, and assets held by your address that may be
+          related to the data we collect is beyond our control.
         </p>
         <p>
           To exercise any of your rights under the GDPR, please contact us at{' '}

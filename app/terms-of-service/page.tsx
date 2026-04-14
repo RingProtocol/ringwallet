@@ -57,11 +57,11 @@ export default function TermsOfServicePage() {
         <p>
           These Terms of Service (the &ldquo;Agreement&rdquo;) explain the terms
           and conditions by which you may access and use the Products provided
-          by Ring Labs (referred to herein as &ldquo;Ring Labs&rdquo;,
-          &ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;). The
-          Products shall include, but shall not necessarily be limited to, Ring
-          Wallet, a self-custody cryptocurrency wallet available as a
-          progressive web application at{' '}
+          by BOTBOT LTD., doing business as Ring Labs (referred to herein as
+          &ldquo;Ring Labs&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, or
+          &ldquo;us&rdquo;). The Products shall include, but shall not
+          necessarily be limited to, Ring Wallet, a self-custody cryptocurrency
+          wallet available as a progressive web application at{' '}
           <a href="https://wallet.ring.exchange">
             https://wallet.ring.exchange
           </a>{' '}
@@ -166,6 +166,15 @@ export default function TermsOfServicePage() {
           Agreement.
         </p>
 
+        <h3>1.5 Privacy Policy</h3>
+        <p>
+          Your use of the Products is also governed by our{' '}
+          <a href="/privacy-policy">Privacy Policy</a>, which is incorporated
+          into this Agreement by reference. Please review the Privacy Policy to
+          understand how we collect, use, and share data in connection with the
+          Products.
+        </p>
+
         {/* Section 2 */}
         <h2>2. Modifications of this Agreement or our Products</h2>
 
@@ -178,11 +187,16 @@ export default function TermsOfServicePage() {
           <a href="https://wallet.ring.exchange/terms-of-service">
             https://wallet.ring.exchange/terms-of-service
           </a>
-          . All modifications will be effective when they are posted, and your
-          continued accessing or use of any of the Products will serve as
-          confirmation of your acceptance of those modifications. If you do not
-          agree with any modifications to this Agreement, you must immediately
-          stop accessing and using all of our Products.
+          . For material modifications, we will use commercially reasonable
+          efforts to provide at least thirty (30) days&rsquo; advance notice
+          before the changes take effect, through the Products or by other
+          reasonable means. All modifications will be effective when they are
+          posted (or, for material modifications, at the end of the applicable
+          notice period), and your continued accessing or use of any of the
+          Products after the effective date will serve as confirmation of your
+          acceptance of those modifications. If you do not agree with any
+          modifications to this Agreement, you must immediately stop accessing
+          and using all of our Products.
         </p>
 
         <h3>2.2 Modifications of our Products</h3>
@@ -689,6 +703,59 @@ export default function TermsOfServicePage() {
           greatest extent possible under any applicable law and the validity or
           enforceability of any other provision of this Agreement shall not be
           affected.
+        </p>
+
+        <h3>9.6 Term and Termination</h3>
+        <p>
+          This Agreement is effective until terminated. We may terminate or
+          suspend your access to any of our Products immediately, without prior
+          notice or liability, for any reason whatsoever, including without
+          limitation if you breach any term of this Agreement. Upon termination:
+          (a) all rights and licenses granted to you under this Agreement will
+          immediately terminate; and (b) you must cease all use of the Products.
+          Because the Wallet is a self-custody application, termination of your
+          access to our Products does not affect your ability to manage your
+          digital assets independently using your private keys. Sections 3
+          (Intellectual Property), 4.3 (Self-Custody and No Fiduciary Duties),
+          4.7 (Release of Claims), 5 (Disclaimers), 6 (Indemnification), 7
+          (Limitation of Liability), 8 (Governing Law, Dispute Resolution and
+          Class Action Waivers), and 9 (Miscellaneous) shall survive any
+          termination of this Agreement.
+        </p>
+
+        <h3>9.7 Force Majeure</h3>
+        <p>
+          We shall not be liable for any failure or delay in performing our
+          obligations under this Agreement where such failure or delay results
+          from circumstances beyond our reasonable control, including but not
+          limited to: (a) acts of God, natural disasters, epidemics, or
+          pandemics; (b) war, terrorism, riots, or civil unrest; (c) government
+          actions, laws, regulations, embargoes, or sanctions; (d) power
+          outages, telecommunications failures, or internet service disruptions;
+          (e) blockchain network congestion, forks, or protocol-level failures;
+          (f) third-party RPC provider, indexer, or infrastructure outages; (g)
+          cyberattacks, including denial-of-service attacks, hacking, or
+          malware; or (h) any other event beyond our reasonable control. Our
+          obligations shall be suspended for the duration of such circumstances.
+        </p>
+
+        <h3>9.8 Time Limitation on Claims</h3>
+        <p>
+          You agree that any claim you may have arising out of or related to
+          your relationship with us or this Agreement must be filed within one
+          (1) year after such claim arose; otherwise, your claim is permanently
+          barred. This limitation applies regardless of the form of action,
+          whether in contract, tort, strict liability, or otherwise.
+        </p>
+
+        <h3>9.9 Consumer Rights Preservation</h3>
+        <p>
+          Nothing in this Agreement shall limit or exclude any rights you may
+          have under applicable consumer protection laws that cannot be lawfully
+          limited or excluded. Some jurisdictions do not allow the exclusion of
+          certain warranties or the limitation of certain liabilities. If these
+          laws apply to you, some or all of the above exclusions or limitations
+          may not apply, and you may have additional rights.
         </p>
       </div>
     </div>
