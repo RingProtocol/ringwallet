@@ -1,0 +1,334 @@
+.token-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  background: var(--ring-bg-page, #0d0f14);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
+}
+
+/*
+ * App.css gives .card:not(.card--guest) min-height: 100% / 100dvh on small screens.
+ * Inside this overlay that stretches the details/activity panels and hides Activity
+ * below a fake “full card” height — scope the same fix as WalletMainPage__card.
+ */
+.token-detail .card:not(.card--guest) {
+  min-height: 0;
+  max-height: none;
+  align-self: stretch;
+  width: 100%;
+  margin-inline: 0;
+  text-align: start;
+}
+
+.token-detail__nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.token-detail__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.token-detail__back:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.token-detail__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.token-detail__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+  line-height: 1.2;
+}
+
+.token-detail__hero-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.token-detail__price-block {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.token-detail__price-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+}
+
+.token-detail__unit-price {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ring-text-secondary, #e5e7eb);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-detail__change {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ring-accent, #a5b4fc);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-detail__position {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-detail__position-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ring-text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.token-detail__position-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-detail__actions--circle-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(2px, 1vw, 10px);
+  width: 100%;
+  max-width: 100%;
+  padding: 0 clamp(0px, 1vw, 4px);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .token-detail__actions--circle-row {
+    justify-content: center;
+    gap: 20px;
+    padding: 0 8px;
+  }
+}
+
+.token-detail__balance-card {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+@media (max-width: 360px) {
+  .token-detail__hero-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.token-detail__balance-icon {
+  flex-shrink: 0;
+}
+
+.token-detail__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.token-detail__logo-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.token-detail__balance-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.token-detail__balance-symbol {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-detail__balance-qty {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ring-text-secondary, #d1d5db);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-detail__section-title {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ring-text-secondary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.token-detail__details.card {
+  padding: 8px 12px 10px;
+  margin: 0;
+}
+
+.token-detail__dl {
+  margin: 0;
+}
+
+.token-detail__dl-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.06));
+  font-size: 0.8rem;
+  min-width: 0;
+}
+
+.token-detail__dl-row:last-child {
+  border-bottom: none;
+}
+
+.token-detail__dl-row--contract {
+  align-items: start;
+}
+
+.token-detail__dl dt {
+  margin: 0;
+  justify-self: start;
+  color: var(--ring-text-muted, #6b7280);
+  font-weight: 500;
+  text-align: left;
+}
+
+.token-detail__dl dd {
+  margin: 0;
+  justify-self: end;
+  min-width: 0;
+  width: 100%;
+  color: var(--ring-text-primary, #f3f4f6);
+  word-break: break-word;
+  text-align: right;
+}
+
+.token-detail__muted {
+  color: var(--ring-text-muted, #6b7280);
+}
+
+.token-detail__contract {
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+}
+
+.token-detail__contract-dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.token-detail__copy {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.15));
+  background: transparent;
+  color: var(--ring-accent, #a5b4fc);
+  cursor: pointer;
+}
+
+.token-detail__allowance-dd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.token-detail__edit {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  border-radius: 6px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.15));
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ring-text-secondary, #d1d5db);
+  cursor: pointer;
+}
+
+.token-detail__edit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.token-detail__activity-inner.card {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.token-detail__activity-inner .tx-history {
+  max-height: 320px;
+  overflow: auto;
+}

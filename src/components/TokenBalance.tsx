@@ -23,13 +23,14 @@ interface TokenBalanceProps {
   tokens: ChainToken[]
   isLoading?: boolean
   supportsTokens: boolean
-  onTokenSend?: (token: ChainToken) => void
+  /** When set, tapping a row opens token detail (fullscreen). */
+  onTokenSelect?: (token: ChainToken) => void
 }
 
 const TokenBalance: React.FC<TokenBalanceProps> = ({
   tokens,
   supportsTokens,
-  onTokenSend,
+  onTokenSelect,
 }) => {
   const { activeChain, activeAccount } = useAuth()
   const { t } = useI18n()
@@ -92,8 +93,8 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           return (
             <div
               key={`${token.network}-${token.tokenAddress ?? 'native'}`}
-              className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
-              onClick={onTokenSend ? () => onTokenSend(token) : undefined}
+              className={`token-row${onTokenSelect ? ' token-row--clickable' : ''}`}
+              onClick={onTokenSelect ? () => onTokenSelect(token) : undefined}
             >
               <div className="token-row__brand">
                 <div className="token-icon-wrap">

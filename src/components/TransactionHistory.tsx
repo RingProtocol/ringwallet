@@ -22,6 +22,10 @@ import { resolveClientApiUrl } from '../utils/apiUrl'
 import { addToken, getTokenList } from '../utils/tokenStorage'
 import { resolveTokenMetadata } from '../services/rpc/tokenMetadataResolver'
 
+export type TransactionHistoryAssetFilter =
+  | { kind: 'native' }
+  | { kind: 'erc20'; address: string }
+
 const PENDING_POLL_INTERVAL_MS = 8 * 1000
 const HISTORY_POLL_INTERVAL_MS = 15 * 1000
 
@@ -90,7 +94,25 @@ async function discoverTokensFromHistory(
   }
 }
 
-const TransactionHistory: React.FC = () => {
+function transactionMatchesAssetFilter(
+  tx: TxRecord,
+  filter: TransactionHistoryAssetFilter
+): boolean {
+  if (filter.kind === 'native') {
+    return tx.assetType !== 'token'
+  }
+  const want = filter.address.toLowerCase()
+  return tx.assetType === 'token' && tx.assetAddress?.toLowerCase() === want
+}
+
+interface TransactionHistoryProps {
+  /** When set, only rows for this asset (e.g. token detail activity). */
+  assetFilter?: TransactionHistoryAssetFilter
+}
+
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({
+  assetFilter,
+}) => {
   const { activeAccount, activeChain } = useAuth()
   const { lang, t } = useI18n()
   const [transactions, setTransactions] = useState<TxRecord[]>([])
@@ -310,19 +332,25 @@ const TransactionHistory: React.FC = () => {
 
   if (!activeAccount) return null
 
+  const visibleTransactions = assetFilter
+    ? transactions.filter((tx) =>
+        transactionMatchesAssetFilter(tx, assetFilter)
+      )
+    : transactions
+
   return (
     <div className="tx-history" data-testid={TESTID.TX_HISTORY}>
       {isLoading ? (
         <div className="tx-loading" data-testid={TESTID.TX_LOADING}>
           {t('loading')}
         </div>
-      ) : transactions.length === 0 ? (
+      ) : visibleTransactions.length === 0 ? (
         <div className="tx-empty" data-testid={TESTID.TX_EMPTY}>
           <span className="tx-empty-icon">📭</span>
           <span>{t('noTransactions')}</span>
         </div>
       ) : (
-        transactions.map((tx) => (
+        visibleTransactions.map((tx) => (
           <a
             key={getTxRecordKey(tx)}
             href={explorerUrl(tx.hash)}

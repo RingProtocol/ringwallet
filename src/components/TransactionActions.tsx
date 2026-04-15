@@ -14,11 +14,12 @@ import {
   ReceiveDialog,
 } from './transaction'
 import { useI18n } from '../i18n'
+import { ActionCircleEntry } from './ActionCircleEntry'
 import './TransactionActions.css'
 import { TESTID } from './testids'
 
 /** Built-in Ring Exchange swap UI (in-app via DAppContainer + WalletBridge). */
-const RING_SWAP_DAPP: DAppInfo = {
+export const RING_SWAP_DAPP: DAppInfo = {
   id: 900_001,
   name: 'Ring',
   description: 'Ring Exchange',
@@ -56,40 +57,6 @@ interface TransactionActionsProps {
   initialToken?: SendTokenOption
   onSendFormClosed?: () => void
 }
-
-interface ActionCircleEntryProps {
-  icon: React.ReactNode
-  label: string
-  variantClass: string
-  onClick: () => void
-  disabled?: boolean
-  title?: string
-  testId?: string
-}
-
-const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
-  icon,
-  label,
-  variantClass,
-  onClick,
-  disabled,
-  title,
-  testId,
-}) => (
-  <button
-    type="button"
-    className={`action-circle-entry ${variantClass}`}
-    onClick={onClick}
-    disabled={disabled}
-    title={title}
-    data-testid={testId}
-  >
-    <span className="action-circle-entry__disc" aria-hidden>
-      {icon}
-    </span>
-    <span className="action-circle-entry__label">{label}</span>
-  </button>
-)
 
 const TransactionActions: React.FC<TransactionActionsProps> = ({
   initialToken,
@@ -242,4 +209,6 @@ const TransactionActions: React.FC<TransactionActionsProps> = ({
   )
 }
 
+export { ActionCircleEntry } from './ActionCircleEntry'
+export type { ActionCircleEntryProps } from './ActionCircleEntry'
 export default TransactionActions

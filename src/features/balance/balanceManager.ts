@@ -132,6 +132,15 @@ export function chainTokenChangePercentLabel(token: ChainToken): string | null {
   return String(raw)
 }
 
+/** Formatted USD unit price from `tokenPrices`, or em dash when missing. */
+export function formatUsdUnitPrice(token: ChainToken): string {
+  const p = token.tokenPrices?.find((x) => x.currency?.toLowerCase() === 'usd')
+  if (!p) return '—'
+  const n = Number(p.value)
+  if (!Number.isFinite(n)) return '—'
+  return formatUsdAmount(n)
+}
+
 function nativeBalanceFromTokens(
   sortedTokens: ChainToken[],
   chain: Chain,

@@ -41,6 +41,10 @@ export const TESTID = {
   TAB_ASSETS: 'tab-assets',
   TAB_DAPPS: 'tab-dapps',
 
+  // Token detail (fullscreen)
+  TOKEN_DETAIL_BACK: 'token-detail-back',
+  TOKEN_DETAIL_SEND: 'token-detail-send',
+
   // Activity / TransactionHistory
   TX_ROW: 'tx-row',
   TX_HISTORY: 'tx-history',

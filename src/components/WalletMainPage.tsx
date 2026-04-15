@@ -4,11 +4,8 @@ import NativeBalance from './NativeBalance'
 import TransactionActions from './TransactionActions'
 import AccountDrawerPanel from './AccountDrawerPanel'
 import TokenBalance from './TokenBalance'
+import TokenDetailPage from './TokenDetailPage'
 import TransactionHistory from './TransactionHistory'
-import {
-  chainTokenDisplayName,
-  chainTokenDisplaySymbol,
-} from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
 import { useAuth } from '../contexts/AuthContext'
 import { useBalanceManager } from '../hooks/useBalanceManager'
@@ -56,6 +53,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   const [pendingSendToken, setPendingSendToken] = useState<
     SendTokenOption | undefined
   >(undefined)
+  const [tokenDetail, setTokenDetail] = useState<ChainToken | null>(null)
 
   const { totalAssetUsd, currentChainUsd, tokens, supportsTokens } =
     useBalanceManager()
@@ -85,28 +83,13 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
     window.history.replaceState(null, '', url.toString())
   }, [])
 
-  const handleTokenSend = useCallback(
-    (token: ChainToken) => {
-      if (!activeChain) return
-      if (token.tokenAddress) {
-        setPendingSendToken({
-          type: 'erc20',
-          token: {
-            address: token.tokenAddress,
-            symbol: chainTokenDisplaySymbol(token, activeChain),
-            name: chainTokenDisplayName(token, activeChain),
-            decimals: token.tokenMetadata.decimals ?? 18,
-          },
-        })
-      } else {
-        setPendingSendToken({
-          type: 'native',
-          symbol: chainTokenDisplaySymbol(token, activeChain),
-        })
-      }
-    },
-    [activeChain]
-  )
+  const openTokenDetail = useCallback((token: ChainToken) => {
+    setTokenDetail(token)
+  }, [])
+
+  const closeTokenDetail = useCallback(() => {
+    setTokenDetail(null)
+  }, [])
 
   return (
     <div
@@ -159,7 +142,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
               <TokenBalance
                 tokens={tokens}
                 supportsTokens={supportsTokens}
-                onTokenSend={handleTokenSend}
+                onTokenSelect={openTokenDetail}
               />
             </div>
           </div>
@@ -232,6 +215,14 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           </nav>
         </div>
       </div>
+
+      {tokenDetail && activeChain && (
+        <TokenDetailPage
+          token={tokenDetail}
+          chain={activeChain}
+          onBack={closeTokenDetail}
+        />
+      )}
     </div>
   )
 }
