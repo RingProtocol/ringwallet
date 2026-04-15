@@ -1,2 +1,5 @@
-/** Wallet home balance/assets polling — conservative to avoid public RPC 429s. */
-export const BALANCE_POLL_INTERVAL_MS = 10_000
+export {
+  ACCOUNT_BALANCE_POLL_INTERVAL_MS as BALANCE_POLL_INTERVAL_MS,
+  getAccountBalancePollIntervalMs,
+  setAccountBalancePollIntervalMs,
+} from '../features/balance/balanceManager'

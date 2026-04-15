@@ -1,14 +1,28 @@
 import { formatUnits } from 'ethers'
+import { chainToAccountAssetsNetwork } from '../../config/chains'
 import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   cacheTokensForNetwork,
   type ChainToken,
   getTokensForNetwork,
+  notifyTokenCacheUpdated,
+  setCachedUsdTotals,
 } from '../../models/ChainTokens'
-import type { TokenInfo } from '../../utils/tokenStorage'
+// import type { TokenInfo } from '../../utils/tokenStorage'
 import type { DisplayToken } from './balanceTypes'
-import { balanceAdapterRegistry } from './balanceAdapterRegistry'
-import './adapters'
+
+/** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
+export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
+
+let accountBalancePollIntervalMs = ACCOUNT_BALANCE_POLL_INTERVAL_MS
+
+export function getAccountBalancePollIntervalMs(): number {
+  return accountBalancePollIntervalMs
+}
+
+export function setAccountBalancePollIntervalMs(ms: number): void {
+  accountBalancePollIntervalMs = Math.max(5_000, ms)
+}
 
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
@@ -23,24 +37,6 @@ type AccountAssetsResponse = {
   data: {
     tokens: ChainToken[]
     pageKey?: string
-  }
-}
-
-function chainToAccountAssetsNetwork(chain: Chain): string | undefined {
-  // Derived from `api2.md` examples.
-  if (chain.family !== ChainFamily.EVM) return undefined
-  const id = typeof chain.id === 'string' ? chain.id : String(chain.id)
-  switch (id) {
-    case '1':
-      return 'eth-mainnet'
-    case '11155111':
-      return 'eth-sepolia'
-    case '8453':
-      return 'base-mainnet'
-    case '56':
-      return 'bnb-mainnet'
-    default:
-      return undefined
   }
 }
 
@@ -168,8 +164,19 @@ function toDisplayTokensForNetwork(
 
 export type AccountBalancesResult = {
   nativeBalance: string
+  /** Sum of USD value across all requested networks (formatted). */
   totalAssetUsd: string
+  /** USD value on the active chain’s `account_assets` network only (formatted). */
+  currentChainUsd: string
   tokens: DisplayToken[]
+}
+
+export function displayTokensFromChainTokens(
+  tokens: ChainToken[],
+  chain: Chain,
+  displayDecimals = 4
+): DisplayToken[] {
+  return toDisplayTokensForNetwork(tokens, chain, displayDecimals).displayTokens
 }
 
 function sumUsdAcrossTokens(
@@ -203,13 +210,13 @@ function sumUsdAcrossTokens(
 export async function fetchAccountBalances(
   address: string,
   chains: Chain[],
-  activeChain: Chain,
-  importedTokens: TokenInfo[] = []
+  activeChain: Chain
+  // importedTokens: TokenInfo[] = []
 ): Promise<AccountBalancesResult> {
   const family = activeChain.family ?? ChainFamily.EVM
+  const activeNetwork = chainToAccountAssetsNetwork(activeChain)
 
-  // EVM: use `api2.md` account_assets and compute total USD across all chains.
-  // Non-EVM chains are ignored by this endpoint (for now).
+  // Chains with a mapped `account_assets` network (EVM chainId or Alchemy slug id).
   const networks = Array.from(
     new Set(
       chains
@@ -218,118 +225,166 @@ export async function fetchAccountBalances(
     )
   )
 
-  const activeNetwork = chainToAccountAssetsNetwork(activeChain)
-
-  if (family === ChainFamily.EVM && activeNetwork && networks.length > 0) {
-    // If we have cached tokens for *all* networks, we can compute total without refetch.
-    const cachedByNetwork: ChainToken[] = []
-    let hasAll = true
-    for (const n of networks) {
-      const cached = getTokensForNetwork(n)
-      if (!cached) {
-        hasAll = false
-        break
-      }
-      cachedByNetwork.push(...cached)
-    }
-
-    if (hasAll) {
-      const activeCached = getTokensForNetwork(activeNetwork) ?? []
-      const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
-        activeCached,
-        activeChain,
-        4
-      )
-      const totalUsd = sumUsdAcrossTokens(cachedByNetwork, 18)
-      return {
-        nativeBalance,
-        totalAssetUsd: formatUsdAmount(totalUsd),
-        tokens: displayTokens,
-      }
-    }
-
-    try {
-      const fetched = await fetchAccountAssets(address, networks)
-
-      // Separate tokens by network and cache into ChainTokens model.
-      const byNetwork = new Map<string, ChainToken[]>()
-      for (const t of fetched) {
-        const list = byNetwork.get(t.network) ?? []
-        list.push(t)
-        byNetwork.set(t.network, list)
-      }
-      for (const [n, list] of byNetwork) {
-        cacheTokensForNetwork(n, list)
-      }
-
-      const activeTokens = byNetwork.get(activeNetwork) ?? []
-      const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
-        activeTokens,
-        activeChain,
-        4
-      )
-      const totalUsd = sumUsdAcrossTokens(fetched, 18)
-
-      return {
-        nativeBalance,
-        totalAssetUsd: formatUsdAmount(totalUsd),
-        tokens: displayTokens,
-      }
-    } catch (error) {
-      console.error('Failed to fetch account assets:', error)
-      // fall through to adapter-based fallback below
-    }
+  if (networks.length == 0) {
+    return emptyAccountBalancesResult(activeChain, family)
   }
 
-  // Fallback: existing per-chain adapters (native + imported tokens only; no USD pricing).
-  const adapter = balanceAdapterRegistry.get(family)
-  if (!adapter) {
-    const zero = emptyBalance(family)
-    return {
-      nativeBalance: zero,
-      totalAssetUsd: formatUsdAmount(0),
-      tokens: [
-        {
-          symbol: activeChain.symbol || 'UNKNOWN',
-          name: activeChain.name,
-          balance: zero,
-          isNative: true,
-        },
-      ],
+  // If we have cached tokens for *all* networks, we can compute total without refetch.
+  const cachedByNetwork: ChainToken[] = []
+  let hasAll = true
+  for (const n of networks) {
+    const cached = getTokensForNetwork(n)
+    if (!cached) {
+      hasAll = false
+      break
     }
+    cachedByNetwork.push(...cached)
   }
 
-  const native = await adapter.fetchNativeBalance(address, activeChain)
-  const displayTokens: DisplayToken[] = [
-    {
-      symbol: activeChain.symbol || 'UNKNOWN',
-      name: activeChain.name,
-      balance: native,
-      isNative: true,
-    },
-  ]
-
-  if (adapter.supportsTokens && importedTokens.length > 0) {
-    const tokenBalances = await adapter.fetchTokenBalances(
-      address,
+  if (hasAll) {
+    const activeCached = activeNetwork
+      ? (getTokensForNetwork(activeNetwork) ?? [])
+      : []
+    const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
+      activeCached,
       activeChain,
-      importedTokens
+      4
     )
-    displayTokens.push(
-      ...tokenBalances.map((t) => ({
-        symbol: t.symbol,
-        name: t.name,
-        balance: t.balance,
-        isNative: false,
-        address: t.address,
-        decimals: t.decimals,
-      }))
-    )
+    const totalUsd = sumUsdAcrossTokens(cachedByNetwork, 18)
+    const currentUsd = sumUsdAcrossTokens(activeCached, 18)
+    const totalAssetUsd = formatUsdAmount(totalUsd)
+    const currentChainUsd = formatUsdAmount(currentUsd)
+    setCachedUsdTotals(totalAssetUsd, currentChainUsd)
+    notifyTokenCacheUpdated()
+    return {
+      nativeBalance,
+      totalAssetUsd,
+      currentChainUsd,
+      tokens: displayTokens,
+    }
   }
 
-  return {
-    nativeBalance: native,
-    totalAssetUsd: formatUsdAmount(0),
-    tokens: displayTokens,
+  try {
+    const fetched = await fetchAccountAssets(address, networks)
+
+    // Separate tokens by network and cache into ChainTokens model.
+    const byNetwork = new Map<string, ChainToken[]>()
+    for (const t of fetched) {
+      const list = byNetwork.get(t.network) ?? []
+      list.push(t)
+      byNetwork.set(t.network, list)
+    }
+    for (const [n, list] of byNetwork) {
+      const networkUsd = sumUsdAcrossTokens(list, 18)
+      cacheTokensForNetwork(n, list, formatUsdAmount(networkUsd))
+    }
+
+    const activeTokens = activeNetwork
+      ? (byNetwork.get(activeNetwork) ?? [])
+      : []
+    const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
+      activeTokens,
+      activeChain,
+      4
+    )
+    const totalUsd = sumUsdAcrossTokens(fetched, 18)
+    const currentUsd = sumUsdAcrossTokens(activeTokens, 18)
+    const totalAssetUsd = formatUsdAmount(totalUsd)
+    const currentChainUsd = formatUsdAmount(currentUsd)
+    setCachedUsdTotals(totalAssetUsd, currentChainUsd)
+    notifyTokenCacheUpdated()
+
+    return {
+      nativeBalance,
+      totalAssetUsd,
+      currentChainUsd,
+      tokens: displayTokens,
+    }
+  } catch (error) {
+    console.error('Failed to fetch account assets:', error)
+    return emptyAccountBalancesResult(activeChain, family, {
+      updateUsdCache: false,
+    })
   }
 }
+
+function emptyAccountBalancesResult(
+  activeChain: Chain,
+  family: ChainFamily,
+  opts?: { updateUsdCache?: boolean }
+): AccountBalancesResult {
+  const zero = emptyBalance(family)
+  const z = formatUsdAmount(0)
+  if (opts?.updateUsdCache !== false) {
+    setCachedUsdTotals(z, z)
+    notifyTokenCacheUpdated()
+  }
+  return {
+    nativeBalance: zero,
+    totalAssetUsd: z,
+    currentChainUsd: z,
+    tokens: [
+      {
+        symbol: activeChain.symbol || 'UNKNOWN',
+        name: activeChain.name,
+        balance: zero,
+        isNative: true,
+      },
+    ],
+  }
+}
+
+/*
+ * Optional RPC adapter fallback (native + imported tokens via `balanceAdapterRegistry`).
+ * Uncomment this and the imports below when you want on-chain balances when
+ * `account_assets` fails or for chains without a mapped `account_assets` network.
+ *
+ * import { balanceAdapterRegistry } from './balanceAdapterRegistry'
+ * import './adapters'
+ *
+ * async function fallbackBalance(
+ *   address: string,
+ *   activeChain: Chain,
+ *   importedTokens: TokenInfo[]
+ * ): Promise<AccountBalancesResult> {
+ *   const family = activeChain.family ?? ChainFamily.EVM
+ *   const adapter = balanceAdapterRegistry.get(family)
+ *   if (!adapter) {
+ *     return emptyAccountBalancesResult(activeChain, family)
+ *   }
+ *
+ *   const native = await adapter.fetchNativeBalance(address, activeChain)
+ *   const displayTokens: DisplayToken[] = [
+ *     {
+ *       symbol: activeChain.symbol || 'UNKNOWN',
+ *       name: activeChain.name,
+ *       balance: native,
+ *       isNative: true,
+ *     },
+ *   ]
+ *
+ *   if (adapter.supportsTokens && importedTokens.length > 0) {
+ *     const tokenBalances = await adapter.fetchTokenBalances(
+ *       address,
+ *       activeChain,
+ *       importedTokens
+ *     )
+ *     displayTokens.push(
+ *       ...tokenBalances.map((t) => ({
+ *         symbol: t.symbol,
+ *         name: t.name,
+ *         balance: t.balance,
+ *         isNative: false,
+ *         address: t.address,
+ *         decimals: t.decimals,
+ *       }))
+ *     )
+ *   }
+ *
+ *   return {
+ *     nativeBalance: native,
+ *     totalAssetUsd: formatUsdAmount(0),
+ *     tokens: displayTokens,
+ *   }
+ * }
+ */

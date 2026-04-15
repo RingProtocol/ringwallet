@@ -50,7 +50,8 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
     SendTokenOption | undefined
   >(undefined)
 
-  const { totalAssetUsd, tokens, supportsTokens } = useBalanceManager()
+  const { totalAssetUsd, currentChainUsd, tokens, supportsTokens } =
+    useBalanceManager()
 
   const goToMore = useCallback((expandWalletList: boolean) => {
     setMoreExpandWalletListOnOpen(expandWalletList)
@@ -131,7 +132,8 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           </header>
           <div className="wallet-main-page__hero-body">
             <NativeBalance
-              balance={totalAssetUsd}
+              allChainsUsd={totalAssetUsd}
+              currentChainUsd={currentChainUsd}
               onAddressClick={openMoreFromAddress}
             />
             <TransactionActions

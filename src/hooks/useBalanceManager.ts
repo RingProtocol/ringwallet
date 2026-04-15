@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { BALANCE_POLL_INTERVAL_MS } from '../config/uiTiming'
 import { ChainFamily } from '../models/ChainType'
+import { clearChainTokenCache } from '../models/ChainTokens'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
 import { balanceAdapterRegistry } from '../features/balance/balanceAdapterRegistry'
+import '../features/balance/adapters'
 import {
   DEFAULT_CHAINS,
   FEATURED_CHAIN_IDS,
@@ -14,6 +15,7 @@ import {
   fetchAccountBalances,
   emptyBalance,
   formatUsdAmount,
+  getAccountBalancePollIntervalMs,
 } from '../features/balance/balanceManager'
 import type { DisplayToken } from '../features/balance/balanceTypes'
 
@@ -21,6 +23,8 @@ export interface BalanceState {
   nativeBalance: string
   /** Total portfolio value in USD (formatted), from `fetchAccountBalances` / `getAccountBalance`. */
   totalAssetUsd: string
+  /** Active chain portfolio USD (formatted), same network as token list. */
+  currentChainUsd: string
   tokens: DisplayToken[]
   isLoading: boolean
   supportsTokens: boolean
@@ -35,6 +39,9 @@ export function useBalanceManager(): BalanceState {
 
   const [nativeBalance, setNativeBalance] = useState(() => emptyBalance(family))
   const [totalAssetUsd, setTotalAssetUsd] = useState(() => formatUsdAmount('0'))
+  const [currentChainUsd, setCurrentChainUsd] = useState(() =>
+    formatUsdAmount('0')
+  )
   const [tokens, setTokens] = useState<DisplayToken[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -69,10 +76,15 @@ export function useBalanceManager(): BalanceState {
       window.removeEventListener('ring:tokens-updated', handleTokensUpdated)
   }, [activeAccount?.address, activeChain?.id, supportsTokens])
 
+  useEffect(() => {
+    clearChainTokenCache()
+  }, [activeAccount?.address])
+
   // Reset on chain/account change
   useEffect(() => {
     setNativeBalance(emptyBalance(family))
     setTotalAssetUsd(formatUsdAmount('0'))
+    setCurrentChainUsd(formatUsdAmount('0'))
     setTokens([])
     observedBalanceRef.current = null
   }, [activeChain?.id, activeAccount?.address, family])
@@ -129,8 +141,8 @@ export function useBalanceManager(): BalanceState {
           fetchAccountBalances(
             address,
             portfolioChains,
-            activeChain,
-            importedTokens
+            activeChain
+            // importedTokens
           ),
         ])
 
@@ -139,11 +151,13 @@ export function useBalanceManager(): BalanceState {
           commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
           setTokens(result.tokens)
           setTotalAssetUsd(result.totalAssetUsd)
+          setCurrentChainUsd(result.currentChainUsd)
         } else {
           console.error('Failed to fetch token balances:', allBal.reason)
           const zero = emptyBalance(family)
           commitNativeBalance(zero, { recordObserved: false })
           setTotalAssetUsd(formatUsdAmount('0'))
+          setCurrentChainUsd(formatUsdAmount('0'))
           setTokens([
             {
               symbol: activeChain.symbol || 'UNKNOWN',
@@ -159,9 +173,19 @@ export function useBalanceManager(): BalanceState {
     }
 
     fetchBalances()
-    const interval = setInterval(fetchBalances, BALANCE_POLL_INTERVAL_MS)
+    const interval = setInterval(
+      fetchBalances,
+      getAccountBalancePollIntervalMs()
+    )
     return () => clearInterval(interval)
   }, [activeAccount, activeChain, importedTokens, family, commitNativeBalance])
 
-  return { nativeBalance, totalAssetUsd, tokens, isLoading, supportsTokens }
+  return {
+    nativeBalance,
+    totalAssetUsd,
+    currentChainUsd,
+    tokens,
+    isLoading,
+    supportsTokens,
+  }
 }

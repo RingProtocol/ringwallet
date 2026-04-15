@@ -5,6 +5,8 @@ export const TESTID = {
 
   // Balance
   BALANCE_AMOUNT: 'balance-amount',
+  /** Native token quantity on the assets list (not USD hero). */
+  TOKEN_NATIVE_BALANCE: 'token-native-balance',
   WALLET_ADDRESS: 'wallet-address',
 
   // Chain switcher

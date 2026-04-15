@@ -7,6 +7,42 @@
   margin-bottom: 20px;
 }
 
+.balance-usd-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.balance-usd-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.balance-usd-row--secondary .balance-usd-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ring-text-secondary, #e8eff1);
+  letter-spacing: 0.02em;
+}
+
+.balance-usd-row--secondary .balance-usd-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+  line-height: 1.2;
+}
+
+.balance-usd-row--primary .balance-usd-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ring-text-secondary, #e5e7eb);
+  letter-spacing: 0.02em;
+}
 .balance-amount {
   font-size: 2.5rem;
   font-weight: 700;

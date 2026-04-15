@@ -1,11 +1,16 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
+import { chainToAccountAssetsNetwork } from '../config/chains'
 import { useAuth } from '../contexts/AuthContext'
-import { addToken } from '../utils/tokenStorage'
+import { displayTokensFromChainTokens } from '../features/balance/balanceManager'
 import type { DisplayToken } from '../features/balance/balanceTypes'
+import { useTokenCacheNotifier } from '../hooks/useTokenCacheNotifier'
+import { getTokensForNetwork } from '../models/ChainTokens'
+import { addToken } from '../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
 import ChainIcon from './ChainIcon'
 import './TokenBalance.css'
 import { useI18n } from '../i18n'
+import { TESTID } from './testids'
 
 interface TokenBalanceProps {
   tokens: DisplayToken[]
@@ -22,6 +27,19 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
   const { activeChain, activeAccount } = useAuth()
   const { t } = useI18n()
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const cacheGen = useTokenCacheNotifier()
+
+  const displayTokens = useMemo(() => {
+    void cacheGen
+    if (!activeChain) return tokens
+    const net = chainToAccountAssetsNetwork(activeChain)
+    if (!net) return tokens
+    const raw = getTokensForNetwork(net)
+    if (raw && raw.length > 0) {
+      return displayTokensFromChainTokens(raw, activeChain, 4)
+    }
+    return tokens
+  }, [activeChain, tokens, cacheGen])
 
   const handleImportToken = useCallback(
     (token: {
@@ -52,10 +70,10 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
         )}
       </div>
-      {tokens.length === 0 ? (
+      {displayTokens.length === 0 ? (
         <div className="token-empty">{t('noTokensFound')}</div>
       ) : (
-        tokens.map((token) => (
+        displayTokens.map((token) => (
           <div
             key={token.isNative ? 'native' : token.address}
             className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
@@ -80,7 +98,14 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 <span className="token-name">{token.name}</span>
               </div>
             </div>
-            <div className="token-amount">{token.balance}</div>
+            <div
+              className="token-amount"
+              data-testid={
+                token.isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined
+              }
+            >
+              {token.balance}
+            </div>
           </div>
         ))
       )}

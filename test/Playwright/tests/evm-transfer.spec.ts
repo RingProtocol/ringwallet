@@ -19,13 +19,14 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
       .filter({ hasText: chain.chainName })
     await chainOption.first().click()
 
-    // Wait for balance to load after chain switch
-    const balanceEl = page.getByTestId(TESTID.BALANCE_AMOUNT)
-    await expect(balanceEl).toBeVisible()
-    await expect(balanceEl).not.toHaveText(/^0\.0000\s/, { timeout: 15000 })
+    // Hero shows USD; native quantity for assertions is on the token list.
+    await expect(page.getByTestId(TESTID.BALANCE_AMOUNT)).toBeVisible()
+    const nativeBalEl = page.getByTestId(TESTID.TOKEN_NATIVE_BALANCE)
+    await expect(nativeBalEl).toBeVisible({ timeout: 15000 })
+    await expect(nativeBalEl).not.toHaveText(/^0\.0000\s/, { timeout: 15000 })
 
     const balanceBefore = parseFloat(
-      (await balanceEl.textContent())!.replace(/[^\d.]/g, '')
+      (await nativeBalEl.textContent())!.replace(/[^\d.]/g, '')
     )
 
     // ---- 2. Open Send form ----
@@ -63,7 +64,7 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
 
     const sendAmount = parseFloat(chain.sendAmount)
     await expect(async () => {
-      const text = await balanceEl.textContent()
+      const text = await nativeBalEl.textContent()
       const balanceAfter = parseFloat(text!.replace(/[^\d.]/g, ''))
       expect(balanceAfter).toBeLessThan(balanceBefore - sendAmount * 0.5)
     }).toPass({ timeout: 60_000 })
