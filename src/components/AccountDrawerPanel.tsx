@@ -102,7 +102,6 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
   const handleSelectWallet = (index: number) => {
     switchWallet(index)
-    setShowWalletList(false)
   }
 
   const handleLogout = () => {
