@@ -10,6 +10,16 @@ import {
   type VirtualAuthenticator,
 } from '../helpers/webauthn'
 
+/** Same derivation as the `wallet` fixture — for tests that need the address before `page.goto`. */
+export function getE2EWalletEvmAddresses(): string[] {
+  const seedBytes = new Uint8Array(
+    Buffer.from(E2E_CONFIG_EVM.masterSeed, 'hex')
+  )
+  const evmPlugin = chainRegistry.get(ChainFamily.EVM)!
+  const evmAccounts = evmPlugin.deriveAccounts(seedBytes, 5)
+  return evmAccounts.map((a) => a.address)
+}
+
 export interface WalletContext {
   page: Page
   auth: VirtualAuthenticator
@@ -29,7 +39,7 @@ export interface WalletContext {
  *   rpcUrl.  Playwright catches them here and forwards to local Anvil, so the app
  *   never reaches the real testnet — it always talks to the funded local chain.
  */
-async function setupAnvilRoutes(page: Page): Promise<void> {
+export async function setupAnvilRoutes(page: Page): Promise<void> {
   for (const chain of EVM_TESTNET_CHAINS) {
     const anvilRpc = `http://127.0.0.1:${chain.anvilPort}`
     for (const rpcUrl of chain.rpcUrls) {
@@ -62,7 +72,7 @@ async function setupAnvilRoutes(page: Page): Promise<void> {
  * is a safety net for race conditions and is skipped silently if Anvil is not
  * yet reachable (webServer may still be initialising).
  */
-async function fundSenderOnAnvil(senderAddress: string): Promise<void> {
+export async function fundSenderOnAnvil(senderAddress: string): Promise<void> {
   const weiHex = '0x' + (100n * 10n ** 18n).toString(16) // 100 tokens
   for (const chain of EVM_TESTNET_CHAINS) {
     const anvilRpc = `http://127.0.0.1:${chain.anvilPort}`

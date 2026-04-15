@@ -25,10 +25,8 @@ export function setAccountBalancePollIntervalMs(ms: number): void {
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
 type AccountAssetsRequest = {
-  addresses: Array<{
-    address: string
-    networks: string[]
-  }>
+  address: string
+  networks: string[]
 }
 
 type AccountAssetsResponse = {
@@ -78,9 +76,7 @@ async function fetchAccountAssets(
   address: string,
   networks: string[]
 ): Promise<ChainToken[]> {
-  const body: AccountAssetsRequest = {
-    addresses: [{ address, networks }],
-  }
+  const body: AccountAssetsRequest = { address, networks }
 
   const res = await fetch(ACCOUNT_ASSETS_URL, {
     method: 'POST',
