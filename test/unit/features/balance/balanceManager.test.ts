@@ -73,10 +73,6 @@ describe('balanceManager.fetchAccountBalances', () => {
     stubEvmChain(56, 'BNB Smart Chain', 'BNB'),
   ]
 
-  const expectedNetworkOrder = portfolioChains
-    .map((c) => chainToAccountAssetsNetwork(c))
-    .filter((n): n is string => Boolean(n))
-
   beforeEach(() => {
     clearChainTokenCache()
     vi.spyOn(globalThis, 'fetch').mockImplementation(
@@ -100,12 +96,11 @@ describe('balanceManager.fetchAccountBalances', () => {
 
   it('POSTs account_assets with address + networks, then returns balances matching mocked portfolio', async () => {
     const activeChain = portfolioChains[1] // Sepolia → eth-sepolia
+    const activeNetwork = chainToAccountAssetsNetwork(activeChain)!
 
-    const result = await fetchAccountBalances(
-      TEST_WALLET,
-      portfolioChains,
-      activeChain
-    )
+    const result = await fetchAccountBalances(TEST_WALLET, activeChain)
+    expect(result).not.toBeNull()
+    if (!result) throw new Error('Expected non-null balances result')
 
     const fetchMock = vi.mocked(globalThis.fetch)
     expect(fetchMock).toHaveBeenCalledWith(
@@ -118,7 +113,7 @@ describe('balanceManager.fetchAccountBalances', () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit
     expect(JSON.parse(init.body as string)).toEqual({
       address: TEST_WALLET,
-      networks: expectedNetworkOrder,
+      networks: [activeNetwork],
     })
 
     const tokens: ChainToken[] = JSON.parse(
@@ -140,7 +135,7 @@ describe('balanceManager.fetchAccountBalances', () => {
   it('after fetchAccountBalances, ChainTokens maps match api2.md-derived cache and per-network USD', async () => {
     const activeChain = portfolioChains[0] // mainnet
 
-    await fetchAccountBalances(TEST_WALLET, portfolioChains, activeChain)
+    await fetchAccountBalances(TEST_WALLET, activeChain)
 
     const tokens: ChainToken[] = JSON.parse(
       buildAccountAssetsApi2MockBody(TEST_WALLET)

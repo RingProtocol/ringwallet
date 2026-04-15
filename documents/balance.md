@@ -1,3 +1,8 @@
-1. rpcService has query balance api.
-2. do real query of balance through rpc url, you can use .env's alchemy apikey to joint chain's rpc url.
-   Or just use public rpc url.
+# how to get balance?
+
+- some chains get from service api, eg: alchemy.
+- some other chains goes through on chain, by Adapters, like bitcoinAdapter.
+
+# service api return price, but chain adapter not
+
+- todo: get price for this way.

@@ -6,6 +6,8 @@ import {
   type ChainToken,
   notifyTokenCacheUpdated,
 } from '../../models/ChainTokens'
+import type { AccountBalancesResult } from './balanceTypes'
+import { fetchAccountBalanceByAdapter } from './balanceAdapterRegistry'
 
 /** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
 export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
@@ -171,13 +173,6 @@ async function fetchAccountAssets(
   return json.data.tokens ?? []
 }
 
-export type AccountBalancesResult = {
-  nativeBalance: string
-  totalAssetUsd: string
-  currentChainUsd: string
-  tokens: ChainToken[]
-}
-
 function sumUsdAcrossTokens(
   tokens: ChainToken[],
   displayDecimals = 18
@@ -202,49 +197,32 @@ function sumUsdAcrossTokens(
   return total
 }
 
-function emptyNativePlaceholder(
-  activeChain: Chain
-  // family: ChainFamily
-): ChainToken {
-  const net = chainToAccountAssetsNetwork(activeChain) ?? ''
-  // const zero = emptyBalance(family)
-  return {
-    address: '',
-    network: net,
-    tokenAddress: null,
-    tokenBalance: '0x0',
-    tokenMetadata: {
-      decimals: 18,
-      logo: null,
-      name: activeChain.name,
-      symbol: activeChain.symbol,
-    },
-    tokenPrices: [],
-  }
-}
-
 export async function fetchAccountBalances(
   address: string,
-  chains: Chain[],
   activeChain: Chain
-): Promise<AccountBalancesResult> {
-  const family = activeChain.family ?? ChainFamily.EVM
+): Promise<AccountBalancesResult | null> {
+  if (activeChain == null) {
+    return null
+  }
+
+  //some chains is not supported by the account_assets API, so we need to fetch the balance from the adapter
+  if (
+    activeChain.family == ChainFamily.Bitcoin ||
+    activeChain.id == 'tron-mainnet' ||
+    activeChain.id == 'plasma-mainnet'
+  ) {
+    return fetchAccountBalanceByAdapter(address, activeChain)
+  }
+
+  // const family = activeChain.family ?? ChainFamily.EVM
   const activeNetwork = chainToAccountAssetsNetwork(activeChain)
 
-  const networks = Array.from(
-    new Set(
-      chains
-        .map((c) => chainToAccountAssetsNetwork(c))
-        .filter((n): n is string => Boolean(n))
-    )
-  )
-
-  if (networks.length == 0) {
-    return emptyAccountBalancesResult(activeChain, family)
+  if (activeNetwork == null) {
+    return null
   }
 
   try {
-    const fetched = await fetchAccountAssets(address, networks)
+    const fetched = await fetchAccountAssets(address, [activeNetwork])
 
     const byNetwork = new Map<string, ChainToken[]>()
     for (const t of fetched) {
@@ -276,26 +254,8 @@ export async function fetchAccountBalances(
     }
   } catch (error) {
     console.error('Failed to fetch account assets:', error)
-    return emptyAccountBalancesResult(activeChain, family, {
-      skipNotify: true,
-    })
-  }
-}
-
-function emptyAccountBalancesResult(
-  activeChain: Chain,
-  family: ChainFamily,
-  opts?: { skipNotify?: boolean }
-): AccountBalancesResult {
-  const zero = emptyBalance(family)
-  const z = formatUsdAmount(0)
-  if (!opts?.skipNotify) {
-    notifyTokenCacheUpdated()
-  }
-  return {
-    nativeBalance: zero,
-    totalAssetUsd: z,
-    currentChainUsd: z,
-    tokens: [emptyNativePlaceholder(activeChain)],
+    // Returning `null` lets the UI keep the last successful balances
+    // instead of overwriting with placeholders on transient failures.
+    return null
   }
 }

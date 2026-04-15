@@ -6,11 +6,7 @@ import { notifyBalanceChange } from '../services/devices/notificationService'
 import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
 import { balanceAdapterRegistry } from '../features/balance/balanceAdapterRegistry'
 import '../features/balance/adapters'
-import {
-  DEFAULT_CHAINS,
-  FEATURED_CHAIN_IDS,
-  FEATURED_TESTNET_IDS,
-} from '../config/chains'
+
 import {
   fetchAccountBalances,
   emptyBalance,
@@ -128,11 +124,10 @@ export function useBalanceManager(): BalanceState {
     if (!activeAccount || !activeChain) return
 
     const address = activeAccount.address
-    const featuredIds = new Set<string | number>([
-      ...FEATURED_CHAIN_IDS,
-      ...FEATURED_TESTNET_IDS,
-    ])
-    const portfolioChains = DEFAULT_CHAINS.filter((c) => featuredIds.has(c.id))
+    // const featuredIds = new Set<string | number>([
+    //   ...FEATURED_CHAIN_IDS,
+    //   ...FEATURED_TESTNET_IDS,
+    // ])
 
     const fetchBalances = async () => {
       setIsLoading(true)
@@ -140,7 +135,6 @@ export function useBalanceManager(): BalanceState {
         const [allBal] = await Promise.allSettled([
           fetchAccountBalances(
             address,
-            portfolioChains,
             activeChain
             // importedTokens
           ),
@@ -148,6 +142,10 @@ export function useBalanceManager(): BalanceState {
 
         if (allBal.status === 'fulfilled') {
           const result = allBal.value
+          if (result == null) {
+            // No balance available for this chain (or unsupported network); keep last values.
+            return
+          }
           commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
           setTokens(result.tokens)
           setTotalAssetUsd(result.totalAssetUsd)
