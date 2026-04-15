@@ -1,8 +1,15 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { chainToAccountAssetsNetwork } from '../config/chains'
 import { useAuth } from '../contexts/AuthContext'
-import { displayTokensFromChainTokens } from '../features/balance/balanceManager'
-import type { DisplayToken } from '../features/balance/balanceTypes'
+import {
+  chainTokenChangePercentLabel,
+  chainTokenDisplayName,
+  chainTokenDisplaySymbol,
+  formatChainTokenBalance,
+  formatChainTokenPositionUsd,
+  sortChainTokensForDisplay,
+} from '../features/balance/balanceManager'
+import type { ChainToken } from '../models/ChainTokens'
 import { useTokenCacheNotifier } from '../hooks/useTokenCacheNotifier'
 import { getTokensForNetwork } from '../models/ChainTokens'
 import { addToken } from '../utils/tokenStorage'
@@ -13,10 +20,10 @@ import { useI18n } from '../i18n'
 import { TESTID } from './testids'
 
 interface TokenBalanceProps {
-  tokens: DisplayToken[]
+  tokens: ChainToken[]
   isLoading?: boolean
   supportsTokens: boolean
-  onTokenSend?: (token: DisplayToken) => void
+  onTokenSend?: (token: ChainToken) => void
 }
 
 const TokenBalance: React.FC<TokenBalanceProps> = ({
@@ -29,16 +36,16 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
   const [showImportDialog, setShowImportDialog] = useState(false)
   const cacheGen = useTokenCacheNotifier()
 
-  const displayTokens = useMemo(() => {
+  const rows = useMemo(() => {
     void cacheGen
     if (!activeChain) return tokens
     const net = chainToAccountAssetsNetwork(activeChain)
     if (!net) return tokens
     const raw = getTokensForNetwork(net)
     if (raw && raw.length > 0) {
-      return displayTokensFromChainTokens(raw, activeChain, 4)
+      return sortChainTokensForDisplay(raw)
     }
-    return tokens
+    return sortChainTokensForDisplay(tokens)
   }, [activeChain, tokens, cacheGen])
 
   const handleImportToken = useCallback(
@@ -55,7 +62,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     [activeAccount, activeChain, supportsTokens]
   )
 
-  if (!activeAccount) return null
+  if (!activeAccount || !activeChain) return null
 
   return (
     <div className="token-balance-list">
@@ -70,44 +77,62 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
         )}
       </div>
-      {displayTokens.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="token-empty">{t('noTokensFound')}</div>
       ) : (
-        displayTokens.map((token) => (
-          <div
-            key={token.isNative ? 'native' : token.address}
-            className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
-            onClick={onTokenSend ? () => onTokenSend(token) : undefined}
-          >
-            <div className="token-row__main">
-              <div className="token-icon-wrap">
-                {token.isNative && activeChain?.icon ? (
-                  <ChainIcon
-                    icon={activeChain.icon}
-                    symbol={token.symbol}
-                    size={38}
-                  />
-                ) : (
-                  <span className="token-icon-placeholder">
-                    {token.symbol.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <div className="token-info">
-                <span className="token-symbol">{token.symbol}</span>
-                <span className="token-name">{token.name}</span>
-              </div>
-            </div>
+        rows.map((token) => {
+          const symbol = chainTokenDisplaySymbol(token, activeChain)
+          const name = chainTokenDisplayName(token, activeChain)
+          const balanceStr = formatChainTokenBalance(token, activeChain, 4)
+          const usdStr = formatChainTokenPositionUsd(token)
+          const changeStr = chainTokenChangePercentLabel(token)
+          const logoUrl = token.tokenMetadata.logo?.trim()
+          const isNative = token.tokenAddress == null
+
+          return (
             <div
-              className="token-amount"
-              data-testid={
-                token.isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined
-              }
+              key={`${token.network}-${token.tokenAddress ?? 'native'}`}
+              className={`token-row${onTokenSend ? ' token-row--clickable' : ''}`}
+              onClick={onTokenSend ? () => onTokenSend(token) : undefined}
             >
-              {token.balance}
+              <div className="token-row__brand">
+                <div className="token-icon-wrap">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={symbol}
+                      className="token-logo-img"
+                    />
+                  ) : isNative && activeChain.icon ? (
+                    <ChainIcon
+                      icon={activeChain.icon}
+                      symbol={symbol}
+                      size={38}
+                    />
+                  ) : (
+                    <span className="token-icon-placeholder">
+                      {symbol.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <div className="token-info">
+                  <span className="token-symbol">{symbol}</span>
+                  <span className="token-name">{name}</span>
+                </div>
+              </div>
+              <div
+                className="token-row__balance"
+                data-testid={isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined}
+              >
+                {balanceStr}
+              </div>
+              <div className="token-row__fiat">
+                <span className="token-usd">{usdStr}</span>
+                <span className="token-change">{changeStr ?? '—'}</span>
+              </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
 
       {supportsTokens && (

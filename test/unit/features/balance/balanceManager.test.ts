@@ -107,8 +107,6 @@ describe('balanceManager.fetchAccountBalances', () => {
       activeChain
     )
 
-    // console.log(result)
-
     const fetchMock = vi.mocked(globalThis.fetch)
     expect(fetchMock).toHaveBeenCalledWith(
       ACCOUNT_ASSETS_URL,

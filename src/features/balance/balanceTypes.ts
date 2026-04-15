@@ -22,12 +22,3 @@ export interface BalanceAdapter {
     tokens: TokenInfo[]
   ): Promise<TokenBalanceResult[]>
 }
-
-export interface DisplayToken {
-  symbol: string
-  name: string
-  balance: string
-  isNative: boolean
-  address?: string
-  decimals?: number
-}

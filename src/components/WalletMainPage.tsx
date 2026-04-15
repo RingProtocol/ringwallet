@@ -5,6 +5,12 @@ import TransactionActions from './TransactionActions'
 import AccountDrawerPanel from './AccountDrawerPanel'
 import TokenBalance from './TokenBalance'
 import TransactionHistory from './TransactionHistory'
+import {
+  chainTokenDisplayName,
+  chainTokenDisplaySymbol,
+} from '../features/balance/balanceManager'
+import type { ChainToken } from '../models/ChainTokens'
+import { useAuth } from '../contexts/AuthContext'
 import { useBalanceManager } from '../hooks/useBalanceManager'
 import type { SendTokenOption } from './transaction/types'
 import { useI18n } from '../i18n'
@@ -42,6 +48,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   className,
 }) => {
   const { t } = useI18n()
+  const { activeChain } = useAuth()
   const [bottomTab, setBottomTab] = useState<BottomTab>(getInitialBottomTab)
   const [moreExpandWalletListOnOpen, setMoreExpandWalletListOnOpen] =
     useState(false)
@@ -79,27 +86,26 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   }, [])
 
   const handleTokenSend = useCallback(
-    (token: {
-      symbol: string
-      name: string
-      address?: string
-      decimals?: number
-    }) => {
-      if (token.address && token.decimals != null) {
+    (token: ChainToken) => {
+      if (!activeChain) return
+      if (token.tokenAddress) {
         setPendingSendToken({
           type: 'erc20',
           token: {
-            address: token.address,
-            symbol: token.symbol,
-            name: token.name,
-            decimals: token.decimals,
+            address: token.tokenAddress,
+            symbol: chainTokenDisplaySymbol(token, activeChain),
+            name: chainTokenDisplayName(token, activeChain),
+            decimals: token.tokenMetadata.decimals ?? 18,
           },
         })
       } else {
-        setPendingSendToken({ type: 'native', symbol: token.symbol })
+        setPendingSendToken({
+          type: 'native',
+          symbol: chainTokenDisplaySymbol(token, activeChain),
+        })
       }
     },
-    []
+    [activeChain]
   )
 
   return (

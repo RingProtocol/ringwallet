@@ -3,6 +3,8 @@ export interface ChainTokenPrice {
   /** Unit price in `currency` as a string (e.g. `"2385.02"`). */
   value: string
   lastUpdatedAt: string
+  /** Optional 24h change (e.g. ratio or percent from API); shown when present. */
+  changePercent24h?: string | null
 }
 
 export interface ChainTokenMetadata {
@@ -19,6 +21,9 @@ export interface ChainToken {
   tokenAddress: string | null
   /** Hex string (0x...) token amount in smallest units. */
   tokenBalance: string
+  /**
+   * Includes `logo` for token icon URL when the API provides it (see `api2.md` response).
+   */
   tokenMetadata: ChainTokenMetadata
   tokenPrices: ChainTokenPrice[]
 }

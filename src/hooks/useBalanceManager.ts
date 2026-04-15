@@ -17,7 +17,7 @@ import {
   formatUsdAmount,
   getAccountBalancePollIntervalMs,
 } from '../features/balance/balanceManager'
-import type { DisplayToken } from '../features/balance/balanceTypes'
+import type { ChainToken } from '../models/ChainTokens'
 
 export interface BalanceState {
   nativeBalance: string
@@ -25,7 +25,7 @@ export interface BalanceState {
   totalAssetUsd: string
   /** Active chain portfolio USD (formatted), same network as token list. */
   currentChainUsd: string
-  tokens: DisplayToken[]
+  tokens: ChainToken[]
   isLoading: boolean
   supportsTokens: boolean
 }
@@ -42,7 +42,7 @@ export function useBalanceManager(): BalanceState {
   const [currentChainUsd, setCurrentChainUsd] = useState(() =>
     formatUsdAmount('0')
   )
-  const [tokens, setTokens] = useState<DisplayToken[]>([])
+  const [tokens, setTokens] = useState<ChainToken[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const observedBalanceRef = useRef<string | null>(null)

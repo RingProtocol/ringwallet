@@ -6,8 +6,6 @@ import {
   type ChainToken,
   notifyTokenCacheUpdated,
 } from '../../models/ChainTokens'
-// import type { TokenInfo } from '../../utils/tokenStorage'
-import type { DisplayToken } from './balanceTypes'
 
 /** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
 export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
@@ -63,13 +61,85 @@ export function formatUsdAmount(value: string | number): string {
 }
 
 export function emptyBalance(family: ChainFamily): string {
-  // Matches the EVM adapter UX (4 decimals) and keeps other chains consistent.
   switch (family) {
     case ChainFamily.EVM:
       return '0.0000'
     default:
       return '0.0000'
   }
+}
+
+export function sortChainTokensForDisplay(tokens: ChainToken[]): ChainToken[] {
+  return [...tokens].sort(
+    (a, b) => Number(b.tokenAddress == null) - Number(a.tokenAddress == null)
+  )
+}
+
+function usdUnitPrice(token: ChainToken): number {
+  const p = token.tokenPrices?.find((x) => x.currency?.toLowerCase() === 'usd')
+  const n = p ? Number(p.value) : 0
+  return Number.isFinite(n) ? n : 0
+}
+
+export function chainTokenDisplaySymbol(
+  token: ChainToken,
+  chain: Chain
+): string {
+  if (token.tokenMetadata.symbol) return token.tokenMetadata.symbol
+  if (token.tokenAddress == null) return chain.symbol
+  return 'UNKNOWN'
+}
+
+export function chainTokenDisplayName(token: ChainToken, chain: Chain): string {
+  if (token.tokenMetadata.name) return token.tokenMetadata.name
+  if (token.tokenAddress == null) return chain.name
+  return chainTokenDisplaySymbol(token, chain)
+}
+
+export function formatChainTokenBalance(
+  token: ChainToken,
+  chain: Chain,
+  displayDecimals: number
+): string {
+  const decimals = token.tokenMetadata.decimals ?? 18
+  return formatTokenQuantity(token.tokenBalance, decimals, displayDecimals)
+}
+
+export function chainTokenPositionUsd(token: ChainToken): number {
+  const decimals = token.tokenMetadata.decimals ?? 18
+  const qtyStr = formatTokenQuantity(token.tokenBalance, decimals, 18)
+  const qtyNum = Number(qtyStr)
+  if (!Number.isFinite(qtyNum) || qtyNum <= 0) return 0
+  const unit = usdUnitPrice(token)
+  if (!Number.isFinite(unit) || unit <= 0) return 0
+  return qtyNum * unit
+}
+
+export function formatChainTokenPositionUsd(token: ChainToken): string {
+  return formatUsdAmount(chainTokenPositionUsd(token))
+}
+
+export function chainTokenChangePercentLabel(token: ChainToken): string | null {
+  const usd = token.tokenPrices?.find(
+    (x) => x.currency?.toLowerCase() === 'usd'
+  )
+  const raw = usd?.changePercent24h
+  if (raw == null || raw === '') return null
+  const n = Number(raw)
+  if (Number.isFinite(n)) {
+    return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
+  }
+  return String(raw)
+}
+
+function nativeBalanceFromTokens(
+  sortedTokens: ChainToken[],
+  chain: Chain,
+  displayDecimals: number
+): string {
+  const native = sortedTokens.find((t) => t.tokenAddress == null)
+  if (!native) return emptyBalance(chain.family ?? ChainFamily.EVM)
+  return formatChainTokenBalance(native, chain, displayDecimals)
 }
 
 async function fetchAccountAssets(
@@ -92,101 +162,23 @@ async function fetchAccountAssets(
   return json.data.tokens ?? []
 }
 
-function usdUnitPrice(token: ChainToken): number {
-  const p = token.tokenPrices?.find((x) => x.currency?.toLowerCase() === 'usd')
-  const n = p ? Number(p.value) : 0
-  return Number.isFinite(n) ? n : 0
-}
-
-function toDisplayTokensForNetwork(
-  tokens: ChainToken[],
-  chain: Chain,
-  displayDecimals: number
-): { displayTokens: DisplayToken[]; nativeBalance: string; totalUsd: number } {
-  let totalUsd = 0
-  let nativeBalance = emptyBalance(ChainFamily.EVM)
-
-  const displayTokens: DisplayToken[] = tokens.map((t) => {
-    const isNative = t.tokenAddress == null
-    const decimals =
-      (t.tokenMetadata?.decimals ?? null) != null
-        ? t.tokenMetadata.decimals!
-        : 18
-
-    const symbol =
-      (t.tokenMetadata?.symbol ?? null) != null
-        ? t.tokenMetadata.symbol!
-        : isNative
-          ? chain.symbol
-          : 'UNKNOWN'
-
-    const name =
-      (t.tokenMetadata?.name ?? null) != null
-        ? t.tokenMetadata.name!
-        : isNative
-          ? chain.name
-          : symbol
-
-    const qtyStr = formatTokenQuantity(
-      t.tokenBalance,
-      decimals,
-      displayDecimals
-    )
-
-    const qtyNum = Number(qtyStr)
-    if (Number.isFinite(qtyNum) && qtyNum > 0) {
-      totalUsd += qtyNum * usdUnitPrice(t)
-    }
-
-    if (isNative) nativeBalance = qtyStr
-
-    return {
-      symbol,
-      name,
-      balance: qtyStr,
-      isNative,
-      address: t.tokenAddress ?? undefined,
-      decimals: isNative ? undefined : decimals,
-    }
-  })
-
-  // Put native first for consistent UI
-  displayTokens.sort((a, b) => Number(b.isNative) - Number(a.isNative))
-
-  return { displayTokens, nativeBalance, totalUsd }
-}
-
 export type AccountBalancesResult = {
   nativeBalance: string
-  /** Sum of USD value across all requested networks (formatted). */
   totalAssetUsd: string
-  /** USD value on the active chain’s `account_assets` network only (formatted). */
   currentChainUsd: string
-  tokens: DisplayToken[]
-}
-
-export function displayTokensFromChainTokens(
-  tokens: ChainToken[],
-  chain: Chain,
-  displayDecimals = 4
-): DisplayToken[] {
-  return toDisplayTokensForNetwork(tokens, chain, displayDecimals).displayTokens
+  tokens: ChainToken[]
 }
 
 function sumUsdAcrossTokens(
   tokens: ChainToken[],
   displayDecimals = 18
 ): number {
-  // We must decode quantities to compute portfolio value; `tokenPrices.value` is a unit price.
-  // Use high precision decimals when decoding; final UI formatting is handled elsewhere.
   let total = 0
   for (const t of tokens) {
     const decimals =
       (t.tokenMetadata?.decimals ?? null) != null
         ? t.tokenMetadata.decimals!
         : 18
-    // Note: we use a high displayDecimals purely to preserve precision when
-    // parsing to number; this is still a best-effort approximation.
     const qtyStr = formatTokenQuantity(
       t.tokenBalance,
       decimals,
@@ -201,16 +193,35 @@ function sumUsdAcrossTokens(
   return total
 }
 
+function emptyNativePlaceholder(
+  activeChain: Chain
+  // family: ChainFamily
+): ChainToken {
+  const net = chainToAccountAssetsNetwork(activeChain) ?? ''
+  // const zero = emptyBalance(family)
+  return {
+    address: '',
+    network: net,
+    tokenAddress: null,
+    tokenBalance: '0x0',
+    tokenMetadata: {
+      decimals: 18,
+      logo: null,
+      name: activeChain.name,
+      symbol: activeChain.symbol,
+    },
+    tokenPrices: [],
+  }
+}
+
 export async function fetchAccountBalances(
   address: string,
   chains: Chain[],
   activeChain: Chain
-  // importedTokens: TokenInfo[] = []
 ): Promise<AccountBalancesResult> {
   const family = activeChain.family ?? ChainFamily.EVM
   const activeNetwork = chainToAccountAssetsNetwork(activeChain)
 
-  // Chains with a mapped `account_assets` network (EVM chainId or Alchemy slug id).
   const networks = Array.from(
     new Set(
       chains
@@ -226,7 +237,6 @@ export async function fetchAccountBalances(
   try {
     const fetched = await fetchAccountAssets(address, networks)
 
-    // Separate tokens by network and cache into ChainTokens model.
     const byNetwork = new Map<string, ChainToken[]>()
     for (const t of fetched) {
       const list = byNetwork.get(t.network) ?? []
@@ -241,11 +251,8 @@ export async function fetchAccountBalances(
     const activeTokens = activeNetwork
       ? (byNetwork.get(activeNetwork) ?? [])
       : []
-    const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
-      activeTokens,
-      activeChain,
-      4
-    )
+    const sortedActive = sortChainTokensForDisplay(activeTokens)
+    const nativeBalance = nativeBalanceFromTokens(sortedActive, activeChain, 4)
     const totalUsd = sumUsdAcrossTokens(fetched, 18)
     const currentUsd = sumUsdAcrossTokens(activeTokens, 18)
     const totalAssetUsd = formatUsdAmount(totalUsd)
@@ -256,7 +263,7 @@ export async function fetchAccountBalances(
       nativeBalance,
       totalAssetUsd,
       currentChainUsd,
-      tokens: displayTokens,
+      tokens: sortedActive,
     }
   } catch (error) {
     console.error('Failed to fetch account assets:', error)
@@ -280,68 +287,6 @@ function emptyAccountBalancesResult(
     nativeBalance: zero,
     totalAssetUsd: z,
     currentChainUsd: z,
-    tokens: [
-      {
-        symbol: activeChain.symbol || 'UNKNOWN',
-        name: activeChain.name,
-        balance: zero,
-        isNative: true,
-      },
-    ],
+    tokens: [emptyNativePlaceholder(activeChain)],
   }
 }
-
-/*
- * Optional RPC adapter fallback (native + imported tokens via `balanceAdapterRegistry`).
- * Uncomment this and the imports below when you want on-chain balances when
- * `account_assets` fails or for chains without a mapped `account_assets` network.
- *
- * import { balanceAdapterRegistry } from './balanceAdapterRegistry'
- * import './adapters'
- *
- * async function fallbackBalance(
- *   address: string,
- *   activeChain: Chain,
- *   importedTokens: TokenInfo[]
- * ): Promise<AccountBalancesResult> {
- *   const family = activeChain.family ?? ChainFamily.EVM
- *   const adapter = balanceAdapterRegistry.get(family)
- *   if (!adapter) {
- *     return emptyAccountBalancesResult(activeChain, family)
- *   }
- *
- *   const native = await adapter.fetchNativeBalance(address, activeChain)
- *   const displayTokens: DisplayToken[] = [
- *     {
- *       symbol: activeChain.symbol || 'UNKNOWN',
- *       name: activeChain.name,
- *       balance: native,
- *       isNative: true,
- *     },
- *   ]
- *
- *   if (adapter.supportsTokens && importedTokens.length > 0) {
- *     const tokenBalances = await adapter.fetchTokenBalances(
- *       address,
- *       activeChain,
- *       importedTokens
- *     )
- *     displayTokens.push(
- *       ...tokenBalances.map((t) => ({
- *         symbol: t.symbol,
- *         name: t.name,
- *         balance: t.balance,
- *         isNative: false,
- *         address: t.address,
- *         decimals: t.decimals,
- *       }))
- *     )
- *   }
- *
- *   return {
- *     nativeBalance: native,
- *     totalAssetUsd: formatUsdAmount(0),
- *     tokens: displayTokens,
- *   }
- * }
- */
