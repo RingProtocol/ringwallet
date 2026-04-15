@@ -32,9 +32,6 @@ const chainTotalUsdMap: Map<string, string> = new Map()
 
 const tokenCacheListeners = new Set<() => void>()
 
-let cachedAllChainsUsdFormatted: string | undefined
-let cachedCurrentChainUsdFormatted: string | undefined
-
 export function subscribeTokenCache(listener: () => void): () => void {
   tokenCacheListeners.add(listener)
   return () => {
@@ -52,34 +49,9 @@ export function notifyTokenCacheUpdated(): void {
   }
 }
 
-export function setCachedUsdTotals(
-  allChains: string,
-  currentChain: string
-): void {
-  cachedAllChainsUsdFormatted = allChains
-  cachedCurrentChainUsdFormatted = currentChain
-}
-
-export function getCachedUsdTotals():
-  | { allChains: string; currentChain: string }
-  | undefined {
-  if (
-    cachedAllChainsUsdFormatted === undefined ||
-    cachedCurrentChainUsdFormatted === undefined
-  ) {
-    return undefined
-  }
-  return {
-    allChains: cachedAllChainsUsdFormatted,
-    currentChain: cachedCurrentChainUsdFormatted,
-  }
-}
-
 export function clearChainTokenCache(): void {
   chainTokensMap.clear()
   chainTotalUsdMap.clear()
-  cachedAllChainsUsdFormatted = undefined
-  cachedCurrentChainUsdFormatted = undefined
   notifyTokenCacheUpdated()
 }
 

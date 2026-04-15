@@ -1,7 +1,5 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { getCachedUsdTotals } from '../models/ChainTokens'
-import { useTokenCacheNotifier } from '../hooks/useTokenCacheNotifier'
 import { useI18n } from '../i18n'
 import './NativeBalance.css'
 import { TESTID } from './testids'
@@ -27,14 +25,6 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
 }) => {
   const { activeAccount } = useAuth()
   const { t } = useI18n()
-  const cacheGen = useTokenCacheNotifier()
-
-  const { allChains, currentChain } = useMemo(() => {
-    void cacheGen
-    const cached = getCachedUsdTotals()
-    if (cached) return cached
-    return { allChains: allChainsUsd, currentChain: currentChainUsd }
-  }, [cacheGen, allChainsUsd, currentChainUsd])
 
   if (!activeAccount) return null
 
@@ -43,7 +33,7 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
       <div className="balance-usd-stack">
         <div className="balance-usd-row balance-usd-row--secondary">
           <span className="balance-usd-label">{t('balanceAllChainsUsd')}</span>
-          <span className="balance-usd-value">{allChains}</span>
+          <span className="balance-usd-value">{allChainsUsd}</span>
         </div>
         <div className="balance-usd-row balance-usd-row--primary">
           <span className="balance-usd-label">
@@ -53,7 +43,7 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
             className="balance-usd-value balance-amount"
             data-testid={TESTID.BALANCE_AMOUNT}
           >
-            {currentChain}
+            {currentChainUsd}
           </span>
         </div>
       </div>

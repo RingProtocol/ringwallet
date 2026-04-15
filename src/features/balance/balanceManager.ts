@@ -4,9 +4,7 @@ import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   cacheTokensForNetwork,
   type ChainToken,
-  getTokensForNetwork,
   notifyTokenCacheUpdated,
-  setCachedUsdTotals,
 } from '../../models/ChainTokens'
 // import type { TokenInfo } from '../../utils/tokenStorage'
 import type { DisplayToken } from './balanceTypes'
@@ -229,41 +227,6 @@ export async function fetchAccountBalances(
     return emptyAccountBalancesResult(activeChain, family)
   }
 
-  // If we have cached tokens for *all* networks, we can compute total without refetch.
-  const cachedByNetwork: ChainToken[] = []
-  let hasAll = true
-  for (const n of networks) {
-    const cached = getTokensForNetwork(n)
-    if (!cached) {
-      hasAll = false
-      break
-    }
-    cachedByNetwork.push(...cached)
-  }
-
-  if (hasAll) {
-    const activeCached = activeNetwork
-      ? (getTokensForNetwork(activeNetwork) ?? [])
-      : []
-    const { displayTokens, nativeBalance } = toDisplayTokensForNetwork(
-      activeCached,
-      activeChain,
-      4
-    )
-    const totalUsd = sumUsdAcrossTokens(cachedByNetwork, 18)
-    const currentUsd = sumUsdAcrossTokens(activeCached, 18)
-    const totalAssetUsd = formatUsdAmount(totalUsd)
-    const currentChainUsd = formatUsdAmount(currentUsd)
-    setCachedUsdTotals(totalAssetUsd, currentChainUsd)
-    notifyTokenCacheUpdated()
-    return {
-      nativeBalance,
-      totalAssetUsd,
-      currentChainUsd,
-      tokens: displayTokens,
-    }
-  }
-
   try {
     const fetched = await fetchAccountAssets(address, networks)
 
@@ -291,7 +254,6 @@ export async function fetchAccountBalances(
     const currentUsd = sumUsdAcrossTokens(activeTokens, 18)
     const totalAssetUsd = formatUsdAmount(totalUsd)
     const currentChainUsd = formatUsdAmount(currentUsd)
-    setCachedUsdTotals(totalAssetUsd, currentChainUsd)
     notifyTokenCacheUpdated()
 
     return {
@@ -303,7 +265,7 @@ export async function fetchAccountBalances(
   } catch (error) {
     console.error('Failed to fetch account assets:', error)
     return emptyAccountBalancesResult(activeChain, family, {
-      updateUsdCache: false,
+      skipNotify: true,
     })
   }
 }
@@ -311,12 +273,11 @@ export async function fetchAccountBalances(
 function emptyAccountBalancesResult(
   activeChain: Chain,
   family: ChainFamily,
-  opts?: { updateUsdCache?: boolean }
+  opts?: { skipNotify?: boolean }
 ): AccountBalancesResult {
   const zero = emptyBalance(family)
   const z = formatUsdAmount(0)
-  if (opts?.updateUsdCache !== false) {
-    setCachedUsdTotals(z, z)
+  if (!opts?.skipNotify) {
     notifyTokenCacheUpdated()
   }
   return {

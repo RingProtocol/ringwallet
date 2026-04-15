@@ -154,18 +154,7 @@ export function useBalanceManager(): BalanceState {
           setCurrentChainUsd(result.currentChainUsd)
         } else {
           console.error('Failed to fetch token balances:', allBal.reason)
-          const zero = emptyBalance(family)
-          commitNativeBalance(zero, { recordObserved: false })
-          setTotalAssetUsd(formatUsdAmount('0'))
-          setCurrentChainUsd(formatUsdAmount('0'))
-          setTokens([
-            {
-              symbol: activeChain.symbol || 'UNKNOWN',
-              name: activeChain.name,
-              balance: zero,
-              isNative: true,
-            },
-          ])
+          // Keep last successful values; a later poll may recover.
         }
       } finally {
         setIsLoading(false)
@@ -178,7 +167,7 @@ export function useBalanceManager(): BalanceState {
       getAccountBalancePollIntervalMs()
     )
     return () => clearInterval(interval)
-  }, [activeAccount, activeChain, importedTokens, family, commitNativeBalance])
+  }, [activeAccount, activeChain, importedTokens, commitNativeBalance])
 
   return {
     nativeBalance,
