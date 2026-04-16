@@ -1,10 +1,14 @@
 import React, { useCallback, useState } from 'react'
-import DAppContainer from '@/features/dapps/components/DAppContainer'
+import {
+  RingSwapFrame,
+  kyberWidgetEngine,
+} from '@ring-protocol/ring-swap-sdk'
+import '@ring-protocol/ring-swap-sdk/styles'
+import { useSwapSigner } from './swap/useSwapSigner'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { ChainToken } from '../models/ChainTokens'
 import type { Chain } from '../models/ChainType'
-import { RING_SWAP_DAPP } from './QuickActionBar'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -45,6 +49,11 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
     isBitcoinChain,
     isDogecoinChain,
   } = useAuth()
+  const {
+    signer: swapSigner,
+    chainId: swapChainId,
+    rpcUrl: swapRpcUrl,
+  } = useSwapSigner()
   const [swapOpen, setSwapOpen] = useState(false)
   const [sendOpen, setSendOpen] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
@@ -55,7 +64,9 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   const isNative = token.tokenAddress == null
   const symbol = token.tokenMetadata.symbol ?? token.tokenMetadata.name ?? ''
 
-  const canUseRingSwap = !isSolanaChain && !isBitcoinChain && !isDogecoinChain
+  const canUseRingSwap = kyberWidgetEngine
+    .supportedChainIds()
+    .includes(swapChainId)
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
@@ -116,10 +127,12 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
 
   return (
     <div className="token-detail" role="dialog" aria-modal="true">
-      {swapOpen && (
-        <DAppContainer
-          dapp={RING_SWAP_DAPP}
-          onBack={() => setSwapOpen(false)}
+      {swapOpen && swapSigner && (
+        <RingSwapFrame
+          signer={swapSigner}
+          chainId={swapChainId}
+          rpcUrl={swapRpcUrl}
+          onClose={() => setSwapOpen(false)}
         />
       )}
 
