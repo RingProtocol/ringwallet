@@ -595,7 +595,8 @@ export function chainToAccountAssetsNetwork(chain: Chain): string | undefined {
     if (
       chain.family === ChainFamily.Bitcoin ||
       chain.family === ChainFamily.Solana ||
-      chain.family === ChainFamily.Tron
+      chain.family === ChainFamily.Tron ||
+      chain.family === ChainFamily.Prisma
     ) {
       return WALLET_CHAIN_ID_TO_ACCOUNT_ASSETS_NETWORK[chain.id] ?? chain.id
     }

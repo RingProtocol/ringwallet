@@ -28,20 +28,24 @@ export function setAccountBalancePollIntervalMs(ms: number): void {
 
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
-/** Same chains as `syncAccountBalancesToCache` adapter branch — never sent to `account_assets`. */
-function isAdapterOnlyAccountAssetsChain(c: Chain): boolean {
-  return (
-    c.family === ChainFamily.Bitcoin ||
-    c.id === 'tron-mainnet' ||
-    c.id === 'plasma-mainnet' ||
-    c.id === 9745
-  )
+/**
+ * Balances from local RPC adapters, not `account_assets`.
+ * Plasma uses numeric `id` (9745 / 9746); Tron testnet is `tron-shasta`, not only mainnet.
+ */
+function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
+  if (c.family === ChainFamily.Bitcoin || c.family === ChainFamily.Tron) {
+    return true
+  }
+  const { id } = c
+  if (id === 9745 || id === 9746) return true
+  if (id === '9745' || id === '9746') return true
+  return false
 }
 
 const ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS: Set<string> = (() => {
   const s = new Set<string>()
   for (const c of DEFAULT_CHAINS) {
-    if (!isAdapterOnlyAccountAssetsChain(c)) continue
+    if (!usesAdapterOnlyAccountAssetsSync(c)) continue
     const slug = chainToAccountAssetsNetwork(c)
     if (slug) s.add(slug)
   }
@@ -296,11 +300,7 @@ export async function syncAccountBalancesToCache(
 ): Promise<void> {
   if (activeChain == null) return
 
-  if (
-    activeChain.family === ChainFamily.Bitcoin ||
-    activeChain.id === 'tron-mainnet' ||
-    activeChain.id === 'plasma-mainnet'
-  ) {
+  if (usesAdapterOnlyAccountAssetsSync(activeChain)) {
     const result = await fetchAccountBalanceByAdapter(
       adapterAddress,
       activeChain
