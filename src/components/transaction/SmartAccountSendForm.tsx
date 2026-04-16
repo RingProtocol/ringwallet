@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import EvmWalletService, {
   type EIP7951Result,
@@ -6,8 +6,11 @@ import EvmWalletService, {
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'
+import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
 import type { SignedTx } from './types'
 import '../TransactionActions.css'
+import { useI18n } from '../../i18n'
+import { decodeUserOp } from '../../utils/userOpDecoder'
 
 interface SmartAccountSendFormProps {
   onClose: () => void
@@ -17,10 +20,66 @@ interface SmartAccountSendFormProps {
 const isEIP7951Tx = (tx: SignedTx): tx is EIP7951Result =>
   typeof tx === 'object' && tx.type === 'eip-7951'
 
+function buildUserOpRows(
+  result: EIP7951Result,
+  nativeSymbol: string,
+  t: (key: string) => string
+): TxDisplayRow[] {
+  const decoded = decodeUserOp(result.userOp, result.isDeployed, nativeSymbol)
+  if (!decoded) return []
+
+  const rows: TxDisplayRow[] = [
+    { label: t('txFieldSender'), value: decoded.sender, mono: true },
+    { label: t('txFieldTo'), value: decoded.to, mono: true },
+    { label: t('txFieldValue'), value: decoded.value },
+  ]
+
+  if (decoded.innerCalldata) {
+    rows.push(
+      {
+        label: t('txFieldMethod'),
+        value: decoded.innerCalldata.method,
+        mono: true,
+      },
+      {
+        label: t('txFieldAction'),
+        value: decoded.innerCalldata.description,
+      }
+    )
+    for (const p of decoded.innerCalldata.params) {
+      rows.push({ label: p.name, value: p.value, mono: true, indent: true })
+    }
+  }
+
+  rows.push(
+    { label: t('txFieldCallGasLimit'), value: decoded.callGasLimit },
+    {
+      label: t('txFieldVerificationGas'),
+      value: decoded.verificationGasLimit,
+    },
+    {
+      label: t('txFieldPreVerificationGas'),
+      value: decoded.preVerificationGas,
+    },
+    { label: 'Max Fee', value: decoded.maxFeePerGas },
+    { label: 'Priority Fee', value: decoded.maxPriorityFeePerGas },
+    { label: 'Nonce', value: decoded.nonce },
+    {
+      label: t('txFieldAccountStatus'),
+      value: decoded.isDeployed
+        ? t('txFieldDeployed')
+        : t('txFieldNotDeployed'),
+    }
+  )
+
+  return rows
+}
+
 const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
   onClose,
   initialToken,
 }) => {
+  const { t } = useI18n()
   const {
     activeWallet,
     activeChainId,
@@ -48,6 +107,15 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     resetForm,
     copyToClipboard,
   } = useSendForm(initialToken)
+
+  const nativeSymbol = activeChain?.symbol || 'ETH'
+  const userOpRows = useMemo(
+    () =>
+      signedTx && isEIP7951Tx(signedTx)
+        ? buildUserOpRows(signedTx, nativeSymbol, t as (key: string) => string)
+        : [],
+    [signedTx, nativeSymbol, t]
+  )
 
   if (!activeWallet) return null
 
@@ -109,6 +177,31 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
 
   const walletHint = `From: Wallet #${activeWallet.index + 1} (${activeWallet.address.substring(0, 6)}...${activeWallet.address.substring(activeWallet.address.length - 4)})`
 
+  const isBroadcastDisabled =
+    signedTx &&
+    isEIP7951Tx(signedTx) &&
+    !signedTx.isDeployed &&
+    (!signedTx.userOp?.initCode || signedTx.userOp.initCode === '0x')
+
+  const deployWarning =
+    signedTx && isEIP7951Tx(signedTx) && !signedTx.isDeployed ? (
+      <div
+        className="warning-banner"
+        style={{
+          backgroundColor: '#fff3cd',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '10px',
+          fontSize: '12px',
+        }}
+      >
+        ⚠️ Account not deployed yet.{' '}
+        {signedTx.userOp?.initCode && signedTx.userOp.initCode !== '0x'
+          ? 'Will be deployed on first transaction.'
+          : 'Factory address not configured. Please configure VITE_FACTORY_* environment variables.'}
+      </div>
+    ) : null
+
   return (
     <SendFormLayout
       title="Send Transaction"
@@ -141,77 +234,20 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
       </div>
 
       {signedTx && isEIP7951Tx(signedTx) && (
-        <div className="signed-result">
-          <h4>✅ Signed Successfully</h4>
-
-          {!signedTx.isDeployed && (
-            <div
-              className="warning-banner"
-              style={{
-                backgroundColor: '#fff3cd',
-                padding: '10px',
-                borderRadius: '4px',
-                marginBottom: '10px',
-                fontSize: '12px',
-              }}
-            >
-              ⚠️ Account not deployed yet.{' '}
-              {signedTx.userOp?.initCode && signedTx.userOp.initCode !== '0x'
-                ? 'Will be deployed on first transaction.'
-                : 'Factory address not configured. Please configure VITE_FACTORY_* environment variables.'}
-            </div>
-          )}
-
-          <div
-            className="result-area"
-            style={{ fontSize: '12px', whiteSpace: 'pre-wrap' }}
-          >
-            {signedTx.display}
-          </div>
-          <div className="button-group">
-            <button
-              onClick={() => copyToClipboard(JSON.stringify(signedTx, null, 2))}
-              className="copy-btn"
-            >
-              Copy JSON
-            </button>
-            {!broadcastHash && (
-              <button
-                onClick={handleBroadcast}
-                className="primary-btn broadcast-btn"
-                disabled={
-                  isBroadcasting ||
-                  (!signedTx.isDeployed &&
-                    (!signedTx.userOp?.initCode ||
-                      signedTx.userOp.initCode === '0x'))
-                }
-              >
-                {isBroadcasting ? 'Broadcasting...' : '🚀 Broadcast UserOp'}
-              </button>
-            )}
-          </div>
-
-          {broadcastHash && (
-            <div className="broadcast-success">
-              <h4>🎉 Transaction Submitted!</h4>
-              <p>
-                Tx Hash:{' '}
-                <span className="hash-text">
-                  {broadcastHash.substring(0, 10)}...
-                  {broadcastHash.substring(broadcastHash.length - 8)}
-                </span>
-              </p>
-              <a
-                href={`${activeChain?.explorer || 'https://etherscan.io'}/tx/${broadcastHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="view-link"
-              >
-                View on Explorer ↗
-              </a>
-            </div>
-          )}
-        </div>
+        <SignedTxResult
+          rows={userOpRows}
+          rawData={JSON.stringify(signedTx, null, 2)}
+          rawFormat="json"
+          copyLabel="Copy JSON"
+          broadcastLabel="Broadcast UserOp"
+          broadcastHash={broadcastHash}
+          isBroadcasting={isBroadcasting}
+          broadcastDisabled={!!isBroadcastDisabled}
+          disabledHint={deployWarning}
+          explorerUrl={activeChain?.explorer || 'https://etherscan.io'}
+          onCopy={() => copyToClipboard(JSON.stringify(signedTx, null, 2))}
+          onBroadcast={handleBroadcast}
+        />
       )}
     </SendFormLayout>
   )

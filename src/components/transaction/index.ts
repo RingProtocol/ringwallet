@@ -1,4 +1,6 @@
 export { default as EOASendForm } from './EOASendForm'
+export { default as SignedTxResult } from './SignedTxResult'
+export type { TxDisplayRow } from './SignedTxResult'
 export { default as SmartAccountSendForm } from './SmartAccountSendForm'
 export { default as SolanaSendForm } from './SolanaSendForm'
 export { default as BitcoinSendForm } from './BitcoinSendForm'
