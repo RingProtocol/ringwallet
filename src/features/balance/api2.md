@@ -1,7 +1,7 @@
 # request parameter
 
 curl --request POST \
- --url https://rw.testring.org/v1/account_assets \
+ --url https://rw.testring.org/v1/accountassets \
  --header 'Content-Type: application/json' \
  --data '{
 "addresses": [

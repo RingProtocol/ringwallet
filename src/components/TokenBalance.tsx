@@ -7,6 +7,7 @@ import {
   chainTokenDisplaySymbol,
   formatChainTokenBalance,
   formatChainTokenPositionUsd,
+  formatUsdUnitPrice,
   sortChainTokensForDisplay,
 } from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
@@ -78,6 +79,19 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
         )}
       </div>
+      <div className="token-columns-header" role="row">
+        <div
+          className="token-columns-header__name token-columns-header__name--hidden"
+          role="columnheader"
+          aria-hidden="true"
+        />
+        <div className="token-columns-header__amount" role="columnheader">
+          {t('tokenColumnAmountValue')}
+        </div>
+        <div className="token-columns-header__price" role="columnheader">
+          {t('tokenColumnPriceChangeRate')}
+        </div>
+      </div>
       {rows.length === 0 ? (
         <div className="token-empty">{t('noTokensFound')}</div>
       ) : (
@@ -86,6 +100,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           const name = chainTokenDisplayName(token, activeChain)
           const balanceStr = formatChainTokenBalance(token, activeChain, 4)
           const usdStr = formatChainTokenPositionUsd(token)
+          const usdUnitStr = formatUsdUnitPrice(token)
           const changeStr = chainTokenChangePercentLabel(token)
           const logoUrl = token.tokenMetadata.logo?.trim()
           const isNative = token.tokenAddress == null
@@ -125,10 +140,11 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 className="token-row__balance"
                 data-testid={isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined}
               >
-                {balanceStr}
+                <span className="token-amount">{balanceStr}</span>
+                <span className="token-value">{usdStr}</span>
               </div>
               <div className="token-row__fiat">
-                <span className="token-usd">{usdStr}</span>
+                <span className="token-usd">{usdUnitStr}</span>
                 <span className="token-change">{changeStr ?? '—'}</span>
               </div>
             </div>
