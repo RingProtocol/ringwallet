@@ -1,19 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChainFamily } from '../models/ChainType'
-import { clearChainTokenCache } from '../models/ChainTokens'
+import {
+  clearChainTokenCache,
+  subscribeTokenCache,
+} from '../models/ChainTokens'
 import { notifyBalanceChange } from '../services/devices/notificationService'
 import { getTokenList, type TokenInfo } from '../utils/tokenStorage'
 import { balanceAdapterRegistry } from '../features/balance/balanceAdapterRegistry'
 import '../features/balance/adapters'
 
 import {
-  fetchAccountBalances,
+  readAccountBalancesFromCache,
+  syncAccountBalancesToCache,
   emptyBalance,
   formatUsdAmount,
   getAccountBalancePollIntervalMs,
 } from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
+import { chainToAccountAssetsNetwork, DEFAULT_CHAINS } from '@/config/chains'
 
 export interface BalanceState {
   nativeBalance: string
@@ -33,6 +38,14 @@ export function useBalanceManager(): BalanceState {
   const adapter = balanceAdapterRegistry.get(family)
   const supportsTokens = adapter?.supportsTokens ?? false
 
+  const portfolioNetworkSlugs = useMemo(
+    () =>
+      DEFAULT_CHAINS.filter((c) => c.family !== ChainFamily.Bitcoin)
+        .map((c) => chainToAccountAssetsNetwork(c) ?? '')
+        .filter(Boolean),
+    []
+  )
+
   const [nativeBalance, setNativeBalance] = useState(() => emptyBalance(family))
   const [totalAssetUsd, setTotalAssetUsd] = useState(() => formatUsdAmount('0'))
   const [currentChainUsd, setCurrentChainUsd] = useState(() =>
@@ -42,6 +55,12 @@ export function useBalanceManager(): BalanceState {
   const [isLoading, setIsLoading] = useState(false)
 
   const observedBalanceRef = useRef<string | null>(null)
+  const activeChainRef = useRef(activeChain)
+  const activeAccountRef = useRef(activeAccount)
+  activeChainRef.current = activeChain
+  activeAccountRef.current = activeAccount
+
+  const inFlightFetchIdRef = useRef(0)
 
   // Track imported tokens
   const [importedTokens, setImportedTokens] = useState<TokenInfo[]>(() =>
@@ -75,15 +94,6 @@ export function useBalanceManager(): BalanceState {
   useEffect(() => {
     clearChainTokenCache()
   }, [activeAccount?.address])
-
-  // Reset on chain/account change
-  useEffect(() => {
-    setNativeBalance(emptyBalance(family))
-    setTotalAssetUsd(formatUsdAmount('0'))
-    setCurrentChainUsd(formatUsdAmount('0'))
-    setTokens([])
-    observedBalanceRef.current = null
-  }, [activeChain?.id, activeAccount?.address, family])
 
   // Commit balance with optional change notification
   const commitNativeBalance = useCallback(
@@ -119,53 +129,73 @@ export function useBalanceManager(): BalanceState {
     [activeAccount?.address, activeChain]
   )
 
-  // Polling effect
+  const applyFromCache = useCallback(
+    (opts?: { notifyNativeChange?: boolean }) => {
+      const acc = activeAccountRef.current
+      const chain = activeChainRef.current
+      if (!acc?.address || !chain) {
+        setTokens([])
+        setTotalAssetUsd(formatUsdAmount('0'))
+        setCurrentChainUsd(formatUsdAmount('0'))
+        commitNativeBalance(emptyBalance(ChainFamily.EVM), {
+          notifyOnChange: false,
+          recordObserved: false,
+        })
+        observedBalanceRef.current = null
+        return
+      }
+      const r = readAccountBalancesFromCache(chain, portfolioNetworkSlugs)
+      setTokens(r.tokens)
+      setTotalAssetUsd(r.totalAssetUsd)
+      setCurrentChainUsd(r.currentChainUsd)
+      commitNativeBalance(r.nativeBalance, {
+        notifyOnChange: opts?.notifyNativeChange ?? false,
+      })
+    },
+    [portfolioNetworkSlugs, commitNativeBalance]
+  )
+
+  // On chain/account change: show cached row for this network immediately.
   useEffect(() => {
-    if (!activeAccount || !activeChain) return
+    observedBalanceRef.current = null
+    applyFromCache({ notifyNativeChange: false })
+  }, [activeChain?.id, activeAccount?.address, family, applyFromCache])
 
+  // Re-render when something else updates the shared token cache.
+  useEffect(() => {
+    return subscribeTokenCache(() => {
+      applyFromCache({ notifyNativeChange: false })
+    })
+  }, [applyFromCache])
+
+  // Interval: only fetch + populate cache; UI reads cache above.
+  useEffect(() => {
+    if (!activeAccount) return
     const address = activeAccount.address
-    // const featuredIds = new Set<string | number>([
-    //   ...FEATURED_CHAIN_IDS,
-    //   ...FEATURED_TESTNET_IDS,
-    // ])
 
-    const fetchBalances = async () => {
+    const tick = async () => {
+      const fetchId = ++inFlightFetchIdRef.current
       setIsLoading(true)
       try {
-        const [allBal] = await Promise.allSettled([
-          fetchAccountBalances(
-            address,
-            activeChain
-            // importedTokens
-          ),
-        ])
-
-        if (allBal.status === 'fulfilled') {
-          const result = allBal.value
-          if (result == null) {
-            // No balance available for this chain (or unsupported network); keep last values.
-            return
-          }
-          commitNativeBalance(result.nativeBalance, { notifyOnChange: true })
-          setTokens(result.tokens)
-          setTotalAssetUsd(result.totalAssetUsd)
-          setCurrentChainUsd(result.currentChainUsd)
-        } else {
-          console.error('Failed to fetch token balances:', allBal.reason)
-          // Keep last successful values; a later poll may recover.
-        }
+        const chain = activeChainRef.current
+        if (!chain) return
+        await syncAccountBalancesToCache(address, chain, portfolioNetworkSlugs)
+        if (activeAccountRef.current?.address !== address) return
+        applyFromCache({ notifyNativeChange: true })
       } finally {
-        setIsLoading(false)
+        if (fetchId === inFlightFetchIdRef.current) {
+          setIsLoading(false)
+        }
       }
     }
 
-    fetchBalances()
+    void tick()
     const interval = setInterval(
-      fetchBalances,
+      () => void tick(),
       getAccountBalancePollIntervalMs()
     )
     return () => clearInterval(interval)
-  }, [activeAccount, activeChain, importedTokens, commitNativeBalance])
+  }, [activeAccount, portfolioNetworkSlugs, applyFromCache, importedTokens])
 
   return {
     nativeBalance,

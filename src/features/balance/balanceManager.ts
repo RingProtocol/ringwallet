@@ -3,6 +3,7 @@ import { chainToAccountAssetsNetwork } from '../../config/chains'
 import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   cacheTokensForNetwork,
+  getTokensForNetwork,
   type ChainToken,
   notifyTokenCacheUpdated,
 } from '../../models/ChainTokens'
@@ -197,32 +198,76 @@ function sumUsdAcrossTokens(
   return total
 }
 
-export async function fetchAccountBalances(
+/**
+ * Read balances for the active chain from the in-memory token cache (see `ChainTokens`).
+ * Safe to call synchronously on chain switch; shows zeros when nothing is cached yet.
+ */
+export function readAccountBalancesFromCache(
+  activeChain: Chain,
+  portfolioNetworkSlugs: string[]
+): AccountBalancesResult {
+  const family = activeChain.family ?? ChainFamily.EVM
+  const activeNetwork = chainToAccountAssetsNetwork(activeChain) ?? ''
+  const cachedActive =
+    activeNetwork.length > 0 ? getTokensForNetwork(activeNetwork) : undefined
+  const sortedActive = cachedActive?.length
+    ? sortChainTokensForDisplay([...cachedActive])
+    : []
+
+  const nativeBalance =
+    sortedActive.length > 0
+      ? nativeBalanceFromTokens(sortedActive, activeChain, 4)
+      : emptyBalance(family)
+
+  let totalUsd = 0
+  for (const n of portfolioNetworkSlugs) {
+    if (!n) continue
+    const list = getTokensForNetwork(n)
+    if (list?.length) totalUsd += sumUsdAcrossTokens(list, 18)
+  }
+
+  const currentUsd =
+    sortedActive.length > 0 ? sumUsdAcrossTokens(sortedActive, 18) : 0
+
+  return {
+    nativeBalance,
+    totalAssetUsd: formatUsdAmount(totalUsd),
+    currentChainUsd: formatUsdAmount(currentUsd),
+    tokens: sortedActive,
+  }
+}
+
+/**
+ * Fetches remote balances and writes per-network rows into `ChainTokens` cache.
+ * Call on an interval; UI should read via `readAccountBalancesFromCache`.
+ */
+export async function syncAccountBalancesToCache(
   address: string,
-  activeChain: Chain
-): Promise<AccountBalancesResult | null> {
-  if (activeChain == null) {
-    return null
-  }
+  activeChain: Chain,
+  portfolioNetworkSlugs: string[]
+): Promise<void> {
+  if (activeChain == null) return
 
-  //some chains is not supported by the account_assets API, so we need to fetch the balance from the adapter
   if (
-    activeChain.family == ChainFamily.Bitcoin ||
-    activeChain.id == 'tron-mainnet' ||
-    activeChain.id == 'plasma-mainnet'
+    activeChain.family === ChainFamily.Bitcoin ||
+    activeChain.id === 'tron-mainnet' ||
+    activeChain.id === 'plasma-mainnet'
   ) {
-    return fetchAccountBalanceByAdapter(address, activeChain)
+    const result = await fetchAccountBalanceByAdapter(address, activeChain)
+    if (result == null) return
+    const net = chainToAccountAssetsNetwork(activeChain)
+    if (net == null) return
+    const networkUsd = sumUsdAcrossTokens(result.tokens, 18)
+    cacheTokensForNetwork(net, result.tokens, formatUsdAmount(networkUsd))
+    notifyTokenCacheUpdated()
+    return
   }
 
-  // const family = activeChain.family ?? ChainFamily.EVM
   const activeNetwork = chainToAccountAssetsNetwork(activeChain)
-
-  if (activeNetwork == null) {
-    return null
-  }
+  if (activeNetwork == null) return
 
   try {
-    const fetched = await fetchAccountAssets(address, [activeNetwork])
+    const fetched = await fetchAccountAssets(address, portfolioNetworkSlugs)
 
     const byNetwork = new Map<string, ChainToken[]>()
     for (const t of fetched) {
@@ -234,28 +279,22 @@ export async function fetchAccountBalances(
       const networkUsd = sumUsdAcrossTokens(list, 18)
       cacheTokensForNetwork(n, list, formatUsdAmount(networkUsd))
     }
-
-    const activeTokens = activeNetwork
-      ? (byNetwork.get(activeNetwork) ?? [])
-      : []
-    const sortedActive = sortChainTokensForDisplay(activeTokens)
-    const nativeBalance = nativeBalanceFromTokens(sortedActive, activeChain, 4)
-    const totalUsd = sumUsdAcrossTokens(fetched, 18)
-    const currentUsd = sumUsdAcrossTokens(activeTokens, 18)
-    const totalAssetUsd = formatUsdAmount(totalUsd)
-    const currentChainUsd = formatUsdAmount(currentUsd)
     notifyTokenCacheUpdated()
-
-    return {
-      nativeBalance,
-      totalAssetUsd,
-      currentChainUsd,
-      tokens: sortedActive,
-    }
   } catch (error) {
     console.error('Failed to fetch account assets:', error)
-    // Returning `null` lets the UI keep the last successful balances
-    // instead of overwriting with placeholders on transient failures.
+  }
+}
+
+//for test
+export async function fetchAccountBalances(
+  address: string,
+  activeChain: Chain,
+  allChains: string[]
+): Promise<AccountBalancesResult | null> {
+  if (activeChain == null) {
     return null
   }
+
+  await syncAccountBalancesToCache(address, activeChain, allChains)
+  return readAccountBalancesFromCache(activeChain, allChains)
 }
