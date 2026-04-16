@@ -54,15 +54,20 @@ export class SolanaService {
     }
   }
 
-  /** Send SOL. Returns the transaction signature (Base58). */
-  async sendSOL(
+  /** Build, sign, and return the serialized transaction without broadcasting. */
+  async buildAndSignSOL(
     senderKeypair: Keypair,
     recipient: string,
     amountSOL: number
-  ): Promise<string> {
+  ): Promise<{
+    serializedTx: Buffer
+    blockhash: string
+    lastValidBlockHeight: number
+  }> {
     const { blockhash, lastValidBlockHeight } =
       await this.connection.getLatestBlockhash('confirmed')
 
+    const lamports = Math.round(amountSOL * LAMPORTS_PER_SOL)
     const transaction = new Transaction({
       recentBlockhash: blockhash,
       feePayer: senderKeypair.publicKey,
@@ -70,15 +75,30 @@ export class SolanaService {
       SystemProgram.transfer({
         fromPubkey: senderKeypair.publicKey,
         toPubkey: new PublicKey(recipient),
-        lamports: Math.round(amountSOL * LAMPORTS_PER_SOL),
+        lamports,
       })
     )
 
-    const signature = await this.connection.sendTransaction(
-      transaction,
-      [senderKeypair],
-      { skipPreflight: false, preflightCommitment: 'confirmed' }
-    )
+    transaction.sign(senderKeypair)
+    const serializedTx = transaction.serialize()
+
+    return {
+      serializedTx: Buffer.from(serializedTx),
+      blockhash,
+      lastValidBlockHeight,
+    }
+  }
+
+  /** Broadcast a pre-signed serialized transaction. Returns the signature. */
+  async broadcastRawTransaction(
+    serializedTx: Buffer,
+    blockhash: string,
+    lastValidBlockHeight: number
+  ): Promise<string> {
+    const signature = await this.connection.sendRawTransaction(serializedTx, {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    })
 
     const result = await this.connection.confirmTransaction(
       { signature, blockhash, lastValidBlockHeight },
@@ -90,6 +110,21 @@ export class SolanaService {
     }
 
     return signature
+  }
+
+  /** Send SOL. Returns the transaction signature (Base58). */
+  async sendSOL(
+    senderKeypair: Keypair,
+    recipient: string,
+    amountSOL: number
+  ): Promise<string> {
+    const { serializedTx, blockhash, lastValidBlockHeight } =
+      await this.buildAndSignSOL(senderKeypair, recipient, amountSOL)
+    return this.broadcastRawTransaction(
+      serializedTx,
+      blockhash,
+      lastValidBlockHeight
+    )
   }
 
   /** Request an airdrop on devnet/testnet. Not available on mainnet. */

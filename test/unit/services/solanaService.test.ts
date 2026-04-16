@@ -7,12 +7,11 @@ import { SolanaKeyService } from '@/services/chainplugins/solana/solanaPlugin'
 const mockGetBalance = vi.fn()
 const mockGetLatestBlockhash = vi.fn()
 const mockSendTransaction = vi.fn()
+const mockSendRawTransaction = vi.fn()
 const mockConfirmTransaction = vi.fn()
 const mockGetEstimatedFee = vi.fn()
 const mockRequestAirdrop = vi.fn()
 
-// Mock @solana/web3.js Connection without replacing the whole module.
-// We intercept at the class level so Transaction / PublicKey etc. still work.
 vi.mock('@solana/web3.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@solana/web3.js')>()
   class MockTransaction {
@@ -24,6 +23,12 @@ vi.mock('@solana/web3.js', async (importOriginal) => {
     add() {
       return this
     }
+    sign() {
+      // no-op for mock
+    }
+    serialize() {
+      return Buffer.from([0x01, 0x02, 0x03])
+    }
     async getEstimatedFee() {
       return mockGetEstimatedFee()
     }
@@ -34,6 +39,7 @@ vi.mock('@solana/web3.js', async (importOriginal) => {
       getBalance: mockGetBalance,
       getLatestBlockhash: mockGetLatestBlockhash,
       sendTransaction: mockSendTransaction,
+      sendRawTransaction: mockSendRawTransaction,
       confirmTransaction: mockConfirmTransaction,
       requestAirdrop: mockRequestAirdrop,
     })),
@@ -58,6 +64,7 @@ beforeEach(() => {
     lastValidBlockHeight: 9999,
   })
   mockConfirmTransaction.mockResolvedValue({ value: { err: null } })
+  mockSendRawTransaction.mockResolvedValue('MOCK_RAW_SIG')
 })
 
 // ─── TC-SOL-BAL-02 · Zero-balance address ─────────────────────────────────
@@ -96,21 +103,18 @@ describe('TC-SOL-BAL-02: getBalance', () => {
 describe('TC-SOL-TX-01: sendSOL', () => {
   it('returns a transaction signature on success', async () => {
     const expectedSig = 'MOCK_SIGNATURE_BASE58_STRING_123'
-    mockSendTransaction.mockResolvedValue(expectedSig)
+    mockSendRawTransaction.mockResolvedValue(expectedSig)
 
     const service = new SolanaService(DEVNET_RPC)
     const sig = await service.sendSOL(keypair, address, 0.001)
     expect(sig).toBe(expectedSig)
   })
 
-  it('calls sendTransaction with the keypair as signer', async () => {
-    mockSendTransaction.mockResolvedValue('sig')
+  it('calls sendRawTransaction with serialized tx', async () => {
+    mockSendRawTransaction.mockResolvedValue('sig')
     const service = new SolanaService(DEVNET_RPC)
     await service.sendSOL(keypair, address, 0.001)
-    expect(mockSendTransaction).toHaveBeenCalledOnce()
-    // second arg is the signers array
-    const [, signers] = mockSendTransaction.mock.calls[0]
-    expect(signers[0].publicKey.toBase58()).toBe(keypair.publicKey.toBase58())
+    expect(mockSendRawTransaction).toHaveBeenCalledOnce()
   })
 })
 
@@ -118,7 +122,7 @@ describe('TC-SOL-TX-01: sendSOL', () => {
 
 describe('TC-SOL-TX-02: sendSOL error handling', () => {
   it('throws when the RPC rejects (simulated insufficient funds)', async () => {
-    mockSendTransaction.mockRejectedValue(
+    mockSendRawTransaction.mockRejectedValue(
       new Error('Transaction simulation failed: insufficient lamports')
     )
     const service = new SolanaService(DEVNET_RPC)
@@ -128,7 +132,7 @@ describe('TC-SOL-TX-02: sendSOL error handling', () => {
   })
 
   it('throws when confirmTransaction reports an on-chain error', async () => {
-    mockSendTransaction.mockResolvedValue('sig')
+    mockSendRawTransaction.mockResolvedValue('sig')
     mockConfirmTransaction.mockResolvedValue({
       value: { err: { InstructionError: [0, 'InsufficientFunds'] } },
     })
