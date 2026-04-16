@@ -1,15 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import PasskeyService from '../../services/account/passkeyService'
 import { SolanaService } from '../../services/rpc/solanaService'
 import { SolanaKeyService } from '../../services/chainplugins/solana/solanaPlugin'
 import SendFormLayout from './SendFormLayout'
+import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
 import '../TransactionActions.css'
 import { useI18n } from '../../i18n'
+import { decodeSolanaTx } from '../../utils/solanaTxDecoder'
 
 interface SolanaSendFormProps {
   onClose: () => void
+}
+
+interface SignedSolanaTx {
+  serializedTx: Buffer
+  blockhash: string
+  lastValidBlockHeight: number
+}
+
+function buildSolanaRows(
+  serializedTx: Buffer,
+  nativeSymbol: string,
+  t: (key: string) => string
+): TxDisplayRow[] {
+  const decoded = decodeSolanaTx(serializedTx, nativeSymbol)
+  if (!decoded) return []
+
+  return [
+    { label: t('txFieldFrom'), value: decoded.from, mono: true },
+    { label: t('txFieldTo'), value: decoded.to, mono: true },
+    { label: t('txFieldValue'), value: decoded.amount },
+    { label: t('txFieldEstimatedFee'), value: decoded.estimatedFee },
+    { label: t('txFieldProgram'), value: decoded.program, mono: true },
+    { label: t('txFieldBlockhash'), value: decoded.blockhash, mono: true },
+  ]
 }
 
 const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
@@ -21,8 +47,23 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
   const [addressError, setAddressError] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [signedTx, setSignedTx] = useState<SignedSolanaTx | null>(null)
   const [txSignature, setTxSignature] = useState('')
+  const [isBroadcasting, setIsBroadcasting] = useState(false)
   const [estimatedFee, setEstimatedFee] = useState<string | null>(null)
+
+  const nativeSymbol = activeChain?.symbol || 'SOL'
+  const solanaRows = useMemo(
+    () =>
+      signedTx
+        ? buildSolanaRows(
+            signedTx.serializedTx,
+            nativeSymbol,
+            t as (key: string) => string
+          )
+        : [],
+    [signedTx, nativeSymbol, t]
+  )
 
   if (!activeSolanaWallet) return null
 
@@ -31,6 +72,7 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
     setAmount('')
     setAddressError('')
     setError('')
+    setSignedTx(null)
     setTxSignature('')
     setEstimatedFee(null)
     onClose()
@@ -70,8 +112,9 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
     }
   }
 
-  const handleSend = async () => {
+  const handleSign = async () => {
     setError('')
+    setSignedTx(null)
     setTxSignature('')
 
     if (!validateAddress(toAddress)) return
@@ -96,8 +139,12 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
         activeSolanaWallet.privateKey!
       )
       const service = new SolanaService(getPrimaryRpcUrl(activeChain))
-      const signature = await service.sendSOL(keypair, toAddress, amountNum)
-      setTxSignature(signature)
+      const result = await service.buildAndSignSOL(
+        keypair,
+        toAddress,
+        amountNum
+      )
+      setSignedTx(result)
     } catch (e) {
       console.error(e)
       setError((e as Error).message)
@@ -106,14 +153,36 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
     }
   }
 
-  const explorerBase = activeChain.explorer || 'https://solscan.io'
-  const explorerUrl = `${explorerBase}/tx/${txSignature}`
+  const handleBroadcast = async () => {
+    if (!signedTx) return
+    setError('')
+    setIsBroadcasting(true)
+    try {
+      const service = new SolanaService(getPrimaryRpcUrl(activeChain))
+      const signature = await service.broadcastRawTransaction(
+        signedTx.serializedTx,
+        signedTx.blockhash,
+        signedTx.lastValidBlockHeight
+      )
+      setTxSignature(signature)
+    } catch (e) {
+      console.error(e)
+      setError((e as Error).message)
+    } finally {
+      setIsBroadcasting(false)
+    }
+  }
 
+  const explorerBase = activeChain.explorer || 'https://solscan.io'
   const walletHint = `From: ${activeSolanaWallet.address.slice(0, 6)}...${activeSolanaWallet.address.slice(-4)} (${activeChain.name})`
+
+  const rawBase64 = signedTx
+    ? Buffer.from(signedTx.serializedTx).toString('base64')
+    : ''
 
   return (
     <SendFormLayout title="Send SOL" walletHint={walletHint} error={error}>
-      {!txSignature ? (
+      {!signedTx && !txSignature ? (
         <>
           <div className="form-group">
             <label>Recipient (Solana address)</label>
@@ -150,20 +219,20 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
 
           <div className="modal-actions">
             <button
-              onClick={handleSend}
+              onClick={handleSign}
               disabled={isLoading || !toAddress || !amount || !!addressError}
               className="primary-btn"
             >
-              {isLoading ? 'Sending...' : 'Sign & Send'}
+              {isLoading ? 'Signing...' : t('signAndReview')}
             </button>
             <button onClick={handleClose} className="secondary-btn">
               Close
             </button>
           </div>
         </>
-      ) : (
+      ) : txSignature ? (
         <div className="broadcast-success">
-          <h4>Transaction Submitted!</h4>
+          <h4>{t('txSubmitted')}</h4>
           <p>
             Signature:{' '}
             <span className="hash-text">
@@ -171,12 +240,12 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
             </span>
           </p>
           <a
-            href={explorerUrl}
+            href={`${explorerBase}/tx/${txSignature}`}
             target="_blank"
             rel="noopener noreferrer"
             className="view-link"
           >
-            View on Explorer
+            View on Explorer ↗
           </a>
           <div className="modal-actions">
             <button
@@ -194,6 +263,29 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
             </button>
           </div>
         </div>
+      ) : (
+        <>
+          <SignedTxResult
+            rows={solanaRows}
+            rawData={rawBase64}
+            rawFormat="base64"
+            broadcastHash=""
+            isBroadcasting={isBroadcasting}
+            explorerUrl={explorerBase}
+            hashLabel="Signature"
+            onCopy={() =>
+              navigator.clipboard
+                .writeText(rawBase64)
+                .then(() => alert(t('copied')))
+            }
+            onBroadcast={handleBroadcast}
+          />
+          <div className="modal-actions" style={{ marginTop: '10px' }}>
+            <button onClick={handleClose} className="secondary-btn">
+              Close
+            </button>
+          </div>
+        </>
       )}
     </SendFormLayout>
   )

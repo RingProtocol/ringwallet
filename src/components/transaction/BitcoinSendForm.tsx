@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
+import * as bitcoin from 'bitcoinjs-lib'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import PasskeyService from '../../services/account/passkeyService'
@@ -8,10 +9,18 @@ import {
 } from '../../services/rpc/bitcoinService'
 import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
 import SendFormLayout from './SendFormLayout'
+import SignedTxResult from './SignedTxResult'
 import '../TransactionActions.css'
+import { useI18n } from '../../i18n'
+import { decodeBitcoinTx, buildBitcoinRows } from '../../utils/bitcoinTxDecoder'
 
 interface BitcoinSendFormProps {
   onClose: () => void
+}
+
+interface SignedBitcoinTx {
+  txHex: string
+  fee: number
 }
 
 const FEE_TARGETS = [
@@ -22,26 +31,45 @@ const FEE_TARGETS = [
 
 const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
   const { activeBitcoinWallet, activeChain, user } = useAuth()
+  const { t } = useI18n()
 
   const [toAddress, setToAddress] = useState('')
   const [amount, setAmount] = useState('')
   const [addressError, setAddressError] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [signedTx, setSignedTx] = useState<SignedBitcoinTx | null>(null)
   const [txId, setTxId] = useState('')
   const [estimatedFee, setEstimatedFee] = useState<string | null>(null)
   const [feeTarget, setFeeTarget] = useState(3)
   const [isBroadcasting, setIsBroadcasting] = useState(false)
 
-  if (!activeBitcoinWallet) return null
+  const isTestnet = activeChain?.network === 'testnet'
+  const nativeSymbol = activeChain?.symbol || 'BTC'
+  const btcNetwork = isTestnet
+    ? bitcoin.networks.testnet
+    : bitcoin.networks.bitcoin
 
-  const isTestnet = activeChain.network === 'testnet'
+  const btcRows = useMemo(() => {
+    if (!signedTx || !activeBitcoinWallet) return []
+    const decoded = decodeBitcoinTx(
+      signedTx.txHex,
+      activeBitcoinWallet.address,
+      signedTx.fee,
+      btcNetwork
+    )
+    if (!decoded) return []
+    return buildBitcoinRows(decoded, nativeSymbol, t as (key: string) => string)
+  }, [signedTx, activeBitcoinWallet, nativeSymbol, btcNetwork, t])
+
+  if (!activeBitcoinWallet) return null
 
   const handleClose = () => {
     setToAddress('')
     setAmount('')
     setAddressError('')
     setError('')
+    setSignedTx(null)
     setTxId('')
     setEstimatedFee(null)
     onClose()
@@ -85,8 +113,9 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
     }
   }
 
-  const handleSend = async () => {
+  const handleSign = async () => {
     setError('')
+    setSignedTx(null)
     setTxId('')
 
     if (!validateAddress(toAddress)) return
@@ -123,8 +152,7 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
       )
       const amountSats = BitcoinService.btcToSats(amountBtc)
 
-      setIsBroadcasting(true)
-      const { txHex } = await service.buildAndSignTransaction({
+      const result = await service.buildAndSignTransaction({
         fromAddress: activeBitcoinWallet.address,
         toAddress,
         amountSats,
@@ -133,29 +161,45 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
         feeRate: undefined,
       })
 
-      const txid = await service.broadcast(txHex)
-      setTxId(txid)
+      setSignedTx(result)
     } catch (e) {
       console.error(e)
       setError((e as Error).message)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleBroadcast = async () => {
+    if (!signedTx) return
+    setError('')
+    setIsBroadcasting(true)
+    try {
+      const service = new BitcoinService(
+        getPrimaryRpcUrl(activeChain),
+        isTestnet,
+        bitcoinForkForChain(activeChain)
+      )
+      const txid = await service.broadcast(signedTx.txHex)
+      setTxId(txid)
+    } catch (e) {
+      console.error(e)
+      setError((e as Error).message)
+    } finally {
       setIsBroadcasting(false)
     }
   }
 
-  const explorerBase = activeChain.explorer || 'https://mempool.space'
-  const explorerUrl = `${explorerBase}/tx/${txId}`
-
+  const explorerBase = activeChain?.explorer || 'https://mempool.space'
   const walletHint = `From: ${activeBitcoinWallet.address.slice(0, 10)}...${activeBitcoinWallet.address.slice(-6)} (${activeChain.name})`
 
   return (
     <SendFormLayout
-      title={`Send ${activeChain.symbol}`}
+      title={`Send ${nativeSymbol}`}
       walletHint={walletHint}
       error={error}
     >
-      {!txId ? (
+      {!signedTx && !txId ? (
         <>
           <div className="form-group">
             <label>Recipient</label>
@@ -174,7 +218,7 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
           </div>
 
           <div className="form-group">
-            <label>Amount ({activeChain.symbol})</label>
+            <label>Amount ({nativeSymbol})</label>
             <input
               type="number"
               value={amount}
@@ -218,24 +262,20 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
 
           <div className="modal-actions">
             <button
-              onClick={handleSend}
+              onClick={handleSign}
               disabled={isLoading || !toAddress || !amount || !!addressError}
               className="primary-btn"
             >
-              {isBroadcasting
-                ? 'Broadcasting...'
-                : isLoading
-                  ? 'Signing...'
-                  : 'Sign & Send'}
+              {isLoading ? 'Signing...' : t('signAndReview')}
             </button>
             <button onClick={handleClose} className="secondary-btn">
               Close
             </button>
           </div>
         </>
-      ) : (
+      ) : txId ? (
         <div className="broadcast-success">
-          <h4>Transaction Submitted!</h4>
+          <h4>{t('txSubmitted')}</h4>
           <p>
             TxID:{' '}
             <span className="hash-text">
@@ -243,12 +283,12 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
             </span>
           </p>
           <a
-            href={explorerUrl}
+            href={`${explorerBase}/tx/${txId}`}
             target="_blank"
             rel="noopener noreferrer"
             className="view-link"
           >
-            View on Explorer
+            View on Explorer ↗
           </a>
           <div className="modal-actions">
             <button
@@ -264,6 +304,29 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
             </button>
           </div>
         </div>
+      ) : (
+        <>
+          <SignedTxResult
+            rows={btcRows}
+            rawData={signedTx!.txHex}
+            rawFormat="hex"
+            broadcastHash=""
+            isBroadcasting={isBroadcasting}
+            explorerUrl={explorerBase}
+            hashLabel="TxID"
+            onCopy={() =>
+              navigator.clipboard
+                .writeText(signedTx!.txHex)
+                .then(() => alert('Copied!'))
+            }
+            onBroadcast={handleBroadcast}
+          />
+          <div className="modal-actions" style={{ marginTop: '10px' }}>
+            <button onClick={handleClose} className="secondary-btn">
+              Close
+            </button>
+          </div>
+        </>
       )}
     </SendFormLayout>
   )
