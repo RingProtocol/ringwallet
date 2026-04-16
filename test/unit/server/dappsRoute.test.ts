@@ -73,7 +73,7 @@ describe('/api/v1/dapps GET', () => {
     expect(upstreamUrl.searchParams.get('testdapp')).toBe('abc123')
     expect(init).toMatchObject({
       headers: { Accept: 'application/json' },
-      cache: 'no-store',
+      next: { revalidate: 300 },
     })
     expect(payload).toMatchObject({
       dapps: [
