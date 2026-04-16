@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import DAppContainer from '@/features/dapps/components/DAppContainer'
+import RingSwapWidget from './swap/RingSwapWidget'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import {
@@ -17,7 +17,6 @@ import TransactionHistory, {
   type TransactionHistoryAssetFilter,
 } from './TransactionHistory'
 import { ActionCircleEntry } from './ActionCircleEntry'
-import { RING_SWAP_DAPP } from './TransactionActions'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -134,12 +133,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
 
   return (
     <div className="token-detail" role="dialog" aria-modal="true">
-      {swapOpen && (
-        <DAppContainer
-          dapp={RING_SWAP_DAPP}
-          onBack={() => setSwapOpen(false)}
-        />
-      )}
+      {swapOpen && <RingSwapWidget onClose={() => setSwapOpen(false)} />}
       <header className="token-detail__nav">
         <button
           type="button"
