@@ -50,9 +50,16 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
 
   it('all families produce unique addresses (no cross-family collision)', () => {
     const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
-    const addresses = Object.values(all).map((arr) => arr[0].address)
-    const unique = new Set(addresses)
-    expect(unique.size).toBe(addresses.length)
+
+    // Prisma intentionally shares EVM derivation (BIP44 coin 60),
+    // and the base 'cosmos' slot uses the same params as 'cosmos_cosmos'.
+    const KNOWN_ALIASES = new Set(['prisma', 'cosmos'])
+    const filtered = Object.entries(all)
+      .filter(([key]) => !KNOWN_ALIASES.has(key))
+      .map(([, arr]) => arr[0].address)
+
+    const unique = new Set(filtered)
+    expect(unique.size).toBe(filtered.length)
   })
 
   it('each family uses the correct address format', () => {
