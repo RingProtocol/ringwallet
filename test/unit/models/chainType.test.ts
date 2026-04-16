@@ -38,8 +38,8 @@ describe('ChainFamily enum', () => {
     expect(ChainFamily.Cosmos).toBe('cosmos')
   })
 
-  it('has exactly 5 members', () => {
+  it('has exactly 7 members', () => {
     const values = Object.values(ChainFamily)
-    expect(values).toHaveLength(5)
+    expect(values).toHaveLength(7)
   })
 })

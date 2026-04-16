@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import EvmRpcService from '@/services/rpc/evmRpcService'
 
 // ─── Existing: fetchHistoryFromChain ─────────────────────────────────────
@@ -177,6 +177,8 @@ describe('EvmRpcService — multi-URL fallback (tryRpcUrls)', () => {
   })
 
   it('waits for one RPC result before starting the next URL', async () => {
+    vi.useFakeTimers()
+
     const service = new EvmRpcService([
       'https://rpc-1.example.test',
       'https://rpc-2.example.test',
@@ -206,11 +208,11 @@ describe('EvmRpcService — multi-URL fallback (tryRpcUrls)', () => {
       })
     })
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(started).toEqual(['https://rpc-1.example.test'])
 
     rejectFirst(new Error('rpc-1 failed'))
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(1000)
     expect(started).toEqual([
       'https://rpc-1.example.test',
       'https://rpc-2.example.test',
@@ -218,6 +220,8 @@ describe('EvmRpcService — multi-URL fallback (tryRpcUrls)', () => {
 
     resolveSecond('ok')
     await expect(promise).resolves.toBe('ok')
+
+    vi.useRealTimers()
   })
 
   it('throws when all URLs fail', async () => {
