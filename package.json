@@ -90,7 +90,6 @@
     "dappsdk:minify": "node scripts/minify-dappsdk.mjs"
   },
   "dependencies": {
-    "@kyberswap/widgets": "^2.3.0",
     "@neondatabase/serverless": "^1.0.2",
     "@ring-protocol/ring-swap-sdk": "link:../ring-swap-sdk",
     "@solana/spl-token": "^0.4.14",
