@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import RingSwapWidget from './swap/RingSwapWidget'
+import { RingSwapFrame } from '@ring-protocol/ring-swap-sdk'
+import '@ring-protocol/ring-swap-sdk/styles'
+import { useSwapSigner } from './swap/useSwapSigner'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { SendTokenOption } from './transaction/types'
@@ -98,6 +100,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     isDogecoinChain,
   } = useAuth()
   const { t } = useI18n()
+  const {
+    signer: swapSigner,
+    chainId: swapChainId,
+    rpcUrl: swapRpcUrl,
+  } = useSwapSigner()
   const [showSend, setShowSend] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
   const [swapDappOpen, setSwapDappOpen] = useState(false)
@@ -183,8 +190,13 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
   return (
     <div className="transaction-actions-container">
-      {swapDappOpen && (
-        <RingSwapWidget onClose={() => setSwapDappOpen(false)} />
+      {swapDappOpen && swapSigner && (
+        <RingSwapFrame
+          signer={swapSigner}
+          chainId={swapChainId}
+          rpcUrl={swapRpcUrl}
+          onClose={() => setSwapDappOpen(false)}
+        />
       )}
       <div className="action-buttons" role="toolbar" aria-label={t('wallet')}>
         <ActionCircleEntry
