@@ -119,8 +119,12 @@ describe('balanceManager.fetchAccountBalances', () => {
     )
     const init = fetchMock.mock.calls[0][1] as RequestInit
     expect(JSON.parse(init.body as string)).toEqual({
-      address: TEST_WALLET,
-      networks: portfolioNetworkSlugs,
+      addresses: [
+        {
+          address: TEST_WALLET,
+          networks: portfolioNetworkSlugs,
+        },
+      ],
     })
 
     const tokens: ChainToken[] = JSON.parse(

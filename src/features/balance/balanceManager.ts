@@ -25,9 +25,14 @@ export function setAccountBalancePollIntervalMs(ms: number): void {
 
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
-type AccountAssetsRequest = {
+/** One wallet address and the `account_assets` network slugs to query for it. */
+export type AccountAssetsAddressEntry = {
   address: string
   networks: string[]
+}
+
+type AccountAssetsRequest = {
+  addresses: AccountAssetsAddressEntry[]
 }
 
 type AccountAssetsResponse = {
@@ -155,10 +160,16 @@ function nativeBalanceFromTokens(
 }
 
 async function fetchAccountAssets(
-  address: string,
-  networks: string[]
+  addresses: AccountAssetsAddressEntry[]
 ): Promise<ChainToken[]> {
-  const body: AccountAssetsRequest = { address, networks }
+  const body: AccountAssetsRequest = {
+    addresses: addresses.filter(
+      (a) => a.address.length > 0 && a.networks.length > 0
+    ),
+  }
+  if (body.addresses.length === 0) {
+    return []
+  }
 
   const res = await fetch(ACCOUNT_ASSETS_URL, {
     method: 'POST',
@@ -242,9 +253,9 @@ export function readAccountBalancesFromCache(
  * Call on an interval; UI should read via `readAccountBalancesFromCache`.
  */
 export async function syncAccountBalancesToCache(
-  address: string,
+  adapterAddress: string,
   activeChain: Chain,
-  portfolioNetworkSlugs: string[]
+  accountAssetGroups: AccountAssetsAddressEntry[]
 ): Promise<void> {
   if (activeChain == null) return
 
@@ -253,7 +264,10 @@ export async function syncAccountBalancesToCache(
     activeChain.id === 'tron-mainnet' ||
     activeChain.id === 'plasma-mainnet'
   ) {
-    const result = await fetchAccountBalanceByAdapter(address, activeChain)
+    const result = await fetchAccountBalanceByAdapter(
+      adapterAddress,
+      activeChain
+    )
     if (result == null) return
     const net = chainToAccountAssetsNetwork(activeChain)
     if (net == null) return
@@ -267,7 +281,7 @@ export async function syncAccountBalancesToCache(
   if (activeNetwork == null) return
 
   try {
-    const fetched = await fetchAccountAssets(address, portfolioNetworkSlugs)
+    const fetched = await fetchAccountAssets(accountAssetGroups)
 
     const byNetwork = new Map<string, ChainToken[]>()
     for (const t of fetched) {
@@ -295,6 +309,8 @@ export async function fetchAccountBalances(
     return null
   }
 
-  await syncAccountBalancesToCache(address, activeChain, allChains)
+  await syncAccountBalancesToCache(address, activeChain, [
+    { address, networks: allChains },
+  ])
   return readAccountBalancesFromCache(activeChain, allChains)
 }

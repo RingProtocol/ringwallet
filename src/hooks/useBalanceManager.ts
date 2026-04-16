@@ -13,6 +13,7 @@ import '../features/balance/adapters'
 import {
   readAccountBalancesFromCache,
   syncAccountBalancesToCache,
+  type AccountAssetsAddressEntry,
   emptyBalance,
   formatUsdAmount,
   getAccountBalancePollIntervalMs,
@@ -32,19 +33,87 @@ export interface BalanceState {
 }
 
 export function useBalanceManager(): BalanceState {
-  const { activeAccount, activeChain } = useAuth()
+  const {
+    activeAccount,
+    activeChain,
+    activeWallet,
+    activeSolanaWallet,
+    activeDogecoinWallet,
+    activeWalletIndex,
+    accountsByFamily,
+  } = useAuth()
 
   const family = activeChain?.family ?? ChainFamily.EVM
   const adapter = balanceAdapterRegistry.get(family)
   const supportsTokens = adapter?.supportsTokens ?? false
 
+  const accountAssetGroups = useMemo((): AccountAssetsAddressEntry[] => {
+    const uniq = (xs: string[]) => [...new Set(xs)]
+    const evmNets: string[] = []
+    const solNets: string[] = []
+    const tronNets: string[] = []
+    const dogeNets: string[] = []
+
+    for (const c of DEFAULT_CHAINS) {
+      if (c.family === ChainFamily.Bitcoin) continue
+      const slug = chainToAccountAssetsNetwork(c)
+      if (!slug) continue
+      switch (c.family) {
+        case ChainFamily.EVM:
+          evmNets.push(slug)
+          break
+        case ChainFamily.Solana:
+          solNets.push(slug)
+          break
+        case ChainFamily.Tron:
+          tronNets.push(slug)
+          break
+        case ChainFamily.Dogecoin:
+          dogeNets.push(slug)
+          break
+        default:
+          break
+      }
+    }
+
+    const groups: AccountAssetsAddressEntry[] = []
+    const evmAddr = activeWallet?.address
+    if (evmAddr && evmNets.length > 0) {
+      groups.push({ address: evmAddr, networks: uniq(evmNets) })
+    }
+    const solAddr = activeSolanaWallet?.address
+    if (solAddr && solNets.length > 0) {
+      groups.push({ address: solAddr, networks: uniq(solNets) })
+    }
+    const tronAcc = accountsByFamily[ChainFamily.Tron]?.[activeWalletIndex]
+    if (tronAcc?.address && tronNets.length > 0) {
+      groups.push({ address: tronAcc.address, networks: uniq(tronNets) })
+    }
+    const dogeAddr = activeDogecoinWallet?.address
+    if (dogeAddr && dogeNets.length > 0) {
+      groups.push({ address: dogeAddr, networks: uniq(dogeNets) })
+    }
+    return groups
+  }, [
+    activeWallet?.address,
+    activeSolanaWallet?.address,
+    activeDogecoinWallet?.address,
+    activeWalletIndex,
+    accountsByFamily,
+  ])
+
   const portfolioNetworkSlugs = useMemo(
-    () =>
-      DEFAULT_CHAINS.filter((c) => c.family !== ChainFamily.Bitcoin)
-        .map((c) => chainToAccountAssetsNetwork(c) ?? '')
-        .filter(Boolean),
-    []
+    () => accountAssetGroups.flatMap((g) => g.networks),
+    [accountAssetGroups]
   )
+
+  const accountAssetGroupsRef = useRef(accountAssetGroups)
+  accountAssetGroupsRef.current = accountAssetGroups
+
+  const accountAssetsSyncKeyRef = useRef('')
+  accountAssetsSyncKeyRef.current = accountAssetGroups
+    .map((g) => `${g.address}:${g.networks.join(',')}`)
+    .join('|')
 
   const [nativeBalance, setNativeBalance] = useState(() => emptyBalance(family))
   const [totalAssetUsd, setTotalAssetUsd] = useState(() => formatUsdAmount('0'))
@@ -91,9 +160,27 @@ export function useBalanceManager(): BalanceState {
       window.removeEventListener('ring:tokens-updated', handleTokensUpdated)
   }, [activeAccount?.address, activeChain?.id, supportsTokens])
 
+  const walletIdentityKey = useMemo(
+    () =>
+      [
+        activeWalletIndex,
+        activeWallet?.address ?? '',
+        activeSolanaWallet?.address ?? '',
+        activeDogecoinWallet?.address ?? '',
+        accountsByFamily[ChainFamily.Tron]?.[activeWalletIndex]?.address ?? '',
+      ].join('|'),
+    [
+      activeWalletIndex,
+      activeWallet?.address,
+      activeSolanaWallet?.address,
+      activeDogecoinWallet?.address,
+      accountsByFamily,
+    ]
+  )
+
   useEffect(() => {
     clearChainTokenCache()
-  }, [activeAccount?.address])
+  }, [walletIdentityKey])
 
   // Commit balance with optional change notification
   const commitNativeBalance = useCallback(
@@ -171,16 +258,18 @@ export function useBalanceManager(): BalanceState {
   // Interval: only fetch + populate cache; UI reads cache above.
   useEffect(() => {
     if (!activeAccount) return
-    const address = activeAccount.address
 
     const tick = async () => {
       const fetchId = ++inFlightFetchIdRef.current
       setIsLoading(true)
+      const syncKeyAtStart = accountAssetsSyncKeyRef.current
+      const adapterAddress = activeAccountRef.current?.address ?? ''
       try {
         const chain = activeChainRef.current
         if (!chain) return
-        await syncAccountBalancesToCache(address, chain, portfolioNetworkSlugs)
-        if (activeAccountRef.current?.address !== address) return
+        const groups = accountAssetGroupsRef.current
+        await syncAccountBalancesToCache(adapterAddress, chain, groups)
+        if (accountAssetsSyncKeyRef.current !== syncKeyAtStart) return
         applyFromCache({ notifyNativeChange: true })
       } finally {
         if (fetchId === inFlightFetchIdRef.current) {
@@ -195,7 +284,7 @@ export function useBalanceManager(): BalanceState {
       getAccountBalancePollIntervalMs()
     )
     return () => clearInterval(interval)
-  }, [activeAccount, portfolioNetworkSlugs, applyFromCache, importedTokens])
+  }, [activeAccount, accountAssetGroups, applyFromCache, importedTokens])
 
   return {
     nativeBalance,
