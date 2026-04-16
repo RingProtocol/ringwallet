@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import DAppContainer from '@/features/dapps/components/DAppContainer'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
@@ -36,6 +36,8 @@ export interface TokenDetailPageProps {
   onBack: () => void
 }
 
+const CONTRACT_COPY_FEEDBACK_MS = 1_500
+
 const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   token,
   chain,
@@ -49,6 +51,10 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   const [sendTokenOption, setSendTokenOption] = useState<
     SendTokenOption | undefined
   >(undefined)
+  const [contractCopied, setContractCopied] = useState(false)
+  const contractCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
 
   const isNative = token.tokenAddress == null
   const symbol = chainTokenDisplaySymbol(token, chain)
@@ -120,10 +126,30 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
     )
   }
 
-  const copyContract = useCallback(() => {
+  const handleCopyContract = useCallback(async () => {
     if (!token.tokenAddress) return
-    void navigator.clipboard.writeText(token.tokenAddress)
+    try {
+      await navigator.clipboard.writeText(token.tokenAddress)
+    } catch {
+      return
+    }
+    setContractCopied(true)
+    if (contractCopyTimerRef.current != null) {
+      clearTimeout(contractCopyTimerRef.current)
+    }
+    contractCopyTimerRef.current = setTimeout(() => {
+      setContractCopied(false)
+      contractCopyTimerRef.current = null
+    }, CONTRACT_COPY_FEEDBACK_MS)
   }, [token.tokenAddress])
+
+  useEffect(() => {
+    return () => {
+      if (contractCopyTimerRef.current != null) {
+        clearTimeout(contractCopyTimerRef.current)
+      }
+    }
+  }, [])
 
   const decimalsLabel =
     token.tokenMetadata.decimals != null
@@ -153,40 +179,50 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
       </header>
 
       <div className="token-detail__scroll">
-        <h1 className="token-detail__title">{name}</h1>
-        <div className="token-detail__hero-row">
-          <div className="token-detail__price-block">
-            <div className="token-detail__price-row">
-              <span className="token-detail__unit-price">{unitPrice}</span>
-              {changeStr != null && (
-                <span className="token-detail__change">{changeStr}</span>
-              )}
-            </div>
-            <div className="token-detail__position">
-              <span className="token-detail__position-label">
-                {t('tokenDetailHoldingsUsd')}
-              </span>
-              <span className="token-detail__position-value">
-                {positionUsd}
-              </span>
-            </div>
+        <div className="token-detail__title">
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="token-detail__logo" />
+          ) : isNative && chain.icon ? (
+            <ChainIcon icon={chain.icon} symbol={symbol} size={44} />
+          ) : (
+            <span className="token-detail__logo-fallback">
+              {symbol.charAt(0)}
+            </span>
+          )}
+          <span className="token-detail__title-name">{name}</span>
+        </div>
+        <div className="token-detail__metric-card token-detail__price-block">
+          <div className="token-detail__metric-row">
+            <span className="token-detail__metric-label">
+              {t('tokenColumnPrice')}
+            </span>
+            <span className="token-detail__metric-value token-detail__unit-price">
+              {unitPrice}
+            </span>
           </div>
-          <div className="token-detail__balance-card">
-            <div className="token-detail__balance-icon">
-              {logoUrl ? (
-                <img src={logoUrl} alt="" className="token-detail__logo" />
-              ) : isNative && chain.icon ? (
-                <ChainIcon icon={chain.icon} symbol={symbol} size={44} />
-              ) : (
-                <span className="token-detail__logo-fallback">
-                  {symbol.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="token-detail__balance-text">
-              <span className="token-detail__balance-symbol">{symbol}</span>
-              <span className="token-detail__balance-qty">{balanceStr}</span>
-            </div>
+          <div className="token-detail__metric-row">
+            <span className="token-detail__metric-label">
+              {t('tokenColumnChangeRate')}
+            </span>
+            <span className="token-detail__metric-value token-detail__change">
+              {changeStr ?? '—'}
+            </span>
+          </div>
+          <div className="token-detail__metric-row">
+            <span className="token-detail__metric-label">
+              {t('tokenDetailHoldingsUsd')}
+            </span>
+            <span className="token-detail__metric-value token-detail__position-value">
+              {positionUsd}
+            </span>
+          </div>
+          <div className="token-detail__metric-row">
+            <span className="token-detail__metric-label">
+              {t('tokenDetailBalance')}
+            </span>
+            <span className="token-detail__metric-value token-detail__balance-value">
+              {symbol} {balanceStr}
+            </span>
           </div>
         </div>
 
@@ -230,15 +266,21 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
                   </span>
                 ) : (
                   <>
-                    <code className="token-detail__contract">
-                      {token.tokenAddress}
-                    </code>
+                    <button
+                      type="button"
+                      className="token-detail__contract token-detail__contract--clickcopy"
+                      onClick={() => void handleCopyContract()}
+                      title={contractCopied ? t('copied') : t('copy')}
+                      aria-label={contractCopied ? t('copied') : t('copy')}
+                    >
+                      {contractCopied ? t('copied') : token.tokenAddress}
+                    </button>
                     <button
                       type="button"
                       className="token-detail__copy"
-                      onClick={copyContract}
+                      onClick={() => void handleCopyContract()}
                     >
-                      {t('copy')}
+                      {contractCopied ? t('copied') : t('copy')}
                     </button>
                   </>
                 )}

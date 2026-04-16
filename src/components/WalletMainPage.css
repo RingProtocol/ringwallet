@@ -246,8 +246,17 @@
 
 .wallet-main-page__assets {
   margin-top: 8px;
-  margin-left: -16px;
-  margin-right: -16px;
+}
+
+/*
+ * Wallet tab card: remove the global `.card` padding for this panel so token rows can align
+ * flush to the rounded container edge (otherwise you always see ~6px “air” inside the card).
+ */
+.wallet-main-page__scroll
+  > .wallet-main-page__card.wallet-main-page__card--below-hero.card {
+  padding-left: 0;
+  padding-right: 0;
+  text-align: start;
 }
 
 .wallet-main-page__card--activity {
