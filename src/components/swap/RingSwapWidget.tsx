@@ -92,7 +92,7 @@ const RingSwapWidget: React.FC<RingSwapWidgetProps> = ({ onClose }) => {
             enableRoute
             showRate
             showDetail
-            title="RingSwap"
+            title="Swap"
             width={380}
           />
         </div>
