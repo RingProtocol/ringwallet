@@ -15,9 +15,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 2px 10px;
-  margin-top: -8px;
-  margin-left: 0;
+  padding: 0 0 6px;
+  margin: 0;
 }
 
 .token-list-title {
@@ -27,8 +26,8 @@
 }
 
 .token-import-btn {
-  padding: 6px 14px;
-  font-size: 0.85rem;
+  padding: 6px 10px;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--ring-accent, #a5b4fc);
   background: transparent;

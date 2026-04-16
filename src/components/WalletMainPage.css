@@ -245,18 +245,36 @@
 }
 
 .wallet-main-page__assets {
-  margin-top: 8px;
+  margin-top: 0px;
 }
 
 /*
- * Wallet tab card: remove the global `.card` padding for this panel so token rows can align
- * flush to the rounded container edge (otherwise you always see ~6px “air” inside the card).
+ * Wallet tab card: override the global `.card` horizontal padding for this panel. * Use a small inset so token rows don't feel glued to the rounded edge.
  */
 .wallet-main-page__scroll
   > .wallet-main-page__card.wallet-main-page__card--below-hero.card {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 2px;
+  padding-right: 2px;
   text-align: start;
+}
+
+/* PWA App.css uses .card { padding: 30px 20px } ≤768px for login; restate padding so wallet tab cards stay compact. */
+@media (max-width: 768px) {
+  .wallet-main-page__scroll
+    > .wallet-main-page__card.wallet-main-page__card--below-hero.card {
+    padding-top: 6px;
+    padding-bottom: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .wallet-main-page__scroll
+    > .wallet-main-page__card.wallet-main-page__card--activity.card {
+    padding-top: 8px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
 
 .wallet-main-page__card--activity {
