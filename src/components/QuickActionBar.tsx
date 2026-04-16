@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import DAppContainer from '@/features/dapps/components/DAppContainer'
-import '@/features/dapps/components/DApps.css'
-import type { DAppInfo } from '@/features/dapps/types/dapp'
+import RingSwapWidget from './swap/RingSwapWidget'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { SendTokenOption } from './transaction/types'
@@ -55,18 +53,6 @@ export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
 )
 
 /* ── Constants ── */
-
-/** Built-in Ring Exchange swap UI (in-app via DAppContainer + WalletBridge). */
-export const RING_SWAP_DAPP: DAppInfo = {
-  id: 900_001,
-  name: 'Ring',
-  description: 'Ring Exchange',
-  url: 'https://dapp-test.new-interface-7vn.pages.dev/#/swap',
-  icon: 'https://app.ring.exchange/favicon.png',
-  chains: [],
-  category: 'swap',
-  top: 0,
-}
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 
@@ -198,10 +184,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   return (
     <div className="transaction-actions-container">
       {swapDappOpen && (
-        <DAppContainer
-          dapp={RING_SWAP_DAPP}
-          onBack={() => setSwapDappOpen(false)}
-        />
+        <RingSwapWidget onClose={() => setSwapDappOpen(false)} />
       )}
       <div className="action-buttons" role="toolbar" aria-label={t('wallet')}>
         <ActionCircleEntry
