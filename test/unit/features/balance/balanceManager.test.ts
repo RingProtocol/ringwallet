@@ -1,7 +1,8 @@
 import { formatUnits } from 'ethers'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { chainToAccountAssetsNetwork } from '@/config/chains'
+import { chainToAccountAssetsNetwork, DEFAULT_CHAINS } from '@/config/chains'
 import {
+  chainTokenPositionUsd,
   fetchAccountBalances,
   formatUsdAmount,
 } from '@/features/balance/balanceManager'
@@ -170,5 +171,43 @@ describe('balanceManager.fetchAccountBalances', () => {
       const expectedUsd = sumUsdAcrossTokensLikeManager(list)
       expect(getTotalUsdForNetwork(network)).toBe(formatUsdAmount(expectedUsd))
     }
+  })
+
+  it('normalizes native rows: null tokenMetadata, inferred decimals/symbol; empty testnet prices', async () => {
+    const sepolia = DEFAULT_CHAINS.find((c) => c.id === 11155111)
+    expect(sepolia).toBeDefined()
+    if (!sepolia) throw new Error('Sepolia missing from DEFAULT_CHAINS')
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return new Response(
+        JSON.stringify({
+          data: {
+            tokens: [
+              {
+                address: TEST_WALLET.toLowerCase(),
+                network: 'eth-sepolia',
+                tokenAddress: null,
+                tokenBalance:
+                  '0x0000000000000000000000000000000000000000000000000000000000000001',
+                tokenMetadata: null,
+                tokenPrices: [],
+              },
+            ],
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    })
+
+    await fetchAccountBalances(TEST_WALLET, sepolia, ['eth-sepolia'])
+
+    const cached = getTokensForNetwork('eth-sepolia')
+    expect(cached).toBeDefined()
+    const native = cached!.find((t) => t.tokenAddress == null)
+    expect(native?.tokenMetadata.decimals).toBe(18)
+    expect(native?.tokenMetadata.symbol).toBe(sepolia.symbol)
+    expect(native?.tokenMetadata.name).toBe(sepolia.name)
+    expect(native?.tokenPrices).toEqual([])
+    expect(chainTokenPositionUsd(native!)).toBe(0)
   })
 })

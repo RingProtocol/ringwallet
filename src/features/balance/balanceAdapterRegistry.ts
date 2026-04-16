@@ -76,7 +76,7 @@ export async function fetchAccountBalanceByAdapter(
   ])
 
   const allTokens = [native, ...tokens]
-  const nativeDecimals = native.tokenMetadata.decimals ?? 18
+  const nativeDecimals = native.tokenMetadata?.decimals ?? 18
   const nativeBalance = formatTokenQuantity(
     native.tokenBalance,
     nativeDecimals,

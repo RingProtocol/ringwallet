@@ -95,6 +95,71 @@ type AccountAssetsResponse = {
   }
 }
 
+function defaultTokenMetadata(): ChainToken['tokenMetadata'] {
+  return { decimals: null, logo: null, name: null, symbol: null }
+}
+
+function nativeDecimalsForChainFamily(family: ChainFamily | undefined): number {
+  switch (family) {
+    case ChainFamily.Solana:
+      return 9
+    case ChainFamily.Tron:
+      return 6
+    case ChainFamily.Bitcoin:
+    case ChainFamily.Dogecoin:
+      return 8
+    default:
+      return 18
+  }
+}
+
+function chainForAccountAssetsNetwork(network: string): Chain | undefined {
+  return DEFAULT_CHAINS.find((c) => chainToAccountAssetsNetwork(c) === network)
+}
+
+/**
+ * `account_assets` often returns native rows with `tokenAddress: null` and
+ * missing or all-null `tokenMetadata`; testnets may have empty `tokenPrices`.
+ */
+function normalizeAccountAssetToken(raw: ChainToken): ChainToken {
+  const metaIn = raw.tokenMetadata
+  const base =
+    metaIn == null
+      ? defaultTokenMetadata()
+      : {
+          decimals: metaIn.decimals ?? null,
+          logo: metaIn.logo ?? null,
+          name: metaIn.name ?? null,
+          symbol: metaIn.symbol ?? null,
+        }
+
+  const isNative = raw.tokenAddress == null
+  const chain = isNative ? chainForAccountAssetsNetwork(raw.network) : undefined
+
+  let decimals = base.decimals
+  if (decimals == null && isNative) {
+    decimals = nativeDecimalsForChainFamily(chain?.family ?? ChainFamily.EVM)
+  }
+
+  return {
+    address: raw.address ?? '',
+    network: raw.network,
+    tokenAddress: raw.tokenAddress,
+    tokenBalance: raw.tokenBalance,
+    tokenMetadata: {
+      decimals,
+      logo: base.logo,
+      name: base.name ?? (isNative && chain ? chain.name : null),
+      symbol: base.symbol ?? (isNative && chain ? chain.symbol : null),
+    },
+    tokenPrices: Array.isArray(raw.tokenPrices) ? raw.tokenPrices : [],
+  }
+}
+
+function normalizeAccountAssetsTokens(tokens: ChainToken[]): ChainToken[] {
+  return tokens.map(normalizeAccountAssetToken)
+}
+
 function formatTokenQuantity(
   balanceHex: string,
   decimals: number,
@@ -147,13 +212,15 @@ export function chainTokenDisplaySymbol(
   token: ChainToken,
   chain: Chain
 ): string {
-  if (token.tokenMetadata.symbol) return token.tokenMetadata.symbol
+  const sym = token.tokenMetadata?.symbol
+  if (sym) return sym
   if (token.tokenAddress == null) return chain.symbol
   return 'UNKNOWN'
 }
 
 export function chainTokenDisplayName(token: ChainToken, chain: Chain): string {
-  if (token.tokenMetadata.name) return token.tokenMetadata.name
+  const name = token.tokenMetadata?.name
+  if (name) return name
   if (token.tokenAddress == null) return chain.name
   return chainTokenDisplaySymbol(token, chain)
 }
@@ -163,12 +230,12 @@ export function formatChainTokenBalance(
   chain: Chain,
   displayDecimals: number
 ): string {
-  const decimals = token.tokenMetadata.decimals ?? 18
+  const decimals = token.tokenMetadata?.decimals ?? 18
   return formatTokenQuantity(token.tokenBalance, decimals, displayDecimals)
 }
 
 export function chainTokenPositionUsd(token: ChainToken): number {
-  const decimals = token.tokenMetadata.decimals ?? 18
+  const decimals = token.tokenMetadata?.decimals ?? 18
   const qtyStr = formatTokenQuantity(token.tokenBalance, decimals, 18)
   const qtyNum = Number(qtyStr)
   if (!Number.isFinite(qtyNum) || qtyNum <= 0) return 0
@@ -236,7 +303,8 @@ async function fetchAccountAssets(
   }
 
   const json = (await res.json()) as AccountAssetsResponse
-  return json.data.tokens ?? []
+  const raw = (json.data.tokens ?? []) as ChainToken[]
+  return normalizeAccountAssetsTokens(raw)
 }
 
 function sumUsdAcrossTokens(
@@ -247,7 +315,7 @@ function sumUsdAcrossTokens(
   for (const t of tokens) {
     const decimals =
       (t.tokenMetadata?.decimals ?? null) != null
-        ? t.tokenMetadata.decimals!
+        ? t.tokenMetadata!.decimals!
         : 18
     const qtyStr = formatTokenQuantity(
       t.tokenBalance,
