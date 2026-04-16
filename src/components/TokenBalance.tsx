@@ -79,24 +79,26 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
         )}
       </div>
-      <div className="token-columns-header" role="row">
-        <div
-          className="token-columns-header__name token-columns-header__name--hidden"
-          role="columnheader"
-          aria-hidden="true"
-        />
-        <div className="token-columns-header__amount" role="columnheader">
-          {t('tokenColumnAmountValue')}
+      {rows.length > 0 && (
+        <div className="token-columns-header" role="row">
+          <div
+            className="token-columns-header__name token-columns-header__name--hidden"
+            role="columnheader"
+            aria-hidden="true"
+          />
+          <div className="token-columns-header__amount" role="columnheader">
+            {t('tokenColumnAmountValue')}
+          </div>
+          <div className="token-columns-header__price" role="columnheader">
+            <span className="token-columns-header__priceLine">
+              {t('tokenColumnPrice')}
+            </span>
+            <span className="token-columns-header__priceLine">
+              {t('tokenColumnChangeRate')}
+            </span>
+          </div>
         </div>
-        <div className="token-columns-header__price" role="columnheader">
-          <span className="token-columns-header__priceLine">
-            {t('tokenColumnPrice')}
-          </span>
-          <span className="token-columns-header__priceLine">
-            {t('tokenColumnChangeRate')}
-          </span>
-        </div>
-      </div>
+      )}
       {rows.length === 0 ? (
         <div className="token-empty">{t('noTokensFound')}</div>
       ) : (
