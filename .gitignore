@@ -14,3 +14,6 @@ next-env.d.ts
 # Playwright
 playwright-report/
 test-results/
+
+# oh-my-claudecode
+.omc/
