@@ -47,6 +47,9 @@ export class EvmRpcService
     GasPriceReader,
     BlockNumberReader
 {
+  /** Wait before trying the next RPC URL after a failure (avoids hammering endpoints). */
+  private static readonly RPC_FAILOVER_DELAY_MS = 750
+
   private readonly rpcUrls: string[]
   private readonly providers = new Map<string, ethers.JsonRpcProvider>()
   private activeRpcUrl: string | null
@@ -92,7 +95,8 @@ export class EvmRpcService
     ]
 
     let lastError: unknown = null
-    for (const rpcUrl of orderedUrls) {
+    for (let i = 0; i < orderedUrls.length; i++) {
+      const rpcUrl = orderedUrls[i]
       const provider = this.getProviderForUrl(rpcUrl)
       try {
         //this try is sequence not concurrency.
@@ -101,6 +105,12 @@ export class EvmRpcService
         return result
       } catch (error) {
         lastError = error
+        const hasMore = i < orderedUrls.length - 1
+        if (hasMore) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, EvmRpcService.RPC_FAILOVER_DELAY_MS)
+          )
+        }
       }
     }
 

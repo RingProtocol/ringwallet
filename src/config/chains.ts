@@ -66,12 +66,8 @@ const ENV: Record<string, ChainEnvConfig> = {
   'bitcoin-testnet3': {
     rpc: `https://bitcoin-testnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
-  'tron-mainnet': {
-    rpc: `https://api.trongrid.io/jsonrpc/${env('VITE_ALCHEMY_RPC_KEY')}`,
-  },
-  'tron-shasta': {
-    rpc: `https://api.shasta.trongrid.io/jsonrpc/${env('VITE_ALCHEMY_RPC_KEY')}`,
-  },
+  // Tron JSON-RPC is not Alchemy-shaped; do not append VITE_ALCHEMY_RPC_KEY to Trongrid paths
+  // (see RPC_FALLBACK['tron-mainnet'] / ['tron-shasta']).
   'cosmos-hub': {
     rpc: `https://cosmos-rpc.publicnode.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
