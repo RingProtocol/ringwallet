@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { ethers } from 'ethers'
 import { useI18n } from '../../i18n'
+import { useAuth } from '../../contexts/AuthContext'
+import { decodeCalldata } from '../../utils/calldataDecoder'
 import type {
   ApprovalRequest,
   SignData,
@@ -30,10 +32,10 @@ function formatOrigin(url: string): string {
   }
 }
 
-function formatHexValue(value: string): string {
+function formatHexValue(value: string, symbol = 'ETH'): string {
   try {
     const formatted = ethers.formatEther(BigInt(value))
-    return `${formatted.replace(/\.?0+$/, '') || '0'} ETH`
+    return `${formatted.replace(/\.?0+$/, '') || '0'} ${symbol}`
   } catch {
     return value
   }
@@ -69,7 +71,17 @@ const ConnectContent: React.FC = () => {
 const TransactionContent: React.FC<{ request: ApprovalRequest }> = ({
   request,
 }) => {
+  const { t } = useI18n()
+  const { activeChain } = useAuth()
+  const [showRaw, setShowRaw] = useState(false)
   const tx = request.data as TransactionData | undefined
+  const nativeSymbol = activeChain?.symbol || 'ETH'
+
+  const decoded = useMemo(
+    () => (tx?.data && tx.data !== '0x' ? decodeCalldata(tx.data) : null),
+    [tx?.data]
+  )
+
   if (!tx) return null
 
   return (
@@ -92,13 +104,45 @@ const TransactionContent: React.FC<{ request: ApprovalRequest }> = ({
       )}
       {tx.value && tx.value !== '0x0' && (
         <div className="transaction-request__row">
-          <span className="transaction-request__label">Value</span>
+          <span className="transaction-request__label">
+            {t('txFieldValue')}
+          </span>
           <span className="transaction-request__value">
-            {formatHexValue(tx.value)}
+            {formatHexValue(tx.value, nativeSymbol)}
           </span>
         </div>
       )}
-      {tx.data && tx.data !== '0x' && (
+
+      {decoded && (
+        <>
+          <div className="transaction-request__row">
+            <span className="transaction-request__label">
+              {t('txFieldMethod')}
+            </span>
+            <span className="transaction-request__value transaction-request__value--mono">
+              {decoded.method}
+            </span>
+          </div>
+          <div className="transaction-request__row">
+            <span className="transaction-request__label">
+              {t('txFieldAction')}
+            </span>
+            <span className="transaction-request__value">
+              {decoded.description}
+            </span>
+          </div>
+          {decoded.params.map((p, i) => (
+            <div className="transaction-request__row" key={i}>
+              <span className="transaction-request__label">→ {p.name}</span>
+              <span className="transaction-request__value transaction-request__value--mono">
+                {p.value}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {tx.data && tx.data !== '0x' && !decoded && (
         <div className="transaction-request__row">
           <span className="transaction-request__label">Data</span>
           <span className="transaction-request__value transaction-request__value--mono">
@@ -106,6 +150,20 @@ const TransactionContent: React.FC<{ request: ApprovalRequest }> = ({
           </span>
         </div>
       )}
+
+      {tx.data && tx.data !== '0x' && (
+        <button
+          className="signed-result__toggle"
+          onClick={() => setShowRaw(!showRaw)}
+          style={{ marginTop: '4px' }}
+        >
+          {showRaw ? t('hideRawData') : t('showRawData')}
+        </button>
+      )}
+      {showRaw && tx.data && (
+        <div className="signed-result__raw">{tx.data}</div>
+      )}
+
       {tx.gas && (
         <div className="transaction-request__row">
           <span className="transaction-request__label">Gas</span>
