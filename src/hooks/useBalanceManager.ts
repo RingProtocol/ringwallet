@@ -60,6 +60,7 @@ export function useBalanceManager(): BalanceState {
       if (!slug) continue
       switch (c.family) {
         case ChainFamily.EVM:
+        case ChainFamily.Prisma:
           evmNets.push(slug)
           break
         case ChainFamily.Solana:

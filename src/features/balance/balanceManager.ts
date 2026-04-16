@@ -1,5 +1,8 @@
 import { formatUnits } from 'ethers'
-import { chainToAccountAssetsNetwork } from '../../config/chains'
+import {
+  chainToAccountAssetsNetwork,
+  DEFAULT_CHAINS,
+} from '../../config/chains'
 import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   cacheTokensForNetwork,
@@ -24,6 +27,39 @@ export function setAccountBalancePollIntervalMs(ms: number): void {
 }
 
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
+
+/** Same chains as `syncAccountBalancesToCache` adapter branch — never sent to `account_assets`. */
+function isAdapterOnlyAccountAssetsChain(c: Chain): boolean {
+  return (
+    c.family === ChainFamily.Bitcoin ||
+    c.id === 'tron-mainnet' ||
+    c.id === 'plasma-mainnet' ||
+    c.id === 9745
+  )
+}
+
+const ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS: Set<string> = (() => {
+  const s = new Set<string>()
+  for (const c of DEFAULT_CHAINS) {
+    if (!isAdapterOnlyAccountAssetsChain(c)) continue
+    const slug = chainToAccountAssetsNetwork(c)
+    if (slug) s.add(slug)
+  }
+  return s
+})()
+
+function accountAssetGroupsForAccountAssetsApi(
+  groups: AccountAssetsAddressEntry[]
+): AccountAssetsAddressEntry[] {
+  return groups
+    .map((g) => ({
+      address: g.address,
+      networks: g.networks.filter(
+        (n) => !ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS.has(n)
+      ),
+    }))
+    .filter((g) => g.networks.length > 0)
+}
 
 /** One wallet address and the `account_assets` network slugs to query for it. */
 export type AccountAssetsAddressEntry = {
@@ -71,6 +107,7 @@ export function formatUsdAmount(value: string | number): string {
 export function emptyBalance(family: ChainFamily): string {
   switch (family) {
     case ChainFamily.EVM:
+    case ChainFamily.Prisma:
       return '0.0000'
     default:
       return '0.0000'
@@ -281,7 +318,9 @@ export async function syncAccountBalancesToCache(
   if (activeNetwork == null) return
 
   try {
-    const fetched = await fetchAccountAssets(accountAssetGroups)
+    const fetched = await fetchAccountAssets(
+      accountAssetGroupsForAccountAssetsApi(accountAssetGroups)
+    )
 
     const byNetwork = new Map<string, ChainToken[]>()
     for (const t of fetched) {

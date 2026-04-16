@@ -73,6 +73,7 @@ export async function resolveTokenMetadata(
 
   switch (normalizedFamily) {
     case ChainFamily.EVM:
+    case ChainFamily.Prisma:
       return resolveEvm(address, rpcUrls, hints)
     case ChainFamily.Solana:
       return resolveSolana(address, rpcUrls, hints)

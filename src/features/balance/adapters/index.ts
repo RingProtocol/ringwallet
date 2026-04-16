@@ -1,4 +1,5 @@
 import './evmBalanceAdapter'
+import './prismaBalanceAdapter'
 import './solanaBalanceAdapter'
 import './bitcoinBalanceAdapter'
 import './dogecoinBalanceAdapter'

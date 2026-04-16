@@ -1,7 +1,7 @@
-import { ChainFamily, type Chain } from '../../models/ChainType';
-import EvmRpcService from './evmRpcService';
+import { ChainFamily, type Chain } from '../../models/ChainType'
+import EvmRpcService from './evmRpcService'
 
-type RpcChainLike = Pick<Chain, 'family' | 'rpcUrl'> | null | undefined;
+type RpcChainLike = Pick<Chain, 'family' | 'rpcUrl'> | null | undefined
 
 export class RpcService {
   private static readonly instances = new Map<string, RpcService>()
@@ -30,17 +30,18 @@ export class RpcService {
   private static readonly EVM_COMPATIBLE_FAMILIES = new Set([
     ChainFamily.EVM,
     ChainFamily.Tron,
+    ChainFamily.Prisma,
   ])
 
   getEvmService(): EvmRpcService {
     const family = this.chain?.family
     if (family && !RpcService.EVM_COMPATIBLE_FAMILIES.has(family)) {
-      throw new Error(`RPC service for ${String(family)} is not implemented`);
+      throw new Error(`RPC service for ${String(family)} is not implemented`)
     }
 
     const rpcUrls = this.chain?.rpcUrl?.filter(Boolean) ?? []
     if (rpcUrls.length === 0) {
-      throw new Error('RPC URL is required');
+      throw new Error('RPC URL is required')
     }
 
     if (!this.evmService) {
@@ -51,4 +52,4 @@ export class RpcService {
   }
 }
 
-export default RpcService;
+export default RpcService

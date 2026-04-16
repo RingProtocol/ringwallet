@@ -1,28 +1,23 @@
 import { ChainFamily, type Chain } from '../../../models/ChainType'
 import { chainToAccountAssetsNetwork } from '../../../config/chains'
-import { tronAddressToHex } from '../../../services/chainplugins/tron/tronPlugin'
 import { parseUnits } from 'ethers'
 import { RpcService } from '../../../services/rpc/rpcService'
 import type EvmRpcService from '../../../services/rpc/evmRpcService'
 import type { TokenInfo } from '../../../utils/tokenStorage'
-import {
-  chainToTokenPriceNetwork,
-  fetchTokenPricesBySymbol,
-} from '../tokenPrice'
 import type { BalanceAdapter } from '../balanceTypes'
 import { balanceAdapterRegistry } from '../balanceAdapterRegistry'
 import type { ChainToken } from '../../../models/ChainTokens'
 
 function hexFromFormatted(formatted: string, decimals: number): string {
   try {
-    const u = parseUnits(formatted, decimals)
-    return `0x${u.toString(16)}`
+    const wei = parseUnits(formatted, decimals)
+    return `0x${wei.toString(16)}`
   } catch {
     return '0x0'
   }
 }
 
-function makeNativeTrxToken(chain: Chain, tokenBalanceHex: string): ChainToken {
+function makeNativeToken(chain: Chain, tokenBalanceHex: string): ChainToken {
   const network = chainToAccountAssetsNetwork(chain) ?? ''
   return {
     address: '',
@@ -30,23 +25,16 @@ function makeNativeTrxToken(chain: Chain, tokenBalanceHex: string): ChainToken {
     tokenAddress: null,
     tokenBalance: tokenBalanceHex,
     tokenMetadata: {
-      decimals: 6,
+      decimals: 18,
       logo: null,
       name: chain.name,
       symbol: chain.symbol,
     },
-    tokenPrices: [
-      {
-        currency: 'usd',
-        value: '0',
-        lastUpdatedAt: new Date().toISOString(),
-        changePercent24h: null,
-      },
-    ],
+    tokenPrices: [],
   }
 }
 
-function makeTrc20Token(
+function makeErc20Token(
   chain: Chain,
   token: TokenInfo,
   tokenBalanceHex: string
@@ -68,7 +56,7 @@ function makeTrc20Token(
 }
 
 const adapter = {
-  family: ChainFamily.Tron,
+  family: ChainFamily.Prisma,
   displayDecimals: 4,
   supportsTokens: true,
   service: undefined,
@@ -78,24 +66,9 @@ const adapter = {
     if (this.service == null) {
       this.service = RpcService.fromChain(chain).getEvmService()
     }
-    const hexAddr = tronAddressToHex(address)
     const svc = this.service as EvmRpcService
-    const raw = await svc.getFormattedBalance(hexAddr)
-    const token = makeNativeTrxToken(chain, hexFromFormatted(raw, 6))
-    try {
-      const network = chainToTokenPriceNetwork(chain)
-      if (network) {
-        const res = await fetchTokenPricesBySymbol(['TRX'])
-        const prices =
-          res.find((x) => x.network === network)?.prices ?? res[0]?.prices
-        if (Array.isArray(prices) && prices.length > 0) {
-          token.tokenPrices = prices
-        }
-      }
-    } catch {
-      // Best-effort only; keep default tokenPrices.
-    }
-    return token
+    const raw = await svc.getFormattedBalance(address)
+    return makeNativeToken(chain, hexFromFormatted(raw, 18))
   },
 
   async fetchTokenBalances(
@@ -104,24 +77,22 @@ const adapter = {
     tokens: TokenInfo[]
   ): Promise<ChainToken[]> {
     const evmService = RpcService.fromChain(chain).getEvmService()
-    const hexWallet = tronAddressToHex(address)
 
     return Promise.all(
       tokens.map(async (t) => {
         try {
-          const hexToken = tronAddressToHex(t.address)
           const formatted = await evmService.getFormattedTokenBalance(
-            hexToken,
-            hexWallet,
+            t.address,
+            address,
             t.decimals
           )
-          return makeTrc20Token(
+          return makeErc20Token(
             chain,
             t,
             hexFromFormatted(formatted, t.decimals)
           )
         } catch {
-          return makeTrc20Token(chain, t, '0x0')
+          return makeErc20Token(chain, t, '0x0')
         }
       })
     )

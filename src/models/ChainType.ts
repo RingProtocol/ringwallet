@@ -5,6 +5,8 @@ export enum ChainFamily {
   Tron = 'tron',
   Cosmos = 'cosmos',
   Dogecoin = 'dogecoin',
+  /** EVM-equivalent execution; same address derivation as `EVM` (BIP44 60). */
+  Prisma = 'prisma',
 }
 
 export interface Chain {

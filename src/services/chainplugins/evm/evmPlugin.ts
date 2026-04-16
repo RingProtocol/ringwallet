@@ -396,7 +396,11 @@ export default EvmWalletService
 // ── Chain Plugin ─────────────────────────────────────────────────────────────
 
 class EvmChainPlugin implements ChainPlugin {
-  readonly family = ChainFamily.EVM
+  readonly family: ChainFamily
+
+  constructor(family: ChainFamily = ChainFamily.EVM) {
+    this.family = family
+  }
 
   deriveAccounts(masterSeed: Uint8Array, count: number): DerivedAccount[] {
     if (!masterSeed || masterSeed.length !== 32) {
@@ -527,3 +531,4 @@ class EvmChainPlugin implements ChainPlugin {
 }
 
 chainRegistry.register(new EvmChainPlugin())
+chainRegistry.register(new EvmChainPlugin(ChainFamily.Prisma))

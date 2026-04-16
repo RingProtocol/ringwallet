@@ -776,6 +776,7 @@ export function validateAddress(chain: Chain, address: string): boolean {
         return false
       }
     case ChainFamily.EVM:
+    case ChainFamily.Prisma:
       return ethers.isAddress(address)
     default:
       return address.length >= 8
