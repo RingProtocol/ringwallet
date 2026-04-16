@@ -32,9 +32,17 @@ const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
  * Balances from local RPC adapters, not `account_assets`.
  * Plasma: numeric ids 9745 / 9746. MegaETH: 6342 (testnet), 4326 (mainnet slug map).
  * Tron: all `ChainFamily.Tron` (mainnet + Shasta).
+ * Solana devnet/testnet: `account_assets` rejects e.g. `solana-devnet`; mainnet-beta may use the API.
  */
 function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
   if (c.family === ChainFamily.Bitcoin || c.family === ChainFamily.Tron) {
+    return true
+  }
+  if (
+    c.family === ChainFamily.Solana &&
+    c.cluster != null &&
+    c.cluster !== 'mainnet-beta'
+  ) {
     return true
   }
   const { id } = c
