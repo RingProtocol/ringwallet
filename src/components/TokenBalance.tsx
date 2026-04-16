@@ -89,7 +89,12 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           {t('tokenColumnAmountValue')}
         </div>
         <div className="token-columns-header__price" role="columnheader">
-          {t('tokenColumnPriceChangeRate')}
+          <span className="token-columns-header__priceLine">
+            {t('tokenColumnPrice')}
+          </span>
+          <span className="token-columns-header__priceLine">
+            {t('tokenColumnChangeRate')}
+          </span>
         </div>
       </div>
       {rows.length === 0 ? (

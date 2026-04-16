@@ -246,6 +246,8 @@
 
 .wallet-main-page__assets {
   margin-top: 8px;
+  margin-left: -16px;
+  margin-right: -16px;
 }
 
 .wallet-main-page__card--activity {
