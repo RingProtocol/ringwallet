@@ -30,15 +30,20 @@ const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
 /**
  * Balances from local RPC adapters, not `account_assets`.
- * Plasma uses numeric `id` (9745 / 9746); Tron testnet is `tron-shasta`, not only mainnet.
+ * Plasma: numeric ids 9745 / 9746. MegaETH: 6342 (testnet), 4326 (mainnet slug map).
+ * Tron: all `ChainFamily.Tron` (mainnet + Shasta).
  */
 function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
   if (c.family === ChainFamily.Bitcoin || c.family === ChainFamily.Tron) {
     return true
   }
   const { id } = c
+  //prisma
   if (id === 9745 || id === 9746) return true
   if (id === '9745' || id === '9746') return true
+  //megaeth
+  if (id === 6342 || id === 4326) return true
+  if (id === '6342' || id === '4326') return true
   return false
 }
 
