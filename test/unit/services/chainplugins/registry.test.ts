@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   chainRegistry,
   BITCOIN_TESTNET_ACCOUNTS_KEY,
+  DOGECOIN_TESTNET_ACCOUNTS_KEY,
+  cosmosAccountsKey,
 } from '@/services/chainplugins/index'
 import { ChainFamily } from '@/models/ChainType'
 
@@ -13,12 +15,14 @@ const KNOWN_SEED = new Uint8Array(
 )
 
 describe('ChainPluginRegistry — registration', () => {
-  it('has all 5 chain families registered', () => {
+  it('has all chain families registered', () => {
     expect(chainRegistry.has(ChainFamily.EVM)).toBe(true)
     expect(chainRegistry.has(ChainFamily.Solana)).toBe(true)
     expect(chainRegistry.has(ChainFamily.Bitcoin)).toBe(true)
     expect(chainRegistry.has(ChainFamily.Tron)).toBe(true)
     expect(chainRegistry.has(ChainFamily.Cosmos)).toBe(true)
+    expect(chainRegistry.has(ChainFamily.Dogecoin)).toBe(true)
+    expect(chainRegistry.has(ChainFamily.Prisma)).toBe(true)
   })
 
   it('families() returns all registered families', () => {
@@ -28,12 +32,14 @@ describe('ChainPluginRegistry — registration', () => {
     expect(families).toContain(ChainFamily.Bitcoin)
     expect(families).toContain(ChainFamily.Tron)
     expect(families).toContain(ChainFamily.Cosmos)
-    expect(families.length).toBeGreaterThanOrEqual(5)
+    expect(families).toContain(ChainFamily.Dogecoin)
+    expect(families).toContain(ChainFamily.Prisma)
+    expect(families.length).toBeGreaterThanOrEqual(7)
   })
 
   it('getAll() returns all plugins', () => {
     const plugins = chainRegistry.getAll()
-    expect(plugins.length).toBeGreaterThanOrEqual(5)
+    expect(plugins.length).toBeGreaterThanOrEqual(7)
   })
 })
 
@@ -46,32 +52,55 @@ describe('ChainPluginRegistry — deriveAllAccounts', () => {
     expect(all[BITCOIN_TESTNET_ACCOUNTS_KEY]).toHaveLength(3)
     expect(all[ChainFamily.Tron]).toHaveLength(3)
     expect(all[ChainFamily.Cosmos]).toHaveLength(3)
+    expect(all[ChainFamily.Dogecoin]).toHaveLength(3)
+    expect(all[DOGECOIN_TESTNET_ACCOUNTS_KEY]).toHaveLength(3)
+    expect(all[ChainFamily.Prisma]).toHaveLength(3)
+    expect(all[cosmosAccountsKey('cosmos')]).toHaveLength(3)
+    expect(all[cosmosAccountsKey('provenance')]).toHaveLength(3)
   })
 
   it('all families produce unique addresses (no cross-family collision)', () => {
     const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
 
-    // Prisma intentionally shares EVM derivation (BIP44 coin 60),
-    // and the base 'cosmos' slot uses the same params as 'cosmos_cosmos'.
-    const KNOWN_ALIASES = new Set(['prisma', 'cosmos'])
-    const filtered = Object.entries(all)
-      .filter(([key]) => !KNOWN_ALIASES.has(key))
+    const KNOWN_DUPLICATE_KEYS = new Set([
+      cosmosAccountsKey('cosmos'),
+      ChainFamily.Prisma as string,
+    ])
+    const deduped = Object.entries(all)
+      .filter(([key]) => !KNOWN_DUPLICATE_KEYS.has(key))
       .map(([, arr]) => arr[0].address)
+    const unique = new Set(deduped)
+    expect(unique.size).toBe(deduped.length)
+  })
 
-    const unique = new Set(filtered)
-    expect(unique.size).toBe(filtered.length)
+  it('Prisma addresses match EVM (EVM-equivalent derivation)', () => {
+    const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
+    expect(all[ChainFamily.Prisma][0].address).toBe(
+      all[ChainFamily.EVM][0].address
+    )
+  })
+
+  it('cosmos base matches cosmos_cosmos variant', () => {
+    const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
+    expect(all[ChainFamily.Cosmos][0].address).toBe(
+      all[cosmosAccountsKey('cosmos')][0].address
+    )
   })
 
   it('each family uses the correct address format', () => {
     const all = chainRegistry.deriveAllAccounts(KNOWN_SEED, 1)
     expect(all[ChainFamily.EVM][0].address).toMatch(/^0x/)
+    expect(all[ChainFamily.Prisma][0].address).toMatch(/^0x/)
     expect(all[ChainFamily.Solana][0].address).toMatch(
       /^[1-9A-HJ-NP-Za-km-z]+$/
     )
     expect(all[ChainFamily.Bitcoin][0].address).toMatch(/^bc1q/)
     expect(all[BITCOIN_TESTNET_ACCOUNTS_KEY][0].address).toMatch(/^tb1q/)
+    expect(all[ChainFamily.Dogecoin][0].address).toMatch(/^D/)
+    expect(all[DOGECOIN_TESTNET_ACCOUNTS_KEY][0].address).toMatch(/^n/)
     expect(all[ChainFamily.Tron][0].address).toMatch(/^T/)
     expect(all[ChainFamily.Cosmos][0].address).toMatch(/^cosmos1/)
+    expect(all[cosmosAccountsKey('provenance')][0].address).toMatch(/^pb1/)
   })
 
   it('is deterministic across calls', () => {
