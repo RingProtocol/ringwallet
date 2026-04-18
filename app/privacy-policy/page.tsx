@@ -66,6 +66,11 @@ export default function PrivacyPolicyPage() {
             personal or payment data you provide to MoonPay.
           </li>
           <li>
+            If you sign up for emails or notifications, Ring Labs stores your
+            email address for those communications. You can unsubscribe at any
+            time.
+          </li>
+          <li>
             If you contact us via email or other channels, Ring Labs stores that
             correspondence. We do not require you to provide any personal data
             to use the Services.
