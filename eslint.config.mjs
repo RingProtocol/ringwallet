@@ -30,7 +30,7 @@ export default [
     },
   },
   {
-    files: ['test/**/*.{js,jsx,ts,tsx,mjs,cjs}'],
+    files: ['test/**/*.{js,jsx,ts,tsx,mjs,cjs}', 'scripts/**/*.{js,mjs,cjs}'],
     rules: {
       'no-console': 'off',
     },
