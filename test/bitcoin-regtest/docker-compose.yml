@@ -1,0 +1,23 @@
+# Bitcoin Core regtest only. Esplora-compatible HTTP is provided by
+# test/bitcoin-regtest/esplora-proxy.mjs (bitcoin-cli–backed) so tests do not require electrs images.
+services:
+  bitcoind:
+    image: bitcoin/bitcoin:27.0
+    container_name: ring-bitcoind-regtest
+    command:
+      - -printtoconsole
+      - -regtest=1
+      - -server=1
+      - -txindex=1
+      - -rpcuser=ci
+      - -rpcpassword=cipass
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -fallbackfee=0.0002
+    ports:
+      - '18443:18443'
+    volumes:
+      - btc_regtest_data:/home/bitcoin/.bitcoin
+
+volumes:
+  btc_regtest_data:

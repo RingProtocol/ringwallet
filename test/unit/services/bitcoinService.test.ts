@@ -35,6 +35,12 @@ describe('bitcoinForkForChain', () => {
     ).toBe('testnet4')
   })
 
+  it('returns regtest for network=regtest', () => {
+    expect(
+      bitcoinForkForChain({ id: 'bitcoin-regtest', network: 'regtest' })
+    ).toBe('regtest')
+  })
+
   it('defaults to mainnet when no hints', () => {
     expect(bitcoinForkForChain({ id: 'unknown' })).toBe('mainnet')
   })
@@ -62,6 +68,11 @@ describe('inferBitcoinForkFromRpcUrl', () => {
       'testnet3',
     ],
     ['generic testnet', 'https://some-testnet.example.com', 'testnet4'],
+    [
+      'local esplora proxy (regtest integration)',
+      'http://127.0.0.1:3002',
+      'regtest',
+    ],
     ['mainnet', 'https://mempool.space/api', 'mainnet'],
     [
       'alchemy mainnet',

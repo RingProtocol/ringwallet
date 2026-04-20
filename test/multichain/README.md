@@ -1,44 +1,41 @@
-# Multichain RPC tests (`test/multichain`)
+# Multichain integration tests
 
-**Not Anvil.** Bitcoin / Solana / Tron smoke tests over the network. No local validator.
+These specs use [`vitest.multichain.config.ts`](../../vitest.multichain.config.ts) (not the default `yarn test` unit suite).
 
-## Command
+| Suite                                 | What it needs                                                                            | Typical CI                                                                                           |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `solana.local.integration.spec.ts`    | `solana-test-validator` on `127.0.0.1:8899`                                              | PR job `solana-local` in [`.github/workflows/quality.yml`](../../.github/workflows/quality.yml)      |
+| `bitcoin.regtest.integration.spec.ts` | Docker: `test/bitcoin-regtest/docker-compose.yml`, then `esplora-proxy.mjs` on port 3002 | Nightly [`.github/workflows/nightly-multichain.yml`](../../.github/workflows/nightly-multichain.yml) |
+
+## Solana (local)
 
 ```bash
-yarn test:multichain
+# Terminal 1
+solana-test-validator --reset
+
+# Terminal 2
+export SOLANA_LOCAL_TEST=1
+export TEST_SOLANA_RPC_URL=http://127.0.0.1:8899
+yarn test:multichain:solana-local
 ```
 
-Uses `vitest.multichain.config.ts`. Can be flaky on free public nodes; **one Alchemy key** in `.env.test` is enough to compose provider URLs (see below).
+Or use `yarn test:multichain:solana-local` after the validator is already up (the script waits for RPC).
 
-## Alchemy: one key → default URLs
+## Bitcoin (regtest)
 
-If **`ALCHEMY_API_KEY`** or **`VITE_ALCHEMY_RPC_KEY`** is set in `.env.test` (Vitest loads it), `test/multichain/lib/resolveTestRpc.ts` builds defaults **unless** you set the explicit `TEST_*` URL overrides:
+Prerequisites: Docker running; container name must be `ring-bitcoind-regtest` (from the compose file below).
 
-| Chain       | Default URL pattern (key = your API key)                                                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Solana**  | `https://solana-devnet.g.alchemy.com/v2/<key>` — set `TEST_SOLANA_ALCHEMY_CLUSTER=mainnet` for mainnet-beta host                      |
-| **Tron**    | `https://tron-mainnet.g.alchemy.com/v2/<key>` — `POST …/wallet/getnowblock`                                                           |
-| **Bitcoin** | JSON-RPC `getblockcount` on `https://bitcoin-testnet.g.alchemy.com/v2/<key>` — set `TEST_BITCOIN_ALCHEMY_NETWORK=mainnet` for mainnet |
+```bash
+docker compose -f test/bitcoin-regtest/docker-compose.yml up -d
+# Required — without this, Vitest skips the suite entirely.
+export RUN_BITCOIN_REGTEST=1
+# Optional; default is http://127.0.0.1:3002 (must match ESPLORA_PROXY_PORT in the spec).
+export TEST_BITCOIN_INDEXER_URL=http://127.0.0.1:3002
+yarn test:multichain:bitcoin-regtest
+```
 
-You do **not** need separate lines like `TEST_SOLANA_RPC_URL=https://solana-devnet.g.alchemy.com/v2/...` if the key is already in `.env.test`; only add them to override host or cluster.
+The integration spec starts [`test/bitcoin-regtest/esplora-proxy.mjs`](../../test/bitcoin-regtest/esplora-proxy.mjs) in `beforeAll` (do not start a second copy on the same port). The proxy implements the Esplora HTTP surface `BitcoinService` uses (`/address/...`, `POST /tx`, …) on top of `bitcoin-cli` (`scantxoutset`, `sendrawtransaction`).
 
-## Optional overrides
+## Playwright Solana route proxy
 
-| Variable                       | Purpose                                                                                                              |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `TEST_SOLANA_RPC_URL`          | Full Solana JSON-RPC URL (wins over Alchemy composition).                                                            |
-| `TEST_SOLANA_ALCHEMY_CLUSTER`  | `devnet` (default) or `mainnet` / `mainnet-beta` when using Alchemy without `TEST_SOLANA_RPC_URL`.                   |
-| `TEST_TRON_API_URL`            | Tron HTTP API base (e.g. Shasta TronGrid); wins over Alchemy.                                                        |
-| `TEST_BITCOIN_INDEXER_URL`     | Esplora REST base (`GET {base}/blocks/tip/height`); if set, **disables** Alchemy Bitcoin JSON-RPC for the tip check. |
-| `TEST_BITCOIN_ALCHEMY_NETWORK` | `testnet` (default, testnet3 RPC) or `mainnet` when using Alchemy without Esplora override.                          |
-| `SKIP_MULTICHAIN_INTEGRATION`  | `1` = skip this entire suite.                                                                                        |
-
-Details and copy-paste examples: `documents/testchain/env.test.example`.
-
-## What is covered
-
-- **Solana:** `Connection.getLatestBlockhash`, `getBalance`; `SolanaChainPlugin` derive + `isValidAddress`.
-- **Bitcoin:** tip height via Esplora **or** Alchemy `getblockcount`; `BitcoinChainPlugin` derive + `isValidAddress`.
-- **Tron:** `wallet/getnowblock`; `TronChainPlugin` derive + `isValidAddress`; `signTransaction` still throws (not implemented in app).
-
-EVM fork + Anvil: **`test/evmchain`** (`yarn test:chain`).
+With `SOLANA_E2E_LOCAL=1`, [`test/Playwright/fixtures/wallet.fixture.ts`](../Playwright/fixtures/wallet.fixture.ts) proxies devnet RPC URLs to `127.0.0.1:8899`. Optional smoke: `test/Playwright/tests/solana-smoke.spec.ts` (also requires `SOLANA_E2E_LOCAL=1`).
