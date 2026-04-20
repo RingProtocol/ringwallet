@@ -10,6 +10,14 @@ yarn test:prepare
 
 See [`scripts/test-prepare.mjs`](../../scripts/test-prepare.mjs). Components are skipped if the tool is missing or the port is already in use.
 
+**EVM (Anvil):** after prepare, Sepolia listens on **8545** (same as [`test/evmchain`](../evmchain/README.md)). Run fork integration tests with:
+
+```bash
+yarn test:chain:local
+```
+
+(`yarn test:prepare && yarn test:chain`)
+
 | Suite                                 | What it needs                                                                            | Typical CI                                                                                           |
 | ------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `solana.local.integration.spec.ts`    | `solana-test-validator` on `127.0.0.1:8899`                                              | PR job `solana-local` in [`.github/workflows/quality.yml`](../../.github/workflows/quality.yml)      |

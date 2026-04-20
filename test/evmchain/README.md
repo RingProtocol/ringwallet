@@ -7,6 +7,16 @@ Fork-based EVM checks with **Anvil** + an upstream Sepolia RPC (often Alchemy). 
 - [Foundry](https://getfoundry.sh) — `anvil` on `PATH`
 - Repo root `.env.test` with `ALCHEMY_API_KEY` or `VITE_ALCHEMY_RPC_KEY` (template: `documents/testchain/env.test.example`)
 
+## One-liner (prepare + tests)
+
+Sepolia fork is expected on **`127.0.0.1:8545`** (see `chains/sepolia.ts`). This matches `yarn test:prepare`, which starts Anvil for Sepolia on 8545 and Hyperliquid on 8546:
+
+```bash
+yarn test:chain:local
+```
+
+Same as `yarn test:prepare && yarn test:chain`. If you only start Anvil manually, use **`8545`** for Sepolia fork (see table below).
+
 ## Run flow (Anvil first)
 
 **Anvil is mandatory and you start it yourself.** `yarn test:chain:wait-anvil` only **polls** `http://127.0.0.1:8545`; it does not launch Anvil. If nothing listens on that port, you get a timeout — fix by starting Anvil in **terminal A** and leaving it running; use **terminal B** for the yarn commands below.
@@ -21,10 +31,10 @@ Fork-based EVM checks with **Anvil** + an upstream Sepolia RPC (often Alchemy). 
 
 **Vitest:** type **only** `yarn test:chain`. Extra tokens after it become [filename filters](https://vitest.dev/guide/filtering) → _No test files found_.
 
-Custom RPC:
+Custom RPC (non-default port):
 
 ```bash
-TESTCHAIN_RPC_URL=http://127.0.0.1:8546 yarn test:chain
+TESTCHAIN_RPC_URL=http://127.0.0.1:8547 yarn test:chain
 ```
 
 ## Layout

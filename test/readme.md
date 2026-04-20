@@ -143,12 +143,12 @@ yarn test:chain                     # Optional: needs Anvil + ALCHEMY_API_KEY
 ```bash
 Terminal 1 (keep running):
   yarn test:e2e:anvil
-  # prints: [anvil] starting fresh local chain chainId=998 on port 8545
-  # prints: [anvil] funded 0x9fe8b07... with 100 tokens
+  # Sepolia 11155111 on 8545, Hyperliquid 998 on 8546 (see test/Playwright/env.ts)
+  # prints: [anvil] funded 0x9fe8b07... with 100 tokens per chain
   # stays running...
 
 Terminal 2:
   yarn test:e2e:ui
-  # Playwright sees anvil already on 8545 → reuseExistingServer → opens UI
+  # Playwright sees anvil on 8545/8546 → opens UI
   # Click ▶ on any test to run it
 ```

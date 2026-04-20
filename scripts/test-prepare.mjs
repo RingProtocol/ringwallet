@@ -3,7 +3,7 @@
  * One-shot local prep for multichain integration / E2E stacks:
  * - Bitcoin: docker compose (bitcoind regtest)
  * - Solana: solana-test-validator (background)
- * - EVM: two Anvil instances (same ports as Playwright E2E: 8545, 8546)
+ * - EVM: two Anvil instances — Sepolia 11155111 on 8545 (matches test/evmchain), Hyperliquid 998 on 8546
  *
  * Requires: Docker, optional Solana CLI, optional Foundry `anvil`.
  * Idempotent-ish: skips Solana/Anvil spawn if RPC already answers on the port.
@@ -12,7 +12,10 @@ import { spawn, execSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import path from 'path'
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..'
+)
 
 function hasCmd(name) {
   try {
@@ -89,9 +92,7 @@ async function main() {
   // ─── Bitcoin (Docker) ─────────────────────────────────────────────
   console.log('\n[test:prepare] 1/3 Bitcoin regtest (Docker bitcoind)...')
   try {
-    sh(
-      'docker compose -f test/bitcoin-regtest/docker-compose.yml up -d'
-    )
+    sh('docker compose -f test/bitcoin-regtest/docker-compose.yml up -d')
     console.log(
       '[test:prepare] Bitcoin: container ring-bitcoind-regtest should be up.'
     )
@@ -150,8 +151,8 @@ async function main() {
   // ─── EVM (Anvil) — same chain IDs / ports as test/Playwright/env EVM_TESTNET_CHAINS
   console.log('\n[test:prepare] 3/3 EVM Anvil (Foundry)...')
   const anvilChains = [
-    { chainId: 998, port: 8545 },
-    { chainId: 11155111, port: 8546 },
+    { chainId: 11155111, port: 8545 },
+    { chainId: 998, port: 8546 },
   ]
 
   if (!hasCmd('anvil')) {
@@ -170,12 +171,16 @@ async function main() {
         )
         continue
       }
-      const p = spawn(process.execPath, [startAnvil, String(chainId), String(port)], {
-        detached: true,
-        stdio: 'ignore',
-        cwd: repoRoot,
-        env: process.env,
-      })
+      const p = spawn(
+        process.execPath,
+        [startAnvil, String(chainId), String(port)],
+        {
+          detached: true,
+          stdio: 'ignore',
+          cwd: repoRoot,
+          env: process.env,
+        }
+      )
       p.unref()
       console.log(
         `[test:prepare] EVM: spawned anvil chainId=${chainId} port=${port} (pid ${p.pid})`
@@ -187,8 +192,12 @@ async function main() {
           : `[test:prepare] EVM: anvil on ${port} not ready in time.`
       )
     }
-    console.log('  → Playwright E2E: yarn test:e2e (globalSetup also starts anvil if needed)')
-    console.log('  → Vitest chain: yarn test:chain (uses Anvil fork per test/evmchain)')
+    console.log(
+      '  → Playwright E2E: yarn test:e2e (globalSetup also starts anvil if needed)'
+    )
+    console.log(
+      '  → Vitest EVM: yarn test:chain (Sepolia on 8545). One-shot from scratch: yarn test:chain:local'
+    )
   }
 
   console.log('\n[test:prepare] Done.')
