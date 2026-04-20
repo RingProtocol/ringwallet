@@ -71,7 +71,8 @@ export const EVM_TESTNET_CHAINS: EvmTestnetChainConfig[] = [
     chainId: 998,
     chainName: 'Hyperliquid',
     sendAmount: '0.001',
-    anvilPort: 8545,
+    /** Keep 8546 free for Sepolia (8545) — matches `test/evmchain` Sepolia default + `yarn test:prepare` */
+    anvilPort: 8546,
     // Chain 998 has no Alchemy endpoint; app uses only the public RPC (RPC_FALLBACK['998']).
     rpcUrls: ['https://api.hyperliquid-testnet.xyz/evm'],
   },
@@ -79,7 +80,8 @@ export const EVM_TESTNET_CHAINS: EvmTestnetChainConfig[] = [
     chainId: 11155111,
     chainName: 'Sepolia',
     sendAmount: '0.0001',
-    anvilPort: 8546,
+    /** Same default as `test/evmchain/chains/sepolia.ts` so `yarn test:prepare` + `yarn test:chain` work together */
+    anvilPort: 8545,
     // next.config.mjs inlines VITE_ALCHEMY_RPC_KEY via DefinePlugin, so the app calls
     // the exact URL below. We register the same URL so Playwright intercepts it.
     rpcUrls: [

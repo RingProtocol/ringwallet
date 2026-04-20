@@ -78,7 +78,7 @@ function forkHint(): string {
     `  anvil --fork-url "${url}" --port ${profile.defaultAnvilPort}`,
     '',
     'Or: yarn test:chain fork-url   then paste into anvil',
-    'Optional: TESTCHAIN_RPC_URL=http://127.0.0.1:8546 for custom port',
+    'Optional: TESTCHAIN_RPC_URL=http://127.0.0.1:<port> if Anvil is not on default 8545',
   ].join('\n')
 }
 
