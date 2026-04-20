@@ -2,6 +2,7 @@
 @import '../apps/pwa/App.css';
 @import '../src/components/LoginButton.css';
 @import '../src/components/Introduce.css';
+@import '../src/components/LegalNotice.css';
 @import '../src/components/RingWalletLogo.css';
 @import '../src/components/WalletSwitcher.css';
 @import '../src/components/fullscreencomps/ChainSwitcher.css';

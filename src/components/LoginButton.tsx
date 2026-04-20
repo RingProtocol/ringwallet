@@ -3,6 +3,7 @@ import { useAuth, type UserData } from '../contexts/AuthContext'
 import PasskeyService from '../services/account/passkeyService'
 import { WalletType } from '../models/WalletType'
 import BiometricGuide from './BiometricGuide'
+import LegalNotice from './LegalNotice'
 import * as DbgLog from '../utils/DbgLog'
 import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import './LoginButton.css'
@@ -194,6 +195,7 @@ const LoginButton: React.FC = () => {
               {t('loginTipNoPasskey')}
             </p>
           )}
+          <LegalNotice />
         </div>
       )}
 

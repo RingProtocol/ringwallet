@@ -42,4 +42,9 @@ describe('ChainFamily enum', () => {
     const values = Object.values(ChainFamily)
     expect(values).toHaveLength(7)
   })
+
+  it('includes Dogecoin and Prisma families', () => {
+    expect(ChainFamily.Dogecoin).toBe('dogecoin')
+    expect(ChainFamily.Prisma).toBe('prisma')
+  })
 })

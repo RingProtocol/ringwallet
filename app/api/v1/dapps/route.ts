@@ -34,13 +34,22 @@ function getCategoryName(value: unknown): string {
 }
 
 function getCategoryId(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'general'
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'general'
+  )
 }
 
 function isDAppListResponse(data: unknown): data is DAppListResponse {
   if (!data || typeof data !== 'object') return false
   const value = data as Partial<DAppListResponse>
-  return Array.isArray(value.dapps) && Array.isArray(value.categories) && typeof value.updated_at === 'string'
+  return (
+    Array.isArray(value.dapps) &&
+    Array.isArray(value.categories) &&
+    typeof value.updated_at === 'string'
+  )
 }
 
 function transformRawDAppRows(rows: RawDAppRow[]): DAppListResponse {
@@ -63,12 +72,14 @@ function transformRawDAppRows(rows: RawDAppRow[]): DAppListResponse {
     }
   })
 
-  const categories = Array.from(categoryMap.entries()).map(([id, name], index) => ({
-    id,
-    name,
-    icon: '',
-    sort_order: index,
-  }))
+  const categories = Array.from(categoryMap.entries()).map(
+    ([id, name], index) => ({
+      id,
+      name,
+      icon: '',
+      sort_order: index,
+    })
+  )
 
   return {
     dapps,
@@ -85,7 +96,9 @@ function normalizeDAppListResponse(data: unknown): DAppListResponse {
   throw new Error('Invalid DApp list response format')
 }
 
-async function fetchRemoteDApps(testApiKey: string | null): Promise<DAppListResponse> {
+async function fetchRemoteDApps(
+  testApiKey: string | null
+): Promise<DAppListResponse> {
   const dappUrl = env('VITE_DAPP_URL')
   const dappToken = env('DAPP_TOKEN')
 
@@ -106,7 +119,7 @@ async function fetchRemoteDApps(testApiKey: string | null): Promise<DAppListResp
       Accept: 'application/json',
     },
     next: { revalidate: 300 },
-  })
+  } as RequestInit)
 
   if (!response.ok) {
     throw new Error(`Remote DApp request failed with ${response.status}`)
@@ -124,6 +137,9 @@ export async function GET(request: Request) {
     return NextResponse.json(remotePayload)
   } catch (err) {
     console.error('[API] /v1/dapps error:', (err as Error).message)
-    return NextResponse.json({ error: 'Failed to fetch DApps' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch DApps' },
+      { status: 500 }
+    )
   }
 }
