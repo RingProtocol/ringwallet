@@ -5,13 +5,14 @@ import { BitcoinKeyService } from '../chainplugins/bitcoin/bitcoinPlugin'
 
 bitcoin.initEccLib(ecc)
 
-export type BitcoinFork = 'mainnet' | 'testnet3' | 'testnet4'
+export type BitcoinFork = 'mainnet' | 'testnet3' | 'testnet4' | 'regtest'
 
 /** Resolve fork from chain config (see `Chain.bitcoinFork` in `ChainType.ts`). */
 export function bitcoinForkForChain(
   chain: Pick<Chain, 'id' | 'network' | 'bitcoinFork'>
 ): BitcoinFork {
   if (chain.bitcoinFork) return chain.bitcoinFork
+  if (chain.network === 'regtest') return 'regtest'
   if (chain.network === 'mainnet') return 'mainnet'
   if (chain.id === 'bitcoin-testnet3') return 'testnet3'
   if (chain.network === 'testnet') return 'testnet4'
@@ -21,6 +22,9 @@ export function bitcoinForkForChain(
 /** When only `rpcUrl` is available (e.g. plugin broadcast). */
 export function inferBitcoinForkFromRpcUrl(rpcUrl: string): BitcoinFork {
   const u = rpcUrl.toLowerCase()
+  if (u.includes('regtest') || /\/\/127\.0\.0\.1:3002\b/.test(rpcUrl)) {
+    return 'regtest'
+  }
   if (u.includes('testnet4') || u.includes('/testnet4')) return 'testnet4'
   if (
     u.includes('blockstream.info/testnet') ||
@@ -131,7 +135,10 @@ export class BitcoinService {
     this.apiBase = apiBase.replace(/\/$/, '')
     this.isTestnet = isTestnet
     this.bitcoinFork = bitcoinFork ?? (isTestnet ? 'testnet4' : 'mainnet')
-    this.network = BitcoinKeyService.getNetwork(isTestnet)
+    this.network =
+      this.bitcoinFork === 'regtest'
+        ? bitcoin.networks.regtest
+        : BitcoinKeyService.getNetwork(isTestnet)
   }
 
   private normalizeBase(base: string): string {
@@ -149,6 +156,13 @@ export class BitcoinService {
         kind: this.detectApiKind(this.apiBase),
       },
     ]
+
+    if (this.bitcoinFork === 'regtest') {
+      const unique = candidates.filter((candidate, index, arr) => {
+        return arr.findIndex((x) => x.base === candidate.base) === index
+      })
+      return kind ? unique.filter((c) => c.kind === kind) : unique
+    }
 
     if (this.isTestnet) {
       candidates.push(...this.getTestnetForkEndpoints())
@@ -178,6 +192,14 @@ export class BitcoinService {
         : label === 'source'
           ? 'source Bitcoin address'
           : 'Bitcoin address'
+    if (this.bitcoinFork === 'regtest') {
+      if (!BitcoinKeyService.isValidAddress(address, 'regtest')) {
+        throw new Error(
+          `Invalid ${target}. Only bech32 P2WPKH (bcrt1q) is supported on regtest`
+        )
+      }
+      return
+    }
     if (!BitcoinKeyService.isValidAddress(address)) {
       throw new Error(
         `Invalid ${target}. Only bech32 P2WPKH (bc1q/tb1q) is supported`
@@ -436,7 +458,8 @@ export class BitcoinService {
     const signer = BitcoinKeyService.getSigner(
       masterSeed,
       this.isTestnet,
-      addressIndex
+      addressIndex,
+      this.bitcoinFork === 'regtest' ? { regtest: true } : undefined
     )
 
     // Coin selection: accumulate until we have enough

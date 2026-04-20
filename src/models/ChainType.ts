@@ -28,7 +28,7 @@ export interface Chain {
    * Bitcoin indexer fork. Testnet3 vs testnet4 are different chains; `tb1` addresses match, UTXO sets do not.
    * Used by `BitcoinService` so Esplora fallbacks never query the wrong testnet.
    */
-  bitcoinFork?: 'mainnet' | 'testnet3' | 'testnet4'
+  bitcoinFork?: 'mainnet' | 'testnet3' | 'testnet4' | 'regtest'
   /** BIP44 coin type override (e.g. 505 for Provenance, 118 for Cosmos Hub) */
   coinType?: number
   /** Bech32 human-readable prefix for Cosmos chains (e.g. "cosmos", "pb", "osmo") */

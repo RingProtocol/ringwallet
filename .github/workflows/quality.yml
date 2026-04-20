@@ -43,3 +43,33 @@ jobs:
       - run: yarn typecheck
 
       - run: yarn test
+
+  solana-local:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install Solana CLI
+        run: curl -sSfL https://release.solana.com/stable/install | sh
+
+      - name: Add Solana to PATH
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Start local validator
+        run: solana-test-validator --reset &
+
+      - name: Wait for RPC
+        run: node test/solana-local/wait-rpc.mjs
+
+      - name: Solana integration (transfer + balance)
+        env:
+          SOLANA_LOCAL_TEST: '1'
+          TEST_SOLANA_RPC_URL: http://127.0.0.1:8899
+        run: yarn vitest run --config vitest.multichain.config.ts test/multichain/solana.local.integration.spec.ts

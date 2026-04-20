@@ -30,6 +30,8 @@
     "test:chain:wait-anvil": "node test/evmchain/cli/run.mjs wait-anvil",
     "test:multichain": "vitest run --config vitest.multichain.config.ts",
     "test:multichain:watch": "vitest --config vitest.multichain.config.ts",
+    "test:multichain:solana-local": "node test/solana-local/wait-rpc.mjs && vitest run --config vitest.multichain.config.ts test/multichain/solana.local.integration.spec.ts",
+    "test:multichain:bitcoin-regtest": "vitest run --config vitest.multichain.config.ts test/multichain/bitcoin.regtest.integration.spec.ts",
     "test:e2e": "npx playwright test --config test/playwright/playwright.config.ts",
     "test:e2e:ui": "npx playwright test --config test/playwright/playwright.config.ts --ui",
     "test:e2e:anvil": "node test/Playwright/scripts/start-anvil.mjs 998 8545 & node test/Playwright/scripts/start-anvil.mjs 11155111 8546 & wait",

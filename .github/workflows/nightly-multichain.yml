@@ -1,0 +1,38 @@
+name: Nightly multichain (Bitcoin regtest)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  bitcoin-regtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Start bitcoind regtest
+        run: docker compose -f test/bitcoin-regtest/docker-compose.yml up -d
+
+      - name: Wait for bitcoind RPC
+        run: |
+          for i in $(seq 1 60); do
+            if docker exec ring-bitcoind-regtest bitcoin-cli -regtest -rpcuser=ci -rpcpassword=cipass getblockcount >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Bitcoin regtest integration (starts esplora-proxy in test beforeAll)
+        env:
+          RUN_BITCOIN_REGTEST: '1'
+          TEST_BITCOIN_INDEXER_URL: http://127.0.0.1:3002
+        run: yarn vitest run --config vitest.multichain.config.ts test/multichain/bitcoin.regtest.integration.spec.ts

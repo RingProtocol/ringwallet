@@ -3,7 +3,11 @@ import { TESTID } from '../../../src/components/testids'
 import { ChainFamily } from '../../../src/models/ChainType'
 import { chainRegistry } from '../../../src/services/chainplugins/registry'
 import '../../../src/services/chainplugins/evm/evmPlugin' // side-effect: registers EvmChainPlugin
-import { E2E_CONFIG_EVM, EVM_TESTNET_CHAINS } from '../env'
+import {
+  E2E_CONFIG_EVM,
+  EVM_TESTNET_CHAINS,
+  SOLANA_DEVNET_RPC_URLS,
+} from '../env'
 import {
   setupVirtualAuthenticator,
   teardownVirtualAuthenticator,
@@ -39,6 +43,35 @@ export interface WalletContext {
  *   rpcUrl.  Playwright catches them here and forwards to local Anvil, so the app
  *   never reaches the real testnet — it always talks to the funded local chain.
  */
+/**
+ * When SOLANA_E2E_LOCAL=1 and solana-test-validator is on 127.0.0.1:8899,
+ * forward devnet RPC fetches to the local validator (same idea as setupAnvilRoutes).
+ */
+export async function setupSolanaRoutes(page: Page): Promise<void> {
+  if (process.env.SOLANA_E2E_LOCAL !== '1') return
+  const port = process.env.SOLANA_LOCAL_RPC_PORT ?? '8899'
+  const local = `http://127.0.0.1:${port}`
+  for (const rpcUrl of SOLANA_DEVNET_RPC_URLS) {
+    await page.route(rpcUrl, async (route) => {
+      try {
+        const response = await fetch(local, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: route.request().postData(),
+        })
+        const body = await response.text()
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body,
+        })
+      } catch {
+        await route.abort()
+      }
+    })
+  }
+}
+
 export async function setupAnvilRoutes(page: Page): Promise<void> {
   for (const chain of EVM_TESTNET_CHAINS) {
     const anvilRpc = `http://127.0.0.1:${chain.anvilPort}`
@@ -109,6 +142,8 @@ export const test = base.extend<{ wallet: WalletContext }>({
     const evmPlugin = chainRegistry.get(ChainFamily.EVM)!
     const evmAccounts = evmPlugin.deriveAccounts(seedBytes, 5)
     const evmAddresses = evmAccounts.map((a) => a.address)
+
+    await setupSolanaRoutes(page)
 
     // Intercept real testnet RPC calls → proxy to local Anvil forks
     await setupAnvilRoutes(page)

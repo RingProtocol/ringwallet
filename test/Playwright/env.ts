@@ -45,6 +45,15 @@ function loadAlchemyKey(): string {
 
 const alchemyKey = loadAlchemyKey()
 
+/**
+ * Solana RPC URLs the PWA may call (Alchemy + public fallback). Used by
+ * setupSolanaRoutes to proxy to a local solana-test-validator when SOLANA_E2E_LOCAL=1.
+ */
+export const SOLANA_DEVNET_RPC_URLS: string[] = [
+  `https://solana-devnet.g.alchemy.com/v2/${alchemyKey}`,
+  'https://api.devnet.solana.com',
+]
+
 export const E2E_CONFIG_EVM = {
   baseUrl: 'http://localhost:3000',
   masterSeed:
