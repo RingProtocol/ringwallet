@@ -13,6 +13,7 @@ dist-extension
 # Playwright
 playwright-report/
 test-results/
+test-ledger
 
 # oh-my-claudecode
 .omc/
