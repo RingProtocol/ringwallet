@@ -271,6 +271,11 @@ const messages = {
     approveTransactionAction: 'Approve transaction',
     switchAction: 'Switch',
     signAction: 'Sign',
+    termsOfService: 'Terms of Service',
+    privacyPolicy: 'Privacy Policy',
+    legalNoticePrefix: "By using Ring Wallet, you agree to Ring Labs' ",
+    legalNoticeMid: ' and consent to its ',
+    legalNoticeSuffix: '.',
   },
   zh: {
     account: '账户',
@@ -503,6 +508,11 @@ const messages = {
     approveTransactionAction: '确认交易',
     switchAction: '切换',
     signAction: '签名',
+    termsOfService: '服务条款',
+    privacyPolicy: '隐私政策',
+    legalNoticePrefix: '使用 Ring Wallet 即表示您同意 Ring Labs 的',
+    legalNoticeMid: '并同意其',
+    legalNoticeSuffix: '。',
   },
 } as const
 

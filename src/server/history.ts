@@ -179,7 +179,9 @@ async function fetchEtherscanAccountHistory<
     url.searchParams.set('sort', 'desc')
     url.searchParams.set('apikey', apiKey)
     logWarn('Etherscan request URL=', url.toString())
-    const response = await fetch(url, { next: { revalidate: 60 } })
+    const response = await fetch(url, {
+      next: { revalidate: 60 },
+    } as RequestInit)
     logWarn('Etherscan response=', response)
     if (!response.ok) {
       logWarn('Etherscan request failed with status', response.status)
@@ -504,7 +506,7 @@ async function fetchBitcoinHistory(
   const baseUrl = getPrimaryRpcUrl(chain).replace(/\/$/, '')
   const response = await fetch(`${baseUrl}/address/${address}/txs`, {
     next: { revalidate: 60 },
-  })
+  } as RequestInit)
   if (!response.ok) {
     throw new Error(`Bitcoin history request failed with ${response.status}`)
   }
@@ -538,7 +540,7 @@ async function fetchTronTrc20Transfers(
       {
         headers: { accept: 'application/json' },
         next: { revalidate: 60 },
-      }
+      } as RequestInit
     )
     if (!response.ok) return []
 
@@ -579,7 +581,7 @@ async function fetchTronHistory(
     fetch(`${baseUrl}/v1/accounts/${address}/transactions?limit=${limit}`, {
       headers: { accept: 'application/json' },
       next: { revalidate: 60 },
-    }),
+    } as RequestInit),
     fetchTronTrc20Transfers(baseUrl, address, limit),
   ])
 
@@ -639,7 +641,7 @@ async function fetchCosmosHistory(
     `${baseUrl}/cosmos/tx/v1beta1/txs?events=message.sender='${address}'&pagination.limit=${limit}`,
     {
       next: { revalidate: 60 },
-    }
+    } as RequestInit
   )
 
   if (!response.ok) {
