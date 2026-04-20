@@ -33,8 +33,9 @@ export default function PrivacyPolicyPage() {
         <h2>High Level Summary</h2>
         <ul className="legal-summary-list">
           <li>
-            Ring Labs is an incorporated company based in the United States.
-            Ring Labs complies with applicable U.S. laws and regulations.
+            Ring Labs is an incorporated company based in Singapore. Ring Labs
+            complies with applicable Singapore laws and regulations, as well as
+            applicable laws of other jurisdictions where it operates.
           </li>
           <li>
             Ring Wallet is a self-custody wallet. Your private keys and master
@@ -386,8 +387,8 @@ export default function PrivacyPolicyPage() {
 
         <h2>International Data Transfers</h2>
         <p>
-          Ring Labs is based in the United States. When you use the Services,
-          certain data may be processed in the United States or other
+          Ring Labs is based in Singapore. When you use the Services, certain
+          data may be processed in Singapore, the United States, or other
           jurisdictions where our service providers operate. Specifically:
         </p>
         <ul className="legal-list">

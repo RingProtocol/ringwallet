@@ -594,20 +594,18 @@ export default function TermsOfServicePage() {
 
         <h3>8.1 Governing Law</h3>
         <p>
-          You agree that the laws of the State of New York, without regard to
-          principles of conflict of laws, govern this Agreement and any Dispute
-          between you and us. You further agree that each of our Products shall
-          be deemed to be based solely in the State of New York, and that
-          although a Product may be available in other jurisdictions, its
-          availability does not give rise to general or specific personal
-          jurisdiction in any forum outside the State of New York. The parties
-          acknowledge that this Agreement evidences interstate commerce. Any
-          arbitration conducted pursuant to this Agreement shall be governed by
-          the Federal Arbitration Act. You agree that the federal and state
-          courts of New York County, New York are the proper forum for any
-          appeals of an arbitration award or for court proceedings in the event
-          that this Agreement&rsquo;s binding arbitration clause is found to be
-          unenforceable.
+          You agree that the laws of Singapore, without regard to principles of
+          conflict of laws, govern this Agreement and any Dispute between you
+          and us. You further agree that each of our Products shall be deemed to
+          be based solely in Singapore, and that although a Product may be
+          available in other jurisdictions, its availability does not give rise
+          to general or specific personal jurisdiction in any forum outside
+          Singapore. Any arbitration conducted pursuant to this Agreement shall
+          be governed by the Singapore International Arbitration Act (Cap.
+          143A). You agree that the courts of Singapore are the proper forum for
+          any appeals of an arbitration award or for court proceedings in the
+          event that this Agreement&rsquo;s binding arbitration clause is found
+          to be unenforceable.
         </p>
 
         <h3>8.2 Dispute Resolution</h3>
@@ -626,20 +624,21 @@ export default function TermsOfServicePage() {
           Products, this Agreement, or any other acts or omissions for which you
           may contend that we are liable, including, but not limited to, any
           claim or controversy as to arbitrability (&ldquo;Dispute&rdquo;),
-          shall be finally and exclusively settled by arbitration under the JAMS
-          Optional Expedited Arbitration Procedures. You understand that you are
-          required to resolve all Disputes by binding arbitration. The
-          arbitration shall be held on a confidential basis before a single
-          arbitrator, who shall be selected pursuant to JAMS rules. The
-          arbitration will be held in New York, New York, unless you and we both
-          agree to hold it elsewhere. Unless we agree otherwise, the arbitrator
-          may not consolidate your claims with those of any other party. Any
-          judgment on the award rendered by the arbitrator may be entered in any
-          court of competent jurisdiction. If for any reason a claim by law or
-          equity must proceed in court rather than in arbitration you agree to
-          waive any right to a jury trial and any claim may be brought only in a
-          Federal District Court or a New York state court located in New York
-          County, New York.
+          shall be finally and exclusively settled by arbitration administered
+          by the Singapore International Arbitration Centre (&ldquo;SIAC&rdquo;)
+          in accordance with the SIAC Arbitration Rules in force at the time of
+          filing. You understand that you are required to resolve all Disputes
+          by binding arbitration. The arbitration shall be held on a
+          confidential basis before a single arbitrator, who shall be selected
+          pursuant to SIAC rules. The arbitration will be held in Singapore,
+          unless you and we both agree to hold it elsewhere. The language of the
+          arbitration shall be English. Unless we agree otherwise, the
+          arbitrator may not consolidate your claims with those of any other
+          party. Any judgment on the award rendered by the arbitrator may be
+          entered in any court of competent jurisdiction. If for any reason a
+          claim by law or equity must proceed in court rather than in
+          arbitration, any such claim may be brought only in the courts of
+          Singapore.
         </p>
 
         <h3>8.3 Class Action and Jury Trial Waiver</h3>
@@ -677,13 +676,14 @@ export default function TermsOfServicePage() {
 
         <h3>9.3 Not Registered with the SEC or Any Other Agency</h3>
         <p>
-          We are not registered with the U.S. Securities and Exchange Commission
-          as a national securities exchange or in any other capacity. You
-          understand and acknowledge that we do not broker trading orders on
-          your behalf. We also do not facilitate the execution or settlement of
-          your trades, which occur entirely on public distributed blockchains.
-          As a result, we do not (and cannot) guarantee market best pricing or
-          best execution through our Products.
+          We are not registered with the U.S. Securities and Exchange
+          Commission, the Monetary Authority of Singapore, or any other
+          securities regulatory authority as a national securities exchange or
+          in any other capacity. You understand and acknowledge that we do not
+          broker trading orders on your behalf. We also do not facilitate the
+          execution or settlement of your trades, which occur entirely on public
+          distributed blockchains. As a result, we do not (and cannot) guarantee
+          market best pricing or best execution through our Products.
         </p>
 
         <h3>9.4 Notice</h3>
