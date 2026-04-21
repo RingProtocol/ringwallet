@@ -9,6 +9,8 @@ on:
 jobs:
   sepolia-fork:
     runs-on: ubuntu-latest
+    env:
+      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -23,8 +25,6 @@ jobs:
       - run: yarn install --frozen-lockfile
 
       - name: Start Anvil (Sepolia fork)
-        env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         run: |
           FORK_URL=$(node test/simulation/evm/cli/run.mjs fork-url sepolia 2>/dev/null)
           anvil --fork-url "$FORK_URL" --port 8545 &
