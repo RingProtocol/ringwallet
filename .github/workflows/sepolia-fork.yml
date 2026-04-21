@@ -1,0 +1,34 @@
+name: Sepolia Fork Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  sepolia-fork:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Start Anvil (Sepolia fork)
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+        run: |
+          FORK_URL=$(node test/simulation/evm/cli/run.mjs fork-url sepolia 2>/dev/null)
+          anvil --fork-url "$FORK_URL" --port 8545 &
+          yarn test:chain:wait-anvil sepolia
+
+      - name: Run Sepolia fork tests
+        run: yarn test:chain:sepolia
