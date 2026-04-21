@@ -5,7 +5,16 @@ export const optimismProfile: ChainTestProfile = {
   displayName: 'Optimism',
   chainId: 10,
   defaultAnvilPort: 8548,
-  /** Fork not supported — Anvil runs as a fresh local chain with --chain-id 10. */
+  buildForkRpcUrl() {
+    return null
+  },
+}
+
+export const opSepoliaProfile: ChainTestProfile = {
+  id: 'op-sepolia',
+  displayName: 'OP Sepolia',
+  chainId: 11155420,
+  defaultAnvilPort: 8557,
   buildForkRpcUrl() {
     return null
   },
