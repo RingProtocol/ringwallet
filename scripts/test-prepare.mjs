@@ -3,7 +3,13 @@
  * One-shot local prep for multichain integration / E2E stacks:
  * - Bitcoin: docker compose (bitcoind regtest)
  * - Solana: solana-test-validator (background)
- * - EVM: two Anvil instances — Sepolia 11155111 on 8545 (matches test/evmchain), Hyperliquid 998 on 8546
+ * - EVM: Anvil instances —
+ *     Sepolia 11155111 on 8545 (fork, matches test/evmchain)
+ *     Hyperliquid 998 on 8546
+ *     Tron 728126428 on 8547
+ *     Optimism 10 on 8548
+ *     Arbitrum 42161 on 8549
+ *     Polygon 137 on 8550
  *
  * Requires: Docker, optional Solana CLI, optional Foundry `anvil`.
  * Idempotent-ish: skips Solana/Anvil spawn if RPC already answers on the port.
@@ -279,11 +285,87 @@ async function main() {
       )
     }
 
+    // --- Optimism (fresh local chain, no fork)
+    const optimismPort = 8548
+    if (await waitAnvilReady(optimismPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${optimismPort} already serving JSON-RPC (skip Optimism).`
+      )
+    } else {
+      const op = spawn(
+        'anvil',
+        ['--chain-id', '10', '--port', String(optimismPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      op.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=10 port=${optimismPort} (pid ${op.pid})`
+      )
+      const ok = await waitAnvilReady(optimismPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Optimism anvil ready on ${optimismPort}.`
+          : `[test:prepare] EVM: Optimism anvil on ${optimismPort} not ready in time.`
+      )
+    }
+
+    // --- Arbitrum (fresh local chain, no fork)
+    const arbitrumPort = 8549
+    if (await waitAnvilReady(arbitrumPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${arbitrumPort} already serving JSON-RPC (skip Arbitrum).`
+      )
+    } else {
+      const arb = spawn(
+        'anvil',
+        ['--chain-id', '42161', '--port', String(arbitrumPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      arb.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=42161 port=${arbitrumPort} (pid ${arb.pid})`
+      )
+      const ok = await waitAnvilReady(arbitrumPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Arbitrum anvil ready on ${arbitrumPort}.`
+          : `[test:prepare] EVM: Arbitrum anvil on ${arbitrumPort} not ready in time.`
+      )
+    }
+
+    // --- Polygon (fresh local chain, no fork)
+    const polygonPort = 8550
+    if (await waitAnvilReady(polygonPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${polygonPort} already serving JSON-RPC (skip Polygon).`
+      )
+    } else {
+      const pol = spawn(
+        'anvil',
+        ['--chain-id', '137', '--port', String(polygonPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      pol.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=137 port=${polygonPort} (pid ${pol.pid})`
+      )
+      const ok = await waitAnvilReady(polygonPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Polygon anvil ready on ${polygonPort}.`
+          : `[test:prepare] EVM: Polygon anvil on ${polygonPort} not ready in time.`
+      )
+    }
+
     console.log(
       '  → Playwright E2E: yarn test:e2e (globalSetup also starts anvil if needed)'
     )
     console.log(
-      '  → Vitest EVM: yarn test:chain:sepolia (8545), yarn test:chain:hyperliquid (8546), yarn test:multichain:tron-local (8547)'
+      '  → Vitest EVM: yarn test:chain:sepolia (8545), yarn test:chain:hyperliquid (8546),'
+    )
+    console.log('                 yarn test:multichain:tron-local (8547),')
+    console.log(
+      '                 yarn test:chain:optimism (8548), yarn test:chain:arbitrum (8549), yarn test:chain:polygon (8550)'
     )
   }
 
