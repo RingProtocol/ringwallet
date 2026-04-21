@@ -193,6 +193,28 @@ const ChainSwitcher: React.FC = () => {
     chain.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const chainCountForTab = (tab: 'mainnet' | 'testnet') => {
+    const ids = tab === 'testnet' ? FEATURED_TESTNET_IDS : FEATURED_CHAIN_IDS
+    const seen = new Set<number | string>()
+    let count = 0
+    for (const id of ids) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      if (CHAINS.find((c) => c.id === id)) count++
+    }
+    for (const id of userAddedIds) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      const chain = CHAINS.find((c) => c.id === id)
+      if (chain) {
+        const matchesTab =
+          tab === 'testnet' ? isTestnet(chain) : !isTestnet(chain)
+        if (matchesTab) count++
+      }
+    }
+    return count
+  }
+
   const enabledIdSet = new Set([...ALL_FEATURED, ...userAddedIds])
   const availableToAdd = CHAINS.filter((chain) => {
     if (enabledIdSet.has(chain.id)) return false
@@ -315,7 +337,7 @@ const ChainSwitcher: React.FC = () => {
                     setActiveTab('mainnet')
                   }}
                 >
-                  Mainnet
+                  Mainnet ({chainCountForTab('mainnet')})
                 </button>
                 <button
                   className={`tab-btn ${activeTab === 'testnet' ? 'active' : ''}`}
@@ -325,7 +347,7 @@ const ChainSwitcher: React.FC = () => {
                   }}
                   data-testid={TESTID.CHAIN_TAB_TESTNET}
                 >
-                  Testnet
+                  Testnet ({chainCountForTab('testnet')})
                 </button>
               </div>
             </div>
