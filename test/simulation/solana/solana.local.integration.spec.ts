@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { SolanaService } from '@/services/rpc/solanaService'
 import { SolanaKeyService } from '@/services/chainplugins/solana/solanaPlugin'
-import { KNOWN_MASTER_SEED } from './seed'
+import { KNOWN_MASTER_SEED } from '../seed'
 
 const runLocal =
   process.env.SOLANA_LOCAL_TEST === '1' ||

@@ -5,7 +5,7 @@ import path from 'path'
 import { execFileSync } from 'child_process'
 import { BitcoinService } from '@/services/rpc/bitcoinService'
 import { BitcoinKeyService } from '@/services/chainplugins/bitcoin/bitcoinPlugin'
-import { KNOWN_MASTER_SEED } from './seed'
+import { KNOWN_MASTER_SEED } from '../seed'
 
 const runRegtest = process.env.RUN_BITCOIN_REGTEST === '1'
 
@@ -80,7 +80,7 @@ describe.skipIf(!runRegtest)(
     let proxy: ChildProcess | undefined
     const proxyScript = path.join(
       path.dirname(fileURLToPath(import.meta.url)),
-      '../bitcoin-regtest/esplora-proxy.mjs'
+      './esplora-proxy.mjs'
     )
 
     beforeAll(async () => {

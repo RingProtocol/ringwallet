@@ -1,4 +1,4 @@
-import { ensureTestEnv, tryGetAlchemyApiKey } from '../../evmchain/lib/env'
+import { ensureTestEnv, tryGetAlchemyApiKey } from '../../../lib/env'
 
 /**
  * When `TEST_SOLANA_RPC_URL` is unset, builds Alchemy Solana URL from the same key as EVM fork:

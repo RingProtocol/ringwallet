@@ -18,13 +18,10 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['test/evmchain/**/*.spec.ts'],
+    include: ['test/simulation/**/*.spec.ts'],
     environment: 'node',
     globals: true,
-    testTimeout: 120_000,
-    hookTimeout: 60_000,
-    poolOptions: {
-      threads: { singleThread: true },
-    },
+    testTimeout: 90_000,
+    hookTimeout: 45_000,
   },
 })
