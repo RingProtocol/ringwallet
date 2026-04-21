@@ -37,6 +37,7 @@
     "test:multichain:watch": "vitest --config vitest.simulation.config.ts",
     "test:multichain:solana-local": "node test/simulation/solana/wait-rpc.mjs && vitest run --config vitest.simulation.config.ts test/simulation/solana/solana.local.integration.spec.ts",
     "test:multichain:bitcoin-regtest": "vitest run --config vitest.simulation.config.ts test/simulation/bitcoin/bitcoin.regtest.integration.spec.ts",
+    "test:multichain:tron-local": "vitest run --config vitest.simulation.config.ts test/simulation/tron/tron.local.integration.spec.ts",
     "test:e2e": "npx playwright test --config test/playwright/playwright.config.ts",
     "test:e2e:ui": "npx playwright test --config test/playwright/playwright.config.ts --ui",
     "test:e2e:anvil": "node test/playwright/scripts/start-anvil.mjs 11155111 8545 & node test/playwright/scripts/start-anvil.mjs 998 8546 & wait",

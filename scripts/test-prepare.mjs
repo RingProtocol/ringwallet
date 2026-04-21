@@ -255,11 +255,35 @@ async function main() {
       )
     }
 
+    // --- Tron (fresh local chain, EVM-compatible, no fork)
+    const tronPort = 8547
+    if (await waitAnvilReady(tronPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${tronPort} already serving JSON-RPC (skip Tron).`
+      )
+    } else {
+      const tp = spawn(
+        'anvil',
+        ['--chain-id', '728126428', '--port', String(tronPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      tp.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=728126428 port=${tronPort} (pid ${tp.pid})`
+      )
+      const ok = await waitAnvilReady(tronPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Tron anvil ready on ${tronPort}.`
+          : `[test:prepare] EVM: Tron anvil on ${tronPort} not ready in time.`
+      )
+    }
+
     console.log(
       '  → Playwright E2E: yarn test:e2e (globalSetup also starts anvil if needed)'
     )
     console.log(
-      '  → Vitest EVM: yarn test:chain:sepolia (Sepolia fork on 8545), yarn test:chain:hyperliquid (998 on 8546)'
+      '  → Vitest EVM: yarn test:chain:sepolia (8545), yarn test:chain:hyperliquid (8546), yarn test:multichain:tron-local (8547)'
     )
   }
 
