@@ -30,10 +30,10 @@ describe.skipIf(!runLocal)(
       const beforeTo = await service.getBalance(to)
       expect(beforeTo).toBeGreaterThanOrEqual(0)
 
-      await service.sendSOL(sender, to, 0.05)
+      await service.sendSOL(sender, to, 0.9)
 
       const afterTo = await service.getBalance(to)
-      expect(afterTo).toBeGreaterThan(beforeTo)
+      expect(afterTo - beforeTo).toBeCloseTo(0.9, 5)
 
       const afterFrom = await service.getBalance(from)
       expect(afterFrom).toBeGreaterThanOrEqual(0)
