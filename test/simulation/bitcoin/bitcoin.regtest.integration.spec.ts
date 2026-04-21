@@ -117,6 +117,10 @@ describe.skipIf(!runRegtest)(
       )
 
       const bal0Before = await service.getBalance(a0.address)
+      const bal1Before = await service.getBalance(a1.address)
+      console.log(
+        `[bitcoin] bal0Before: ${bal0Before}, bal1Before: ${bal1Before}`
+      )
       expect(bal0Before).toBeGreaterThan(0)
 
       const amountSats = 100_000
@@ -140,11 +144,19 @@ describe.skipIf(!runRegtest)(
       ])
       dockerCli(['-rpcwallet=miner', 'generatetoaddress', '1', mineAddr])
 
-      const bal1 = await service.getBalance(a1.address)
-      expect(bal1).toBeGreaterThan(0)
+      const expectedBtc = amountSats / 1e8
+
+      const bal1After = await service.getBalance(a1.address)
+      console.log(
+        `[bitcoin] bal1After: ${bal1After}, bal1Before: ${bal1Before}, expectedBtc: ${expectedBtc}`
+      )
+      expect(bal1After - bal1Before).toBeCloseTo(expectedBtc, 8)
 
       const bal0After = await service.getBalance(a0.address)
-      expect(bal0After).toBeLessThan(bal0Before)
+      console.log(
+        `[bitcoin] bal0After: ${bal0After}, bal0Before: ${bal0Before}`
+      )
+      expect(bal0Before - bal0After).toBeGreaterThanOrEqual(expectedBtc)
     }, 120_000)
   }
 )
