@@ -1,10 +1,16 @@
 import type { ChainTestProfile } from './types'
 import { sepoliaProfile } from './sepolia'
 import { hyperliquidProfile } from './hyperliquid'
+import { optimismProfile } from './optimism'
+import { arbitrumProfile } from './arbitrum'
+import { polygonProfile } from './polygon'
 
 const registry: Record<string, ChainTestProfile> = {
   sepolia: sepoliaProfile,
   hyperliquid: hyperliquidProfile,
+  optimism: optimismProfile,
+  arbitrum: arbitrumProfile,
+  polygon: polygonProfile,
 }
 
 export function getChainProfile(chainId: string): ChainTestProfile {
@@ -21,4 +27,10 @@ export function listChainIds(): string[] {
   return Object.keys(registry)
 }
 
-export { sepoliaProfile, hyperliquidProfile }
+export {
+  sepoliaProfile,
+  hyperliquidProfile,
+  optimismProfile,
+  arbitrumProfile,
+  polygonProfile,
+}
