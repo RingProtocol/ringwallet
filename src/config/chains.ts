@@ -102,7 +102,12 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
   'dogecoin-mainnet': ['https://api.blockcypher.com/v1/doge/main'],
   'dogecoin-testnet': ['https://api.blockcypher.com/v1/doge/test3'],
   'cosmos-hub': ['https://cosmos-rpc.publicnode.com'],
+  'cosmos-testnet': [
+    'https://cosmos-testnet-rpc.polkachu.com',
+    'https://cosmoshub-testnet.rpc.kjnodes.com',
+  ],
   'provenance-mainnet': ['https://api.provenance.io'],
+  'provenance-testnet': ['https://rpc.test.provenance.io'],
   '43114': [
     'https://api.avax.network/ext/bc/C/rpc',
     'https://avalanche-c-chain-rpc.publicnode.com',
@@ -117,6 +122,7 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
   '998': ['https://api.hyperliquid-testnet.xyz/evm'],
   '9745': ['https://rpc.plasma.to'],
   '9746': ['https://testnet-rpc.plasma.to'],
+  '4326': ['https://mainnet.megaeth.com/rpc'],
   '6342': ['https://carrot.megaeth.com/rpc'],
   '2000': [
     'https://rpc.dogechain.dog',
@@ -185,7 +191,8 @@ const CHAIN_ICON: Record<string | number, string> = {
   196: '/icons/chains/okb.svg',
   999: '/icons/chains/hype.svg',
   9745: '/icons/chains/xpl.svg',
-  6342: '/icons/chains/eth.svg', // MegaETH (ETH native)
+  4326: '/icons/chains/eth.svg', // MegaETH (ETH native)
+  6342: '/icons/chains/eth.svg', // MegaETH Testnet (ETH native)
   2000: '/icons/chains/doge.svg',
   // ── EVM testnets ──
   11155111: '/icons/chains/eth.svg', // Sepolia
@@ -221,7 +228,9 @@ const CHAIN_ICON: Record<string | number, string> = {
   'dogecoin-mainnet': '/icons/chains/doge.svg',
   'dogecoin-testnet': '/icons/chains/doge.svg',
   'cosmos-hub': '/icons/chains/atom.svg',
+  'cosmos-testnet': '/icons/chains/atom.svg',
   'provenance-mainnet': '/icons/chains/hash.svg',
+  'provenance-testnet': '/icons/chains/hash.svg',
 }
 
 /** Symbol → icon path fallback for dynamic chains loaded from chainid.json. */
@@ -281,7 +290,7 @@ function chainIcon(id: string | number): string | undefined {
 // BTC + SOL first, then Ethereum, then popular L2s and L1s.
 export const FEATURED_CHAIN_IDS: (number | string)[] = [
   'bitcoin-mainnet',
-  // 'dogecoin-mainnet',
+  'dogecoin-mainnet',
   'solana-mainnet',
   'tron-mainnet',
   'cosmos-hub',
@@ -299,7 +308,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   250, // Fantom
   42220, // Celo
   100, // Gnosis
-  1284, // Moonbeam
+  1284, // Moonbeam, Polkadot 生态的 EVM 兼容主网，原生代币 GLMR
   5000, // Mantle
   1101, // Polygon zkEVM
   81457, // Blast
@@ -307,6 +316,7 @@ export const FEATURED_CHAIN_IDS: (number | string)[] = [
   196, // X Layer
   999, // Hyperliquid L1
   9745, // Plasma
+  4326, // MegaETH
   // 2000, // Dogechain
 ]
 
@@ -316,6 +326,8 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'dogecoin-testnet',
   'solana-devnet',
   'tron-shasta',
+  'cosmos-testnet',
+  'provenance-testnet',
   11155111, // Sepolia
   11155420, // OP Sepolia
   421614, // Arbitrum Sepolia
@@ -332,13 +344,13 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   168587773, // Blast Sepolia
   999999999, // Zora Sepolia
   4002, // Fantom Testnet
-  1287, // Moonbase Alpha
+  1287, // Moonbase Alpha, Moonbeam 的测试网
   2442, // Polygon zkEVM Cardona
   195, // X Layer Testnet
   998, // Hyperliquid Testnet
   9746, // Plasma Testnet
   6342, // MegaETH Testnet
-  568, // Dogechain Testnet
+  // 568, // Dogechain Testnet
 ]
 
 //chain info
@@ -488,6 +500,17 @@ export const DEFAULT_CHAINS: Chain[] = [
     addressPrefix: 'cosmos',
   },
   {
+    id: 'cosmos-testnet',
+    name: 'Cosmos Hub Testnet',
+    symbol: 'ATOM',
+    icon: chainIcon('cosmos-testnet'),
+    family: ChainFamily.Cosmos,
+    rpcUrl: rpcUrl('cosmos-testnet'),
+    explorer: 'https://explorer.kjnodes.com/cosmoshub-testnet',
+    coinType: 118,
+    addressPrefix: 'cosmos',
+  },
+  {
     id: 'provenance-mainnet',
     name: 'Provenance',
     symbol: 'HASH',
@@ -497,6 +520,17 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://explorer.provenance.io',
     coinType: 505,
     addressPrefix: 'pb',
+  },
+  {
+    id: 'provenance-testnet',
+    name: 'Provenance Testnet',
+    symbol: 'HASH',
+    icon: chainIcon('provenance-testnet'),
+    family: ChainFamily.Cosmos,
+    rpcUrl: rpcUrl('provenance-testnet'),
+    explorer: 'https://explorer.test.provenance.io',
+    coinType: 1,
+    addressPrefix: 'tp',
   },
   // ─── Avalanche ───
   {
@@ -575,6 +609,15 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://testnet.plasmascan.to',
   },
   // ─── MegaETH ───
+  {
+    id: 4326,
+    name: 'MegaETH',
+    symbol: 'ETH',
+    icon: chainIcon(4326),
+    family: ChainFamily.EVM,
+    rpcUrl: rpcUrl(4326),
+    explorer: 'https://megaeth.blockscout.com',
+  },
   {
     id: 6342,
     name: 'MegaETH Testnet',
