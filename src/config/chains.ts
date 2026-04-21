@@ -124,6 +124,22 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
     'https://rpc.ankr.com/dogechain',
   ],
   '568': ['https://rpc-testnet.dogechain.dog', 'https://568.rpc.thirdweb.com'],
+  '11155420': ['https://sepolia.optimism.io'],
+  '421614': ['https://sepolia-rollup.arbitrum.io/rpc'],
+  '84532': ['https://sepolia.base.org'],
+  '80002': ['https://rpc-amoy.polygon.technology'],
+  '300': ['https://sepolia.era.zksync.dev'],
+  '59141': ['https://rpc.sepolia.linea.build'],
+  '534351': ['https://sepolia-rpc.scroll.io'],
+  '97': ['https://bsc-testnet-rpc.publicnode.com'],
+  '44787': ['https://alfajores-forno.celo-testnet.org'],
+  '10200': ['https://rpc.chiadochain.net'],
+  '5003': ['https://rpc.sepolia.mantle.xyz'],
+  '168587773': ['https://sepolia.blast.io'],
+  '999999999': ['https://sepolia.rpc.zora.energy'],
+  '4002': ['https://rpc.testnet.fantom.network'],
+  '1287': ['https://rpc.api.moonbase.moonbeam.network'],
+  '2442': ['https://rpc.cardona.zkevm-rpc.com'],
 }
 
 function flattenRpcValues(
@@ -173,6 +189,22 @@ const CHAIN_ICON: Record<string | number, string> = {
   2000: '/icons/chains/doge.svg',
   // ── EVM testnets ──
   11155111: '/icons/chains/eth.svg', // Sepolia
+  11155420: '/icons/chains/optimism.svg', // OP Sepolia
+  421614: '/icons/chains/arbitrum.svg', // Arbitrum Sepolia
+  84532: '/icons/chains/base.svg', // Base Sepolia
+  80002: '/icons/chains/polygon.svg', // Polygon Amoy
+  300: '/icons/chains/zksync.svg', // zkSync Sepolia
+  59141: '/icons/chains/linea.svg', // Linea Sepolia
+  534351: '/icons/chains/scroll.svg', // Scroll Sepolia
+  97: '/icons/chains/bnb.svg', // BNB Testnet
+  44787: '/icons/chains/celo.svg', // Celo Alfajores
+  10200: '/icons/chains/xdai.svg', // Gnosis Chiado
+  5003: '/icons/chains/mnt.svg', // Mantle Sepolia
+  168587773: '/icons/chains/blast.svg', // Blast Sepolia
+  999999999: '/icons/chains/zora.svg', // Zora Sepolia
+  4002: '/icons/chains/ftm.svg', // Fantom Testnet
+  1287: '/icons/chains/glmr.svg', // Moonbase Alpha
+  2442: '/icons/chains/polygon.svg', // Polygon zkEVM Cardona
   43113: '/icons/chains/avax.svg', // Fuji
   195: '/icons/chains/okb.svg', // X Layer Testnet
   998: '/icons/chains/hype.svg', // Hyperliquid Testnet
@@ -285,7 +317,23 @@ export const FEATURED_TESTNET_IDS: (number | string)[] = [
   'solana-devnet',
   'tron-shasta',
   11155111, // Sepolia
+  11155420, // OP Sepolia
+  421614, // Arbitrum Sepolia
+  84532, // Base Sepolia
+  80002, // Polygon Amoy
+  300, // zkSync Sepolia
+  59141, // Linea Sepolia
+  534351, // Scroll Sepolia
+  97, // BNB Testnet
   43113, // Avalanche Fuji
+  44787, // Celo Alfajores
+  10200, // Gnosis Chiado
+  5003, // Mantle Sepolia
+  168587773, // Blast Sepolia
+  999999999, // Zora Sepolia
+  4002, // Fantom Testnet
+  1287, // Moonbase Alpha
+  2442, // Polygon zkEVM Cardona
   195, // X Layer Testnet
   998, // Hyperliquid Testnet
   9746, // Plasma Testnet
