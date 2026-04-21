@@ -5,7 +5,16 @@ export const polygonProfile: ChainTestProfile = {
   displayName: 'Polygon',
   chainId: 137,
   defaultAnvilPort: 8550,
-  /** Fork not supported — Anvil runs as a fresh local chain with --chain-id 137. */
+  buildForkRpcUrl() {
+    return null
+  },
+}
+
+export const polygonAmoyProfile: ChainTestProfile = {
+  id: 'polygon-amoy',
+  displayName: 'Polygon Amoy',
+  chainId: 80002,
+  defaultAnvilPort: 8559,
   buildForkRpcUrl() {
     return null
   },

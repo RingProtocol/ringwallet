@@ -5,7 +5,16 @@ export const arbitrumProfile: ChainTestProfile = {
   displayName: 'Arbitrum One',
   chainId: 42161,
   defaultAnvilPort: 8549,
-  /** Fork not supported — Anvil runs as a fresh local chain with --chain-id 42161. */
+  buildForkRpcUrl() {
+    return null
+  },
+}
+
+export const arbitrumSepoliaProfile: ChainTestProfile = {
+  id: 'arbitrum-sepolia',
+  displayName: 'Arbitrum Sepolia',
+  chainId: 421614,
+  defaultAnvilPort: 8558,
   buildForkRpcUrl() {
     return null
   },
