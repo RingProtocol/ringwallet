@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run test/unit",
     "test:rpc": "vitest run --config vitest.rpc.config.ts",
     "test:chain": "vitest run --config vitest.simulation.evm.config.ts",
     "test:chain:local": "yarn test:prepare && yarn test:chain",
