@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url'
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
-  '..',
   '..'
 )
 

@@ -18,7 +18,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['test/multichain/**/*.spec.ts'],
+    include: ['test/unit/rpc/**/*.spec.ts'],
     environment: 'node',
     globals: true,
     testTimeout: 90_000,

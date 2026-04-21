@@ -44,6 +44,18 @@ const CHAINS = {
     expectedChainId: 11155111,
     defaultPort: 8545,
     buildForkUrl: (key) => `https://eth-sepolia.g.alchemy.com/v2/${key}`,
+    forkUrlFromEnv: () =>
+      process.env.TESTCHAIN_FORK_URL_SEPOLIA?.trim() ||
+      process.env.TESTCHAIN_FORK_URL?.trim() ||
+      '',
+    requiresAlchemyKey: true,
+  },
+  hyperliquid: {
+    expectedChainId: 998,
+    defaultPort: 8546,
+    noFork: true, // fork not supported — Anvil starts as fresh local chain
+    forkUrlFromEnv: () => '',
+    requiresAlchemyKey: false,
   },
 }
 
@@ -55,27 +67,14 @@ function getKey() {
   )
 }
 
-function sepoliaForkUrlFromEnv() {
-  return (
-    process.env.TESTCHAIN_FORK_URL_SEPOLIA?.trim() ||
-    process.env.TESTCHAIN_FORK_URL?.trim() ||
-    ''
-  )
-}
-
 function cmdDoctor() {
   console.log('[test:chain] doctor')
   const key = getKey()
-  const forkOverride = sepoliaForkUrlFromEnv()
   console.log(
     '  .env.test:',
     fs.existsSync(path.join(repoRoot, '.env.test')) ? 'yes' : 'no'
   )
   console.log('  Alchemy key:', key ? 'yes' : 'no')
-  console.log(
-    '  TESTCHAIN_FORK_URL_* (used only without Alchemy key):',
-    forkOverride ? 'yes' : 'no'
-  )
   const anvil = spawnSync('anvil', ['--version'], { encoding: 'utf8' })
   if (anvil.status === 0) {
     console.log('  anvil:', (anvil.stdout || anvil.stderr || '').trim() || 'ok')
@@ -93,8 +92,20 @@ function cmdForkUrl(chain = 'sepolia') {
     )
     process.exit(1)
   }
+  if (meta.noFork) {
+    process.stderr.write(
+      `# ${chain}: fork not supported. Start a fresh local chain instead:\n\n`
+    )
+    process.stdout.write(
+      `anvil --chain-id ${meta.expectedChainId} --port ${meta.defaultPort}\n`
+    )
+    process.stderr.write(
+      `\n# Or use yarn test:prepare to start all local chains at once.\n`
+    )
+    return
+  }
   const alchemyKey = getKey()
-  const fromEnv = sepoliaForkUrlFromEnv()
+  const fromEnv = meta.forkUrlFromEnv()
   let url
   if (alchemyKey) {
     url = meta.buildForkUrl(alchemyKey)
@@ -108,7 +119,7 @@ function cmdForkUrl(chain = 'sepolia') {
     )
   } else {
     console.error(
-      'Set ALCHEMY_API_KEY / VITE_ALCHEMY_RPC_KEY in .env.test, or TESTCHAIN_FORK_URL_SEPOLIA=https://… (see test/evmchain/README.md)'
+      `Set ALCHEMY_API_KEY / VITE_ALCHEMY_RPC_KEY in .env.test, or TESTCHAIN_FORK_URL_${chain.toUpperCase()}=https://… (see test/simulation/evm/README.md)`
     )
     process.exit(1)
   }
@@ -128,8 +139,11 @@ async function cmdWaitAnvil(chain = 'sepolia') {
     process.exit(1)
   }
   const port = meta.defaultPort
+  const envKey = `TESTCHAIN_RPC_URL_${chain.toUpperCase()}`
   const rpc =
-    process.env.TESTCHAIN_RPC_URL?.trim() || `http://127.0.0.1:${port}`
+    process.env[envKey]?.trim() ||
+    process.env.TESTCHAIN_RPC_URL?.trim() ||
+    `http://127.0.0.1:${port}`
   const deadline =
     Date.now() + (Number(process.env.TESTCHAIN_WAIT_MS) || 60_000)
   const want = meta.expectedChainId
@@ -187,14 +201,14 @@ async function cmdWaitAnvil(chain = 'sepolia') {
 }
 
 function printHelp() {
-  console.log(`test/evmchain CLI (run from repo root)
+  const chainList = Object.keys(CHAINS).join(', ')
+  console.log(`test/simulation/evm CLI (run from repo root)
 
-  yarn test:chain:doctor              — .env.test + anvil
-  yarn test:chain:fork-url           — print Sepolia fork URL (stdout)
-  yarn test:chain:fork-url base-sep  — (when added) other chains
-  yarn test:chain:wait-anvil         — Anvil must run first in another terminal; then wait for RPC + correct chainId
+  yarn test:chain:doctor                        — check .env.test + anvil
+  yarn test:chain:fork-url [chain]              — print fork URL (stdout); chain: ${chainList}
+  yarn test:chain:wait-anvil [chain]            — wait for Anvil RPC + correct chainId
 
-Or: node test/evmchain/cli/run.mjs <command>
+Or: node test/simulation/evm/cli/run.mjs <command> [chain]
 `)
 }
 

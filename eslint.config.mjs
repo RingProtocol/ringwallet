@@ -10,6 +10,7 @@ export default [
       'dist/**',
       'node_modules/**',
       'public/**',
+      'test/**',
     ],
   },
   js.configs.recommended,

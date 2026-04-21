@@ -30,8 +30,8 @@ yarn run build || {
 git add .
 
 staged_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs')
-# Skip test/ — CLIs and chain helpers legitimately print to stdout.
-staged_for_console_check=$(printf '%s\n' "$staged_files" | grep -v '^test/' || true)
+# Skip test/ and scripts/ — CLIs and chain helpers legitimately print to stdout.
+staged_for_console_check=$(printf '%s\n' "$staged_files" | grep -v -e '^test/' -e '^scripts/' || true)
 if [[ -n "$staged_for_console_check" ]]; then
   console_matches=$(printf '%s\n' "$staged_for_console_check" | xargs grep -nH -E 'console\.log\s*\(' || true)
   if [[ -n "$console_matches" ]]; then
