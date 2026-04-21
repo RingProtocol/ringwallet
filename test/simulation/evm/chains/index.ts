@@ -4,6 +4,9 @@ import { hyperliquidProfile } from './hyperliquid'
 import { optimismProfile } from './optimism'
 import { arbitrumProfile } from './arbitrum'
 import { polygonProfile } from './polygon'
+import { avalancheProfile, fujiProfile } from './avalanche'
+import { xlayerProfile, xlayerTestnetProfile } from './xlayer'
+import { plasmaProfile, plasmaTestnetProfile } from './plasma'
 
 const registry: Record<string, ChainTestProfile> = {
   sepolia: sepoliaProfile,
@@ -11,6 +14,12 @@ const registry: Record<string, ChainTestProfile> = {
   optimism: optimismProfile,
   arbitrum: arbitrumProfile,
   polygon: polygonProfile,
+  avalanche: avalancheProfile,
+  fuji: fujiProfile,
+  xlayer: xlayerProfile,
+  'xlayer-testnet': xlayerTestnetProfile,
+  plasma: plasmaProfile,
+  'plasma-testnet': plasmaTestnetProfile,
 }
 
 export function getChainProfile(chainId: string): ChainTestProfile {
@@ -33,4 +42,10 @@ export {
   optimismProfile,
   arbitrumProfile,
   polygonProfile,
+  avalancheProfile,
+  fujiProfile,
+  xlayerProfile,
+  xlayerTestnetProfile,
+  plasmaProfile,
+  plasmaTestnetProfile,
 }
