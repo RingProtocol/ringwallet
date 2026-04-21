@@ -10,6 +10,12 @@
  *     Optimism 10 on 8548
  *     Arbitrum 42161 on 8549
  *     Polygon 137 on 8550
+ *     Avalanche C-Chain 43114 on 8551
+ *     Avalanche Fuji 43113 on 8552
+ *     X Layer 196 on 8553
+ *     X Layer Testnet 195 on 8554
+ *     Plasma 9745 on 8555
+ *     Plasma Testnet 9746 on 8556
  *
  * Requires: Docker, optional Solana CLI, optional Foundry `anvil`.
  * Idempotent-ish: skips Solana/Anvil spawn if RPC already answers on the port.
@@ -357,6 +363,150 @@ async function main() {
       )
     }
 
+    // --- Avalanche C-Chain (fresh local chain, no fork)
+    const avalanchePort = 8551
+    if (await waitAnvilReady(avalanchePort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${avalanchePort} already serving JSON-RPC (skip Avalanche).`
+      )
+    } else {
+      const avax = spawn(
+        'anvil',
+        ['--chain-id', '43114', '--port', String(avalanchePort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      avax.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=43114 port=${avalanchePort} (pid ${avax.pid})`
+      )
+      const ok = await waitAnvilReady(avalanchePort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Avalanche anvil ready on ${avalanchePort}.`
+          : `[test:prepare] EVM: Avalanche anvil on ${avalanchePort} not ready in time.`
+      )
+    }
+
+    // --- Avalanche Fuji testnet (fresh local chain, no fork)
+    const fujiPort = 8552
+    if (await waitAnvilReady(fujiPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${fujiPort} already serving JSON-RPC (skip Fuji).`
+      )
+    } else {
+      const fuji = spawn(
+        'anvil',
+        ['--chain-id', '43113', '--port', String(fujiPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      fuji.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=43113 port=${fujiPort} (pid ${fuji.pid})`
+      )
+      const ok = await waitAnvilReady(fujiPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Fuji anvil ready on ${fujiPort}.`
+          : `[test:prepare] EVM: Fuji anvil on ${fujiPort} not ready in time.`
+      )
+    }
+
+    // --- X Layer mainnet (fresh local chain, no fork)
+    const xlayerPort = 8553
+    if (await waitAnvilReady(xlayerPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${xlayerPort} already serving JSON-RPC (skip X Layer).`
+      )
+    } else {
+      const xl = spawn(
+        'anvil',
+        ['--chain-id', '196', '--port', String(xlayerPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      xl.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=196 port=${xlayerPort} (pid ${xl.pid})`
+      )
+      const ok = await waitAnvilReady(xlayerPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: X Layer anvil ready on ${xlayerPort}.`
+          : `[test:prepare] EVM: X Layer anvil on ${xlayerPort} not ready in time.`
+      )
+    }
+
+    // --- X Layer testnet (fresh local chain, no fork)
+    const xlayerTestnetPort = 8554
+    if (await waitAnvilReady(xlayerTestnetPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${xlayerTestnetPort} already serving JSON-RPC (skip X Layer Testnet).`
+      )
+    } else {
+      const xlt = spawn(
+        'anvil',
+        ['--chain-id', '195', '--port', String(xlayerTestnetPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      xlt.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=195 port=${xlayerTestnetPort} (pid ${xlt.pid})`
+      )
+      const ok = await waitAnvilReady(xlayerTestnetPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: X Layer Testnet anvil ready on ${xlayerTestnetPort}.`
+          : `[test:prepare] EVM: X Layer Testnet anvil on ${xlayerTestnetPort} not ready in time.`
+      )
+    }
+
+    // --- Plasma mainnet (fresh local chain, no fork)
+    const plasmaPort = 8555
+    if (await waitAnvilReady(plasmaPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${plasmaPort} already serving JSON-RPC (skip Plasma).`
+      )
+    } else {
+      const pla = spawn(
+        'anvil',
+        ['--chain-id', '9745', '--port', String(plasmaPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      pla.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=9745 port=${plasmaPort} (pid ${pla.pid})`
+      )
+      const ok = await waitAnvilReady(plasmaPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Plasma anvil ready on ${plasmaPort}.`
+          : `[test:prepare] EVM: Plasma anvil on ${plasmaPort} not ready in time.`
+      )
+    }
+
+    // --- Plasma testnet (fresh local chain, no fork)
+    const plasmaTestnetPort = 8556
+    if (await waitAnvilReady(plasmaTestnetPort, 1500)) {
+      console.log(
+        `[test:prepare] EVM: port ${plasmaTestnetPort} already serving JSON-RPC (skip Plasma Testnet).`
+      )
+    } else {
+      const plt = spawn(
+        'anvil',
+        ['--chain-id', '9746', '--port', String(plasmaTestnetPort), '--silent'],
+        { detached: true, stdio: 'ignore', cwd: repoRoot }
+      )
+      plt.unref()
+      console.log(
+        `[test:prepare] EVM: spawned anvil chainId=9746 port=${plasmaTestnetPort} (pid ${plt.pid})`
+      )
+      const ok = await waitAnvilReady(plasmaTestnetPort)
+      console.log(
+        ok
+          ? `[test:prepare] EVM: Plasma Testnet anvil ready on ${plasmaTestnetPort}.`
+          : `[test:prepare] EVM: Plasma Testnet anvil on ${plasmaTestnetPort} not ready in time.`
+      )
+    }
+
     console.log(
       '  → Playwright E2E: yarn test:e2e (globalSetup also starts anvil if needed)'
     )
@@ -365,7 +515,16 @@ async function main() {
     )
     console.log('                 yarn test:multichain:tron-local (8547),')
     console.log(
-      '                 yarn test:chain:optimism (8548), yarn test:chain:arbitrum (8549), yarn test:chain:polygon (8550)'
+      '                 yarn test:chain:optimism (8548), yarn test:chain:arbitrum (8549), yarn test:chain:polygon (8550),'
+    )
+    console.log(
+      '                 yarn test:chain:avalanche (8551), yarn test:chain:fuji (8552),'
+    )
+    console.log(
+      '                 yarn test:chain:xlayer (8553), yarn test:chain:xlayer-testnet (8554),'
+    )
+    console.log(
+      '                 yarn test:chain:plasma (8555), yarn test:chain:plasma-testnet (8556)'
     )
   }
 

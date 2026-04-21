@@ -11,16 +11,22 @@ Use this guide when adding local Anvil-based integration tests for a new EVM-com
 
 Current port assignments:
 
-| Chain       | chainId   | Port |
-| ----------- | --------- | ---- |
-| Sepolia     | 11155111  | 8545 |
-| Hyperliquid | 998       | 8546 |
-| Tron        | 728126428 | 8547 |
-| Optimism    | 10        | 8548 |
-| Arbitrum    | 42161     | 8549 |
-| Polygon     | 137       | 8550 |
+| Chain             | chainId   | Port |
+| ----------------- | --------- | ---- |
+| Sepolia           | 11155111  | 8545 |
+| Hyperliquid       | 998       | 8546 |
+| Tron              | 728126428 | 8547 |
+| Optimism          | 10        | 8548 |
+| Arbitrum          | 42161     | 8549 |
+| Polygon           | 137       | 8550 |
+| Avalanche C-Chain | 43114     | 8551 |
+| Avalanche Fuji    | 43113     | 8552 |
+| X Layer           | 196       | 8553 |
+| X Layer Testnet   | 195       | 8554 |
+| Plasma            | 9745      | 8555 |
+| Plasma Testnet    | 9746      | 8556 |
 
-Pick the next available port (8551, 8552, …).
+Pick the next available port (8557, 8558, …).
 
 ## Step 2 — Create a chain profile
 
