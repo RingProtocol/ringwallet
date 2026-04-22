@@ -1,4 +1,4 @@
-name: Sepolia Fork Tests
+name: Multi-chain Simulation Tests
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: ['**']
 
 jobs:
-  sepolia-fork:
+  multi-chain:
     runs-on: ubuntu-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
@@ -24,11 +24,8 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - name: Start Anvil (Sepolia fork)
-        run: |
-          FORK_URL=$(node test/simulation/evm/cli/run.mjs fork-url sepolia 2>/dev/null)
-          anvil --fork-url "$FORK_URL" --port 8545 &
-          yarn test:chain:wait-anvil sepolia
+      - name: Prepare test infrastructure
+        run: yarn test:prepare
 
-      - name: Run Sepolia fork tests
-        run: yarn test:chain:sepolia
+      - name: Run EVM chain simulation tests
+        run: yarn test:chain
