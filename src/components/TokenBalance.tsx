@@ -9,6 +9,7 @@ import {
   formatChainTokenPositionUsd,
   formatUsdUnitPrice,
   sortChainTokensForDisplay,
+  partitionTokens,
 } from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
 import { useTokenCacheNotifier } from '../hooks/useTokenCacheNotifier'
@@ -36,9 +37,10 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
   const { activeChain, activeAccount } = useAuth()
   const { t } = useI18n()
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showHidden, setShowHidden] = useState(false)
   const cacheGen = useTokenCacheNotifier()
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     void cacheGen
     if (!activeChain) return tokens
     const net = chainToAccountAssetsNetwork(activeChain)
@@ -49,6 +51,11 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     }
     return sortChainTokensForDisplay(tokens)
   }, [activeChain, tokens, cacheGen])
+
+  const { visible: visibleRows, hidden: hiddenRows } = useMemo(
+    () => partitionTokens(allRows),
+    [allRows]
+  )
 
   const handleImportToken = useCallback(
     (token: {
@@ -66,6 +73,52 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
 
   if (!activeAccount || !activeChain) return null
 
+  const renderTokenRow = (token: ChainToken) => {
+    const symbol = chainTokenDisplaySymbol(token, activeChain)
+    const name = chainTokenDisplayName(token, activeChain)
+    const balanceStr = formatChainTokenBalance(token, activeChain, 4)
+    const usdStr = formatChainTokenPositionUsd(token)
+    const usdUnitStr = formatUsdUnitPrice(token)
+    const changeStr = chainTokenChangePercentLabel(token)
+    const logoUrl = token.tokenMetadata.logo?.trim()
+    const isNative = token.tokenAddress == null
+
+    return (
+      <div
+        key={`${token.network}-${token.tokenAddress ?? 'native'}`}
+        className={`token-row${onTokenSelect ? ' token-row--clickable' : ''}`}
+        onClick={onTokenSelect ? () => onTokenSelect(token) : undefined}
+      >
+        <div className="token-row__brand">
+          <div className="token-icon-wrap">
+            {logoUrl ? (
+              <img src={logoUrl} alt={symbol} className="token-logo-img" />
+            ) : isNative && activeChain.icon ? (
+              <ChainIcon icon={activeChain.icon} symbol={symbol} size={38} />
+            ) : (
+              <span className="token-icon-placeholder">{symbol.charAt(0)}</span>
+            )}
+          </div>
+          <div className="token-info">
+            <span className="token-symbol">{symbol}</span>
+            <span className="token-name">{name}</span>
+          </div>
+        </div>
+        <div
+          className="token-row__balance"
+          data-testid={isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined}
+        >
+          <span className="token-amount">{balanceStr}</span>
+          <span className="token-value">{usdStr}</span>
+        </div>
+        <div className="token-row__fiat">
+          <span className="token-usd">{usdUnitStr}</span>
+          <span className="token-change">{changeStr ?? '—'}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="token-balance-list">
       <div className="token-list-header">
@@ -79,7 +132,9 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
         )}
       </div>
-      {rows.length > 0 && (
+
+      {/* Main visible section */}
+      {visibleRows.length > 0 && (
         <div className="token-columns-header" role="row">
           <div
             className="token-columns-header__name token-columns-header__name--hidden"
@@ -99,64 +154,70 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </div>
         </div>
       )}
-      {rows.length === 0 ? (
-        <div className="token-empty">{t('noTokensFound')}</div>
-      ) : (
-        rows.map((token) => {
-          const symbol = chainTokenDisplaySymbol(token, activeChain)
-          const name = chainTokenDisplayName(token, activeChain)
-          const balanceStr = formatChainTokenBalance(token, activeChain, 4)
-          const usdStr = formatChainTokenPositionUsd(token)
-          const usdUnitStr = formatUsdUnitPrice(token)
-          const changeStr = chainTokenChangePercentLabel(token)
-          const logoUrl = token.tokenMetadata.logo?.trim()
-          const isNative = token.tokenAddress == null
 
-          return (
-            <div
-              key={`${token.network}-${token.tokenAddress ?? 'native'}`}
-              className={`token-row${onTokenSelect ? ' token-row--clickable' : ''}`}
-              onClick={onTokenSelect ? () => onTokenSelect(token) : undefined}
-            >
-              <div className="token-row__brand">
-                <div className="token-icon-wrap">
-                  {logoUrl ? (
-                    <img
-                      src={logoUrl}
-                      alt={symbol}
-                      className="token-logo-img"
-                    />
-                  ) : isNative && activeChain.icon ? (
-                    <ChainIcon
-                      icon={activeChain.icon}
-                      symbol={symbol}
-                      size={38}
-                    />
-                  ) : (
-                    <span className="token-icon-placeholder">
-                      {symbol.charAt(0)}
-                    </span>
-                  )}
-                </div>
-                <div className="token-info">
-                  <span className="token-symbol">{symbol}</span>
-                  <span className="token-name">{name}</span>
-                </div>
-              </div>
+      {allRows.length === 0 ? (
+        <div className="token-empty">{t('noTokensFound')}</div>
+      ) : visibleRows.length === 0 ? (
+        <div className="token-empty">{t('noVisibleTokens')}</div>
+      ) : (
+        visibleRows.map(renderTokenRow)
+      )}
+
+      {/* Hidden suspicious tokens section */}
+      {hiddenRows.length > 0 && (
+        <div className="token-hidden-section">
+          <button
+            type="button"
+            className="token-hidden-toggle"
+            onClick={() => setShowHidden((v) => !v)}
+            aria-expanded={showHidden}
+          >
+            <span className="token-hidden-toggle__icon">
+              {showHidden ? '▼' : '▶'}
+            </span>
+            <span className="token-hidden-toggle__text">
+              {t('suspiciousTokens', { count: hiddenRows.length })}
+            </span>
+            <span className="token-hidden-toggle__hint">
+              {showHidden ? t('clickToCollapse') : t('clickToExpand')}
+            </span>
+          </button>
+
+          {showHidden && (
+            <>
               <div
-                className="token-row__balance"
-                data-testid={isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined}
+                className="token-columns-header token-columns-header--hidden"
+                role="row"
               >
-                <span className="token-amount">{balanceStr}</span>
-                <span className="token-value">{usdStr}</span>
+                <div
+                  className="token-columns-header__name token-columns-header__name--hidden"
+                  role="columnheader"
+                  aria-hidden="true"
+                />
+                <div
+                  className="token-columns-header__amount"
+                  role="columnheader"
+                >
+                  {t('tokenColumnAmountValue')}
+                </div>
+                <div
+                  className="token-columns-header__price"
+                  role="columnheader"
+                >
+                  <span className="token-columns-header__priceLine">
+                    {t('tokenColumnPrice')}
+                  </span>
+                  <span className="token-columns-header__priceLine">
+                    {t('tokenColumnChangeRate')}
+                  </span>
+                </div>
               </div>
-              <div className="token-row__fiat">
-                <span className="token-usd">{usdUnitStr}</span>
-                <span className="token-change">{changeStr ?? '—'}</span>
+              <div className="token-hidden-rows">
+                {hiddenRows.map(renderTokenRow)}
               </div>
-            </div>
-          )
-        })
+            </>
+          )}
+        </div>
       )}
 
       {supportsTokens && (

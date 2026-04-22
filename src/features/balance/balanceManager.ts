@@ -270,6 +270,8 @@ export function formatUsdUnitPrice(token: ChainToken): string {
   return formatUsdAmount(n)
 }
 
+export { partitionTokens, isSuspiciousFakeToken } from './fakeTokenDetector'
+
 function nativeBalanceFromTokens(
   sortedTokens: ChainToken[],
   chain: Chain,

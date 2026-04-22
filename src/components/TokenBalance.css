@@ -259,3 +259,59 @@
     opacity: 0.5;
   }
 }
+
+/* ====== Hidden / Suspicious Tokens Section ====== */
+.token-hidden-section {
+  margin-top: 12px;
+  border-top: 1px dashed var(--ring-border, rgba(255, 255, 255, 0.08));
+  padding-top: 10px;
+}
+
+.token-hidden-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.token-hidden-toggle:hover {
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-hidden-toggle__icon {
+  font-size: 0.7rem;
+  width: 14px;
+  text-align: center;
+  color: var(--ring-warning, #f59e0b);
+}
+
+.token-hidden-toggle__text {
+  font-weight: 600;
+}
+
+.token-hidden-toggle__hint {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--ring-text-muted, #6b7280);
+}
+
+.token-columns-header--hidden {
+  padding-top: 6px;
+  opacity: 0.7;
+}
+
+.token-hidden-rows .token-row {
+  opacity: 0.85;
+}
+
+.token-hidden-rows .token-row:hover {
+  opacity: 1;
+}
