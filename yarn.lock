@@ -1598,9 +1598,12 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
-"@ring-protocol/ring-swap-sdk@link:../ring-swap-sdk":
-  version "0.0.0"
-  uid ""
+"@ring-protocol/ring-swap-sdk@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@ring-protocol/ring-swap-sdk/-/ring-swap-sdk-0.1.0.tgz#e264225310592e8d1f8dd9848ff820d76f4cc329"
+  integrity sha512-PoAesENcCVSQRh3y5eq63/wHOyQ37g8qnQgR1JE3qUsoDqpPQjol3G6Qiy6RNebgYNmapUrfoJSRGBnI6EZtBQ==
+  dependencies:
+    "@kyberswap/widgets" "^2.3.0"
 
 "@rolldown/pluginutils@1.0.0-beta.27":
   version "1.0.0-beta.27"
