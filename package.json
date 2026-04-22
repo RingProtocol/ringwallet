@@ -91,7 +91,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "@ring-protocol/ring-swap-sdk": "link:../ring-swap-sdk",
+    "@ring-protocol/ring-swap-sdk": "^0.1.0",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "bech32": "^2.0.0",
