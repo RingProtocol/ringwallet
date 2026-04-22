@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { RingSwapFrame } from '@ring-protocol/ring-swap-sdk'
+import {
+  RingSwapFrame,
+  kyberWidgetEngine,
+} from '@ring-protocol/ring-swap-sdk'
 import '@ring-protocol/ring-swap-sdk/styles'
 import { useSwapSigner } from './swap/useSwapSigner'
 import { useAuth } from '../contexts/AuthContext'
@@ -143,7 +146,9 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     ? 'Set VITE_MOONPAY_API_KEY to enable MoonPay'
     : 'Buy crypto with MoonPay'
 
-  const canUseRingSwap = !isSolanaChain && !isBitcoinChain && !isDogecoinChain
+  const canUseRingSwap = kyberWidgetEngine
+    .supportedChainIds()
+    .includes(swapChainId)
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
