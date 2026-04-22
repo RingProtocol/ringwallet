@@ -11,7 +11,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useBalanceManager } from '../hooks/useBalanceManager'
 import type { SendTokenOption } from './transaction/types'
 import { useI18n } from '../i18n'
-import { TESTID } from './testids'
+
+import BottomTabs from './tabs/BottomTabs'
+import type { BottomTab } from './tabs/BottomTabs'
 import './WalletMainPage.css'
 
 export interface WalletMainPageProps {
@@ -23,8 +25,6 @@ export interface WalletMainPageProps {
   peekOverDapp?: boolean
   className?: string
 }
-
-type BottomTab = 'wallet' | 'activity' | 'more'
 
 const TAB_QUERY_KEYS: BottomTab[] = ['wallet', 'activity', 'more']
 
@@ -45,7 +45,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   className,
 }) => {
   const { t } = useI18n()
-  const { activeChain } = useAuth()
+  const { activeChain, activeAccount } = useAuth()
   const [bottomTab, setBottomTab] = useState<BottomTab>(getInitialBottomTab)
   const [moreExpandWalletListOnOpen, setMoreExpandWalletListOnOpen] =
     useState(false)
@@ -55,8 +55,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   >(undefined)
   const [tokenDetail, setTokenDetail] = useState<ChainToken | null>(null)
 
-  const { totalAssetUsd, currentChainUsd, tokens, supportsTokens } =
-    useBalanceManager()
+  const { totalAssetUsd, tokens, supportsTokens } = useBalanceManager()
 
   const goToMore = useCallback((expandWalletList: boolean) => {
     setMoreExpandWalletListOnOpen(expandWalletList)
@@ -109,20 +108,64 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           onClick={onClose}
           aria-label="Close"
         >
-          ✕
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
       )}
 
       {bottomTab === 'wallet' ? (
         <div className="wallet-main-page__hero">
           <div className="wallet-main-page__hero-gradient" aria-hidden />
-          <header className="wallet-main-page__top-dock">
-            <ChainSwitcher />
+          <header className="wallet-main-page__top-bar">
+            <button
+              type="button"
+              className="wallet-main-page__wallet-pill"
+              onClick={openMoreFromAddress}
+            >
+              <span className="wallet-main-page__wallet-pill-dot">◉</span>
+              <span className="wallet-main-page__wallet-pill-label">
+                {activeAccount
+                  ? `${t('wallet')} #${activeAccount.index + 1}`
+                  : t('wallet')}
+              </span>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ opacity: 0.7 }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div className="wallet-main-page__top-bar-right">
+              <ChainSwitcher />
+              {/* <button type="button" className="wallet-main-page__gallery-btn" aria-label="Gallery">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="3"/>
+                  <circle cx="8.5" cy="9" r="1.4" fill="currentColor"/>
+                  <path d="M20 17l-4-4-7 7"/>
+                </svg>
+              </button> */}
+            </div>
           </header>
           <div className="wallet-main-page__hero-body">
             <NativeBalance
               allChainsUsd={totalAssetUsd}
-              currentChainUsd={currentChainUsd}
               onAddressClick={openMoreFromAddress}
             />
             <TransactionActions
@@ -132,23 +175,68 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           </div>
         </div>
       ) : (
-        <header className="wallet-main-page__top-dock wallet-main-page__top-dock--collapsed wallet-main-page__top-dock--alone" />
+        <header className="wallet-main-page__top-bar wallet-main-page__top-bar--collapsed">
+          <h1 className="wallet-main-page__tab-title">
+            {bottomTab === 'activity' ? t('activityTab') : t('moreTab')}
+          </h1>
+          {bottomTab === 'activity' && (
+            <div className="wallet-main-page__activity-actions">
+              <button
+                type="button"
+                className="wallet-main-page__icon-btn"
+                aria-label={t('search')}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="wallet-main-page__icon-btn"
+                aria-label={t('refresh')}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </header>
       )}
 
       <div className="wallet-main-page__scroll">
         {bottomTab === 'wallet' && (
-          <div className="card wallet-main-page__card wallet-main-page__card--below-hero">
-            <div className="wallet-main-page__assets">
-              <TokenBalance
-                tokens={tokens}
-                supportsTokens={supportsTokens}
-                onTokenSelect={openTokenDetail}
-              />
-            </div>
+          <div className="wallet-main-page__assets">
+            <TokenBalance
+              tokens={tokens}
+              supportsTokens={supportsTokens}
+              onTokenSelect={openTokenDetail}
+            />
           </div>
         )}
         {bottomTab === 'activity' && (
-          <div className="card wallet-main-page__card wallet-main-page__card--activity">
+          <div className="wallet-main-page__activity">
             <TransactionHistory />
           </div>
         )}
@@ -170,51 +258,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
         )}
       </div>
 
-      <div className="wallet-main-page__bottom-wrap">
-        <div className="wallet-main-page__tab-bar-spacer" aria-hidden />
-        <div className="wallet-main-page__bottom-dock">
-          <nav className="wallet-bottom-nav">
-            <button
-              type="button"
-              className={`wallet-bottom-nav__btn ${bottomTab === 'wallet' ? 'wallet-bottom-nav__btn--active' : ''}`}
-              onClick={() => selectTab('wallet')}
-              data-testid={TESTID.TAB_WALLET}
-              aria-label={t('wallet')}
-            >
-              <span className="wallet-bottom-nav__icon" aria-hidden="true">
-                💼
-              </span>
-              <span className="wallet-bottom-nav__label">{t('wallet')}</span>
-            </button>
-            <button
-              type="button"
-              className={`wallet-bottom-nav__btn ${bottomTab === 'activity' ? 'wallet-bottom-nav__btn--active' : ''}`}
-              onClick={() => selectTab('activity')}
-              data-testid={TESTID.TAB_ACTIVITY}
-              aria-label={t('activityTab')}
-            >
-              <span className="wallet-bottom-nav__icon" aria-hidden="true">
-                📋
-              </span>
-              <span className="wallet-bottom-nav__label">
-                {t('activityTab')}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`wallet-bottom-nav__btn ${bottomTab === 'more' ? 'wallet-bottom-nav__btn--active' : ''}`}
-              onClick={() => selectTab('more')}
-              data-testid={TESTID.TAB_MORE}
-              aria-label={t('moreTab')}
-            >
-              <span className="wallet-bottom-nav__icon" aria-hidden="true">
-                ⋯
-              </span>
-              <span className="wallet-bottom-nav__label">{t('moreTab')}</span>
-            </button>
-          </nav>
-        </div>
-      </div>
+      <BottomTabs activeTab={bottomTab} onSelectTab={selectTab} />
 
       {tokenDetail && activeChain && (
         <TokenDetailPage

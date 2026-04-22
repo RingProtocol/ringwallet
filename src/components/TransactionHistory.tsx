@@ -54,7 +54,6 @@ async function discoverTokensFromHistory(
     getTokenList(walletAddress, chainId).map((t) => t.address.toLowerCase())
   )
 
-  // Collect unique new token addresses with their best-available hints
   const newTokenMap = new Map<
     string,
     { symbol?: string; name?: string; decimals?: number }
@@ -148,8 +147,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     [persistTransactions]
   )
 
-  //if activity is empty, search one time from etherscan;
-  //otherwise, poll from blockchain every 8 seconds
   const fetchHistoryFromAPI = useCallback(
     async (showLoading: boolean) => {
       if (!activeChain || !address) return
@@ -264,7 +261,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return () => window.clearInterval(timer)
   }, [activeChain, address, fetchHistoryFromChain, transactions])
 
-  // Poll history API: immediately on mount, then every 15s
   useEffect(() => {
     if (!activeChain || !address) return
 
@@ -297,7 +293,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   }, [activeChain, address, chainId, fetchHistoryFromChain, updateTransactions])
 
   const formatAddress = (addr: string) =>
-    addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : ''
+    addr ? `${addr.substring(0, 6)}…${addr.substring(addr.length - 4)}` : ''
 
   const formatAssetLabel = (tx: TxRecord) => {
     if (tx.assetType !== 'token') {
@@ -308,13 +304,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     if (symbol) return symbol
 
     return tx.assetAddress ? formatAddress(tx.assetAddress) : 'Token'
-  }
-
-  const formatAssetMeta = (tx: TxRecord) => {
-    if (tx.assetType !== 'token') return ''
-    if (tx.assetName?.trim()) return tx.assetName
-    if (tx.assetAddress) return formatAddress(tx.assetAddress)
-    return 'ERC20'
   }
 
   const formatDisplayValue = (value: string) => {
@@ -346,47 +335,96 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </div>
       ) : visibleTransactions.length === 0 ? (
         <div className="tx-empty" data-testid={TESTID.TX_EMPTY}>
-          <span className="tx-empty-icon">📭</span>
+          <div className="tx-empty-icon">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--ring-text-muted)"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </div>
           <span>{t('noTransactions')}</span>
         </div>
       ) : (
-        visibleTransactions.map((tx) => (
-          <a
-            key={getTxRecordKey(tx)}
-            href={explorerUrl(tx.hash)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tx-row"
-            data-testid={TESTID.TX_ROW}
-          >
-            <div className="tx-direction">
-              {tx.from.toLowerCase() === activeAccount.address.toLowerCase()
-                ? '📤'
-                : '📥'}
-            </div>
-            <div className="tx-detail">
-              <span className="tx-peer">
-                {tx.from.toLowerCase() === activeAccount.address.toLowerCase()
-                  ? `To ${formatAddress(tx.to)}`
-                  : `From ${formatAddress(tx.from)}`}
-              </span>
-              <span className="tx-time">
-                {new Date(tx.timestamp * 1000).toLocaleString(
-                  lang === 'zh' ? 'zh-CN' : 'en-US'
+        visibleTransactions.map((tx) => {
+          const isOut =
+            tx.from.toLowerCase() === activeAccount.address.toLowerCase()
+          return (
+            <a
+              key={getTxRecordKey(tx)}
+              href={explorerUrl(tx.hash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tx-row"
+              data-testid={TESTID.TX_ROW}
+            >
+              <div
+                className={`tx-direction ${isOut ? 'tx-direction--out' : 'tx-direction--in'}`}
+              >
+                {isOut ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="19" x2="12" y2="5" />
+                    <polyline points="5 12 12 5 19 12" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <polyline points="19 12 12 19 5 12" />
+                  </svg>
                 )}
-              </span>
-              {formatAssetMeta(tx) && (
-                <span className="tx-asset">{formatAssetMeta(tx)}</span>
-              )}
-            </div>
-            <div className="tx-value">
-              {tx.from.toLowerCase() === activeAccount.address.toLowerCase()
-                ? `-${formatDisplayValue(tx.value)}`
-                : `+${formatDisplayValue(tx.value)}`}{' '}
-              <span className="tx-symbol">{formatAssetLabel(tx)}</span>
-            </div>
-          </a>
-        ))
+              </div>
+              <div className="tx-detail">
+                <div className="tx-primary">
+                  <span className="tx-peer">
+                    {isOut
+                      ? `${t('sent')} ${formatAddress(tx.to)}`
+                      : `${t('received')} ${formatAddress(tx.from)}`}
+                  </span>
+                  {tx.status === 'pending' && (
+                    <span className="tx-pending-badge">{t('pending')}</span>
+                  )}
+                </div>
+                <span className="tx-time">
+                  {new Date(tx.timestamp * 1000).toLocaleString(
+                    lang === 'zh' ? 'zh-CN' : 'en-US'
+                  )}
+                </span>
+              </div>
+              <div
+                className={`tx-value ${isOut ? 'tx-value--out' : 'tx-value--in'}`}
+              >
+                {isOut
+                  ? `-${formatDisplayValue(tx.value)}`
+                  : `+${formatDisplayValue(tx.value)}`}{' '}
+                <span className="tx-symbol">{formatAssetLabel(tx)}</span>
+              </div>
+            </a>
+          )
+        })
       )}
     </div>
   )

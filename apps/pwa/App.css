@@ -86,19 +86,23 @@ body.ring-dapp-open .app > .header-actions {
 
 .card--guest {
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: calc(100dvh - 12px);
 }
 
-/* Top third: flex container so logo is centered between top and login button */
-.card--guest-logo-wrap {
-  height: calc(33vh - 20px);
-  min-height: 80px;
+.card--guest-content {
+  flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  padding: 20px 24px 0;
 }
 
 .card--guest .login-container {
   margin-top: 0;
+  padding: 0 24px 20px;
 }
 
 .title {
@@ -161,6 +165,18 @@ body.ring-dapp-open .app > .header-actions {
   .card:not(.card--guest) {
     min-height: calc(100vh - 12px);
     min-height: calc(100dvh - 12px);
+  }
+
+  .card--guest {
+    padding: 0;
+  }
+
+  .card--guest-content {
+    padding: 20px 20px 0;
+  }
+
+  .card--guest .login-container {
+    padding: 0 20px 20px;
   }
 
   .title {
