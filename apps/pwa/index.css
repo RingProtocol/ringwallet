@@ -6,19 +6,43 @@
 
 :root {
   --ring-bg-page: #0d0f14;
-  --ring-bg-elevated: rgba(28, 30, 38, 0.94);
-  --ring-border: rgba(255, 255, 255, 0.1);
-  --ring-border-strong: rgba(255, 255, 255, 0.14);
+  --ring-bg-elevated: rgba(20, 22, 28, 0.94);
+  --ring-surface: rgba(255, 255, 255, 0.04);
+  --ring-border: rgba(255, 255, 255, 0.08);
+  --ring-border-strong: rgba(255, 255, 255, 0.12);
   --ring-text-primary: #f3f4f6;
-  --ring-text-secondary: #9ca3af;
+  --ring-text-secondary: #d1d5db;
   --ring-text-muted: #6b7280;
-  --ring-accent: #a5b4fc;
-  --ring-accent-soft: rgba(165, 180, 252, 0.18);
+  --ring-text-dim: #52525b;
+  --ring-accent: #bc74ed;
+  --ring-accent-2: #c084fc;
+  --ring-accent-soft: rgba(188, 116, 237, 0.12);
+  --ring-accent-glow: rgba(188, 116, 237, 0.35);
+  --ring-negative: #f87171;
+  --ring-positive: #34d399;
+  --ring-warning: #f59e0b;
+  --ring-gradient: linear-gradient(
+    135deg,
+    #f15266 0%,
+    #bc74ed 50%,
+    #1abee9 100%
+  );
+  --ring-gradient-h: linear-gradient(
+    90deg,
+    #f15266 0%,
+    #bc74ed 52%,
+    #1abee9 100%
+  );
+  --ring-radius-sm: 10px;
+  --ring-radius-md: 12px;
+  --ring-radius-lg: 14px;
+  --ring-radius-pill: 9999px;
 }
 
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Roboto',
+    sans-serif;
   background: var(--ring-bg-page);
   color: var(--ring-text-primary);
   min-height: 100vh;

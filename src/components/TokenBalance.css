@@ -1,116 +1,42 @@
 .token-balance-list {
   display: flex;
   flex-direction: column;
-}
-
-.token-balance-list {
-  --token-icon-size: 38px;
-  --token-brand-gap: 8px;
-  --token-col-amount: 6.5rem;
-  --token-col-price: 7.25rem;
   min-width: 0;
 }
 
 .token-list-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 0 0 6px;
+  justify-content: flex-end;
+  padding: 4px 4px 6px;
   margin: 0;
-}
-
-.token-list-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ring-text-secondary, #9ca3af);
 }
 
 .token-import-btn {
   padding: 6px 10px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--ring-accent, #a5b4fc);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ring-accent-2, #c084fc);
   background: transparent;
-  border: 1px solid rgba(165, 180, 252, 0.35);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .token-import-btn:hover {
-  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.12));
-  border-color: var(--ring-accent, #a5b4fc);
-}
-
-.token-columns-header {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) minmax(0, var(--token-col-amount))
-    minmax(0, var(--token-col-price));
-  align-items: center;
-  gap: 6px 12px;
-  padding: 2px 2px 8px 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--ring-text-muted, #6b7280);
-}
-
-.token-columns-header__name {
-  min-width: 0;
-  padding-left: calc(var(--token-icon-size) + var(--token-brand-gap));
-}
-
-.token-columns-header__name--hidden {
-  visibility: hidden;
-}
-
-.token-columns-header__amount,
-.token-columns-header__price {
-  text-align: right;
-  white-space: nowrap;
-  padding-right: 6px;
-}
-
-.token-columns-header__price {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-}
-
-.token-columns-header__priceLine {
-  line-height: 1.05;
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.12));
 }
 
 .token-row {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) minmax(0, var(--token-col-amount))
-    minmax(0, var(--token-col-price));
-  align-items: center;
-  gap: 8px 12px;
-  padding: 12px 2px 2px 0;
-  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
-  transition: background 0.15s;
-}
-
-.token-row__brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.token-logo-img {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.06);
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
 .token-row:last-child {
@@ -125,8 +51,22 @@
   cursor: pointer;
 }
 
-.token-row--clickable:hover {
-  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.1));
+.token-row__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.token-logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .token-icon-wrap {
@@ -134,8 +74,8 @@
 }
 
 .token-icon-placeholder {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -143,7 +83,9 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .token-info {
@@ -153,24 +95,41 @@
   justify-content: center;
   flex: 1 1 0;
   min-width: 0;
-  gap: 1px;
-}
-
-.token-symbol {
-  font-weight: 600;
-  font-size: 0.85rem;
-  line-height: 1.15;
-  color: var(--ring-text-primary, #f3f4f6);
+  gap: 2px;
 }
 
 .token-name {
-  font-size: 0.7rem;
-  line-height: 1.15;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   color: var(--ring-text-muted, #6b7280);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.token-usd-unit {
+  color: var(--ring-text-muted, #6b7280);
+}
+
+.token-change {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.token-change--positive {
+  color: var(--ring-positive, #34d399);
+}
+
+.token-change--negative {
+  color: var(--ring-negative, #f87171);
 }
 
 .token-row__balance {
@@ -182,52 +141,20 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   text-align: right;
+  flex-shrink: 0;
 }
 
 .token-amount {
   font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.15;
+  font-size: 14px;
+  line-height: 1.2;
   color: var(--ring-text-primary, #f3f4f6);
 }
 
 .token-value {
-  font-weight: 600;
-  font-size: 0.82rem;
-  line-height: 1.15;
-  color: var(--ring-text-secondary, #d1d5db);
-}
-
-.token-row__fiat {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.token-usd {
-  font-weight: 600;
-  font-size: 0.82rem;
-  line-height: 1.15;
-  color: var(--ring-text-secondary, #d1d5db);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.token-change {
-  font-size: 0.7rem;
-  line-height: 1.15;
+  font-size: 12px;
+  line-height: 1.2;
   color: var(--ring-text-muted, #6b7280);
-  font-variant-numeric: tabular-nums;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: right;
 }
 
 .token-loading,
@@ -235,17 +162,11 @@
   padding: 30px 16px;
   text-align: center;
   color: var(--ring-text-muted, #6b7280);
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 .token-loading {
   animation: pulse 1.5s infinite;
-}
-
-.token-loading-inline {
-  padding: 10px 16px 14px;
-  text-align: left;
-  font-size: 0.78rem;
 }
 
 @keyframes pulse {
@@ -276,10 +197,11 @@
   background: transparent;
   border: none;
   color: var(--ring-text-secondary, #9ca3af);
-  font-size: 0.82rem;
+  font-size: 14px;
   cursor: pointer;
   text-align: left;
   transition: color 0.2s;
+  font-family: inherit;
 }
 
 .token-hidden-toggle:hover {
@@ -287,7 +209,7 @@
 }
 
 .token-hidden-toggle__icon {
-  font-size: 0.7rem;
+  font-size: 11px;
   width: 14px;
   text-align: center;
   color: var(--ring-warning, #f59e0b);
@@ -299,13 +221,8 @@
 
 .token-hidden-toggle__hint {
   margin-left: auto;
-  font-size: 0.72rem;
+  font-size: 12px;
   color: var(--ring-text-muted, #6b7280);
-}
-
-.token-columns-header--hidden {
-  padding-top: 6px;
-  opacity: 0.7;
 }
 
 .token-hidden-rows .token-row {

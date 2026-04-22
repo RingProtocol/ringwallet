@@ -82,6 +82,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     const changeStr = chainTokenChangePercentLabel(token)
     const logoUrl = token.tokenMetadata.logo?.trim()
     const isNative = token.tokenAddress == null
+    const pos = changeStr && changeStr.startsWith('+')
 
     return (
       <div
@@ -94,26 +95,33 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
             {logoUrl ? (
               <img src={logoUrl} alt={symbol} className="token-logo-img" />
             ) : isNative && activeChain.icon ? (
-              <ChainIcon icon={activeChain.icon} symbol={symbol} size={38} />
+              <ChainIcon icon={activeChain.icon} symbol={symbol} size={40} />
             ) : (
               <span className="token-icon-placeholder">{symbol.charAt(0)}</span>
             )}
           </div>
           <div className="token-info">
-            <span className="token-symbol">{symbol}</span>
             <span className="token-name">{name}</span>
+            <span className="token-meta">
+              <span className="token-usd-unit">{usdUnitStr}</span>
+              {changeStr && (
+                <span
+                  className={`token-change ${pos ? 'token-change--positive' : 'token-change--negative'}`}
+                >
+                  {changeStr}
+                </span>
+              )}
+            </span>
           </div>
         </div>
         <div
           className="token-row__balance"
           data-testid={isNative ? TESTID.TOKEN_NATIVE_BALANCE : undefined}
         >
-          <span className="token-amount">{balanceStr}</span>
+          <span className="token-amount">
+            {balanceStr} {symbol}
+          </span>
           <span className="token-value">{usdStr}</span>
-        </div>
-        <div className="token-row__fiat">
-          <span className="token-usd">{usdUnitStr}</span>
-          <span className="token-change">{changeStr ?? '—'}</span>
         </div>
       </div>
     )
@@ -128,32 +136,10 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
             className="token-import-btn"
             onClick={() => setShowImportDialog(true)}
           >
-            {t('importToken')}
+            + {t('importToken')}
           </button>
         )}
       </div>
-
-      {/* Main visible section */}
-      {visibleRows.length > 0 && (
-        <div className="token-columns-header" role="row">
-          <div
-            className="token-columns-header__name token-columns-header__name--hidden"
-            role="columnheader"
-            aria-hidden="true"
-          />
-          <div className="token-columns-header__amount" role="columnheader">
-            {t('tokenColumnAmountValue')}
-          </div>
-          <div className="token-columns-header__price" role="columnheader">
-            <span className="token-columns-header__priceLine">
-              {t('tokenColumnPrice')}
-            </span>
-            <span className="token-columns-header__priceLine">
-              {t('tokenColumnChangeRate')}
-            </span>
-          </div>
-        </div>
-      )}
 
       {allRows.length === 0 ? (
         <div className="token-empty">{t('noTokensFound')}</div>
@@ -184,38 +170,9 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           </button>
 
           {showHidden && (
-            <>
-              <div
-                className="token-columns-header token-columns-header--hidden"
-                role="row"
-              >
-                <div
-                  className="token-columns-header__name token-columns-header__name--hidden"
-                  role="columnheader"
-                  aria-hidden="true"
-                />
-                <div
-                  className="token-columns-header__amount"
-                  role="columnheader"
-                >
-                  {t('tokenColumnAmountValue')}
-                </div>
-                <div
-                  className="token-columns-header__price"
-                  role="columnheader"
-                >
-                  <span className="token-columns-header__priceLine">
-                    {t('tokenColumnPrice')}
-                  </span>
-                  <span className="token-columns-header__priceLine">
-                    {t('tokenColumnChangeRate')}
-                  </span>
-                </div>
-              </div>
-              <div className="token-hidden-rows">
-                {hiddenRows.map(renderTokenRow)}
-              </div>
-            </>
+            <div className="token-hidden-rows">
+              {hiddenRows.map(renderTokenRow)}
+            </div>
           )}
         </div>
       )}

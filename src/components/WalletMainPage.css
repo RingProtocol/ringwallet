@@ -1,6 +1,4 @@
-/*
- * Shell: Wallet tab = gradient hero (nav + balance/actions); Activity/More = slim top strip only + scroll + bottom dock.
- */
+/* Shell: Wallet tab = gradient hero (nav + balance/actions); Activity/More = slim top strip only + scroll + bottom dock. */
 .wallet-main-page {
   flex: 1;
   align-self: stretch;
@@ -50,7 +48,7 @@
   margin: 0;
   padding: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, #f15266 0%, #bc74ed 52%, #1abee9 100%);
+  background: var(--ring-gradient-h);
 }
 
 .wallet-main-page__hero-gradient::after {
@@ -64,19 +62,131 @@
   );
 }
 
-/* Navigation row inside hero (chain on Wallet tab only) */
-.wallet-main-page__top-dock {
+/* Top bar: wallet pill left, chain + gallery right */
+.wallet-main-page__top-bar {
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding-top: max(10px, env(safe-area-inset-top));
-  padding-left: max(12px, env(safe-area-inset-left));
-  padding-right: max(12px, env(safe-area-inset-right));
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
   padding-bottom: 10px;
   background: transparent;
   border-bottom: none;
   overflow: visible;
+}
+
+.wallet-main-page__top-bar--collapsed {
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: 10px;
+  background: var(--ring-bg-page, #0d0f14);
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.wallet-main-page__wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.wallet-main-page__wallet-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wallet-main-page__wallet-pill-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ring-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.wallet-main-page__top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-main-page__gallery-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.wallet-main-page__gallery-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Compact chain trigger inside top-bar */
+.wallet-main-page__top-bar .chain-switcher-container {
+  width: auto;
+  max-width: min(
+    200px,
+    calc(
+      100vw - 24px - env(safe-area-inset-left, 0px) -
+        env(safe-area-inset-right, 0px)
+    )
+  );
+  flex-shrink: 0;
+}
+
+.wallet-main-page__top-bar .chain-switcher-trigger {
+  min-width: 0;
+  width: auto;
+  box-sizing: border-box;
+  padding: 5px 10px 5px 6px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border);
+  border-radius: 100px;
+  box-shadow: none;
+  font-size: 12px;
+}
+
+.wallet-main-page__top-bar .chain-switcher-trigger:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.wallet-main-page__top-bar .chain-info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.wallet-main-page__top-bar .chain-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
 }
 
 .wallet-main-page__hero-body {
@@ -90,86 +200,46 @@
 }
 
 .wallet-main-page__hero-body .balance-display {
-  padding: 8px 0 4px;
-  margin-bottom: 12px;
-}
-
-.wallet-main-page__hero-body .balance-usd-row--secondary .balance-usd-label,
-.wallet-main-page__hero-body .balance-usd-row--primary .balance-usd-label {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.wallet-main-page__hero-body .balance-usd-row--secondary .balance-usd-value {
-  color: #f9fafb;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.wallet-main-page__hero-body .balance-amount {
-  color: #f9fafb;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
-
-.wallet-main-page__hero-body .wallet-address,
-.wallet-main-page__hero-body .wallet-address--clickable {
-  color: rgba(255, 255, 255, 0.82);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.wallet-main-page__hero-body .transaction-actions-container {
+  padding: 6px 18px 14px;
   margin-bottom: 0;
 }
 
-.wallet-main-page__top-dock--collapsed {
-  padding-top: max(4px, env(safe-area-inset-top));
-  padding-bottom: 4px;
-  border-bottom: none;
-  min-height: 0;
+.wallet-main-page__hero-body .transaction-actions-container {
+  margin-bottom: 14px;
+  padding: 0 18px;
 }
 
 /* Collapsed strip for Activity / More (no gradient hero) */
-.wallet-main-page__top-dock--alone.wallet-main-page__top-dock--collapsed {
-  grid-row: 1;
-  background: var(--ring-bg-page, #0d0f14);
-  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+.wallet-main-page__tab-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ring-text-primary);
+  letter-spacing: -0.02em;
 }
 
-.wallet-main-page__top-dock:not(.wallet-main-page__top-dock--collapsed) {
+.wallet-main-page__activity-actions {
   display: flex;
-  justify-content: flex-start;
+  gap: 6px;
+}
+
+.wallet-main-page__icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-secondary);
+  display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
 }
 
-/* Compact chain trigger, top-left (dropdown still uses fixed positioning). */
-.wallet-main-page__top-dock .chain-switcher-container {
-  width: min(200px, calc(100% - 8px));
-  max-width: min(
-    200px,
-    calc(
-      100vw - 24px - env(safe-area-inset-left, 0px) -
-        env(safe-area-inset-right, 0px)
-    )
-  );
-  flex-shrink: 0;
-}
-
-.wallet-main-page__top-dock .chain-switcher-trigger {
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 10px;
-  gap: 8px;
-}
-
-.wallet-main-page__top-dock .chain-info {
-  min-width: 0;
-  overflow: hidden;
-}
-
-.wallet-main-page__top-dock .chain-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.wallet-main-page__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* ─── Scrollable tab content ─── */
@@ -186,12 +256,12 @@
   overscroll-behavior: contain;
   padding-left: max(6px, env(safe-area-inset-left));
   padding-right: max(6px, env(safe-area-inset-right));
-  padding-top: 8px;
+  padding-top: 0;
   padding-bottom: 8px;
   box-sizing: border-box;
 }
 
-/* ─── Bottom dock: fixed tab bar + in-flow spacer (row 3) so More / wallet list never covers tabs ─── */
+/* ─── Bottom dock: fixed tab bar + in-flow spacer (row 3) ─── */
 .wallet-main-page__bottom-wrap {
   grid-row: 3;
   flex-shrink: 0;
@@ -214,86 +284,27 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  background: var(--ring-bg-page, #0d0f14);
-  border-top: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  background: rgba(20, 22, 28, 0.94);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--ring-border);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
-}
-
-.wallet-main-page__card {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/*
- * App.css sets .card min-height: 100% and (≤768px) calc(100dvh - 12px) for non-guest
- * cards. That full-viewport height inside the grid scroll row breaks the shell: content
- * becomes ~100dvh tall and the bottom tab bar is pushed off / clipped. Scope overrides
- * here with higher specificity than App.css.
- */
-.wallet-main-page
-  .wallet-main-page__scroll
-  > .wallet-main-page__card.card:not(.card--guest) {
-  min-height: 0;
-  max-height: none;
 }
 
 .wallet-main-page__assets {
-  margin-top: 0px;
+  margin-top: 0;
+  padding: 0 2px;
 }
 
-/*
- * Wallet tab card: override the global `.card` horizontal padding for this panel. * Use a small inset so token rows don't feel glued to the rounded edge.
- */
-.wallet-main-page__scroll
-  > .wallet-main-page__card.wallet-main-page__card--below-hero.card {
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: start;
-}
-
-/* PWA App.css uses .card { padding: 30px 20px } ≤768px for login; restate padding so wallet tab cards stay compact. */
-@media (max-width: 768px) {
-  .wallet-main-page__scroll
-    > .wallet-main-page__card.wallet-main-page__card--below-hero.card {
-    padding-top: 6px;
-    padding-bottom: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-
-  .wallet-main-page__scroll
-    > .wallet-main-page__card.wallet-main-page__card--activity.card {
-    padding-top: 8px;
-    padding-bottom: 12px;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-
-.wallet-main-page__card--activity {
+.wallet-main-page__activity {
   padding-top: 4px;
   display: flex;
   flex-direction: column;
 }
 
-.wallet-main-page__card--activity .tx-empty,
-.wallet-main-page__card--activity .tx-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 12px;
-  box-sizing: border-box;
-}
-
-/* Fills the scroll row so the More panel can clip + scroll internally (wallet list). */
+/* Fills the scroll row so the More panel can clip + scroll internally */
 .wallet-main-page__more-outer {
   flex: 1 1 auto;
   min-height: 0;
@@ -315,23 +326,9 @@
   max-width: 100%;
   box-sizing: border-box;
   background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.5));
-  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--ring-border);
   border-radius: 16px;
   overflow: hidden;
-}
-
-.wallet-main-page__more-head {
-  flex-shrink: 0;
-  padding: 16px 18px 10px;
-  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
-}
-
-.wallet-main-page__more-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .wallet-main-page__more .drawer-menu-list {
@@ -350,7 +347,7 @@
   margin-top: auto;
   padding: 16px 12px 8px;
   text-align: center;
-  border-top: 1px solid var(--ring-border, rgba(255, 255, 255, 0.06));
+  border-top: 1px solid var(--ring-border);
   flex-shrink: 0;
 }
 
@@ -361,13 +358,10 @@
   justify-content: space-around;
   gap: 2px;
   padding: 6px 6px 8px;
-  background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.94));
-  backdrop-filter: blur(12px);
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  border-top: 1px solid var(--ring-border, rgba(255, 255, 255, 0.06));
 }
 
 .wallet-bottom-nav__btn {
@@ -377,20 +371,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   min-height: 48px;
   padding: 6px 2px;
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: var(--ring-text-muted, #6b7280);
-  font-size: 0.68rem;
+  color: var(--ring-text-dim, #52525b);
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.2px;
   cursor: pointer;
   transition:
     color 0.2s,
     background 0.2s;
   -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
 }
 
 .wallet-bottom-nav__btn:hover {
@@ -398,13 +394,14 @@
 }
 
 .wallet-bottom-nav__btn--active {
-  color: var(--ring-accent, #a5b4fc);
-  background: var(--ring-accent-soft, rgba(165, 180, 252, 0.12));
+  color: var(--ring-accent, #bc74ed);
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.12));
 }
 
 .wallet-bottom-nav__icon {
-  font-size: 1.35rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wallet-bottom-nav__label {
@@ -439,12 +436,12 @@
   border: none;
   border-radius: 10px;
   background: var(--ring-bg-elevated, rgba(28, 30, 38, 0.94));
-  color: var(--ring-accent, #a5b4fc);
+  color: var(--ring-accent, #bc74ed);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--ring-border);
   -webkit-tap-highlight-color: transparent;
 }
 

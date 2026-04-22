@@ -173,27 +173,25 @@ const LoginButton: React.FC = () => {
             <p className="login-no-account-msg">{t('noAccountFound')}</p>
           )}
           <button
-            className="login-button"
+            className="login-button login-button--primary"
             onClick={handlePasskeyLogin}
             disabled={isLoading}
-            style={{ width: '100%' }}
             data-testid={TESTID.LOGIN_BUTTON}
           >
-            {isLoading && !isCreatingAccount ? t('loggingIn') : t('login')}
+            {isLoading && !isCreatingAccount
+              ? t('loggingIn')
+              : t('iHaveAWallet')}
           </button>
           <button
             className="login-button login-button--secondary"
             onClick={handleCreateAccount}
             disabled={isLoading}
-            style={{ width: '100%', marginTop: '8px' }}
             data-testid={TESTID.CREATE_ACCOUNT_BUTTON}
           >
-            {isCreatingAccount ? t('creating') : t('createAccount')}
+            {isCreatingAccount ? t('creating') : t('createNewWallet')}
           </button>
           {!hasLoginHistory && !showCreateAccount && (
-            <p style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
-              {t('loginTipNoPasskey')}
-            </p>
+            <p className="login-tip">{t('loginTipNoPasskey')}</p>
           )}
           <LegalNotice />
         </div>
@@ -202,21 +200,9 @@ const LoginButton: React.FC = () => {
       {error && <div className="error-message">{error}</div>}
 
       {debugInfo && !debugInfo.isSupported && (
-        <div
-          className="debug-info"
-          style={{
-            marginTop: '10px',
-            padding: '10px',
-            background: '#f5f5f5',
-            borderRadius: '4px',
-            fontSize: '12px',
-            textAlign: 'left',
-          }}
-        >
-          <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-            {t('envCheckDetails')}
-          </p>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        <div className="debug-info">
+          <p className="debug-info__title">{t('envCheckDetails')}</p>
+          <ul className="debug-info__list">
             <li>
               {debugInfo.isSecureContext ? '✅' : '❌'}{' '}
               {t('httpsSecureContextLabel')}

@@ -25,11 +25,11 @@ function AppContent() {
             onClose={() => setGuestDrawerOpen(false)}
           />
           <div className="card card--guest">
-            <div className="card--guest-logo-wrap">
+            <div className="card--guest-content">
               <RingWalletLogo />
+              <Introduce />
             </div>
             <LoginButton />
-            <Introduce />
           </div>
           <footer className="app-version">version:{VERSION}</footer>
         </>

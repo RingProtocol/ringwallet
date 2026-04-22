@@ -76,18 +76,23 @@ body.ring-dapp-open .app > .header-actions {
 
 .card--guest {
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 520px;
 }
 
-.card--guest-logo-wrap {
-  height: 120px;
-  min-height: 60px;
+.card--guest-content {
+  flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  padding: 20px 8px 0;
 }
 
 .card--guest .login-container {
   margin-top: 0;
+  padding: 0 8px 16px;
 }
 
 .title {

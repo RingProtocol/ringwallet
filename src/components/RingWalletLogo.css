@@ -1,18 +1,15 @@
 .ring-wallet-logo {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 24px;
 }
 
-.ring-wallet-logo__img {
-  display: block;
-  width: 210px;
-  height: auto;
-  margin: 0 auto;
-  object-fit: contain;
-}
-
-@media (max-width: 768px) {
-  .ring-wallet-logo__img {
-    width: 160px;
-  }
+.ring-wallet-logo__icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: var(--ring-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(188, 116, 237, 0.35);
 }
