@@ -1,8 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import {
-  RingSwapFrame,
-  kyberWidgetEngine,
-} from '@ring-protocol/ring-swap-sdk'
+import { RingSwapFrame, kyberWidgetEngine } from '@ring-protocol/ring-swap-sdk'
 import '@ring-protocol/ring-swap-sdk/styles'
 import { useSwapSigner } from './swap/useSwapSigner'
 import { useAuth } from '../contexts/AuthContext'
