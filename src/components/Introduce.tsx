@@ -107,7 +107,7 @@ const Introduce: React.FC = () => {
           title={t('introNoFeeTitle')}
           sub={t('introNoFeeSub')}
         />
-        <IntroDot
+        {/* <IntroDot
           icon={
             <svg
               width="18"
@@ -125,7 +125,7 @@ const Introduce: React.FC = () => {
           }
           title={t('introDevFriendlyTitle')}
           sub={t('introDevFriendlySub')}
-        />
+        /> */}
       </div>
     </section>
   )

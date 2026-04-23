@@ -1,5 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { chainToAccountAssetsNetwork } from '../config/chains'
+import {
+  chainToAccountAssetsNetwork,
+  FEATURED_TESTNET_IDS,
+} from '../config/chains'
 import { useAuth } from '../contexts/AuthContext'
 import {
   chainTokenChangePercentLabel,
@@ -52,9 +55,16 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     return sortChainTokensForDisplay(tokens)
   }, [activeChain, tokens, cacheGen])
 
+  const isTestnet = activeChain
+    ? FEATURED_TESTNET_IDS.includes(activeChain.id)
+    : false
+
   const { visible: visibleRows, hidden: hiddenRows } = useMemo(
-    () => partitionTokens(allRows),
-    [allRows]
+    () =>
+      isTestnet
+        ? { visible: allRows, hidden: [] as ChainToken[] }
+        : partitionTokens(allRows),
+    [allRows, isTestnet]
   )
 
   const handleImportToken = useCallback(
