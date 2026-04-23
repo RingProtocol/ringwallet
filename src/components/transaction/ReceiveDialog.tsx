@@ -1,18 +1,18 @@
-import React from 'react';
-import '../TransactionActions.css';
-import { useI18n } from '../../i18n';
+import React from 'react'
+import '../QuickActionBar.css'
+import { useI18n } from '../../i18n'
 
 interface ReceiveDialogProps {
-  address: string;
-  onClose: () => void;
+  address: string
+  onClose: () => void
 }
 
 const ReceiveDialog: React.FC<ReceiveDialogProps> = ({ address, onClose }) => {
   const { t } = useI18n()
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(address);
-    alert(t('copiedToClipboard'));
-  };
+    navigator.clipboard.writeText(address)
+    alert(t('copiedToClipboard'))
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -36,7 +36,7 @@ const ReceiveDialog: React.FC<ReceiveDialogProps> = ({ address, onClose }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ReceiveDialog;
+export default ReceiveDialog

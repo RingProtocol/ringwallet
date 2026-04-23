@@ -5,7 +5,7 @@ import PasskeyService from '../../services/account/passkeyService'
 import { DogecoinService } from '../../services/rpc/dogecoinService'
 import { isValidDogecoinAddress } from '../../services/chainplugins/dogecoin/dogecoinPlugin'
 import SendFormLayout from './SendFormLayout'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 
 interface DogecoinSendFormProps {
   onClose: () => void

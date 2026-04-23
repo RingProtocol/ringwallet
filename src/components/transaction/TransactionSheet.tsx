@@ -1,5 +1,5 @@
 import React from 'react'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 
 interface TransactionSheetProps {
   children: React.ReactNode

@@ -6,7 +6,7 @@ import { SolanaService } from '../../services/rpc/solanaService'
 import { SolanaKeyService } from '../../services/chainplugins/solana/solanaPlugin'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeSolanaTx } from '../../utils/solanaTxDecoder'
 
