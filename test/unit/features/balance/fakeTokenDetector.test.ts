@@ -36,7 +36,7 @@ function makeToken(
 
 describe('fakeTokenDetector', () => {
   describe('isSuspiciousFakeToken', () => {
-    it('returns true for USDT-like token with zero price', () => {
+    it('returns true when price is 0', () => {
       expect(
         isSuspiciousFakeToken(
           makeToken({ symbol: 'USDT', name: 'Tether USD', price: 0 })
@@ -44,31 +44,15 @@ describe('fakeTokenDetector', () => {
       ).toBe(true)
     })
 
-    it('returns true for ETH-like token with zero price', () => {
+    it('returns true when no price data (empty tokenPrices)', () => {
       expect(
         isSuspiciousFakeToken(
-          makeToken({ symbol: 'ETH', name: 'Ethereum', price: 0 })
+          makeToken({ symbol: 'ETH', name: 'Ethereum', price: undefined })
         )
       ).toBe(true)
     })
 
-    it('returns true for misspelled USDT with zero price (levenshtein)', () => {
-      expect(
-        isSuspiciousFakeToken(
-          makeToken({ symbol: 'USDDT', name: 'Tether', price: 0 })
-        )
-      ).toBe(true)
-    })
-
-    it('returns true for USDT substring with zero price', () => {
-      expect(
-        isSuspiciousFakeToken(
-          makeToken({ symbol: 'USDT Token', name: 'Fake Tether', price: 0 })
-        )
-      ).toBe(true)
-    })
-
-    it('returns false for USDT with non-zero price', () => {
+    it('returns false when price is non-zero', () => {
       expect(
         isSuspiciousFakeToken(
           makeToken({ symbol: 'USDT', name: 'Tether USD', price: 1 })
@@ -76,32 +60,18 @@ describe('fakeTokenDetector', () => {
       ).toBe(false)
     })
 
-    it('returns false for unknown token with zero price', () => {
+    it('returns true for any token with zero price regardless of symbol', () => {
       expect(
         isSuspiciousFakeToken(
           makeToken({ symbol: 'SHIBA', name: 'Shiba Inu', price: 0 })
         )
-      ).toBe(false)
+      ).toBe(true)
     })
 
     it('returns false for normal token with price', () => {
       expect(
         isSuspiciousFakeToken(
           makeToken({ symbol: 'DAI', name: 'Dai Stablecoin', price: 1 })
-        )
-      ).toBe(false)
-    })
-
-    it('returns false for empty symbol/name with zero price', () => {
-      expect(
-        isSuspiciousFakeToken(makeToken({ symbol: '', name: '', price: 0 }))
-      ).toBe(false)
-    })
-
-    it('returns false when tokenPrices is empty (no price data)', () => {
-      expect(
-        isSuspiciousFakeToken(
-          makeToken({ symbol: 'ETH', name: 'Ethereum', price: undefined })
         )
       ).toBe(false)
     })
@@ -115,14 +85,14 @@ describe('fakeTokenDetector', () => {
         makeToken({ symbol: 'FAKE', name: 'Fake Token', price: 0 }),
       ]
       const { visible, hidden } = partitionTokens(tokens)
-      expect(visible).toHaveLength(2)
-      expect(hidden).toHaveLength(1)
-      expect(visible.map((t) => t.tokenMetadata.symbol)).toContain('USDT')
-      expect(visible.map((t) => t.tokenMetadata.symbol)).toContain('FAKE')
-      expect(hidden[0].tokenMetadata.symbol).toBe('ETH')
+      expect(visible).toHaveLength(1)
+      expect(hidden).toHaveLength(2)
+      expect(visible[0].tokenMetadata.symbol).toBe('USDT')
+      expect(hidden.map((t) => t.tokenMetadata.symbol)).toContain('ETH')
+      expect(hidden.map((t) => t.tokenMetadata.symbol)).toContain('FAKE')
     })
 
-    it('returns all visible when no suspicious tokens', () => {
+    it('returns all visible when no hidden tokens', () => {
       const tokens = [
         makeToken({ symbol: 'USDT', name: 'Tether', price: 1 }),
         makeToken({ symbol: 'BTC', name: 'Bitcoin', price: 50000 }),
@@ -132,10 +102,10 @@ describe('fakeTokenDetector', () => {
       expect(hidden).toHaveLength(0)
     })
 
-    it('returns all hidden when all are suspicious', () => {
+    it('returns all hidden when all have zero or no price', () => {
       const tokens = [
         makeToken({ symbol: 'USDT', name: 'Tether', price: 0 }),
-        makeToken({ symbol: 'ETH', name: 'Ethereum', price: 0 }),
+        makeToken({ symbol: 'ETH', name: 'Ethereum', price: undefined }),
       ]
       const { visible, hidden } = partitionTokens(tokens)
       expect(visible).toHaveLength(0)
