@@ -11,6 +11,7 @@ import {
   SolanaSendForm,
   BitcoinSendForm,
   DogecoinSendForm,
+  ReceiveDialog,
 } from './transaction'
 import type { SendTokenOption } from './transaction/types'
 import { useI18n } from '../i18n'
@@ -37,10 +38,16 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   onBack,
 }) => {
   const { t } = useI18n()
-  const { activeWallet, isSolanaChain, isBitcoinChain, isDogecoinChain } =
-    useAuth()
+  const {
+    activeWallet,
+    activeAccount,
+    isSolanaChain,
+    isBitcoinChain,
+    isDogecoinChain,
+  } = useAuth()
   const [swapOpen, setSwapOpen] = useState(false)
   const [sendOpen, setSendOpen] = useState(false)
+  const [showReceive, setShowReceive] = useState(false)
   const [sendTokenOption, setSendTokenOption] = useState<
     SendTokenOption | undefined
   >(undefined)
@@ -57,6 +64,8 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
     setSendOpen(false)
     setSendTokenOption(undefined)
   }, [])
+
+  const receiveAddress = activeAccount?.address
 
   const handleOpenSend = useCallback(() => {
     if (isNative) {
@@ -165,7 +174,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
               </svg>
             }
             label={t('receive')}
-            onClick={() => {}}
+            onClick={() => setShowReceive(true)}
           />
           <ActionCircleEntry
             variantClass="action-circle-entry--swap"
@@ -198,6 +207,13 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
       </div>
 
       {sendOpen && renderSendForm()}
+
+      {showReceive && receiveAddress && (
+        <ReceiveDialog
+          address={receiveAddress}
+          onClose={() => setShowReceive(false)}
+        />
+      )}
     </div>
   )
 }
