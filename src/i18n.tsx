@@ -51,7 +51,7 @@ const messages = {
     introNoPasswordTitle: 'No password, no mnemonic',
     introNoPasswordSub:
       'Log in with your biometrics. No seed phrases to write down or lose.',
-    introNoFeeTitle: 'No platform fee',
+    introNoFeeTitle: 'No platform fee and open source',
     introNoFeeSub: 'We don’t add platform fees on top of network costs.',
     introDevFriendlyTitle: 'Developer friendly and Open source',
     introDevFriendlySub:
@@ -339,7 +339,7 @@ const messages = {
     introSwapSub: '跨去中心化交易所的最优价格路由。',
     introNoPasswordTitle: '无密码，无助记词',
     introNoPasswordSub: '使用指纹登录。无需记录或保管助记词。',
-    introNoFeeTitle: '无平台手续费',
+    introNoFeeTitle: '无平台手续费 + 开源',
     introNoFeeSub: '我们不收取平台手续费，仅有网络费用。',
     introDevFriendlyTitle: '开发者友好且开源',
     introDevFriendlySub: '内置开发工具，支持 1000+ 条链。轻松获取测试代币。',
