@@ -4,12 +4,15 @@ import { TESTID } from '../testids'
 
 export type BottomTab = 'wallet' | 'activity' | 'more'
 
-export interface BottomTabsProps {
+export interface BottomTabBarProps {
   activeTab: BottomTab
   onSelectTab: (tab: BottomTab) => void
 }
 
-const BottomTabs: React.FC<BottomTabsProps> = ({ activeTab, onSelectTab }) => {
+const BottomTabBar: React.FC<BottomTabBarProps> = ({
+  activeTab,
+  onSelectTab,
+}) => {
   const { t } = useI18n()
 
   return (
@@ -96,4 +99,4 @@ const BottomTabs: React.FC<BottomTabsProps> = ({ activeTab, onSelectTab }) => {
   )
 }
 
-export default BottomTabs
+export default BottomTabBar
