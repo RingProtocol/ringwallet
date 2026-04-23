@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import ChainSwitcher from './fullscreencomps/ChainSwitcher'
 import NativeBalance from './NativeBalance'
-import TransactionActions from './TransactionActions'
+import QuickActionBar from './QuickActionBar'
 import AccountDrawerPanel from './AccountDrawerPanel'
 import TokenBalance from './TokenBalance'
 import TokenDetailPage from './TokenDetailPage'
@@ -168,7 +168,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
               allChainsUsd={totalAssetUsd}
               onAddressClick={openMoreFromAddress}
             />
-            <TransactionActions
+            <QuickActionBar
               initialToken={pendingSendToken}
               onSendFormClosed={() => setPendingSendToken(undefined)}
             />

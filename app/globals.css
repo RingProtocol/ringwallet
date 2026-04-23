@@ -7,5 +7,4 @@
 @import '../src/components/WalletSwitcher.css';
 @import '../src/components/fullscreencomps/ChainSwitcher.css';
 @import '../src/components/NativeBalance.css';
-@import '../src/components/TransactionActions.css';
 @import '../src/features/dapps/components/DApps.css';

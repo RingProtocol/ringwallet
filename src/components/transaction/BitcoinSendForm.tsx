@@ -10,7 +10,7 @@ import {
 import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult from './SignedTxResult'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeBitcoinTx, buildBitcoinRows } from '../../utils/bitcoinTxDecoder'
 

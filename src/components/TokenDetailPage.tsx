@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { ChainToken } from '../models/ChainTokens'
 import type { Chain } from '../models/ChainType'
-import { RING_SWAP_DAPP } from './TransactionActions'
+import { RING_SWAP_DAPP } from './QuickActionBar'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -22,7 +22,7 @@ import {
   TokenDetailInfo,
   TokenDetailActivity,
 } from './detail'
-import { ActionCircleEntry } from './ActionCircleEntry'
+import { ActionCircleEntry } from './QuickActionBar'
 import { TESTID } from './testids'
 
 export interface TokenDetailPageProps {

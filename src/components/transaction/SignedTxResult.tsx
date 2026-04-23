@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useI18n } from '../../i18n'
 import { TESTID } from '../testids'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 
 export interface TxDisplayRow {
   label: string

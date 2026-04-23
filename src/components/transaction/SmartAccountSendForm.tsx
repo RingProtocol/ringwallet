@@ -8,7 +8,7 @@ import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
 import type { SignedTx } from './types'
-import '../TransactionActions.css'
+import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeUserOp } from '../../utils/userOpDecoder'
 
