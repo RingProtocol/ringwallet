@@ -127,7 +127,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
 
       <div className="token-detail__scroll">
         <TokenDetailBalance token={token} chain={chain} />
-        <TokenDetailPriceChart token={token} />
+        <TokenDetailPriceChart token={token} chain={chain} />
 
         <div
           className="token-detail__actions"
