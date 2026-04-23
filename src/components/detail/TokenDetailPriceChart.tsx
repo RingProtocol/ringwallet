@@ -1,24 +1,88 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { chainTokenChangePercentLabel } from '../../features/balance/balanceManager'
 import type { ChainToken } from '../../models/ChainTokens'
+import type { Chain } from '../../models/ChainType'
+import {
+  useTokenPriceHistory,
+  type PriceTab,
+} from '../../hooks/useTokenPriceHistory'
+import type { PriceDataPoint } from '../../features/balance/tokenPriceHistorical'
 
 export interface TokenDetailPriceChartProps {
   token: ChainToken
+  chain: Chain
 }
 
-const TIME_LABELS = ['1H', '1D', '1W', '1M', '1Y', 'ALL']
+const TIME_LABELS: PriceTab[] = ['1H', '1D']
+
+const SVG_W = 200
+const SVG_H = 56
+const PAD_TOP = 4
+const PAD_BOT = 4
+
+function buildSvgPoints(data: PriceDataPoint[]): {
+  linePoints: string
+  areaPoints: string
+  up: boolean
+} | null {
+  if (data.length < 2) return null
+  const values = data.map((d) => Number(d.value))
+  if (values.some((v) => !Number.isFinite(v))) return null
+
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+
+  const usableH = SVG_H - PAD_TOP - PAD_BOT
+
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * SVG_W
+    const y = PAD_TOP + usableH - ((v - min) / range) * usableH
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+
+  const linePoints = pts.join(' ')
+  const areaPoints = `${linePoints} ${SVG_W},${SVG_H} 0,${SVG_H}`
+  const up = values[values.length - 1] >= values[0]
+  return { linePoints, areaPoints, up }
+}
+
+const STATIC_UP =
+  '0,44 18,40 36,36 54,28 72,32 90,20 108,22 126,14 144,18 162,10 180,14 198,6'
+const STATIC_DOWN =
+  '0,10 18,14 36,12 54,22 72,18 90,30 108,26 126,36 144,32 162,40 180,38 198,48'
 
 const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   token,
+  chain,
 }) => {
+  const { data, isLoading, selectedTab, setSelectedTab } = useTokenPriceHistory(
+    token,
+    chain
+  )
+
   const changeStr = chainTokenChangePercentLabel(token)
-  const up = changeStr ? changeStr.startsWith('+') : true
+  const fallbackUp = changeStr ? changeStr.startsWith('+') : true
+
+  const svg = useMemo(() => buildSvgPoints(data), [data])
+
+  const up = svg ? svg.up : fallbackUp
+  const linePoints = svg ? svg.linePoints : fallbackUp ? STATIC_UP : STATIC_DOWN
+  const areaPoints = svg
+    ? svg.areaPoints
+    : `${fallbackUp ? STATIC_UP : STATIC_DOWN} 200,56 0,56`
 
   return (
     <>
-      <div className="token-detail__sparkline">
+      <div
+        className="token-detail__sparkline"
+        style={{
+          opacity: isLoading && !svg ? 0.5 : 1,
+          transition: 'opacity 0.2s ease',
+        }}
+      >
         <svg
-          viewBox="0 0 200 56"
+          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
           width="100%"
           height="140"
           preserveAspectRatio="none"
@@ -35,16 +99,9 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
               <stop offset="100%" stopColor="transparent" />
             </linearGradient>
           </defs>
-          <polygon
-            points={`${up ? '0,44 18,40 36,36 54,28 72,32 90,20 108,22 126,14 144,18 162,10 180,14 198,6' : '0,10 18,14 36,12 54,22 72,18 90,30 108,26 126,36 144,32 162,40 180,38 198,48'} 200,56 0,56`}
-            fill="url(#sp)"
-          />
+          <polygon points={areaPoints} fill="url(#sp)" />
           <polyline
-            points={
-              up
-                ? '0,44 18,40 36,36 54,28 72,32 90,20 108,22 126,14 144,18 162,10 180,14 198,6'
-                : '0,10 18,14 36,12 54,22 72,18 90,30 108,26 126,36 144,32 162,40 180,38 198,48'
-            }
+            points={linePoints}
             fill="none"
             stroke={up ? '#34d399' : '#f87171'}
             strokeWidth="1.5"
@@ -55,11 +112,12 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
       </div>
 
       <div className="token-detail__time-tabs">
-        {TIME_LABELS.map((tLabel, i) => (
+        {TIME_LABELS.map((tLabel) => (
           <button
             key={tLabel}
             type="button"
-            className={`token-detail__time-tab ${i === 2 ? 'token-detail__time-tab--active' : ''}`}
+            className={`token-detail__time-tab ${selectedTab === tLabel ? 'token-detail__time-tab--active' : ''}`}
+            onClick={() => setSelectedTab(tLabel)}
           >
             {tLabel}
           </button>
