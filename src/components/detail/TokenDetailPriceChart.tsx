@@ -27,6 +27,8 @@ interface SvgPointResult {
   up: boolean
   minYPct: number
   maxYPct: number
+  minXPct: number
+  maxXPct: number
   minPrice: string
   maxPrice: string
 }
@@ -65,12 +67,16 @@ function buildSvgPoints(data: PriceDataPoint[]): SvgPointResult | null {
   const yPctOf = (v: number) =>
     ((PAD_TOP + usableH - ((v - min) / range) * usableH) / SVG_H) * 100
 
+  const clampY = (v: number) => Math.max(4, Math.min(96, v))
+
   return {
     linePoints,
     areaPoints,
     up,
-    minYPct: yPctOf(min),
-    maxYPct: yPctOf(max),
+    minYPct: clampY(yPctOf(min)),
+    maxYPct: clampY(yPctOf(max)),
+    minXPct: (minIdx / (values.length - 1)) * 100,
+    maxXPct: (maxIdx / (values.length - 1)) * 100,
     minPrice: formatPriceLabel(min),
     maxPrice: formatPriceLabel(max),
   }
@@ -153,13 +159,23 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
               className="token-detail__hline token-detail__hline--max"
               style={{ top: `${svg.maxYPct}%` }}
             >
-              <span className="token-detail__hline-label">{svg.maxPrice}</span>
+              <span
+                className="token-detail__hline-label"
+                style={svg.maxXPct > 70 ? { right: 6 } : { left: 6 }}
+              >
+                {svg.maxPrice}
+              </span>
             </div>
             <div
               className="token-detail__hline token-detail__hline--min"
               style={{ top: `${svg.minYPct}%` }}
             >
-              <span className="token-detail__hline-label">{svg.minPrice}</span>
+              <span
+                className="token-detail__hline-label"
+                style={svg.minXPct > 70 ? { right: 6 } : { left: 6 }}
+              >
+                {svg.minPrice}
+              </span>
             </div>
           </>
         )}
