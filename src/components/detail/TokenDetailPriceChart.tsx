@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { chainTokenChangePercentLabel } from '../../features/balance/balanceManager'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { Chain } from '../../models/ChainType'
@@ -25,8 +25,10 @@ interface SvgPointResult {
   linePoints: string
   areaPoints: string
   up: boolean
-  minLabel: { xPct: number; yPct: number; price: string }
-  maxLabel: { xPct: number; yPct: number; price: string }
+  minYPct: number
+  maxYPct: number
+  minPrice: string
+  maxPrice: string
 }
 
 function formatPriceLabel(v: number): string {
@@ -60,20 +62,17 @@ function buildSvgPoints(data: PriceDataPoint[]): SvgPointResult | null {
   const areaPoints = `${linePoints} ${SVG_W},${SVG_H} 0,${SVG_H}`
   const up = values[values.length - 1] >= values[0]
 
-  const toLabel = (idx: number) => ({
-    xPct: (idx / (values.length - 1)) * 100,
-    yPct:
-      ((PAD_TOP + usableH - ((values[idx] - min) / range) * usableH) / SVG_H) *
-      100,
-    price: formatPriceLabel(values[idx]),
-  })
+  const yPctOf = (v: number) =>
+    ((PAD_TOP + usableH - ((v - min) / range) * usableH) / SVG_H) * 100
 
   return {
     linePoints,
     areaPoints,
     up,
-    minLabel: toLabel(minIdx),
-    maxLabel: toLabel(maxIdx),
+    minYPct: yPctOf(min),
+    maxYPct: yPctOf(max),
+    minPrice: formatPriceLabel(min),
+    maxPrice: formatPriceLabel(max),
   }
 }
 
@@ -89,6 +88,7 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   const { t } = useI18n()
   const { data, isLoading, hasPrice, selectedTab, setSelectedTab } =
     useTokenPriceHistory(token, chain)
+  const [logOpen, setLogOpen] = useState(false)
 
   const changeStr = chainTokenChangePercentLabel(token)
   const fallbackUp = changeStr ? changeStr.startsWith('+') : true
@@ -149,29 +149,30 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
         </svg>
         {svg && (
           <>
-            <span
-              className="token-detail__price-label token-detail__price-label--max"
-              style={{
-                left: `${svg.maxLabel.xPct}%`,
-                top: `${svg.maxLabel.yPct}%`,
-              }}
+            <div
+              className="token-detail__hline token-detail__hline--max"
+              style={{ top: `${svg.maxYPct}%` }}
             >
-              {svg.maxLabel.price}
-            </span>
-            <span
-              className="token-detail__price-label token-detail__price-label--min"
-              style={{
-                left: `${svg.minLabel.xPct}%`,
-                top: `${svg.minLabel.yPct}%`,
-              }}
+              <span className="token-detail__hline-label">{svg.maxPrice}</span>
+            </div>
+            <div
+              className="token-detail__hline token-detail__hline--min"
+              style={{ top: `${svg.minYPct}%` }}
             >
-              {svg.minLabel.price}
-            </span>
+              <span className="token-detail__hline-label">{svg.minPrice}</span>
+            </div>
           </>
         )}
       </div>
 
       <div className="token-detail__time-tabs">
+        <button
+          type="button"
+          className="token-detail__log-btn"
+          onClick={() => setLogOpen((v) => !v)}
+        >
+          Log
+        </button>
         {TIME_LABELS.map((tLabel) => (
           <button
             key={tLabel}
@@ -183,6 +184,12 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
           </button>
         ))}
       </div>
+
+      {logOpen && (
+        <pre className="token-detail__log-panel">
+          {data.length > 0 ? JSON.stringify(data, null, 2) : 'No data received'}
+        </pre>
+      )}
     </>
   )
 }
