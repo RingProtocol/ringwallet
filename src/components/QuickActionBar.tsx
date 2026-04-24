@@ -15,6 +15,7 @@ import {
 } from './transaction'
 import { useI18n } from '../i18n'
 import { TESTID } from './testids'
+import Toast from './Toast'
 import './QuickActionBar.css'
 
 /* ── ActionCircleEntry (single action button) ── */
@@ -117,6 +118,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
     undefined
   )
+  const [toastVisible, setToastVisible] = useState(false)
 
   useEffect(() => {
     if (initialToken) {
@@ -144,7 +146,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     activeChain?.name
   )
   const showMoonPayEntry = import.meta.env.VITE_ENABLE_MOONPAY_ENTRY === 'true'
-  const isMoonPayEnabled = Boolean(moonPayApiKey && moonPayCurrencyCode)
   const moonPayButtonTitle = !moonPayApiKey
     ? 'Set VITE_MOONPAY_API_KEY to enable MoonPay'
     : 'Buy crypto with MoonPay'
@@ -180,7 +181,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   }
 
   const handleMoonPayClick = () => {
-    if (!moonPayApiKey || !moonPayCurrencyCode) return
+    if (!moonPayApiKey || !moonPayCurrencyCode) {
+      setToastVisible(true)
+      return
+    }
 
     const moonPayUrl = new URL(moonPayBaseUrl)
     moonPayUrl.searchParams.set('apiKey', moonPayApiKey)
@@ -288,7 +292,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             }
             label={t('walletActionBuy')}
             onClick={handleMoonPayClick}
-            disabled={!isMoonPayEnabled}
             title={moonPayButtonTitle}
             testId={TESTID.BUY_BUTTON}
           />
@@ -303,6 +306,13 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           onClose={() => setShowReceive(false)}
         />
       )}
+
+      <Toast
+        message={t('serviceNotAvailable')}
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        duration={2000}
+      />
     </div>
   )
 }
