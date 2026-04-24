@@ -7,6 +7,7 @@ import {
   type PriceTab,
 } from '../../hooks/useTokenPriceHistory'
 import type { PriceDataPoint } from '../../features/balance/tokenPriceHistorical'
+import { useI18n } from '../../i18n'
 
 export interface TokenDetailPriceChartProps {
   token: ChainToken
@@ -20,11 +21,21 @@ const SVG_H = 56
 const PAD_TOP = 4
 const PAD_BOT = 4
 
-function buildSvgPoints(data: PriceDataPoint[]): {
+interface SvgPointResult {
   linePoints: string
   areaPoints: string
   up: boolean
-} | null {
+  minLabel: { xPct: number; yPct: number; price: string }
+  maxLabel: { xPct: number; yPct: number; price: string }
+}
+
+function formatPriceLabel(v: number): string {
+  if (v >= 1000) return `$${v.toFixed(0)}`
+  if (v >= 1) return `$${v.toFixed(2)}`
+  return `$${v.toPrecision(4)}`
+}
+
+function buildSvgPoints(data: PriceDataPoint[]): SvgPointResult | null {
   if (data.length < 2) return null
   const values = data.map((d) => Number(d.value))
   if (values.some((v) => !Number.isFinite(v))) return null
@@ -34,8 +45,12 @@ function buildSvgPoints(data: PriceDataPoint[]): {
   const range = max - min || 1
 
   const usableH = SVG_H - PAD_TOP - PAD_BOT
+  let minIdx = 0
+  let maxIdx = 0
 
   const pts = values.map((v, i) => {
+    if (v < values[minIdx]) minIdx = i
+    if (v > values[maxIdx]) maxIdx = i
     const x = (i / (values.length - 1)) * SVG_W
     const y = PAD_TOP + usableH - ((v - min) / range) * usableH
     return `${x.toFixed(1)},${y.toFixed(1)}`
@@ -44,7 +59,22 @@ function buildSvgPoints(data: PriceDataPoint[]): {
   const linePoints = pts.join(' ')
   const areaPoints = `${linePoints} ${SVG_W},${SVG_H} 0,${SVG_H}`
   const up = values[values.length - 1] >= values[0]
-  return { linePoints, areaPoints, up }
+
+  const toLabel = (idx: number) => ({
+    xPct: (idx / (values.length - 1)) * 100,
+    yPct:
+      ((PAD_TOP + usableH - ((values[idx] - min) / range) * usableH) / SVG_H) *
+      100,
+    price: formatPriceLabel(values[idx]),
+  })
+
+  return {
+    linePoints,
+    areaPoints,
+    up,
+    minLabel: toLabel(minIdx),
+    maxLabel: toLabel(maxIdx),
+  }
 }
 
 const STATIC_UP =
@@ -56,15 +86,22 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   token,
   chain,
 }) => {
-  const { data, isLoading, selectedTab, setSelectedTab } = useTokenPriceHistory(
-    token,
-    chain
-  )
+  const { t } = useI18n()
+  const { data, isLoading, hasPrice, selectedTab, setSelectedTab } =
+    useTokenPriceHistory(token, chain)
 
   const changeStr = chainTokenChangePercentLabel(token)
   const fallbackUp = changeStr ? changeStr.startsWith('+') : true
 
   const svg = useMemo(() => buildSvgPoints(data), [data])
+
+  if (!hasPrice && !isLoading) {
+    return (
+      <div className="token-detail__no-price">
+        {t('tokenDetailNoPriceData')}
+      </div>
+    )
+  }
 
   const up = svg ? svg.up : fallbackUp
   const linePoints = svg ? svg.linePoints : fallbackUp ? STATIC_UP : STATIC_DOWN
@@ -79,6 +116,7 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
         style={{
           opacity: isLoading && !svg ? 0.5 : 1,
           transition: 'opacity 0.2s ease',
+          position: 'relative',
         }}
       >
         <svg
@@ -109,6 +147,28 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
             strokeLinecap="round"
           />
         </svg>
+        {svg && (
+          <>
+            <span
+              className="token-detail__price-label token-detail__price-label--max"
+              style={{
+                left: `${svg.maxLabel.xPct}%`,
+                top: `${svg.maxLabel.yPct}%`,
+              }}
+            >
+              {svg.maxLabel.price}
+            </span>
+            <span
+              className="token-detail__price-label token-detail__price-label--min"
+              style={{
+                left: `${svg.minLabel.xPct}%`,
+                top: `${svg.minLabel.yPct}%`,
+              }}
+            >
+              {svg.minLabel.price}
+            </span>
+          </>
+        )}
       </div>
 
       <div className="token-detail__time-tabs">

@@ -18,6 +18,7 @@ const TAB_CONFIG: Record<PriceTab, { interval: string; lookbackMs: number }> = {
 export interface UseTokenPriceHistoryResult {
   data: PriceDataPoint[]
   isLoading: boolean
+  hasPrice: boolean
   selectedTab: PriceTab
   setSelectedTab: (tab: PriceTab) => void
 }
@@ -31,6 +32,9 @@ export function useTokenPriceHistory(
   const [selectedTab, setSelectedTab] = useState<PriceTab>('1D')
 
   const abortRef = useRef<AbortController | null>(null)
+
+  const hasPriceData =
+    Array.isArray(token.tokenPrices) && token.tokenPrices.length > 0
 
   const isNative = token.tokenAddress == null
   const network = chainToAccountAssetsNetwork(chain)
@@ -92,11 +96,18 @@ export function useTokenPriceHistory(
   )
 
   useEffect(() => {
+    if (!hasPriceData) {
+      setData([])
+      setIsLoading(false)
+      return
+    }
     void doFetch(selectedTab)
     return () => {
       abortRef.current?.abort()
     }
-  }, [selectedTab, fetchKey, doFetch])
+  }, [selectedTab, fetchKey, doFetch, hasPriceData])
 
-  return { data, isLoading, selectedTab, setSelectedTab }
+  const hasPrice = hasPriceData || data.length > 0
+
+  return { data, isLoading, hasPrice, selectedTab, setSelectedTab }
 }
