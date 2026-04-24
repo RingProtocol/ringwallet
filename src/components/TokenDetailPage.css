@@ -171,6 +171,7 @@
 .token-detail__sparkline {
   padding: 6px 0 4px;
   margin: 0 -18px;
+  overflow: visible;
 }
 
 .token-detail__no-price {
@@ -198,7 +199,6 @@
 
 .token-detail__hline-label {
   position: absolute;
-  right: 6px;
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
