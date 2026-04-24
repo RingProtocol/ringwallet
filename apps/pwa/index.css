@@ -39,6 +39,10 @@
   --ring-radius-pill: 9999px;
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Roboto',
@@ -49,6 +53,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overscroll-behavior: none;
 }
 
 #root {
