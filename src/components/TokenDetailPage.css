@@ -173,6 +173,42 @@
   margin: 0 -18px;
 }
 
+.token-detail__no-price {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ring-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+.token-detail__price-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.token-detail__price-label--max {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  transform: translate(-50%, -110%);
+}
+
+.token-detail__price-label--min {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  transform: translate(-50%, 20%);
+}
+
 .token-detail__time-tabs {
   display: flex;
   gap: 6px;
