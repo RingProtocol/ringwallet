@@ -109,6 +109,7 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
     )
   }
 
+  const showStaticFallback = isLoading && !svg
   const up = svg ? svg.up : fallbackUp
   const linePoints = svg ? svg.linePoints : fallbackUp ? STATIC_UP : STATIC_DOWN
   const areaPoints = svg
@@ -117,69 +118,73 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
 
   return (
     <>
-      <div
-        className="token-detail__sparkline"
-        style={{
-          opacity: isLoading && !svg ? 0.5 : 1,
-          transition: 'opacity 0.2s ease',
-          position: 'relative',
-        }}
-      >
-        <svg
-          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-          width="100%"
-          height="140"
-          preserveAspectRatio="none"
-          style={{ display: 'block' }}
+      {(svg || showStaticFallback) && (
+        <div
+          className="token-detail__sparkline"
+          style={{
+            opacity: showStaticFallback ? 0.5 : 1,
+            transition: 'opacity 0.2s ease',
+            position: 'relative',
+          }}
         >
-          <defs>
-            <linearGradient id="sp" x1="0" x2="0" y1="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor={
-                  up ? 'rgba(52, 211, 153, 0.18)' : 'rgba(248, 113, 113, 0.18)'
-                }
-              />
-              <stop offset="100%" stopColor="transparent" />
-            </linearGradient>
-          </defs>
-          <polygon points={areaPoints} fill="url(#sp)" />
-          <polyline
-            points={linePoints}
-            fill="none"
-            stroke={up ? '#34d399' : '#f87171'}
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        </svg>
-        {svg && (
-          <>
-            <div
-              className="token-detail__hline token-detail__hline--max"
-              style={{ top: `${svg.maxYPct}%` }}
-            >
-              <span
-                className="token-detail__hline-label"
-                style={svg.maxXPct > 70 ? { right: 6 } : { left: 6 }}
+          <svg
+            viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+            width="100%"
+            height="140"
+            preserveAspectRatio="none"
+            style={{ display: 'block' }}
+          >
+            <defs>
+              <linearGradient id="sp" x1="0" x2="0" y1="0" y2="1">
+                <stop
+                  offset="0%"
+                  stopColor={
+                    up
+                      ? 'rgba(52, 211, 153, 0.18)'
+                      : 'rgba(248, 113, 113, 0.18)'
+                  }
+                />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+            <polygon points={areaPoints} fill="url(#sp)" />
+            <polyline
+              points={linePoints}
+              fill="none"
+              stroke={up ? '#34d399' : '#f87171'}
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+          {svg && (
+            <>
+              <div
+                className="token-detail__hline token-detail__hline--max"
+                style={{ top: `${svg.maxYPct}%` }}
               >
-                {svg.maxPrice}
-              </span>
-            </div>
-            <div
-              className="token-detail__hline token-detail__hline--min"
-              style={{ top: `${svg.minYPct}%` }}
-            >
-              <span
-                className="token-detail__hline-label"
-                style={svg.minXPct > 70 ? { right: 6 } : { left: 6 }}
+                <span
+                  className="token-detail__hline-label"
+                  style={svg.maxXPct > 70 ? { right: 6 } : { left: 6 }}
+                >
+                  {svg.maxPrice}
+                </span>
+              </div>
+              <div
+                className="token-detail__hline token-detail__hline--min"
+                style={{ top: `${svg.minYPct}%` }}
               >
-                {svg.minPrice}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
+                <span
+                  className="token-detail__hline-label"
+                  style={svg.minXPct > 70 ? { right: 6 } : { left: 6 }}
+                >
+                  {svg.minPrice}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="token-detail__time-tabs">
         <button

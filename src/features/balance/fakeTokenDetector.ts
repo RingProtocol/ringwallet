@@ -21,8 +21,11 @@ export function partitionTokens(tokens: ChainToken[]): {
 } {
   const visible: ChainToken[] = []
   const hidden: ChainToken[] = []
+  // 如果列表只有唯一的 native token，不应放入 hidden（即使价格为 null）
+  const onlyNative = tokens.length === 1 && tokens[0].tokenAddress == null
+
   for (const t of tokens) {
-    if (isSuspiciousFakeToken(t)) {
+    if (isSuspiciousFakeToken(t) && !onlyNative) {
       hidden.push(t)
     } else {
       visible.push(t)
