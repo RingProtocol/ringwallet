@@ -34,7 +34,11 @@ export async function fetchTokenPricesByAddr(
 ): Promise<TokenPriceResponseItem[]> {
   const res = await fetch(TOKEN_PRICE_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key':
+        'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7',
+    },
     body: JSON.stringify({ addresses } satisfies TokenPriceRequest),
   })
 
@@ -51,7 +55,11 @@ export async function fetchTokenPricesBySymbol(
 ): Promise<TokenPriceResponseItem[]> {
   const res = await fetch(TOKEN_PRICE_SYMBOL_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key':
+        'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7',
+    },
     body: JSON.stringify({
       symbols: symbols,
     } satisfies TokenPriceSymbolRequest),
