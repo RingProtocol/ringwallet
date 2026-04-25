@@ -6,9 +6,9 @@ import { useBalanceManager } from '../../hooks/useBalanceManager'
 import type { SendTokenOption } from '../transaction/types'
 
 import BottomTabBar from './BottomTabBar'
-import WalletTab from './WalletTab'
-import ActivityTab from './ActivityTab'
-import MoreTab from './MoreTab'
+import { WalletTabHeader, WalletTabBody } from './WalletTab'
+import { ActivityTabHeader, ActivityTabBody } from './ActivityTab'
+import { MoreTabHeader, MoreTabBody } from './MoreTab'
 import type { BottomTab } from './BottomTabBar'
 import './WalletMainPage.css'
 
@@ -118,21 +118,30 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
         </button>
       )}
 
+      {/* ─── Fixed header area (grid row 1) ─── */}
+      {bottomTab === 'wallet' && (
+        <WalletTabHeader
+          totalAssetUsd={totalAssetUsd}
+          pendingSendToken={pendingSendToken}
+          onSendFormClosed={() => setPendingSendToken(undefined)}
+          onAddressClick={openMoreFromAddress}
+        />
+      )}
+      {bottomTab === 'activity' && <ActivityTabHeader />}
+      {bottomTab === 'more' && <MoreTabHeader />}
+
+      {/* ─── Scrollable content (grid row 2) ─── */}
       <div className="wallet-main-page__scroll">
         {bottomTab === 'wallet' && (
-          <WalletTab
-            totalAssetUsd={totalAssetUsd}
+          <WalletTabBody
             tokens={tokens}
             supportsTokens={supportsTokens}
             onTokenSelect={openTokenDetail}
-            pendingSendToken={pendingSendToken}
-            onSendFormClosed={() => setPendingSendToken(undefined)}
-            onAddressClick={openMoreFromAddress}
           />
         )}
-        {bottomTab === 'activity' && <ActivityTab />}
+        {bottomTab === 'activity' && <ActivityTabBody />}
         {bottomTab === 'more' && (
-          <MoreTab
+          <MoreTabBody
             appVersion={appVersion}
             expandWalletListOnOpen={moreExpandWalletListOnOpen}
             pulseExpandWalletList={moreWalletListPulse}
