@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react'
-import { chainTokenChangePercentLabel } from '../../features/balance/balanceManager'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { Chain } from '../../models/ChainType'
 import {
@@ -82,11 +81,6 @@ function buildSvgPoints(data: PriceDataPoint[]): SvgPointResult | null {
   }
 }
 
-const STATIC_UP =
-  '0,44 18,40 36,36 54,28 72,32 90,20 108,22 126,14 144,18 162,10 180,14 198,6'
-const STATIC_DOWN =
-  '0,10 18,14 36,12 54,22 72,18 90,30 108,26 126,36 144,32 162,40 180,38 198,48'
-
 const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   token,
   chain,
@@ -95,9 +89,6 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   const { data, isLoading, hasPrice, selectedTab, setSelectedTab } =
     useTokenPriceHistory(token, chain)
   const [logOpen, setLogOpen] = useState(false)
-
-  const changeStr = chainTokenChangePercentLabel(token)
-  const fallbackUp = changeStr ? changeStr.startsWith('+') : true
 
   const svg = useMemo(() => buildSvgPoints(data), [data])
 
@@ -109,23 +100,12 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
     )
   }
 
-  const showStaticFallback = isLoading && !svg
-  const up = svg ? svg.up : fallbackUp
-  const linePoints = svg ? svg.linePoints : fallbackUp ? STATIC_UP : STATIC_DOWN
-  const areaPoints = svg
-    ? svg.areaPoints
-    : `${fallbackUp ? STATIC_UP : STATIC_DOWN} 200,56 0,56`
-
   return (
     <>
-      {(svg || showStaticFallback) && (
+      {svg && (
         <div
           className="token-detail__sparkline"
-          style={{
-            opacity: showStaticFallback ? 0.5 : 1,
-            transition: 'opacity 0.2s ease',
-            position: 'relative',
-          }}
+          style={{ position: 'relative' }}
         >
           <svg
             viewBox={`0 0 ${SVG_W} ${SVG_H}`}
@@ -139,7 +119,7 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
                 <stop
                   offset="0%"
                   stopColor={
-                    up
+                    svg.up
                       ? 'rgba(52, 211, 153, 0.18)'
                       : 'rgba(248, 113, 113, 0.18)'
                   }
@@ -147,42 +127,38 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
                 <stop offset="100%" stopColor="transparent" />
               </linearGradient>
             </defs>
-            <polygon points={areaPoints} fill="url(#sp)" />
+            <polygon points={svg.areaPoints} fill="url(#sp)" />
             <polyline
-              points={linePoints}
+              points={svg.linePoints}
               fill="none"
-              stroke={up ? '#34d399' : '#f87171'}
+              stroke={svg.up ? '#34d399' : '#f87171'}
               strokeWidth="1.5"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
           </svg>
-          {svg && (
-            <>
-              <div
-                className="token-detail__hline token-detail__hline--max"
-                style={{ top: `${svg.maxYPct}%` }}
-              >
-                <span
-                  className="token-detail__hline-label"
-                  style={svg.maxXPct > 70 ? { right: 6 } : { left: 6 }}
-                >
-                  {svg.maxPrice}
-                </span>
-              </div>
-              <div
-                className="token-detail__hline token-detail__hline--min"
-                style={{ top: `${svg.minYPct}%` }}
-              >
-                <span
-                  className="token-detail__hline-label"
-                  style={svg.minXPct > 70 ? { right: 6 } : { left: 6 }}
-                >
-                  {svg.minPrice}
-                </span>
-              </div>
-            </>
-          )}
+          <div
+            className="token-detail__hline token-detail__hline--max"
+            style={{ top: `${svg.maxYPct}%` }}
+          >
+            <span
+              className="token-detail__hline-label"
+              style={svg.maxXPct > 70 ? { right: 6 } : { left: 6 }}
+            >
+              {svg.maxPrice}
+            </span>
+          </div>
+          <div
+            className="token-detail__hline token-detail__hline--min"
+            style={{ top: `${svg.minYPct}%` }}
+          >
+            <span
+              className="token-detail__hline-label"
+              style={svg.minXPct > 70 ? { right: 6 } : { left: 6 }}
+            >
+              {svg.minPrice}
+            </span>
+          </div>
         </div>
       )}
 

@@ -12,7 +12,7 @@ export type PriceTab = '1H' | '1D'
 
 const TAB_CONFIG: Record<PriceTab, { interval: string; lookbackMs: number }> = {
   '1H': { interval: '5m', lookbackMs: 60 * 60 * 1000 },
-  '1D': { interval: '15m', lookbackMs: 24 * 60 * 60 * 1000 },
+  '1D': { interval: '1h', lookbackMs: 24 * 60 * 60 * 1000 },
 }
 
 export interface UseTokenPriceHistoryResult {
