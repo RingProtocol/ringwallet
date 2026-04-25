@@ -46,6 +46,12 @@ function makeNativeTrxToken(chain: Chain, tokenBalanceHex: string): ChainToken {
   }
 }
 
+const PRICE_CACHE_TTL_MS = 60_000
+let cachedTrxPrices: {
+  ts: number
+  prices: import('../../../models/ChainTokens').ChainTokenPrice[]
+} | null = null
+
 function makeTrc20Token(
   chain: Chain,
   token: TokenInfo,
@@ -85,15 +91,22 @@ const adapter = {
     try {
       const network = chainToTokenPriceNetwork(chain)
       if (network) {
-        const res = await fetchTokenPricesBySymbol(['TRX'])
-        const prices =
-          res.find((x) => x.network === network)?.prices ?? res[0]?.prices
-        if (Array.isArray(prices) && prices.length > 0) {
-          token.tokenPrices = prices
+        const now = Date.now()
+        if (cachedTrxPrices && now - cachedTrxPrices.ts < PRICE_CACHE_TTL_MS) {
+          token.tokenPrices = cachedTrxPrices.prices
+        } else {
+          const res = await fetchTokenPricesBySymbol(['TRX'])
+          const prices =
+            res.find((x) => x.network === network)?.prices ?? res[0]?.prices
+          if (Array.isArray(prices) && prices.length > 0) {
+            cachedTrxPrices = { ts: now, prices }
+            token.tokenPrices = prices
+          }
         }
       }
     } catch {
       // Best-effort only; keep default tokenPrices.
+      if (cachedTrxPrices) token.tokenPrices = cachedTrxPrices.prices
     }
     return token
   },

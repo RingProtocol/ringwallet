@@ -16,7 +16,6 @@ import {
   type AccountAssetsAddressEntry,
   emptyBalance,
   formatUsdAmount,
-  getAccountBalancePollIntervalMs,
 } from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
 import { chainToAccountAssetsNetwork, DEFAULT_CHAINS } from '@/config/chains'
@@ -257,8 +256,17 @@ export function useBalanceManager(): BalanceState {
   }, [applyFromCache])
 
   // Interval: only fetch + populate cache; UI reads cache above.
+  // Uses exponential backoff on consecutive failures to avoid hammering broken RPCs.
   useEffect(() => {
     if (!activeAccount) return
+
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let consecutiveFailures = 0
+    const BACKOFF_STEPS = [10_000, 15_000, 20_000, 30_000, 40_000, 60_000]
+
+    const getNextDelay = () =>
+      BACKOFF_STEPS[Math.min(consecutiveFailures, BACKOFF_STEPS.length - 1)]
 
     const tick = async () => {
       const fetchId = ++inFlightFetchIdRef.current
@@ -272,19 +280,24 @@ export function useBalanceManager(): BalanceState {
         await syncAccountBalancesToCache(adapterAddress, chain, groups)
         if (accountAssetsSyncKeyRef.current !== syncKeyAtStart) return
         applyFromCache({ notifyNativeChange: true })
+        consecutiveFailures = 0
+      } catch {
+        consecutiveFailures++
       } finally {
         if (fetchId === inFlightFetchIdRef.current) {
           setIsLoading(false)
+        }
+        if (!cancelled) {
+          timer = setTimeout(() => void tick(), getNextDelay())
         }
       }
     }
 
     void tick()
-    const interval = setInterval(
-      () => void tick(),
-      getAccountBalancePollIntervalMs()
-    )
-    return () => clearInterval(interval)
+    return () => {
+      cancelled = true
+      if (timer != null) clearTimeout(timer)
+    }
   }, [activeAccount, accountAssetGroups, applyFromCache, importedTokens])
 
   return {
