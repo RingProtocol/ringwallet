@@ -13,7 +13,7 @@ export interface TokenDetailPriceChartProps {
   chain: Chain
 }
 
-const TIME_LABELS: PriceTab[] = ['1H', '1D']
+const TIME_LABELS: PriceTab[] = ['1H', '1d']
 
 const SVG_W = 200
 const SVG_H = 56

@@ -8,11 +8,11 @@ import {
   type TokenPriceHistoricalRequest,
 } from '../features/balance/tokenPriceHistorical'
 
-export type PriceTab = '1H' | '1D'
+export type PriceTab = '1H' | '1d'
 
 const TAB_CONFIG: Record<PriceTab, { interval: string; lookbackMs: number }> = {
   '1H': { interval: '5m', lookbackMs: 60 * 60 * 1000 },
-  '1D': { interval: '1h', lookbackMs: 24 * 60 * 60 * 1000 },
+  '1d': { interval: '1h', lookbackMs: 24 * 60 * 60 * 1000 },
 }
 
 export interface UseTokenPriceHistoryResult {
@@ -29,7 +29,7 @@ export function useTokenPriceHistory(
 ): UseTokenPriceHistoryResult {
   const [data, setData] = useState<PriceDataPoint[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedTab, setSelectedTab] = useState<PriceTab>('1D')
+  const [selectedTab, setSelectedTab] = useState<PriceTab>('1d')
 
   const abortRef = useRef<AbortController | null>(null)
 
