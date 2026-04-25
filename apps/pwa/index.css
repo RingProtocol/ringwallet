@@ -39,7 +39,11 @@
   --ring-radius-pill: 9999px;
 }
 
-html {
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
 }
 
@@ -49,11 +53,9 @@ body {
     sans-serif;
   background: var(--ring-bg-page);
   color: var(--ring-text-primary);
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  overscroll-behavior: none;
 }
 
 #root {

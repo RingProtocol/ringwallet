@@ -1,17 +1,12 @@
 /* Shell: Wallet tab = gradient hero (nav + balance/actions); Activity/More = slim top strip only + scroll + bottom dock. */
 .wallet-main-page {
-  flex: 1;
-  align-self: stretch;
+  position: fixed;
+  inset: 0;
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  min-height: 100dvh;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-columns: 1fr;
-  position: relative;
+  display: flex;
+  flex-direction: column;
   isolation: isolate;
   box-sizing: border-box;
   overflow: hidden;
@@ -28,7 +23,7 @@
 
 /* ─── Gradient hero shell (grid row 1) ─── */
 .wallet-main-page__hero {
-  grid-row: 1;
+  flex-shrink: 0;
   position: relative;
   z-index: 60;
   margin: 0;
@@ -39,7 +34,6 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   overflow: visible;
 }
 
@@ -53,9 +47,9 @@
 
 /* Top bar: wallet pill left, chain + gallery right */
 .wallet-main-page__top-bar {
+  flex-shrink: 0;
   position: relative;
   z-index: 2;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -233,12 +227,11 @@
 
 /* ─── Scrollable tab content ─── */
 .wallet-main-page__scroll {
-  grid-row: 2;
+  flex: 1 1 0%;
+  min-height: 0;
   position: relative;
   z-index: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: block;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -252,7 +245,6 @@
 
 /* ─── Bottom dock: fixed tab bar + in-flow spacer (row 3) ─── */
 .wallet-main-page__bottom-wrap {
-  grid-row: 3;
   flex-shrink: 0;
   position: relative;
 }
