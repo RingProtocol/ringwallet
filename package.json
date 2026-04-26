@@ -106,7 +106,11 @@
     "react-dom": "^18.2.0",
     "serve": "^14.2.0",
     "tiny-secp256k1": "^2.2.4",
-    "undici": "^6.21.1"
+    "undici": "^6.21.1",
+    "@ringearn/sdk": "file:../ringearn",
+    "viem": "^2.22.0",
+    "wagmi": "^2.14.0",
+    "@tanstack/react-query": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

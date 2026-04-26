@@ -16,6 +16,8 @@ import {
 import { useI18n } from '../i18n'
 import { TESTID } from './testids'
 import Toast from './Toast'
+import EarnDialog from './earn/EarnDialog'
+import { useIsEarnSupported } from './earn/useEarnSdk'
 import './QuickActionBar.css'
 
 /* ── ActionCircleEntry (single action button) ── */
@@ -108,10 +110,21 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [showSend, setShowSend] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
   const [swapDappOpen, setSwapDappOpen] = useState(false)
+  const [showEarn, setShowEarn] = useState(false)
   const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
     undefined
   )
   const [toastVisible, setToastVisible] = useState(false)
+  const [devMode, setDevMode] = useState(
+    () => localStorage.getItem('ring:devMode') === '1'
+  )
+
+  useEffect(() => {
+    const handler = () =>
+      setDevMode(localStorage.getItem('ring:devMode') === '1')
+    window.addEventListener('ring:dev-mode-changed', handler)
+    return () => window.removeEventListener('ring:dev-mode-changed', handler)
+  }, [])
 
   useEffect(() => {
     if (initialToken) {
@@ -149,6 +162,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
+
+  const canUseEarn = useIsEarnSupported()
+  const earnButtonTitle = canUseEarn
+    ? t('earnTitle')
+    : t('earnDisabledNonEthereum')
 
   const handleCloseSend = () => {
     setShowSend(false)
@@ -293,6 +311,109 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             testId={TESTID.BUY_BUTTON}
           />
         )}
+        {devMode && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--earn"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2v20M2 12h20" />
+                <circle cx="12" cy="12" r="10" opacity="0.2" />
+              </svg>
+            }
+            label={t('walletActionEarn')}
+            onClick={() => setShowEarn(true)}
+            disabled={!canUseEarn}
+            title={earnButtonTitle}
+            testId={TESTID.EARN_BUTTON}
+          />
+        )}
+        {devMode && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--predict"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 20V10" />
+                <path d="M12 20V4" />
+                <path d="M6 20v-6" />
+              </svg>
+            }
+            label={t('walletActionPredict')}
+            onClick={() => {}}
+            disabled
+            title={t('comingSoon')}
+            testId={TESTID.PREDICT_BUTTON}
+          />
+        )}
+        {devMode && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--dapp"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            }
+            label={t('walletActionDapp')}
+            onClick={() => {}}
+            disabled
+            title={t('comingSoon')}
+            testId={TESTID.DAPP_BUTTON}
+          />
+        )}
+        {devMode && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--bridge"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 9l6 6 6-6" />
+                <path d="M6 15l6-6 6 6" />
+              </svg>
+            }
+            label={t('walletActionBridge')}
+            onClick={() => {}}
+            disabled
+            title={t('comingSoon')}
+            testId={TESTID.BRIDGE_BUTTON}
+          />
+        )}
       </div>
 
       {showSend && renderSendForm()}
@@ -303,6 +424,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           onClose={() => setShowReceive(false)}
         />
       )}
+
+      {showEarn && <EarnDialog onClose={() => setShowEarn(false)} />}
 
       <Toast
         message={t('serviceNotAvailable')}
