@@ -20,6 +20,10 @@ export const TESTID = {
   RECEIVE_BUTTON: 'receive-button',
   SWAP_BUTTON: 'swap-button',
   BUY_BUTTON: 'buy-button',
+  EARN_BUTTON: 'earn-button',
+  PREDICT_BUTTON: 'predict-button',
+  DAPP_BUTTON: 'dapp-button',
+  BRIDGE_BUTTON: 'bridge-button',
 
   // Send form fields
   SEND_TO_INPUT: 'send-to-input',

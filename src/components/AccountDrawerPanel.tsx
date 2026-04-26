@@ -55,6 +55,24 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+
+  const devTapCountRef = useRef(0)
+  const devTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleDevTap = () => {
+    devTapCountRef.current++
+    if (devTapTimerRef.current) clearTimeout(devTapTimerRef.current)
+    if (devTapCountRef.current >= 7) {
+      devTapCountRef.current = 0
+      const current = localStorage.getItem('ring:devMode') === '1'
+      localStorage.setItem('ring:devMode', current ? '0' : '1')
+      window.dispatchEvent(new Event('ring:dev-mode-changed'))
+    } else {
+      devTapTimerRef.current = setTimeout(() => {
+        devTapCountRef.current = 0
+      }, 5000)
+    }
+  }
   const [notificationPermission, setNotificationPermission] =
     useState<DeviceNotificationPermission>('default')
 
@@ -468,7 +486,19 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
                 className={`drawer-menu-item ${item.disabled ? 'disabled' : ''} ${item.negative ? 'negative' : ''}`}
                 onClick={item.disabled ? undefined : item.action}
               >
-                <span className="drawer-menu-icon">{item.icon}</span>
+                <span
+                  className="drawer-menu-icon"
+                  {...(item.key === 'about'
+                    ? {
+                        onClick: (e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          handleDevTap()
+                        },
+                      }
+                    : {})}
+                >
+                  {item.icon}
+                </span>
                 <span className="drawer-menu-label">
                   {item.label}
                   {item.sublabel && (

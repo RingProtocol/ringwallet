@@ -83,6 +83,34 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
 }
 
+.action-circle-entry--earn .action-circle-entry__disc {
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
+.action-circle-entry--predict .action-circle-entry__disc {
+  background: rgba(255, 152, 0, 0.12);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
+.action-circle-entry--dapp .action-circle-entry__disc {
+  background: rgba(156, 39, 176, 0.12);
+  color: #9c27b0;
+  border: 1px solid rgba(156, 39, 176, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
+.action-circle-entry--bridge .action-circle-entry__disc {
+  background: rgba(33, 150, 243, 0.12);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+
 @media (min-width: 768px) {
   .action-circle-entry {
     flex: 0 0 auto;
@@ -100,6 +128,7 @@
 
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
@@ -110,11 +139,21 @@
   box-sizing: border-box;
 }
 
+.action-buttons .action-circle-entry {
+  flex: 1 1 calc(25% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 @media (min-width: 768px) {
   .action-buttons {
     justify-content: center;
     gap: 20px;
     padding: 0 8px;
+  }
+  .action-buttons .action-circle-entry {
+    flex: 1 1 calc(25% - 16px);
+    min-width: 80px;
   }
 }
 
