@@ -66,7 +66,12 @@ export async function fetchAccountBalanceByAdapter(
   activeChain: Chain
 ): Promise<AccountBalancesResult | null> {
   const adapter = balanceAdapterRegistry.get(activeChain.family!)
-  if (!adapter) return null
+  if (!adapter) {
+    console.warn(
+      `No balance adapter found for chain family: ${activeChain.family}`
+    )
+    return null
+  }
 
   const [native, tokens] = await Promise.all([
     adapter.fetchNativeBalance(address, activeChain),
