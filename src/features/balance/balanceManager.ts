@@ -388,9 +388,17 @@ export async function syncAccountBalancesToCache(
       adapterAddress,
       activeChain
     )
-    if (result == null) return
+    if (result == null) {
+      console.warn(
+        `Failed to fetch account balance by adapter for chain: ${activeChain.name}`
+      )
+      return
+    }
     const net = chainToAccountAssetsNetwork(activeChain)
-    if (net == null) return
+    if (net == null) {
+      console.warn(`No network found for chain: ${activeChain.name}`)
+      return
+    }
     const networkUsd = sumUsdAcrossTokens(result.tokens, 18)
     cacheTokensForNetwork(net, result.tokens, formatUsdAmount(networkUsd))
     notifyTokenCacheUpdated()
@@ -398,7 +406,10 @@ export async function syncAccountBalancesToCache(
   }
 
   const activeNetwork = chainToAccountAssetsNetwork(activeChain)
-  if (activeNetwork == null) return
+  if (activeNetwork == null) {
+    console.warn(`No network found for chain: ${activeChain.name}`)
+    return
+  }
 
   try {
     const fetched = await fetchAccountAssets(
