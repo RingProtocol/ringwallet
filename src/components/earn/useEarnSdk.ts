@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { createPublicClient, createWalletClient, http, type Chain } from 'viem'
 import { mainnet, sepolia, optimism, arbitrum, polygon } from 'viem/chains'
 import { privateKeyToAccount } from 'viem/accounts'
-import type { RingEarnConfig } from '@ringearn/sdk'
+import type { RingEarnConfig } from '@ring-protocol/ringearnsdk'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 // ChainFamily can be used later for protocol filtering

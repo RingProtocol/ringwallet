@@ -1956,6 +1956,11 @@
     lodash.isplainobject "^4.0.6"
     lodash.mergewith "^4.6.2"
 
+"@morpho-org/morpho-ts@^2.5.1":
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/@morpho-org/morpho-ts/-/morpho-ts-2.5.1.tgz#c2d834a38250d8c5c270c060e1db258855756f0b"
+  integrity sha512-OxMvbgDZZDqJ9SKoIldeQVk6pdr5djp2APKy7W5qcgK/PP8nQ9LIbWtlfyMtP0LFPPvOVQeRhduMcUjkmqfknw==
+
 "@multiformats/dns@^1.0.3", "@multiformats/dns@^1.0.6":
   version "1.0.13"
   resolved "https://registry.yarnpkg.com/@multiformats/dns/-/dns-1.0.13.tgz#cc8267ee7ee264d0ffcf113a319291f30fdcd982"
@@ -2284,8 +2289,10 @@
   dependencies:
     "@kyberswap/widgets" "^2.3.0"
 
-"@ringearn/sdk@file:../ringearn":
-  version "0.0.0"
+"@ring-protocol/ringearnsdk@0.0.10":
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/@ring-protocol/ringearnsdk/-/ringearnsdk-0.0.10.tgz#bc65ae95273ee0523eed42640fbb31781017aadb"
+  integrity sha512-F3laX+GMpLCOl2vnpJwzBuDB9HlNZwqXeVPbGwd3VvbDxLM5xvzne9WHISzgJRunbOyQx4Md1kpNLGsvnqu/Rw==
   dependencies:
     "@lidofinance/lido-ethereum-sdk" "^4.0.0"
     "@morpho-org/blue-sdk" "^4.13.0"
@@ -5790,7 +5797,7 @@ eventemitter3@5.0.1:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
   integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
 
-eventemitter3@^5.0.1:
+eventemitter3@^5.0.1, eventemitter3@^5.0.4:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.4.tgz#a86d66170433712dde814707ac52b5271ceb1feb"
   integrity sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==
@@ -7705,11 +7712,11 @@ p-locate@^5.0.0:
     p-limit "^3.0.2"
 
 p-queue@^9.0.0:
-  version "9.1.2"
-  resolved "https://registry.yarnpkg.com/p-queue/-/p-queue-9.1.2.tgz#584a48619ac61ff0f9b3661eae9ca60018512f31"
-  integrity sha512-ktsDOALzTYTWWF1PbkNVg2rOt+HaOaMWJMUnt7T3qf5tvZ1L8dBW3tObzprBcXNMKkwj+yFSLqHso0x+UFcJXw==
+  version "9.2.0"
+  resolved "https://registry.yarnpkg.com/p-queue/-/p-queue-9.2.0.tgz#eec653e2318e8d8b401368474161e21c83432799"
+  integrity sha512-dWgLE8AH0HjQ9fe74pUkKkvzzYT18Inp4zra3lKHnnwqGvcfcUBrvF2EAVX+envufDNBOzpPq/IBUONDbI7+3g==
   dependencies:
-    eventemitter3 "^5.0.1"
+    eventemitter3 "^5.0.4"
     p-timeout "^7.0.0"
 
 p-timeout@^7.0.0:

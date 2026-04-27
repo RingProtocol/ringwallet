@@ -90,10 +90,13 @@
     "dappsdk:minify": "node scripts/minify-dappsdk.mjs"
   },
   "dependencies": {
+    "@morpho-org/morpho-ts": "^2.5.1",
     "@neondatabase/serverless": "^1.0.2",
     "@ring-protocol/ring-swap-sdk": "^0.1.0",
+    "@ring-protocol/ringearnsdk": "0.0.10",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
+    "@tanstack/react-query": "^5.0.0",
     "bech32": "^2.0.0",
     "bip32": "^5.0.1",
     "bitcoinjs-lib": "^7.0.1",
@@ -107,10 +110,8 @@
     "serve": "^14.2.0",
     "tiny-secp256k1": "^2.2.4",
     "undici": "^6.21.1",
-    "@ringearn/sdk": "file:../ringearn",
     "viem": "^2.22.0",
-    "wagmi": "^2.14.0",
-    "@tanstack/react-query": "^5.0.0"
+    "wagmi": "^2.14.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
