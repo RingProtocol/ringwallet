@@ -1,3 +1,9 @@
+#agent
+.agent
+.windsurf
+.claude
+.qwen
+.trae
 node_modules
 dist
 .next

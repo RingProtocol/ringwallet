@@ -2,7 +2,11 @@ import React, { useState, useCallback } from 'react'
 import { useI18n } from '../../i18n'
 import { useAuth } from '../../contexts/AuthContext'
 import { useEarnSdk, useIsEarnSupported } from './useEarnSdk'
-import { useStrategies, useYield, useStake } from '@ringearn/sdk/react'
+import {
+  useStrategies,
+  useYield,
+  useStake,
+} from '@ring-protocol/ringearnsdk/react'
 import { formatEther } from 'viem'
 import './EarnDialog.css'
 
