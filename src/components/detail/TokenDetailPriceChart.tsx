@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { Chain } from '../../models/ChainType'
 import {
@@ -89,6 +89,16 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
   const { data, isLoading, hasPrice, selectedTab, setSelectedTab } =
     useTokenPriceHistory(token, chain)
   const [logOpen, setLogOpen] = useState(false)
+  const [devMode, setDevMode] = useState(
+    () => localStorage.getItem('ring:devMode') === '1'
+  )
+
+  useEffect(() => {
+    const handler = () =>
+      setDevMode(localStorage.getItem('ring:devMode') === '1')
+    window.addEventListener('ring:dev-mode-changed', handler)
+    return () => window.removeEventListener('ring:dev-mode-changed', handler)
+  }, [])
 
   const svg = useMemo(() => buildSvgPoints(data), [data])
 
@@ -163,13 +173,15 @@ const TokenDetailPriceChart: React.FC<TokenDetailPriceChartProps> = ({
       )}
 
       <div className="token-detail__time-tabs">
-        <button
-          type="button"
-          className="token-detail__log-btn"
-          onClick={() => setLogOpen((v) => !v)}
-        >
-          Log
-        </button>
+        {devMode && (
+          <button
+            type="button"
+            className="token-detail__log-btn"
+            onClick={() => setLogOpen((v) => !v)}
+          >
+            Log
+          </button>
+        )}
         {TIME_LABELS.map((tLabel) => (
           <button
             key={tLabel}
