@@ -33,6 +33,7 @@ const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
  * Plasma: numeric ids 9745 / 9746. MegaETH: 6342 (testnet), 4326 (mainnet slug map).
  * Tron: all `ChainFamily.Tron` (mainnet + Shasta).
  * Solana devnet/testnet: `account_assets` rejects e.g. `solana-devnet`; mainnet-beta may use the API.
+ * Cosmos testnets: Alchemy does not support Cosmos testnets.
  */
 function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
   if (c.family === ChainFamily.Bitcoin || c.family === ChainFamily.Tron) {
@@ -52,6 +53,8 @@ function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
   //megaeth
   if (id === 6342 || id === 4326) return true
   if (id === '6342' || id === '4326') return true
+  //cosmos testnets
+  if (id === 'cosmos-testnet' || id === 'provenance-testnet') return true
   return false
 }
 
