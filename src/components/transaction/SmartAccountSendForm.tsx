@@ -1,5 +1,10 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
+import {
+  chainToAccountAssetsNetwork,
+  NATIVE_COIN_ICON,
+} from '../../config/chains'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
+import { getTokensForNetwork } from '../../models/ChainTokens'
 import EvmWalletService, {
   type EIP7951Result,
 } from '../../services/chainplugins/evm/evmPlugin'
@@ -7,13 +12,18 @@ import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
+import SendConfirmPreview from './SendConfirmPreview'
+import TransactionSheet from './TransactionSheet'
 import type { SignedTx } from './types'
 import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeUserOp } from '../../utils/userOpDecoder'
+import { formatChainTokenBalance } from '../../features/balance/balanceManager'
+import ChainIcon from '../ChainIcon'
 
 interface SmartAccountSendFormProps {
   onClose: () => void
+  onBack?: () => void
   initialToken?: import('./types').SendTokenOption
 }
 
@@ -77,9 +87,11 @@ function buildUserOpRows(
 
 const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
   onClose,
+  onBack,
   initialToken,
 }) => {
   const { t } = useI18n()
+  const [showPreview, setShowPreview] = useState(false)
   const {
     activeWallet,
     activeChainId,
@@ -104,11 +116,31 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     setBroadcastHash,
     isBroadcasting,
     setIsBroadcasting,
-    resetForm,
     copyToClipboard,
   } = useSendForm(initialToken)
+  void onClose
 
   const nativeSymbol = activeChain?.symbol || 'ETH'
+  const selectedSymbol =
+    selectedToken.type === 'native'
+      ? selectedToken.symbol
+      : selectedToken.token.symbol
+  const availableAmount = useMemo(() => {
+    if (!activeChain) return '0'
+    const network = chainToAccountAssetsNetwork(activeChain)
+    if (!network) return '0'
+    const tokens = getTokensForNetwork(network) ?? []
+    const matched =
+      selectedToken.type === 'native'
+        ? tokens.find((t) => t.tokenAddress == null)
+        : tokens.find(
+            (t) =>
+              t.tokenAddress?.toLowerCase() ===
+              selectedToken.token.address.toLowerCase()
+          )
+    if (!matched) return '0'
+    return formatChainTokenBalance(matched, activeChain, 6)
+  }, [activeChain, selectedToken])
   const userOpRows = useMemo(
     () =>
       signedTx && isEIP7951Tx(signedTx)
@@ -118,11 +150,6 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
   )
 
   if (!activeWallet) return null
-
-  const handleClose = () => {
-    resetForm()
-    onClose()
-  }
 
   const handleSign = async () => {
     setError('')
@@ -204,9 +231,11 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
 
   return (
     <SendFormLayout
-      title="Send Transaction"
+      title="Send"
       walletHint={walletHint}
       error={error}
+      onBack={onBack}
+      selectedToken={selectedToken}
     >
       <SendFormFields
         toAddress={toAddress}
@@ -214,24 +243,78 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
         selectedToken={selectedToken}
         onTokenChange={setSelectedToken}
         tokenOptions={tokenOptions}
+        hideTokenSelect
         amount={amount}
         onAmountChange={setAmount}
         amountLabel={amountLabel}
         nativeSymbol={activeChain?.symbol || 'ETH'}
       />
 
-      <div className="modal-actions">
+      <div className="send-balance-bar">
+        <div className="send-balance-bar__left">
+          <span className="send-balance-bar__icon">
+            {selectedToken.type === 'erc20' && selectedToken.token.logo ? (
+              <img
+                src={selectedToken.token.logo}
+                alt={selectedSymbol}
+                className="send-balance-bar__icon-img"
+              />
+            ) : NATIVE_COIN_ICON[selectedSymbol] ? (
+              <img
+                src={NATIVE_COIN_ICON[selectedSymbol]}
+                alt={selectedSymbol}
+                className="send-balance-bar__icon-img"
+              />
+            ) : (
+              <ChainIcon
+                icon={activeChain?.icon}
+                symbol={selectedSymbol}
+                size={36}
+              />
+            )}
+          </span>
+          <div>
+            <div className="send-balance-bar__label">Balance</div>
+            <div className="send-balance-bar__value">
+              {availableAmount} {selectedSymbol}
+            </div>
+          </div>
+        </div>
         <button
-          onClick={handleSign}
-          disabled={isLoading || !toAddress}
-          className="primary-btn"
+          type="button"
+          className="send-balance-bar__max"
+          onClick={() => setAmount(availableAmount)}
         >
-          {isLoading ? 'Signing...' : 'Sign Transaction'}
-        </button>
-        <button onClick={handleClose} className="secondary-btn">
-          Close
+          Max
         </button>
       </div>
+      <div className="modal-actions modal-actions--single-bottom">
+        <button
+          onClick={() => setShowPreview(true)}
+          disabled={!toAddress}
+          className="primary-btn"
+        >
+          Continue
+        </button>
+      </div>
+
+      {showPreview && (
+        <TransactionSheet variant="sheet">
+          <SendConfirmPreview
+            selectedToken={selectedToken}
+            amount={amount}
+            chainName={activeChain?.name || 'Unknown'}
+            fromAddress={activeWallet.address}
+            toAddress={toAddress}
+            onCancel={() => setShowPreview(false)}
+            onConfirm={async () => {
+              await handleSign()
+              setShowPreview(false)
+            }}
+            isConfirming={isLoading}
+          />
+        </TransactionSheet>
+      )}
 
       {signedTx && isEIP7951Tx(signedTx) && (
         <SignedTxResult

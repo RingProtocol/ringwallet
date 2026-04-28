@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react'
+import { chainToAccountAssetsNetwork } from '../../config/chains'
 import * as bitcoin from 'bitcoinjs-lib'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
+import { getTokensForNetwork } from '../../models/ChainTokens'
 import PasskeyService from '../../services/account/passkeyService'
 import {
   BitcoinService,
@@ -10,12 +12,17 @@ import {
 import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult from './SignedTxResult'
+import SendConfirmPreview from './SendConfirmPreview'
+import TransactionSheet from './TransactionSheet'
+import ChainIcon from '../ChainIcon'
 import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeBitcoinTx, buildBitcoinRows } from '../../utils/bitcoinTxDecoder'
+import { formatChainTokenBalance } from '../../features/balance/balanceManager'
 
 interface BitcoinSendFormProps {
   onClose: () => void
+  onBack?: () => void
 }
 
 interface SignedBitcoinTx {
@@ -24,13 +31,22 @@ interface SignedBitcoinTx {
 }
 
 const FEE_TARGETS = [
-  { label: 'Fast (~1 block)', blocks: 1 },
-  { label: 'Medium (~3 blocks)', blocks: 3 },
-  { label: 'Slow (~6 blocks)', blocks: 6 },
+  { label: 'Fast', hint: '~1 block', icon: '🚀', blocks: 1 },
+  { label: 'Medium', hint: '~3 blocks', icon: '🐇', blocks: 3 },
+  { label: 'Slow', hint: '~6 blocks', icon: '🐢', blocks: 6 },
 ] as const
 
-const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
-  const { activeBitcoinWallet, activeChain, user } = useAuth()
+const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({
+  onClose,
+  onBack,
+}) => {
+  const {
+    activeBitcoinWallet,
+    bitcoinWallets,
+    activeWalletIndex,
+    activeChain,
+    user,
+  } = useAuth()
   const { t } = useI18n()
 
   const [toAddress, setToAddress] = useState('')
@@ -43,6 +59,8 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
   const [estimatedFee, setEstimatedFee] = useState<string | null>(null)
   const [feeTarget, setFeeTarget] = useState(3)
   const [isBroadcasting, setIsBroadcasting] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [showOwnWalletSheet, setShowOwnWalletSheet] = useState(false)
 
   const isTestnet = activeChain?.network === 'testnet'
   const nativeSymbol = activeChain?.symbol || 'BTC'
@@ -61,8 +79,20 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
     if (!decoded) return []
     return buildBitcoinRows(decoded, nativeSymbol, t as (key: string) => string)
   }, [signedTx, activeBitcoinWallet, nativeSymbol, btcNetwork, t])
+  const availableAmount = useMemo(() => {
+    const network = chainToAccountAssetsNetwork(activeChain)
+    if (!network) return '0'
+    const tokens = getTokensForNetwork(network) ?? []
+    const native = tokens.find((t) => t.tokenAddress == null)
+    if (!native) return '0'
+    return formatChainTokenBalance(native, activeChain, 8)
+  }, [activeChain])
 
   if (!activeBitcoinWallet) return null
+  const selectableWallets = bitcoinWallets.filter(
+    (wallet) =>
+      wallet.address.toLowerCase() !== activeBitcoinWallet.address.toLowerCase()
+  )
 
   const handleClose = () => {
     setToAddress('')
@@ -195,25 +225,49 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
 
   return (
     <SendFormLayout
-      title={`Send ${nativeSymbol}`}
+      title="Send"
       walletHint={walletHint}
       error={error}
+      onBack={onBack}
+      selectedToken={{ type: 'native', symbol: nativeSymbol }}
     >
       {!signedTx && !txId ? (
         <>
           <div className="form-group">
             <label>Recipient</label>
-            <input
-              type="text"
-              value={toAddress}
-              onChange={(e) => {
-                setToAddress(e.target.value)
-                setAddressError('')
-              }}
-              onBlur={handleAddressBlur}
-              placeholder={isTestnet ? 'tb1q...' : 'bc1q...'}
-              className="input-field"
-            />
+            <div className="to-address-input-wrap">
+              <input
+                type="text"
+                value={toAddress}
+                onChange={(e) => {
+                  setToAddress(e.target.value)
+                  setAddressError('')
+                }}
+                onBlur={handleAddressBlur}
+                placeholder={isTestnet ? 'tb1q...' : 'bc1q...'}
+                className="input-field to-address-input"
+              />
+              <button
+                type="button"
+                className="to-address-wallet-btn"
+                onClick={() => setShowOwnWalletSheet(true)}
+                aria-label="Select from my wallets"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6.75A1.75 1.75 0 0 1 4.75 5h5.5A1.75 1.75 0 0 1 12 6.75v10.5A1.75 1.75 0 0 0 10.25 19h-5.5A1.75 1.75 0 0 1 3 17.25z" />
+                  <path d="M21 6.75A1.75 1.75 0 0 0 19.25 5h-5.5A1.75 1.75 0 0 0 12 6.75v10.5A1.75 1.75 0 0 1 13.75 19h5.5A1.75 1.75 0 0 0 21 17.25z" />
+                </svg>
+              </button>
+            </div>
             {addressError && <div className="field-error">{addressError}</div>}
           </div>
 
@@ -233,25 +287,20 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
 
           <div className="form-group">
             <label>Fee priority</label>
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div className="fee-priority-group">
               {FEE_TARGETS.map((ft) => (
                 <button
                   key={ft.blocks}
                   type="button"
-                  className={`secondary-btn ${feeTarget === ft.blocks ? 'active' : ''}`}
-                  style={{
-                    flex: 1,
-                    fontSize: '12px',
-                    padding: '6px 4px',
-                    background: feeTarget === ft.blocks ? '#3b82f6' : undefined,
-                    color: feeTarget === ft.blocks ? '#fff' : undefined,
-                  }}
+                  className={`fee-priority-btn ${feeTarget === ft.blocks ? 'active' : ''}`}
                   onClick={() => {
                     setFeeTarget(ft.blocks)
                     handleEstimateFee()
                   }}
                 >
-                  {ft.label}
+                  <span className="fee-priority-btn__icon">{ft.icon}</span>
+                  <span className="fee-priority-btn__label">{ft.label}</span>
+                  <span className="fee-priority-btn__hint">{ft.hint}</span>
                 </button>
               ))}
             </div>
@@ -260,16 +309,37 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
             )}
           </div>
 
-          <div className="modal-actions">
+          <div className="send-balance-bar">
+            <div className="send-balance-bar__left">
+              <span className="send-balance-bar__icon">
+                <ChainIcon
+                  icon={activeChain.icon}
+                  symbol={nativeSymbol}
+                  size={36}
+                />
+              </span>
+              <div>
+                <div className="send-balance-bar__label">Balance</div>
+                <div className="send-balance-bar__value">
+                  {availableAmount} {nativeSymbol}
+                </div>
+              </div>
+            </div>
             <button
-              onClick={handleSign}
-              disabled={isLoading || !toAddress || !amount || !!addressError}
+              type="button"
+              className="send-balance-bar__max"
+              onClick={() => setAmount(availableAmount)}
+            >
+              Max
+            </button>
+          </div>
+          <div className="modal-actions modal-actions--single-bottom">
+            <button
+              onClick={() => setShowPreview(true)}
+              disabled={!toAddress || !amount || !!addressError}
               className="primary-btn"
             >
-              {isLoading ? 'Signing...' : t('signAndReview')}
-            </button>
-            <button onClick={handleClose} className="secondary-btn">
-              Close
+              Continue
             </button>
           </div>
         </>
@@ -327,6 +397,70 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({ onClose }) => {
             </button>
           </div>
         </>
+      )}
+
+      {showPreview && !signedTx && !txId && (
+        <TransactionSheet variant="sheet">
+          <SendConfirmPreview
+            selectedToken={{ type: 'native', symbol: nativeSymbol }}
+            amount={amount}
+            chainName={activeChain.name}
+            fromAddress={activeBitcoinWallet.address}
+            toAddress={toAddress}
+            onCancel={() => setShowPreview(false)}
+            onConfirm={async () => {
+              await handleSign()
+              setShowPreview(false)
+            }}
+            isConfirming={isLoading}
+          />
+        </TransactionSheet>
+      )}
+
+      {showOwnWalletSheet && (
+        <TransactionSheet variant="sheet">
+          <div className="own-wallet-sheet">
+            <div className="own-wallet-sheet__head">
+              <h4>Select My Wallet Address</h4>
+            </div>
+            <div className="own-wallet-sheet__list">
+              {selectableWallets.length === 0 ? (
+                <div className="own-wallet-sheet__empty">
+                  No selectable addresses (cannot send to current wallet
+                  address)
+                </div>
+              ) : (
+                selectableWallets.map((wallet) => (
+                  <button
+                    key={`${wallet.address}:${wallet.index}`}
+                    type="button"
+                    className={`own-wallet-sheet__item ${wallet.index === activeWalletIndex ? 'active' : ''}`}
+                    onClick={() => {
+                      setToAddress(wallet.address)
+                      setAddressError('')
+                      setShowOwnWalletSheet(false)
+                    }}
+                  >
+                    <span className="own-wallet-sheet__item-title">
+                      Wallet #{wallet.index + 1}
+                    </span>
+                    <span className="own-wallet-sheet__item-address">
+                      {wallet.address.substring(0, 6)}…
+                      {wallet.address.slice(-4)}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+            <button
+              type="button"
+              className="secondary-btn own-wallet-sheet__close"
+              onClick={() => setShowOwnWalletSheet(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </TransactionSheet>
       )}
     </SendFormLayout>
   )
