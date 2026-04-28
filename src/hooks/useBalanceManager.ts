@@ -21,6 +21,7 @@ import type { ChainToken } from '../models/ChainTokens'
 import {
   chainToAccountAssetsNetwork,
   DEFAULT_CHAINS,
+  FEATURED_CHAIN_IDS,
   FEATURED_TESTNET_IDS,
 } from '@/config/chains'
 
@@ -57,10 +58,17 @@ export function useBalanceManager(): BalanceState {
     const tronNets: string[] = []
     const dogeNets: string[] = []
 
+    const featuredIdSet = new Set(
+      [...FEATURED_CHAIN_IDS, ...FEATURED_TESTNET_IDS].map(String)
+    )
     const testnetIdSet = new Set(FEATURED_TESTNET_IDS.map(String))
     const activeChainId = String(activeChain?.id ?? '')
 
     for (const c of DEFAULT_CHAINS) {
+      // Only query chains that are featured (or the current active chain)
+      if (!featuredIdSet.has(String(c.id)) && String(c.id) !== activeChainId) {
+        continue
+      }
       if (c.family === ChainFamily.Bitcoin) continue
       const slug = chainToAccountAssetsNetwork(c)
       if (!slug) continue
@@ -87,30 +95,6 @@ export function useBalanceManager(): BalanceState {
           break
         default:
           break
-      }
-    }
-
-    // Ensure the active chain is queried even if it is not in DEFAULT_CHAINS.
-    if (activeChain) {
-      const slug = chainToAccountAssetsNetwork(activeChain)
-      if (slug) {
-        switch (activeChain.family) {
-          case ChainFamily.EVM:
-          case ChainFamily.Prisma:
-            if (!evmNets.includes(slug)) evmNets.push(slug)
-            break
-          case ChainFamily.Solana:
-            if (!solNets.includes(slug)) solNets.push(slug)
-            break
-          case ChainFamily.Tron:
-            if (!tronNets.includes(slug)) tronNets.push(slug)
-            break
-          case ChainFamily.Dogecoin:
-            if (!dogeNets.includes(slug)) dogeNets.push(slug)
-            break
-          default:
-            break
-        }
       }
     }
 

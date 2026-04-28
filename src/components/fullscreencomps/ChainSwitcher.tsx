@@ -8,6 +8,7 @@ import './ChainSwitcher.css'
 
 const USER_CHAINS_KEY = 'user_added_chain_ids'
 const OPEN_CHAIN_SWITCHER_EVENT = 'ring:open-chain-switcher'
+const OPEN_ADD_CHAIN_EVENT = 'ring:open-add-chain'
 
 type DropdownPosition = {
   top: number
@@ -35,12 +36,10 @@ function loadUserAddedIds(): (number | string)[] {
 const ALL_FEATURED = new Set([...FEATURED_CHAIN_IDS, ...FEATURED_TESTNET_IDS])
 
 const ChainSwitcher: React.FC = () => {
-  const { activeChain, switchChain, CHAINS } = useAuth()
+  const { activeChain, switchChain, CHAINS, removeCustomChain } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'mainnet' | 'testnet'>('mainnet')
-  const [showAddPanel, setShowAddPanel] = useState(false)
-  const [addSearchTerm, setAddSearchTerm] = useState('')
   const [userAddedIds, setUserAddedIds] =
     useState<(number | string)[]>(loadUserAddedIds)
   const [dropdownPosition, setDropdownPosition] =
@@ -95,8 +94,6 @@ const ChainSwitcher: React.FC = () => {
 
       setIsOpen(true)
       setSearchTerm('')
-      setAddSearchTerm('')
-      setShowAddPanel(false)
       setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
 
       if (anchorRect && typeof window !== 'undefined') {
@@ -126,8 +123,6 @@ const ChainSwitcher: React.FC = () => {
       return
     }
     setSearchTerm('')
-    setAddSearchTerm('')
-    setShowAddPanel(false)
     setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
     setIsOpen(true)
 
@@ -150,6 +145,7 @@ const ChainSwitcher: React.FC = () => {
   }
 
   const isTestnet = (chain: Chain): boolean => {
+    if (chain.isTestnet != null) return chain.isTestnet
     const name = chain.name.toLowerCase()
     return (
       name.includes('testnet') ||
@@ -215,30 +211,19 @@ const ChainSwitcher: React.FC = () => {
     return count
   }
 
-  const enabledIdSet = new Set([...ALL_FEATURED, ...userAddedIds])
-  const availableToAdd = CHAINS.filter((chain) => {
-    if (enabledIdSet.has(chain.id)) return false
-    const matchesTab =
-      activeTab === 'testnet' ? isTestnet(chain) : !isTestnet(chain)
-    if (!matchesTab) return false
-    if (addSearchTerm) {
-      return chain.name.toLowerCase().includes(addSearchTerm.toLowerCase())
-    }
-    return true
-  })
-
-  const handleAddChain = (chainId: number | string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const updated = [...userAddedIds, chainId]
-    setUserAddedIds(updated)
-    safeSetItem(USER_CHAINS_KEY, JSON.stringify(updated))
-  }
-
   const handleRemoveChain = (chainId: number | string, e: React.MouseEvent) => {
     e.stopPropagation()
     const updated = userAddedIds.filter((id) => id !== chainId)
     setUserAddedIds(updated)
     safeSetItem(USER_CHAINS_KEY, JSON.stringify(updated))
+    removeCustomChain(chainId)
+  }
+
+  const handleOpenAddChain = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsOpen(false)
+    setDropdownPosition(null)
+    window.dispatchEvent(new CustomEvent(OPEN_ADD_CHAIN_EVENT))
   }
 
   return (
@@ -285,50 +270,24 @@ const ChainSwitcher: React.FC = () => {
             }
           >
             <div className="dropdown-top-section">
-              {!showAddPanel ? (
-                <div className="search-row">
-                  <input
-                    type="text"
-                    placeholder="Search chains..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="chain-search-input"
-                    data-testid={TESTID.CHAIN_SEARCH_INPUT}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  {/* <button
-                    className="add-network-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowAddPanel(true)
-                      setAddSearchTerm('')
-                    }}
-                  >
-                    +
-                  </button> */}
-                </div>
-              ) : (
-                <div className="search-row">
-                  <button
-                    className="back-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowAddPanel(false)
-                    }}
-                  >
-                    ←
-                  </button>
-                  <input
-                    type="text"
-                    placeholder="Search all networks..."
-                    value={addSearchTerm}
-                    onChange={(e) => setAddSearchTerm(e.target.value)}
-                    className="chain-search-input"
-                    onClick={(e) => e.stopPropagation()}
-                    autoFocus
-                  />
-                </div>
-              )}
+              <div className="search-row">
+                <input
+                  type="text"
+                  placeholder="Search chains..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="chain-search-input"
+                  data-testid={TESTID.CHAIN_SEARCH_INPUT}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  className="add-network-btn"
+                  onClick={handleOpenAddChain}
+                  title="Add custom chain"
+                >
+                  +
+                </button>
+              </div>
               <div className="tabs-row">
                 <button
                   className={`tab-btn ${activeTab === 'mainnet' ? 'active' : ''}`}
@@ -353,51 +312,14 @@ const ChainSwitcher: React.FC = () => {
             </div>
 
             <div className="chain-list-scroll">
-              {!showAddPanel ? (
-                filteredChains.length > 0 ? (
-                  filteredChains.map((chain) => (
-                    <div
-                      key={chain.id}
-                      className={`chain-option ${chain.id === activeChain.id ? 'active' : ''}`}
-                      onClick={() => handleSelect(chain.id)}
-                      data-testid={TESTID.CHAIN_OPTION}
-                      data-chain-id={chain.id}
-                    >
-                      <div className="option-row">
-                        <span className="option-icon">
-                          <ChainIcon
-                            icon={chain.icon}
-                            symbol={chain.symbol}
-                            size={18}
-                          />
-                        </span>
-                        <span className="option-name">{chain.name}</span>
-                        <span className="option-actions">
-                          {chain.id === activeChain.id && (
-                            <span className="check-mark">✓</span>
-                          )}
-                          {!ALL_FEATURED.has(chain.id) && (
-                            <button
-                              className="remove-chain-btn"
-                              onClick={(e) => handleRemoveChain(chain.id, e)}
-                              title="Remove"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="no-chains-found">No chains found</div>
-                )
-              ) : availableToAdd.length > 0 ? (
-                availableToAdd.map((chain) => (
+              {filteredChains.length > 0 ? (
+                filteredChains.map((chain) => (
                   <div
                     key={chain.id}
-                    className="chain-option add-chain-option"
-                    onClick={(e) => handleAddChain(chain.id, e)}
+                    className={`chain-option ${chain.id === activeChain.id ? 'active' : ''}`}
+                    onClick={() => handleSelect(chain.id)}
+                    data-testid={TESTID.CHAIN_OPTION}
+                    data-chain-id={chain.id}
                   >
                     <div className="option-row">
                       <span className="option-icon">
@@ -408,14 +330,25 @@ const ChainSwitcher: React.FC = () => {
                         />
                       </span>
                       <span className="option-name">{chain.name}</span>
-                      <span className="add-chain-icon">+</span>
+                      <span className="option-actions">
+                        {chain.id === activeChain.id && (
+                          <span className="check-mark">✓</span>
+                        )}
+                        {!ALL_FEATURED.has(chain.id) && (
+                          <button
+                            className="remove-chain-btn"
+                            onClick={(e) => handleRemoveChain(chain.id, e)}
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </span>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="no-chains-found">
-                  {addSearchTerm ? 'No chains found' : 'All networks added'}
-                </div>
+                <div className="no-chains-found">No chains found</div>
               )}
             </div>
           </div>

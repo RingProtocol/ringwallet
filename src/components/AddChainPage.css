@@ -1,0 +1,324 @@
+/* ── AddChainPage: full-screen overlay ─────────────────────────── */
+.add-chain-page {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  background: var(--ring-bg-page, #0d0f14);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
+}
+
+/* ── Nav / Header ──────────────────────────────────────────────── */
+.add-chain-page__nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.add-chain-page__back {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.add-chain-page__back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-primary);
+}
+
+.add-chain-page__title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ring-text-primary);
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.add-chain-page__nav-spacer {
+  width: 34px;
+}
+
+/* ── Scrollable content ────────────────────────────────────────── */
+.add-chain-page__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 18px 32px;
+}
+
+/* ── Hero section ──────────────────────────────────────────────── */
+.add-chain-page__hero {
+  position: relative;
+  text-align: center;
+  padding: 28px 8px 24px;
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+
+.add-chain-page__hero-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(188, 116, 237, 0.18) 0%,
+    rgba(26, 190, 233, 0.08) 45%,
+    transparent 70%
+  );
+  pointer-events: none;
+  filter: blur(20px);
+}
+
+.add-chain-page__hero-title {
+  position: relative;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: var(--ring-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.add-chain-page__hero-subtitle {
+  position: relative;
+  font-size: 14px;
+  color: var(--ring-text-muted);
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ── Form card ─────────────────────────────────────────────────── */
+.add-chain-page__form-card {
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.94));
+  border: 1px solid var(--ring-border);
+  border-radius: 20px;
+  padding: 20px 18px 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Form fields ───────────────────────────────────────────────── */
+.add-chain-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.add-chain-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-chain-form__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ring-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-chain-form__required {
+  color: var(--ring-negative, #f87171);
+}
+
+.add-chain-form__input,
+.add-chain-form__select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ring-text-primary);
+  background: var(--ring-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--ring-border);
+  border-radius: 12px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.add-chain-form__input::placeholder {
+  color: var(--ring-text-dim, #52525b);
+}
+
+.add-chain-form__input:focus,
+.add-chain-form__select:focus {
+  border-color: var(--ring-accent, #bc74ed);
+  box-shadow: 0 0 0 3px var(--ring-accent-glow, rgba(188, 116, 237, 0.35));
+}
+
+/* Hide number spinner */
+.add-chain-form__input[type='number']::-webkit-inner-spin-button,
+.add-chain-form__input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.add-chain-form__hint {
+  font-size: 12px;
+  color: var(--ring-text-dim);
+  margin-top: 2px;
+}
+
+/* ── Select wrapper ────────────────────────────────────────────── */
+.add-chain-form__select-wrap {
+  position: relative;
+}
+
+.add-chain-form__select {
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.add-chain-form__select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ring-text-muted);
+  pointer-events: none;
+}
+
+/* ── Toggle switch ─────────────────────────────────────────────── */
+.add-chain-form__group--toggle {
+  margin-top: 2px;
+}
+
+.add-chain-form__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.add-chain-form__toggle-label {
+  font-size: 14px;
+  color: var(--ring-text-primary);
+  font-weight: 500;
+}
+
+.add-chain-form__toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.add-chain-form__toggle-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.add-chain-form__toggle-input:checked + .add-chain-form__toggle-track {
+  background: var(--ring-accent, #bc74ed);
+}
+
+.add-chain-form__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.add-chain-form__toggle-input:checked
+  + .add-chain-form__toggle-track
+  .add-chain-form__toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* ── Error message ─────────────────────────────────────────────── */
+.add-chain-form__error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--ring-negative, #f87171);
+  line-height: 1.4;
+}
+
+/* ── Bottom actions ────────────────────────────────────────────── */
+.add-chain-page__actions {
+  margin-top: 24px;
+  padding: 0 2px;
+}
+
+.add-chain-page__submit {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--ring-gradient);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 8px 24px rgba(188, 116, 237, 0.25);
+}
+
+.add-chain-page__submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(188, 116, 237, 0.35);
+}
+
+.add-chain-page__submit:active {
+  transform: translateY(0);
+}
+
+.add-chain-page__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

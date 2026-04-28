@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useCallback,
   type ReactNode,
 } from 'react'
 import {
@@ -52,6 +53,10 @@ interface AuthContextValue {
   activeChainId: number | string
   activeChain: Chain
   switchChain: (chainId: number | string) => void
+  /** Add a user-defined custom chain and persist it to localStorage. */
+  addCustomChain: (chain: Chain) => void
+  /** Remove a user-defined custom chain and persist the change. */
+  removeCustomChain: (chainId: number | string) => void
   /** Solana wallets — same index mapping as EVM wallets */
   solanaWallets: Wallet[]
   activeSolanaWallet: Wallet | null
@@ -106,7 +111,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   >({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
-  const CHAINS = DEFAULT_CHAINS
+  const CUSTOM_CHAINS_KEY = 'custom_chains'
+
+  const [customChains, setCustomChains] = useState<Chain[]>(() => {
+    try {
+      const raw = safeGetItem(CUSTOM_CHAINS_KEY)
+      if (raw) return JSON.parse(raw) as Chain[]
+    } catch {
+      /* ignore */
+    }
+    return []
+  })
+
+  const CHAINS = useMemo(
+    () => [...DEFAULT_CHAINS, ...customChains],
+    [customChains]
+  )
+
   const [activeChainId, setActiveChainId] = useState<number | string>(1)
 
   function deriveAllFromSeed(seed: Uint8Array, count: number) {
@@ -124,6 +145,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     safeRemoveItem('wallet_login_state')
+  }, [])
+
+  const addCustomChain = useCallback((chain: Chain) => {
+    setCustomChains((prev) => {
+      if (prev.some((c) => String(c.id) === String(chain.id))) {
+        return prev
+      }
+      const next = [...prev, chain]
+      safeSetItem(CUSTOM_CHAINS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const removeCustomChain = useCallback((chainId: number | string) => {
+    setCustomChains((prev) => {
+      const next = prev.filter((c) => String(c.id) !== String(chainId))
+      safeSetItem(CUSTOM_CHAINS_KEY, JSON.stringify(next))
+      return next
+    })
   }, [])
 
   const login = async (userData: UserData) => {
@@ -262,6 +302,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     activeChainId,
     activeChain,
     switchChain,
+    addCustomChain,
+    removeCustomChain,
     solanaWallets,
     activeSolanaWallet,
     isSolanaChain,

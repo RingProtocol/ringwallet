@@ -45,6 +45,17 @@ export const TESTID = {
   TAB_ASSETS: 'tab-assets',
   TAB_DAPPS: 'tab-dapps',
 
+  // Add custom chain (fullscreen)
+  ADD_CHAIN_ID_INPUT: 'add-chain-id-input',
+  ADD_CHAIN_NAME_INPUT: 'add-chain-name-input',
+  ADD_CHAIN_SYMBOL_INPUT: 'add-chain-symbol-input',
+  ADD_CHAIN_RPC_INPUT: 'add-chain-rpc-input',
+  ADD_CHAIN_EXPLORER_INPUT: 'add-chain-explorer-input',
+  ADD_CHAIN_FAMILY_SELECT: 'add-chain-family-select',
+  ADD_CHAIN_TESTNET_CHECKBOX: 'add-chain-testnet-checkbox',
+  ADD_CHAIN_ERROR: 'add-chain-error',
+  ADD_CHAIN_SUBMIT: 'add-chain-submit',
+
   // Token detail (fullscreen)
   TOKEN_DETAIL_BACK: 'token-detail-back',
   TOKEN_DETAIL_SEND: 'token-detail-send',
