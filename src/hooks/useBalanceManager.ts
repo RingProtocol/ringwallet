@@ -76,6 +76,31 @@ export function useBalanceManager(): BalanceState {
       }
     }
 
+    // Ensure the active chain is queried even if it is not in DEFAULT_CHAINS
+    // (e.g. testnets loaded from chainid.json).
+    if (activeChain) {
+      const slug = chainToAccountAssetsNetwork(activeChain)
+      if (slug) {
+        switch (activeChain.family) {
+          case ChainFamily.EVM:
+          case ChainFamily.Prisma:
+            if (!evmNets.includes(slug)) evmNets.push(slug)
+            break
+          case ChainFamily.Solana:
+            if (!solNets.includes(slug)) solNets.push(slug)
+            break
+          case ChainFamily.Tron:
+            if (!tronNets.includes(slug)) tronNets.push(slug)
+            break
+          case ChainFamily.Dogecoin:
+            if (!dogeNets.includes(slug)) dogeNets.push(slug)
+            break
+          default:
+            break
+        }
+      }
+    }
+
     const groups: AccountAssetsAddressEntry[] = []
     const evmAddr = activeWallet?.address
     if (evmAddr && evmNets.length > 0) {
@@ -100,6 +125,7 @@ export function useBalanceManager(): BalanceState {
     activeDogecoinWallet?.address,
     activeWalletIndex,
     accountsByFamily,
+    activeChain,
   ])
 
   const portfolioNetworkSlugs = useMemo(
