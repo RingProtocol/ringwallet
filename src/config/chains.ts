@@ -66,13 +66,12 @@ const ENV: Record<string, ChainEnvConfig> = {
   'bitcoin-testnet3': {
     rpc: `https://bitcoin-testnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
   },
-  // Tron JSON-RPC is not Alchemy-shaped; do not append VITE_ALCHEMY_RPC_KEY to Trongrid paths
-  // (see RPC_FALLBACK['tron-mainnet'] / ['tron-shasta']).
+  // Cosmos / Provenance RPC endpoints are public nodes, not Alchemy-shaped.
   'cosmos-hub': {
-    rpc: `https://cosmos-rpc.publicnode.com/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: 'https://cosmos-rpc.publicnode.com',
   },
   'provenance-mainnet': {
-    rpc: `https://api.provenance.io/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: 'https://api.provenance.io',
   },
 }
 
