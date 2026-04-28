@@ -5,4 +5,4 @@ export type SignedTx = string | EIP7951Result
 
 export type SendTokenOption =
   | { type: 'native'; symbol: string }
-  | { type: 'erc20'; token: TokenInfo }
+  | { type: 'erc20'; token: TokenInfo & { logo?: string | null } }

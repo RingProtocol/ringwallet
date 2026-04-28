@@ -107,18 +107,32 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
     activeWallet?.type === WalletType.SmartContract
 
   const renderSendForm = () => {
-    if (isBitcoinChain) return <BitcoinSendForm onClose={handleCloseSend} />
-    if (isDogecoinChain) return <DogecoinSendForm onClose={handleCloseSend} />
-    if (isSolanaChain) return <SolanaSendForm onClose={handleCloseSend} />
+    if (isBitcoinChain)
+      return (
+        <BitcoinSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+      )
+    if (isDogecoinChain)
+      return (
+        <DogecoinSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+      )
+    if (isSolanaChain)
+      return (
+        <SolanaSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+      )
     if (isSmartAccount)
       return (
         <SmartAccountSendForm
           onClose={handleCloseSend}
+          onBack={handleCloseSend}
           initialToken={sendTokenOption}
         />
       )
     return (
-      <EOASendForm onClose={handleCloseSend} initialToken={sendTokenOption} />
+      <EOASendForm
+        onClose={handleCloseSend}
+        onBack={handleCloseSend}
+        initialToken={sendTokenOption}
+      />
     )
   }
 
