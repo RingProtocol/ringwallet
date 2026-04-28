@@ -18,7 +18,11 @@ import {
   formatUsdAmount,
 } from '../features/balance/balanceManager'
 import type { ChainToken } from '../models/ChainTokens'
-import { chainToAccountAssetsNetwork, DEFAULT_CHAINS } from '@/config/chains'
+import {
+  chainToAccountAssetsNetwork,
+  DEFAULT_CHAINS,
+  FEATURED_TESTNET_IDS,
+} from '@/config/chains'
 
 export interface BalanceState {
   nativeBalance: string
@@ -53,10 +57,20 @@ export function useBalanceManager(): BalanceState {
     const tronNets: string[] = []
     const dogeNets: string[] = []
 
+    const testnetIdSet = new Set(FEATURED_TESTNET_IDS.map(String))
+    const activeChainId = String(activeChain?.id ?? '')
+
     for (const c of DEFAULT_CHAINS) {
       if (c.family === ChainFamily.Bitcoin) continue
       const slug = chainToAccountAssetsNetwork(c)
       if (!slug) continue
+
+      // Skip testnets unless the user is currently on that testnet
+      const isTestnet = testnetIdSet.has(String(c.id))
+      if (isTestnet && String(c.id) !== activeChainId) {
+        continue
+      }
+
       switch (c.family) {
         case ChainFamily.EVM:
         case ChainFamily.Prisma:
@@ -76,8 +90,7 @@ export function useBalanceManager(): BalanceState {
       }
     }
 
-    // Ensure the active chain is queried even if it is not in DEFAULT_CHAINS
-    // (e.g. testnets loaded from chainid.json).
+    // Ensure the active chain is queried even if it is not in DEFAULT_CHAINS.
     if (activeChain) {
       const slug = chainToAccountAssetsNetwork(activeChain)
       if (slug) {
