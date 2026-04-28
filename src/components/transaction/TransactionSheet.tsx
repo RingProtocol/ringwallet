@@ -1,9 +1,10 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import '../QuickActionBar.css'
 
 interface TransactionSheetProps {
   children: React.ReactNode
-  variant?: 'modal' | 'sheet'
+  variant?: 'modal' | 'sheet' | 'fullscreen'
   contentClassName?: string
 }
 
@@ -12,11 +13,12 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
   variant = 'modal',
   contentClassName,
 }) => {
-  return (
+  const content = (
     <div
       className={[
         'modal-overlay',
         variant === 'sheet' ? 'modal-overlay--sheet' : '',
+        variant === 'fullscreen' ? 'modal-overlay--fullscreen' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -25,6 +27,7 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
         className={[
           'modal-content',
           variant === 'sheet' ? 'modal-content--sheet' : '',
+          variant === 'fullscreen' ? 'modal-content--fullscreen' : '',
           contentClassName ?? '',
         ]
           .filter(Boolean)
@@ -35,6 +38,12 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return content
+  }
+
+  return createPortal(content, document.body)
 }
 
 export default TransactionSheet

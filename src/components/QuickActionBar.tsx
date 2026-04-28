@@ -12,6 +12,7 @@ import {
   BitcoinSendForm,
   DogecoinSendForm,
   ReceiveDialog,
+  SendTokenPickerSheet,
 } from './transaction'
 import { useI18n } from '../i18n'
 import { TESTID } from './testids'
@@ -108,6 +109,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     rpcUrl: swapRpcUrl,
   } = useSwapSigner()
   const [showSend, setShowSend] = useState(false)
+  const [sendStage, setSendStage] = useState<'select' | 'form'>('select')
   const [showReceive, setShowReceive] = useState(false)
   const [swapDappOpen, setSwapDappOpen] = useState(false)
   const [showEarn, setShowEarn] = useState(false)
@@ -129,6 +131,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   useEffect(() => {
     if (initialToken) {
       setSendToken(initialToken)
+      setSendStage('form')
       setShowSend(true)
     }
   }, [initialToken])
@@ -170,22 +173,48 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
   const handleCloseSend = () => {
     setShowSend(false)
+    setSendStage('select')
     setSendToken(undefined)
     onSendFormClosed?.()
   }
 
   const renderSendForm = () => {
-    if (isBitcoinChain) return <BitcoinSendForm onClose={handleCloseSend} />
-    if (isDogecoinChain) return <DogecoinSendForm onClose={handleCloseSend} />
-    if (isSolanaChain) return <SolanaSendForm onClose={handleCloseSend} />
+    if (isBitcoinChain)
+      return (
+        <BitcoinSendForm
+          onClose={handleCloseSend}
+          onBack={() => setSendStage('select')}
+        />
+      )
+    if (isDogecoinChain)
+      return (
+        <DogecoinSendForm
+          onClose={handleCloseSend}
+          onBack={() => setSendStage('select')}
+        />
+      )
+    if (isSolanaChain)
+      return (
+        <SolanaSendForm
+          onClose={handleCloseSend}
+          onBack={() => setSendStage('select')}
+        />
+      )
     if (isSmartAccount)
       return (
         <SmartAccountSendForm
           onClose={handleCloseSend}
+          onBack={() => setSendStage('select')}
           initialToken={sendToken}
         />
       )
-    return <EOASendForm onClose={handleCloseSend} initialToken={sendToken} />
+    return (
+      <EOASendForm
+        onClose={handleCloseSend}
+        onBack={() => setSendStage('select')}
+        initialToken={sendToken}
+      />
+    )
   }
 
   const handleSwapClick = () => {
@@ -237,7 +266,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             </svg>
           }
           label={t('send')}
-          onClick={() => setShowSend(true)}
+          onClick={() => {
+            setSendStage('select')
+            setShowSend(true)
+          }}
           testId={TESTID.SEND_BUTTON}
         />
         <ActionCircleEntry
@@ -416,7 +448,18 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         )}
       </div>
 
-      {showSend && renderSendForm()}
+      {showSend &&
+        (sendStage === 'select' ? (
+          <SendTokenPickerSheet
+            onClose={handleCloseSend}
+            onSelectToken={(token) => {
+              setSendToken(token)
+              setSendStage('form')
+            }}
+          />
+        ) : (
+          renderSendForm()
+        ))}
 
       {showReceive && (
         <ReceiveDialog
