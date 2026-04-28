@@ -14,14 +14,27 @@ fs.copyFileSync(
 )
 
 fs.copyFileSync(
-  path.resolve(__dirname, 'background.js'),
-  path.resolve(distDir, 'background.js')
+  path.resolve(projectRoot, 'public/chainid.json'),
+  path.resolve(distDir, 'chainid.json')
 )
+
+// Recursively copy icons, skipping macOS metadata files
+function copyDirRecursive(src: string, dest: string) {
+  fs.mkdirSync(dest, { recursive: true })
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (entry.name === '.DS_Store') continue
+    const srcPath = path.resolve(src, entry.name)
+    const destPath = path.resolve(dest, entry.name)
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath)
+    } else {
+      fs.copyFileSync(srcPath, destPath)
+    }
+  }
+}
 
 const iconsSource = path.resolve(projectRoot, 'public/icons')
 const iconsDest = path.resolve(distDir, 'icons')
-for (const file of fs.readdirSync(iconsSource)) {
-  fs.copyFileSync(path.resolve(iconsSource, file), path.resolve(iconsDest, file))
-}
+copyDirRecursive(iconsSource, iconsDest)
 
-console.log('Extension assets copied to dist-extension/')
+console.warn('Extension assets copied to dist-extension/')

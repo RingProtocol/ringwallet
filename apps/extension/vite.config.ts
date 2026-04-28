@@ -12,11 +12,17 @@ const projectRoot = path.resolve(__dirname, '../..')
 
 export default defineConfig({
   root,
-  plugins: [wasm(), topLevelAwait(), nodePolyfills({ protocolImports: true }), react()],
+  base: '',
+  plugins: [
+    wasm(),
+    topLevelAwait(),
+    nodePolyfills({ protocolImports: true, exclude: ['vm'] }),
+    react(),
+  ],
   resolve: {
     alias: {
-      '@': path.resolve(projectRoot, 'src')
-    }
+      '@': path.resolve(projectRoot, 'src'),
+    },
   },
   build: {
     outDir: path.resolve(projectRoot, 'dist-extension'),
@@ -24,6 +30,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: path.resolve(root, 'popup.html'),
+        background: path.resolve(root, 'background.ts'),
       },
       output: {
         entryFileNames: '[name].js',
