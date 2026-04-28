@@ -253,29 +253,6 @@
   font-weight: bold;
 }
 
-/* ── Back button (add panel header) ── */
-.back-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--ring-border);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--ring-text-secondary);
-  font-size: 1rem;
-  padding: 0;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--ring-text-primary);
-}
-
 /* ── Action area (check / remove) ── */
 .option-actions {
   display: flex;

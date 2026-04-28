@@ -381,6 +381,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     bundlerUrl: ENV['1']?.bundlerUrl,
     entryPoint: ENV['1']?.entryPoint,
     factoryAddress: ENV['1']?.factoryAddress,
+    isTestnet: false,
   },
   {
     id: 11155111,
@@ -393,6 +394,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     bundlerUrl: ENV['11155111']?.bundlerUrl,
     entryPoint: ENV['11155111']?.entryPoint,
     factoryAddress: ENV['11155111']?.factoryAddress,
+    isTestnet: true,
   },
   {
     id: 11155420,
@@ -402,6 +404,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(11155420),
     explorer: 'https://sepolia-optimism.etherscan.io',
+    isTestnet: true,
   },
   {
     id: 421614,
@@ -411,6 +414,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(421614),
     explorer: 'https://sepolia.arbiscan.io',
+    isTestnet: true,
   },
   {
     id: 84532,
@@ -420,6 +424,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(84532),
     explorer: 'https://sepolia.basescan.org',
+    isTestnet: true,
   },
   {
     id: 80002,
@@ -429,6 +434,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(80002),
     explorer: 'https://amoy.polygonscan.com',
+    isTestnet: false,
   },
   {
     id: 300,
@@ -438,6 +444,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(300),
     explorer: 'https://sepolia.explorer.zksync.io',
+    isTestnet: true,
   },
   {
     id: 59141,
@@ -447,6 +454,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(59141),
     explorer: 'https://sepolia.lineascan.build',
+    isTestnet: true,
   },
   {
     id: 534351,
@@ -456,6 +464,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(534351),
     explorer: 'https://sepolia.scrollscan.com',
+    isTestnet: true,
   },
   {
     id: 97,
@@ -465,6 +474,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(97),
     explorer: 'https://testnet.bscscan.com',
+    isTestnet: true,
   },
   {
     id: 44787,
@@ -474,6 +484,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(44787),
     explorer: 'https://alfajores.celoscan.io',
+    isTestnet: true,
   },
   {
     id: 10200,
@@ -483,6 +494,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(10200),
     explorer: 'https://blockscout.chiadochain.net',
+    isTestnet: true,
   },
   {
     id: 5003,
@@ -492,6 +504,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(5003),
     explorer: 'https://explorer.sepolia.mantle.xyz',
+    isTestnet: true,
   },
   {
     id: 168587773,
@@ -501,6 +514,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(168587773),
     explorer: 'https://testnet.blastscan.io',
+    isTestnet: true,
   },
   {
     id: 999999999,
@@ -510,6 +524,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(999999999),
     explorer: 'https://sepolia.explorer.zora.energy',
+    isTestnet: true,
   },
   {
     id: 4002,
@@ -519,6 +534,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(4002),
     explorer: 'https://testnet.ftmscan.com',
+    isTestnet: true,
   },
   {
     id: 1287,
@@ -528,6 +544,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(1287),
     explorer: 'https://moonbase.moonscan.io',
+    isTestnet: false,
   },
   {
     id: 2442,
@@ -537,6 +554,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(2442),
     explorer: 'https://cardona-zkevm.polygonscan.com',
+    isTestnet: true,
   },
   {
     id: 10,
@@ -549,6 +567,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     bundlerUrl: ENV['10']?.bundlerUrl,
     entryPoint: ENV['10']?.entryPoint,
     factoryAddress: ENV['10']?.factoryAddress,
+    isTestnet: false,
   },
   {
     id: 42161,
@@ -561,6 +580,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     bundlerUrl: ENV['42161']?.bundlerUrl,
     entryPoint: ENV['42161']?.entryPoint,
     factoryAddress: ENV['42161']?.factoryAddress,
+    isTestnet: false,
   },
   {
     id: 137,
@@ -573,6 +593,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     bundlerUrl: ENV['137']?.bundlerUrl,
     entryPoint: ENV['137']?.entryPoint,
     factoryAddress: ENV['137']?.factoryAddress,
+    isTestnet: false,
   },
   {
     id: 8453,
@@ -582,6 +603,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(8453),
     explorer: 'https://basescan.org',
+    isTestnet: false,
   },
   {
     id: 324,
@@ -591,6 +613,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(324),
     explorer: 'https://explorer.zksync.io',
+    isTestnet: false,
   },
   {
     id: 59144,
@@ -600,6 +623,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(59144),
     explorer: 'https://lineascan.build',
+    isTestnet: false,
   },
   {
     id: 534352,
@@ -609,6 +633,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(534352),
     explorer: 'https://scrollscan.com',
+    isTestnet: false,
   },
   {
     id: 56,
@@ -618,6 +643,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(56),
     explorer: 'https://bscscan.com',
+    isTestnet: false,
   },
   {
     id: 250,
@@ -627,6 +653,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(250),
     explorer: 'https://ftmscan.com',
+    isTestnet: false,
   },
   {
     id: 42220,
@@ -636,6 +663,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(42220),
     explorer: 'https://celoscan.io',
+    isTestnet: false,
   },
   {
     id: 100,
@@ -645,6 +673,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(100),
     explorer: 'https://gnosisscan.io',
+    isTestnet: false,
   },
   {
     id: 1284,
@@ -654,6 +683,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(1284),
     explorer: 'https://moonbeam.moonscan.io',
+    isTestnet: false,
   },
   {
     id: 5000,
@@ -663,6 +693,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(5000),
     explorer: 'https://mantlescan.xyz',
+    isTestnet: false,
   },
   {
     id: 1101,
@@ -672,6 +703,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(1101),
     explorer: 'https://zkevm.polygonscan.com',
+    isTestnet: false,
   },
   {
     id: 81457,
@@ -681,6 +713,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(81457),
     explorer: 'https://blastscan.io',
+    isTestnet: false,
   },
   {
     id: 7777777,
@@ -690,6 +723,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(7777777),
     explorer: 'https://explorer.zora.energy',
+    isTestnet: false,
   },
   {
     id: 'solana-mainnet',
@@ -700,6 +734,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     cluster: 'mainnet-beta',
     rpcUrl: rpcUrl('solana-mainnet'),
     explorer: 'https://solscan.io',
+    isTestnet: false,
   },
   {
     id: 'solana-devnet',
@@ -710,6 +745,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     cluster: 'devnet',
     rpcUrl: rpcUrl('solana-devnet'),
     explorer: 'https://solscan.io/?cluster=devnet',
+    isTestnet: true,
   },
   {
     id: 'bitcoin-mainnet',
@@ -721,6 +757,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://mempool.space',
     network: 'mainnet',
     bitcoinFork: 'mainnet',
+    isTestnet: false,
   },
   {
     id: 'bitcoin-testnet',
@@ -732,6 +769,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://mempool.space/testnet4',
     network: 'testnet',
     bitcoinFork: 'testnet4',
+    isTestnet: true,
   },
   {
     id: 'bitcoin-testnet3',
@@ -743,6 +781,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://mempool.space/testnet',
     network: 'testnet',
     bitcoinFork: 'testnet3',
+    isTestnet: true,
   },
   // ─── Tron ───
   {
@@ -753,6 +792,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.Tron,
     rpcUrl: rpcUrl('tron-mainnet'),
     explorer: 'https://tronscan.org',
+    isTestnet: false,
   },
   {
     id: 'tron-shasta',
@@ -762,6 +802,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.Tron,
     rpcUrl: rpcUrl('tron-shasta'),
     explorer: 'https://shasta.tronscan.org',
+    isTestnet: true,
   },
   // ─── Cosmos ───
   {
@@ -774,6 +815,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://www.mintscan.io/cosmos',
     coinType: 118,
     addressPrefix: 'cosmos',
+    isTestnet: false,
   },
   {
     id: 'cosmos-testnet',
@@ -785,6 +827,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://explorer.kjnodes.com/cosmoshub-testnet',
     coinType: 118,
     addressPrefix: 'cosmos',
+    isTestnet: true,
   },
   {
     id: 'provenance-mainnet',
@@ -796,6 +839,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://explorer.provenance.io',
     coinType: 505,
     addressPrefix: 'pb',
+    isTestnet: false,
   },
   {
     id: 'provenance-testnet',
@@ -807,6 +851,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     explorer: 'https://explorer.test.provenance.io',
     coinType: 1,
     addressPrefix: 'tp',
+    isTestnet: true,
   },
   // ─── Avalanche ───
   {
@@ -817,6 +862,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(43114),
     explorer: 'https://snowscan.xyz',
+    isTestnet: false,
   },
   {
     id: 43113,
@@ -826,6 +872,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(43113),
     explorer: 'https://testnet.snowscan.xyz',
+    isTestnet: true,
   },
   // ─── X Layer (OKX) ───
   {
@@ -836,6 +883,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(196),
     explorer: 'https://www.oklink.com/xlayer',
+    isTestnet: false,
   },
   {
     id: 195,
@@ -845,6 +893,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(195),
     explorer: 'https://www.oklink.com/xlayer-test',
+    isTestnet: true,
   },
   // ─── Hyperliquid ───
   {
@@ -855,6 +904,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(999),
     explorer: 'https://hypurrscan.io',
+    isTestnet: false,
   },
   {
     id: 998,
@@ -864,6 +914,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(998),
     explorer: '',
+    isTestnet: true,
   },
   // ─── Plasma ───
   {
@@ -874,6 +925,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(9745),
     explorer: 'https://plasmascan.to',
+    isTestnet: false,
   },
   {
     id: 9746,
@@ -883,6 +935,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(9746),
     explorer: 'https://testnet.plasmascan.to',
+    isTestnet: true,
   },
   // ─── MegaETH ───
   {
@@ -893,6 +946,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(4326),
     explorer: 'https://megaeth.blockscout.com',
+    isTestnet: false,
   },
   {
     id: 6342,
@@ -902,6 +956,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(6342),
     explorer: '',
+    isTestnet: true,
   },
   // ─── Dogecoin L1 ───
   {
@@ -913,6 +968,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     rpcUrl: rpcUrl('dogecoin-mainnet'),
     explorer: 'https://dogechain.info',
     network: 'mainnet',
+    isTestnet: false,
   },
   {
     id: 'dogecoin-testnet',
@@ -923,6 +979,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     rpcUrl: rpcUrl('dogecoin-testnet'),
     explorer: 'https://dogechain.info',
     network: 'testnet',
+    isTestnet: true,
   },
   // ─── Dogechain ───
   {
@@ -933,6 +990,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(2000),
     explorer: 'https://explorer.dogechain.dog',
+    isTestnet: false,
   },
   {
     id: 568,
@@ -942,6 +1000,7 @@ export const DEFAULT_CHAINS: Chain[] = [
     family: ChainFamily.EVM,
     rpcUrl: rpcUrl(568),
     explorer: 'https://explorer-testnet.dogechain.dog',
+    isTestnet: true,
   },
 ]
 

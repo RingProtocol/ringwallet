@@ -6,5 +6,6 @@
 @import '../src/components/RingWalletLogo.css';
 @import '../src/components/WalletSwitcher.css';
 @import '../src/components/fullscreencomps/ChainSwitcher.css';
+@import '../src/components/AddChainPage.css';
 @import '../src/components/NativeBalance.css';
 @import '../src/features/dapps/components/DApps.css';

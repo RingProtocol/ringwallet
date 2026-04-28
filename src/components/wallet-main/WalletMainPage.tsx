@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import TokenDetailPage from '../TokenDetailPage'
+import AddChainPage from '../AddChainPage'
 import type { ChainToken } from '../../models/ChainTokens'
 import { useAuth } from '../../contexts/AuthContext'
 import { useBalanceManager } from '../../hooks/useBalanceManager'
@@ -11,6 +12,8 @@ import { ActivityTabHeader, ActivityTabBody } from './ActivityTab'
 import { MoreTabHeader, MoreTabBody } from './MoreTab'
 import type { BottomTab } from './BottomTabBar'
 import './WalletMainPage.css'
+
+const OPEN_ADD_CHAIN_EVENT = 'ring:open-add-chain'
 
 export interface WalletMainPageProps {
   /** Shown at the bottom of the More tab only (not on Wallet / Activity). */
@@ -49,8 +52,17 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
     SendTokenOption | undefined
   >(undefined)
   const [tokenDetail, setTokenDetail] = useState<ChainToken | null>(null)
+  const [showAddChain, setShowAddChain] = useState(false)
 
   const { totalAssetUsd, tokens, supportsTokens } = useBalanceManager()
+
+  useEffect(() => {
+    const handleOpenAddChain = () => setShowAddChain(true)
+    window.addEventListener(OPEN_ADD_CHAIN_EVENT, handleOpenAddChain)
+    return () => {
+      window.removeEventListener(OPEN_ADD_CHAIN_EVENT, handleOpenAddChain)
+    }
+  }, [])
 
   const goToMore = useCallback((expandWalletList: boolean) => {
     setMoreExpandWalletListOnOpen(expandWalletList)
@@ -158,6 +170,8 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           onBack={closeTokenDetail}
         />
       )}
+
+      {showAddChain && <AddChainPage onBack={() => setShowAddChain(false)} />}
     </div>
   )
 }

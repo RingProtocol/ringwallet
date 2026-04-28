@@ -33,6 +33,8 @@ export interface Chain {
   coinType?: number
   /** Bech32 human-readable prefix for Cosmos chains (e.g. "cosmos", "pb", "osmo") */
   addressPrefix?: string
+  /** Whether this chain is a testnet. */
+  isTestnet?: boolean
 }
 
 export function getPrimaryRpcUrl(chain?: Pick<Chain, 'rpcUrl'> | null): string {
