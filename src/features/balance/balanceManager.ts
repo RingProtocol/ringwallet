@@ -305,6 +305,8 @@ function makeNativePlaceholderToken(chain: Chain, network: string): ChainToken {
 
 /** Maximum networks per address entry allowed by the account_assets API. */
 const MAX_NETWORKS_PER_REQUEST = 20
+/** Maximum address entries per request allowed by the account_assets API. */
+const MAX_ADDRESSES_PER_REQUEST = 3
 
 function chunkNetworks(
   entries: AccountAssetsAddressEntry[]
@@ -325,28 +327,34 @@ function chunkNetworks(
 async function fetchAccountAssets(
   addresses: AccountAssetsAddressEntry[]
 ): Promise<ChainToken[]> {
-  const body: AccountAssetsRequest = {
-    addresses: chunkNetworks(
-      addresses.filter((a) => a.address.length > 0 && a.networks.length > 0)
-    ),
-  }
-  if (body.addresses.length === 0) {
+  const chunks = chunkNetworks(
+    addresses.filter((a) => a.address.length > 0 && a.networks.length > 0)
+  )
+  if (chunks.length === 0) {
     return []
   }
 
-  const res = await fetch(ACCOUNT_ASSETS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  const allTokens: ChainToken[] = []
+  for (let i = 0; i < chunks.length; i += MAX_ADDRESSES_PER_REQUEST) {
+    const batch = chunks.slice(i, i + MAX_ADDRESSES_PER_REQUEST)
+    const body: AccountAssetsRequest = { addresses: batch }
 
-  if (!res.ok) {
-    throw new Error(`account_assets failed: ${res.status} ${res.statusText}`)
+    const res = await fetch(ACCOUNT_ASSETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      throw new Error(`account_assets failed: ${res.status} ${res.statusText}`)
+    }
+
+    const json = (await res.json()) as AccountAssetsResponse
+    const raw = (json.data?.tokens ?? []) as ChainToken[]
+    allTokens.push(...normalizeAccountAssetsTokens(raw))
   }
 
-  const json = (await res.json()) as AccountAssetsResponse
-  const raw = (json.data?.tokens ?? []) as ChainToken[]
-  return normalizeAccountAssetsTokens(raw)
+  return allTokens
 }
 
 function sumUsdAcrossTokens(
