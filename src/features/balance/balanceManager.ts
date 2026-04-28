@@ -3,6 +3,7 @@ import {
   chainToAccountAssetsNetwork,
   DEFAULT_CHAINS,
 } from '../../config/chains'
+import supportedChainsApi from '../../config/chains-api-supported.json'
 import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   cacheTokensForNetwork,
@@ -28,47 +29,30 @@ export function setAccountBalancePollIntervalMs(ms: number): void {
 
 const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
+/** API-supported network slugs extracted from chains-api-supported.json. */
+const API_SUPPORTED_SLUGS: Set<string> = (() => {
+  const slugs = new Set<string>()
+  for (const family of supportedChainsApi) {
+    for (const network of family.networks) {
+      const rpc = network.rpcTemplate
+      const match = rpc.match(/^https:\/\/([^.]+)\.g\.alchemy\.com\//)
+      if (match) {
+        slugs.add(match[1])
+      }
+    }
+  }
+  return slugs
+})()
+
 /**
- * Balances from local RPC adapters, not `account_assets`.
- * Plasma: numeric ids 9745 / 9746. MegaETH: 6342 (testnet), 4326 (mainnet slug map).
- * Tron: all `ChainFamily.Tron` (mainnet + Shasta).
- * Solana devnet/testnet: `account_assets` rejects e.g. `solana-devnet`; mainnet-beta may use the API.
- * Cosmos: Alchemy does not support Cosmos chains.
+ * Returns true when a chain should use local adapter instead of account_assets API.
+ * Looks up the chain's Alchemy network slug in chains-api-supported.json.
  */
 function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
-  if (
-    c.family === ChainFamily.Bitcoin ||
-    c.family === ChainFamily.Tron ||
-    c.family === ChainFamily.Cosmos
-  ) {
-    return true
-  }
-  if (
-    c.family === ChainFamily.Solana &&
-    c.cluster != null &&
-    c.cluster !== 'mainnet-beta'
-  ) {
-    return true
-  }
-  const { id } = c
-  //prisma
-  if (id === 9745 || id === 9746) return true
-  if (id === '9745' || id === '9746') return true
-  //megaeth
-  if (id === 6342 || id === 4326) return true
-  if (id === '6342' || id === '4326') return true
-  return false
+  const slug = chainToAccountAssetsNetwork(c)
+  if (slug == null) return true
+  return !API_SUPPORTED_SLUGS.has(slug)
 }
-
-const ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS: Set<string> = (() => {
-  const s = new Set<string>()
-  for (const c of DEFAULT_CHAINS) {
-    if (!usesAdapterOnlyAccountAssetsSync(c)) continue
-    const slug = chainToAccountAssetsNetwork(c)
-    if (slug) s.add(slug)
-  }
-  return s
-})()
 
 function accountAssetGroupsForAccountAssetsApi(
   groups: AccountAssetsAddressEntry[]
@@ -76,9 +60,7 @@ function accountAssetGroupsForAccountAssetsApi(
   return groups
     .map((g) => ({
       address: g.address,
-      networks: g.networks.filter(
-        (n) => !ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS.has(n)
-      ),
+      networks: g.networks.filter((n) => API_SUPPORTED_SLUGS.has(n)),
     }))
     .filter((g) => g.networks.length > 0)
 }
