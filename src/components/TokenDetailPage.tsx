@@ -235,6 +235,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
       {showReceive && receiveAddress && (
         <ReceiveDialog
           address={receiveAddress}
+          chainName={chain.name}
           onClose={() => setShowReceive(false)}
         />
       )}

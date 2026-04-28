@@ -1278,18 +1278,97 @@
 
 .address-display {
   font-family: monospace;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.22);
   color: var(--ring-text-primary, #f3f4f6);
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 12px;
   word-break: break-all;
   font-size: 0.9rem;
-  margin: 20px 0;
+  margin: 14px 0 18px;
+  line-height: 1.45;
 }
 
 .qr-placeholder {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 6px auto 0;
+}
+
+.qr-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+}
+
+.qr-image-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
+.qr-loading {
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 220px 100%;
+  animation: qrSkeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes qrSkeleton {
+  from {
+    background-position: -220px 0;
+  }
+  to {
+    background-position: 220px 0;
+  }
+}
+
+.qr-chain-name {
+  margin: 10px 0 14px;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--ring-text-secondary, #9ca3af);
+  letter-spacing: 0.02em;
+}
+
+.modal-content--receive {
+  background: radial-gradient(
+    circle at top,
+    rgba(192, 132, 252, 0.16) 0%,
+    rgba(28, 30, 38, 0.96) 42%,
+    rgba(28, 30, 38, 1) 100%
+  );
+  border-radius: 22px;
+}
+
+.modal-content--receive h3 {
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+}
+
+.modal-content--receive .modal-actions {
+  margin-top: 4px;
+}
+
+.modal-content--receive .primary-btn,
+.modal-content--receive .secondary-btn {
+  border-radius: 12px;
+  min-height: 42px;
 }
 
 @keyframes fadeIn {
