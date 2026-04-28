@@ -464,6 +464,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
       {showReceive && (
         <ReceiveDialog
           address={receiveAddress}
+          chainName={activeChain?.name ?? 'Unknown Chain'}
           onClose={() => setShowReceive(false)}
         />
       )}
