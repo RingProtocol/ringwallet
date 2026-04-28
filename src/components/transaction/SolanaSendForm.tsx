@@ -1,17 +1,24 @@
 import React, { useState, useMemo } from 'react'
+import { chainToAccountAssetsNetwork } from '../../config/chains'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
+import { getTokensForNetwork } from '../../models/ChainTokens'
 import PasskeyService from '../../services/account/passkeyService'
 import { SolanaService } from '../../services/rpc/solanaService'
 import { SolanaKeyService } from '../../services/chainplugins/solana/solanaPlugin'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
+import SendConfirmPreview from './SendConfirmPreview'
+import TransactionSheet from './TransactionSheet'
+import ChainIcon from '../ChainIcon'
 import '../QuickActionBar.css'
 import { useI18n } from '../../i18n'
 import { decodeSolanaTx } from '../../utils/solanaTxDecoder'
+import { formatChainTokenBalance } from '../../features/balance/balanceManager'
 
 interface SolanaSendFormProps {
   onClose: () => void
+  onBack?: () => void
 }
 
 interface SignedSolanaTx {
@@ -38,8 +45,14 @@ function buildSolanaRows(
   ]
 }
 
-const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
-  const { activeSolanaWallet, activeChain, user } = useAuth()
+const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose, onBack }) => {
+  const {
+    activeSolanaWallet,
+    solanaWallets,
+    activeWalletIndex,
+    activeChain,
+    user,
+  } = useAuth()
   const { t } = useI18n()
 
   const [toAddress, setToAddress] = useState('')
@@ -51,6 +64,8 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
   const [txSignature, setTxSignature] = useState('')
   const [isBroadcasting, setIsBroadcasting] = useState(false)
   const [estimatedFee, setEstimatedFee] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [showOwnWalletSheet, setShowOwnWalletSheet] = useState(false)
 
   const nativeSymbol = activeChain?.symbol || 'SOL'
   const solanaRows = useMemo(
@@ -64,8 +79,21 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
         : [],
     [signedTx, nativeSymbol, t]
   )
+  const availableAmount = useMemo(() => {
+    const network = chainToAccountAssetsNetwork(activeChain)
+    if (!network) return '0'
+    const native = (getTokensForNetwork(network) ?? []).find(
+      (t) => t.tokenAddress == null
+    )
+    if (!native) return '0'
+    return formatChainTokenBalance(native, activeChain, 6)
+  }, [activeChain])
 
   if (!activeSolanaWallet) return null
+  const selectableWallets = solanaWallets.filter(
+    (wallet) =>
+      wallet.address.toLowerCase() !== activeSolanaWallet.address.toLowerCase()
+  )
 
   const handleClose = () => {
     setToAddress('')
@@ -181,22 +209,50 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
     : ''
 
   return (
-    <SendFormLayout title="Send SOL" walletHint={walletHint} error={error}>
+    <SendFormLayout
+      title="Send"
+      walletHint={walletHint}
+      error={error}
+      onBack={onBack}
+      selectedToken={{ type: 'native', symbol: nativeSymbol }}
+    >
       {!signedTx && !txSignature ? (
         <>
           <div className="form-group">
             <label>Recipient (Solana address)</label>
-            <input
-              type="text"
-              value={toAddress}
-              onChange={(e) => {
-                setToAddress(e.target.value)
-                setAddressError('')
-              }}
-              onBlur={handleAddressBlur}
-              placeholder="Base58 address..."
-              className="input-field"
-            />
+            <div className="to-address-input-wrap">
+              <input
+                type="text"
+                value={toAddress}
+                onChange={(e) => {
+                  setToAddress(e.target.value)
+                  setAddressError('')
+                }}
+                onBlur={handleAddressBlur}
+                placeholder="Base58 address..."
+                className="input-field to-address-input"
+              />
+              <button
+                type="button"
+                className="to-address-wallet-btn"
+                onClick={() => setShowOwnWalletSheet(true)}
+                aria-label="Select from my wallets"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6.75A1.75 1.75 0 0 1 4.75 5h5.5A1.75 1.75 0 0 1 12 6.75v10.5A1.75 1.75 0 0 0 10.25 19h-5.5A1.75 1.75 0 0 1 3 17.25z" />
+                  <path d="M21 6.75A1.75 1.75 0 0 0 19.25 5h-5.5A1.75 1.75 0 0 0 12 6.75v10.5A1.75 1.75 0 0 1 13.75 19h5.5A1.75 1.75 0 0 0 21 17.25z" />
+                </svg>
+              </button>
+            </div>
             {addressError && <div className="field-error">{addressError}</div>}
           </div>
 
@@ -217,16 +273,37 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
             )}
           </div>
 
-          <div className="modal-actions">
+          <div className="send-balance-bar">
+            <div className="send-balance-bar__left">
+              <span className="send-balance-bar__icon">
+                <ChainIcon
+                  icon={activeChain.icon}
+                  symbol={nativeSymbol}
+                  size={36}
+                />
+              </span>
+              <div>
+                <div className="send-balance-bar__label">Balance</div>
+                <div className="send-balance-bar__value">
+                  {availableAmount} {nativeSymbol}
+                </div>
+              </div>
+            </div>
             <button
-              onClick={handleSign}
-              disabled={isLoading || !toAddress || !amount || !!addressError}
+              type="button"
+              className="send-balance-bar__max"
+              onClick={() => setAmount(availableAmount)}
+            >
+              Max
+            </button>
+          </div>
+          <div className="modal-actions modal-actions--single-bottom">
+            <button
+              onClick={() => setShowPreview(true)}
+              disabled={!toAddress || !amount || !!addressError}
               className="primary-btn"
             >
-              {isLoading ? 'Signing...' : t('signAndReview')}
-            </button>
-            <button onClick={handleClose} className="secondary-btn">
-              Close
+              Continue
             </button>
           </div>
         </>
@@ -286,6 +363,70 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose }) => {
             </button>
           </div>
         </>
+      )}
+
+      {showPreview && !signedTx && !txSignature && (
+        <TransactionSheet variant="sheet">
+          <SendConfirmPreview
+            selectedToken={{ type: 'native', symbol: nativeSymbol }}
+            amount={amount}
+            chainName={activeChain.name}
+            fromAddress={activeSolanaWallet.address}
+            toAddress={toAddress}
+            onCancel={() => setShowPreview(false)}
+            onConfirm={async () => {
+              await handleSign()
+              setShowPreview(false)
+            }}
+            isConfirming={isLoading}
+          />
+        </TransactionSheet>
+      )}
+
+      {showOwnWalletSheet && (
+        <TransactionSheet variant="sheet">
+          <div className="own-wallet-sheet">
+            <div className="own-wallet-sheet__head">
+              <h4>Select My Wallet Address</h4>
+            </div>
+            <div className="own-wallet-sheet__list">
+              {selectableWallets.length === 0 ? (
+                <div className="own-wallet-sheet__empty">
+                  No selectable addresses (cannot send to current wallet
+                  address)
+                </div>
+              ) : (
+                selectableWallets.map((wallet) => (
+                  <button
+                    key={`${wallet.address}:${wallet.index}`}
+                    type="button"
+                    className={`own-wallet-sheet__item ${wallet.index === activeWalletIndex ? 'active' : ''}`}
+                    onClick={() => {
+                      setToAddress(wallet.address)
+                      setAddressError('')
+                      setShowOwnWalletSheet(false)
+                    }}
+                  >
+                    <span className="own-wallet-sheet__item-title">
+                      Wallet #{wallet.index + 1}
+                    </span>
+                    <span className="own-wallet-sheet__item-address">
+                      {wallet.address.substring(0, 6)}…
+                      {wallet.address.slice(-4)}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+            <button
+              type="button"
+              className="secondary-btn own-wallet-sheet__close"
+              onClick={() => setShowOwnWalletSheet(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </TransactionSheet>
       )}
     </SendFormLayout>
   )
