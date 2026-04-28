@@ -15,8 +15,8 @@ import {
 } from '../services/chainplugins'
 import { COSMOS_CHAIN_VARIANTS } from '../config/chains'
 import { WalletType } from '../models/WalletType'
-import { ChainFamily, getPrimaryRpcUrl, type Chain } from '../models/ChainType'
-import { DEFAULT_CHAINS, resolveChainIcon } from '../config/chains'
+import { ChainFamily, type Chain } from '../models/ChainType'
+import { DEFAULT_CHAINS } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 
 export type { ChainFamily, Chain }
@@ -106,56 +106,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   >({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
-  const [CHAINS, setChains] = useState<Chain[]>(DEFAULT_CHAINS)
+  const CHAINS = DEFAULT_CHAINS
   const [activeChainId, setActiveChainId] = useState<number | string>(1)
-
-  useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const response = await fetch('/chainid.json')
-        if (!response.ok) throw new Error('Failed to fetch chain data')
-        const data = await response.json()
-
-        const extraChains: Chain[] = data
-          .map((c: Record<string, unknown>) => {
-            const symbol =
-              (c.nativeCurrency as Record<string, string>)?.symbol || 'ETH'
-            const chainId = c.chainId as number
-            return {
-              id: chainId,
-              name: c.name as string,
-              symbol,
-              icon: resolveChainIcon(chainId, symbol),
-              family: ChainFamily.EVM,
-              rpcUrl: ((c.rpc as string[]) ?? [])
-                .map((rpc) =>
-                  rpc.replace(
-                    '${INFURA_API_KEY}',
-                    import.meta.env.VITE_INFURA_API_KEY || ''
-                  )
-                )
-                .filter(Boolean),
-              explorer:
-                (c.explorers as Array<{ url: string }>)?.length > 0
-                  ? (c.explorers as Array<{ url: string }>)[0].url
-                  : '',
-            }
-          })
-          .filter(
-            (c: Chain) =>
-              c.rpcUrl.length > 0 &&
-              !getPrimaryRpcUrl(c).includes('${') &&
-              !DEFAULT_CHAINS.some((dc) => dc.id === c.id)
-          )
-
-        setChains([...DEFAULT_CHAINS, ...extraChains])
-      } catch (error) {
-        console.error('Error loading chains:', error)
-      }
-    }
-
-    fetchChains()
-  }, [])
 
   function deriveAllFromSeed(seed: Uint8Array, count: number) {
     const all = chainRegistry.deriveAllAccounts(seed, count)

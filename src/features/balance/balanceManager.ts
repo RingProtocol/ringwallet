@@ -303,12 +303,31 @@ function makeNativePlaceholderToken(chain: Chain, network: string): ChainToken {
   }
 }
 
+/** Maximum networks per address entry allowed by the account_assets API. */
+const MAX_NETWORKS_PER_REQUEST = 20
+
+function chunkNetworks(
+  entries: AccountAssetsAddressEntry[]
+): AccountAssetsAddressEntry[] {
+  const out: AccountAssetsAddressEntry[] = []
+  for (const e of entries) {
+    if (e.networks.length === 0) continue
+    for (let i = 0; i < e.networks.length; i += MAX_NETWORKS_PER_REQUEST) {
+      out.push({
+        address: e.address,
+        networks: e.networks.slice(i, i + MAX_NETWORKS_PER_REQUEST),
+      })
+    }
+  }
+  return out
+}
+
 async function fetchAccountAssets(
   addresses: AccountAssetsAddressEntry[]
 ): Promise<ChainToken[]> {
   const body: AccountAssetsRequest = {
-    addresses: addresses.filter(
-      (a) => a.address.length > 0 && a.networks.length > 0
+    addresses: chunkNetworks(
+      addresses.filter((a) => a.address.length > 0 && a.networks.length > 0)
     ),
   }
   if (body.addresses.length === 0) {
