@@ -964,7 +964,8 @@ export function chainToAccountAssetsNetwork(chain: Chain): string | undefined {
       chain.family === ChainFamily.Solana ||
       chain.family === ChainFamily.Tron ||
       chain.family === ChainFamily.Prisma ||
-      chain.family === ChainFamily.Cosmos
+      chain.family === ChainFamily.Cosmos ||
+      chain.family === ChainFamily.Dogecoin
     ) {
       return WALLET_CHAIN_ID_TO_ACCOUNT_ASSETS_NETWORK[chain.id] ?? chain.id
     }
@@ -1015,8 +1016,20 @@ export function chainToAccountAssetsNetwork(chain: Chain): string | undefined {
       return 'opbnb-mainnet'
     case '232':
       return 'lens-mainnet'
+    case '196':
+      return 'xlayer-mainnet'
+    case '195':
+      return 'xlayer-testnet'
     case '238':
       return 'blast-mainnet'
+    case '4002':
+      return 'fantom-testnet'
+    case '44787':
+      return 'celo-alfajores'
+    case '81457':
+      return 'blast-mainnet'
+    case '1287':
+      return 'moonbase-alpha'
     case '288':
       return 'boba-mainnet'
     case '300':
@@ -1073,8 +1086,14 @@ export function chainToAccountAssetsNetwork(chain: Chain): string | undefined {
       return 'anime-sepolia'
     case '2201':
       return 'stable-testnet'
+    case '250':
+      return 'fantom-mainnet'
     case '2442':
       return 'polygonzkevm-cardona'
+    case '2000':
+      return 'dogechain-mainnet'
+    case '568':
+      return 'dogechain-testnet'
     case '2522':
       return 'frax-mainnet'
     case '2523':
