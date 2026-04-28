@@ -287,6 +287,22 @@ function nativeBalanceFromTokens(
   return formatChainTokenBalance(native, chain, displayDecimals)
 }
 
+function makeNativePlaceholderToken(chain: Chain, network: string): ChainToken {
+  return {
+    address: '',
+    network,
+    tokenAddress: null,
+    tokenBalance: '0x0',
+    tokenMetadata: {
+      decimals: nativeDecimalsForChainFamily(chain.family),
+      logo: null,
+      name: chain.name,
+      symbol: chain.symbol,
+    },
+    tokenPrices: [],
+  }
+}
+
 async function fetchAccountAssets(
   addresses: AccountAssetsAddressEntry[]
 ): Promise<ChainToken[]> {
@@ -350,9 +366,15 @@ export function readAccountBalancesFromCache(
   const activeNetwork = chainToAccountAssetsNetwork(activeChain) ?? ''
   const cachedActive =
     activeNetwork.length > 0 ? getTokensForNetwork(activeNetwork) : undefined
-  const sortedActive = cachedActive?.length
+  let sortedActive = cachedActive?.length
     ? sortChainTokensForDisplay([...cachedActive])
     : []
+
+  // If the cache is empty, show a native placeholder so the UI never
+  // renders "No tokens found" for a valid chain.
+  if (sortedActive.length === 0 && activeNetwork.length > 0) {
+    sortedActive = [makeNativePlaceholderToken(activeChain, activeNetwork)]
+  }
 
   const nativeBalance =
     sortedActive.length > 0
