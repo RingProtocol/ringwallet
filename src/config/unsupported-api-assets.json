@@ -19,6 +19,7 @@
     "tron-mainnet",
     "tron-testnet",
     "moonbeam-mainnet",
-    "mantle-mainnet"
+    "mantle-mainnet",
+    "polygonzkevm-mainnet"
   ]
 }
