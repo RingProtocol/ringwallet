@@ -18,6 +18,7 @@
     "solana-devnet",
     "tron-mainnet",
     "tron-testnet",
-    "moonbeam-mainnet"
+    "moonbeam-mainnet",
+    "mantle-mainnet"
   ]
 }
