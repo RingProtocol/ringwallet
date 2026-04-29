@@ -45,10 +45,20 @@ const API_SUPPORTED_SLUGS: Set<string> = (() => {
 })()
 
 /**
+ * Hardcoded adapter-only families that should never go through the API,
+ * regardless of what chains-api-supported.json claims.
+ */
+const ADAPTER_ONLY_FAMILIES = new Set<ChainFamily>([
+  ChainFamily.Bitcoin,
+  ChainFamily.Cosmos,
+])
+
+/**
  * Returns true when a chain should use local adapter instead of account_assets API.
  * Looks up the chain's Alchemy network slug in chains-api-supported.json.
  */
-function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
+export function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
+  if (c.family && ADAPTER_ONLY_FAMILIES.has(c.family)) return true
   const slug = chainToAccountAssetsNetwork(c)
   if (slug == null) return true
   return !API_SUPPORTED_SLUGS.has(slug)
@@ -60,10 +70,25 @@ function accountAssetGroupsForAccountAssetsApi(
   return groups
     .map((g) => ({
       address: g.address,
-      networks: g.networks.filter((n) => API_SUPPORTED_SLUGS.has(n)),
+      networks: g.networks.filter(
+        (n) =>
+          API_SUPPORTED_SLUGS.has(n) &&
+          !ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS.has(n)
+      ),
     }))
     .filter((g) => g.networks.length > 0)
 }
+
+/** Adapter-only slugs derived from DEFAULT_CHAINS as a safety net. */
+const ADAPTER_ONLY_ACCOUNT_ASSET_NETWORKS: Set<string> = (() => {
+  const s = new Set<string>()
+  for (const c of DEFAULT_CHAINS) {
+    if (!usesAdapterOnlyAccountAssetsSync(c)) continue
+    const slug = chainToAccountAssetsNetwork(c)
+    if (slug) s.add(slug)
+  }
+  return s
+})()
 
 /** One wallet address and the `account_assets` network slugs to query for it. */
 export type AccountAssetsAddressEntry = {
