@@ -17,6 +17,7 @@
     "provenance-testnet",
     "solana-devnet",
     "tron-mainnet",
-    "tron-testnet"
+    "tron-testnet",
+    "moonbeam-mainnet"
   ]
 }
