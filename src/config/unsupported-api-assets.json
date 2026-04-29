@@ -1,0 +1,22 @@
+{
+  "networks": [
+    "bitcoin-mainnet",
+    "bitcoin-testnet",
+    "bitcoin-testnet4",
+    "cosmos-hub",
+    "cosmos-testnet",
+    "dogecoin-mainnet",
+    "dogecoin-testnet",
+    "fantom-mainnet",
+    "fantom-testnet",
+    "megaeth-mainnet",
+    "megaeth-testnet",
+    "plasma-mainnet",
+    "plasma-testnet",
+    "provenance-mainnet",
+    "provenance-testnet",
+    "solana-devnet",
+    "tron-mainnet",
+    "tron-testnet"
+  ]
+}
