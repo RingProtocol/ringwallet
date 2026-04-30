@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { RingSwapFrame, kyberWidgetEngine } from '@ring-protocol/ring-swap-sdk'
-import '@ring-protocol/ring-swap-sdk/styles'
 import { useSwapSigner } from './swap/useSwapSigner'
+import SwapDialog from './swap/SwapDialog'
+import { isRingV2Supported } from './swap/ringV2Constants'
+import { isKyberAggregatorSupported } from './swap/kyberConstants'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { SendTokenOption } from './transaction/types'
@@ -159,9 +160,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     ? 'Set VITE_MOONPAY_API_KEY to enable MoonPay'
     : 'Buy crypto with MoonPay'
 
-  const canUseRingSwap = kyberWidgetEngine
-    .supportedChainIds()
-    .includes(swapChainId)
+  const canUseRingSwap =
+    isRingV2Supported(swapChainId) || isKyberAggregatorSupported(swapChainId)
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
@@ -240,7 +240,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   return (
     <div className="transaction-actions-container">
       {swapDappOpen && swapSigner && (
-        <RingSwapFrame
+        <SwapDialog
           signer={swapSigner}
           chainId={swapChainId}
           rpcUrl={swapRpcUrl}
