@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { ethers } from 'ethers'
 import {
   chainToAccountAssetsNetwork,
   NATIVE_COIN_ICON,
@@ -100,6 +101,11 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
     selectedToken.type === 'native'
       ? selectedToken.symbol
       : selectedToken.token.symbol
+  const recipientAddress = toAddress.trim()
+  const addressError =
+    recipientAddress && !ethers.isAddress(recipientAddress)
+      ? 'Invalid EVM address'
+      : ''
   const availableAmount = useMemo(() => {
     if (!activeChain) return '0'
     const network = chainToAccountAssetsNetwork(activeChain)
@@ -142,7 +148,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
 
       const tx = await EvmWalletService.signTransaction(
         activeWallet.privateKey!,
-        toAddress,
+        recipientAddress,
         amount,
         Number(activeChainId),
         getPrimaryRpcUrl(activeChain),
@@ -170,7 +176,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
       emitPendingTransaction({
         hash,
         from: activeWallet.address,
-        to: toAddress,
+        to: recipientAddress,
         value: amount,
         timestamp: Math.floor(Date.now() / 1000),
         status: 'pending',
@@ -198,6 +204,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
       <SendFormFields
         toAddress={toAddress}
         onToAddressChange={setToAddress}
+        addressError={addressError}
         selectedToken={selectedToken}
         onTokenChange={setSelectedToken}
         tokenOptions={tokenOptions}
@@ -249,7 +256,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
       <div className="modal-actions modal-actions--single-bottom">
         <button
           onClick={() => setShowPreview(true)}
-          disabled={!toAddress}
+          disabled={!recipientAddress || !!addressError}
           className="primary-btn"
           data-testid={TESTID.SEND_SIGN_BUTTON}
         >
@@ -264,7 +271,7 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
             amount={amount}
             chainName={activeChain?.name || 'Unknown'}
             fromAddress={activeWallet.address}
-            toAddress={toAddress}
+            toAddress={recipientAddress}
             onCancel={() => setShowPreview(false)}
             onConfirm={async () => {
               await handleSign()
