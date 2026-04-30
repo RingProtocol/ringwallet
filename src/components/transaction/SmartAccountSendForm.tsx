@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { ethers } from 'ethers'
 import {
   chainToAccountAssetsNetwork,
   NATIVE_COIN_ICON,
@@ -125,6 +126,11 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     selectedToken.type === 'native'
       ? selectedToken.symbol
       : selectedToken.token.symbol
+  const recipientAddress = toAddress.trim()
+  const addressError =
+    recipientAddress && !ethers.isAddress(recipientAddress)
+      ? 'Invalid EVM address'
+      : ''
   const availableAmount = useMemo(() => {
     if (!activeChain) return '0'
     const network = chainToAccountAssetsNetwork(activeChain)
@@ -163,7 +169,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
 
       const tx = await EvmWalletService.signEIP7951Transaction(
         activeWallet.credentialId!,
-        toAddress,
+        recipientAddress,
         amount,
         Number(activeChainId),
         getPrimaryRpcUrl(activeChain),
@@ -240,6 +246,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
       <SendFormFields
         toAddress={toAddress}
         onToAddressChange={setToAddress}
+        addressError={addressError}
         selectedToken={selectedToken}
         onTokenChange={setSelectedToken}
         tokenOptions={tokenOptions}
@@ -291,7 +298,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
       <div className="modal-actions modal-actions--single-bottom">
         <button
           onClick={() => setShowPreview(true)}
-          disabled={!toAddress}
+          disabled={!recipientAddress || !!addressError}
           className="primary-btn"
         >
           Continue
@@ -305,7 +312,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
             amount={amount}
             chainName={activeChain?.name || 'Unknown'}
             fromAddress={activeWallet.address}
-            toAddress={toAddress}
+            toAddress={recipientAddress}
             onCancel={() => setShowPreview(false)}
             onConfirm={async () => {
               await handleSign()

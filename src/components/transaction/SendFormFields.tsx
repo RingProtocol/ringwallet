@@ -7,6 +7,7 @@ import { TESTID } from '../testids'
 interface SendFormFieldsProps {
   toAddress: string
   onToAddressChange: (value: string) => void
+  addressError?: string
   selectedToken: SendTokenOption
   onTokenChange: (value: SendTokenOption) => void
   tokenOptions: SendTokenOption[]
@@ -25,6 +26,7 @@ function shortenAddress(address: string): string {
 const SendFormFields: React.FC<SendFormFieldsProps> = ({
   toAddress,
   onToAddressChange,
+  addressError,
   selectedToken,
   onTokenChange,
   tokenOptions,
@@ -119,8 +121,9 @@ const SendFormFields: React.FC<SendFormFieldsProps> = ({
                 type="text"
                 value={toAddress}
                 onChange={(e) => onToAddressChange(e.target.value)}
-                placeholder="Enter or paste address / ENS"
+                placeholder="Enter or paste address"
                 className="input-field to-address-input"
+                aria-invalid={addressError ? 'true' : undefined}
                 data-testid={TESTID.SEND_TO_INPUT}
               />
               <button
@@ -146,6 +149,7 @@ const SendFormFields: React.FC<SendFormFieldsProps> = ({
             </>
           )}
         </div>
+        {addressError && <div className="field-error">{addressError}</div>}
       </div>
       {showOwnWalletSheet && (
         <TransactionSheet variant="sheet">
