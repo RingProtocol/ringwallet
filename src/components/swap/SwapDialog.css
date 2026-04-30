@@ -1,0 +1,1135 @@
+/* Swap dialog — wraps the third-party swap widget in the Ring Wallet flow chrome
+   (FlowHeader pattern: back · centered title · close). Replaces the SDK's bare
+   ring-swap-popup wrapper. */
+
+.swap-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.swap-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: swap-dialog-fade 0.2s ease;
+}
+
+.swap-dialog__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  max-height: 92vh;
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.96));
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.12));
+  border-radius: 24px 24px 0 0;
+  box-shadow:
+    0 -10px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(188, 116, 237, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: swap-dialog-slide-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .swap-dialog {
+    align-items: center;
+    padding: 24px;
+  }
+  .swap-dialog__panel {
+    max-height: min(92vh, 760px);
+    border-radius: 24px;
+    animation: swap-dialog-scale 0.2s ease;
+  }
+}
+
+.swap-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.swap-dialog__header::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(188, 116, 237, 0.35),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.swap-dialog__nav {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.swap-dialog__nav--back {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  color: var(--ring-text-secondary, #d1d5db);
+}
+
+.swap-dialog__nav--back:hover,
+.swap-dialog__nav--back:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--ring-border-strong, rgba(255, 255, 255, 0.16));
+  color: var(--ring-text-primary, #f3f4f6);
+  outline: none;
+}
+
+.swap-dialog__nav--close {
+  background: transparent;
+  border: none;
+  color: var(--ring-text-secondary, #d1d5db);
+}
+
+.swap-dialog__nav--close:hover,
+.swap-dialog__nav--close:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ring-text-primary, #f3f4f6);
+  outline: none;
+}
+
+.swap-dialog__title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.swap-dialog__tabs {
+  display: flex;
+  gap: 4px;
+  margin: 12px 16px 0;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.swap-dialog__tab {
+  flex: 1;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.swap-dialog__tab.is-active {
+  background: rgba(188, 116, 237, 0.18);
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.swap-dialog__tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.swap-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 12px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.swap-dialog__ring {
+  width: 100%;
+  max-width: 396px;
+}
+
+.swap-dialog__widget {
+  width: 100%;
+  max-width: 396px;
+  display: flex;
+  justify-content: center;
+}
+
+/* The SDK widget renders at fixed width=380; let it self-size. */
+.swap-dialog__widget > * {
+  width: 100% !important;
+}
+
+.swap-dialog__unsupported {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--ring-text-muted, #9ca3af);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── Brand-tint the embedded swap widget toward Ring purple/gradient ───
+   The third-party widget uses styled-components hashed classes. We match
+   on stable styled-component prefixes (e.g. `__ButtonPrimary-`) plus a
+   text fallback for the primary CTA. These are best-effort overlays —
+   if the upstream widget renames its components, the inner UI just
+   reverts to its built-in indigo theme. */
+
+.swap-dialog__widget [class*='ButtonPrimary'],
+.swap-dialog__widget [class*='SwapButton'],
+.swap-dialog__widget [class*='__SwapBtn'],
+.swap-dialog__widget [class*='__StyledButton']:not([disabled]) {
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%)
+  ) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 6px 18px rgba(188, 116, 237, 0.3) !important;
+}
+
+.swap-dialog__widget [class*='ButtonPrimary']:disabled,
+.swap-dialog__widget [class*='SwapButton']:disabled,
+.swap-dialog__widget [class*='__StyledButton']:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--ring-text-muted, #9ca3af) !important;
+  box-shadow: none !important;
+  opacity: 0.7;
+}
+
+@keyframes swap-dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes swap-dialog-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes swap-dialog-scale {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-dialog__backdrop,
+  .swap-dialog__panel {
+    animation: none;
+  }
+}
+
+/* ─── Ring V2 swap panel — prototype-aligned ─── */
+
+.ring-v2-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.ring-v2-panel--unsupported {
+  text-align: center;
+  color: var(--ring-text-muted, #9ca3af);
+  padding: 24px 8px;
+}
+
+.ring-v2-panel__topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ring-v2-panel__pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ring-accent-2, #c084fc);
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.12));
+  border: 1px solid rgba(188, 116, 237, 0.25);
+  padding: 4px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.ring-v2-panel__settings-toggle {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  color: var(--ring-text-secondary, #d1d5db);
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ring-v2-panel__settings-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.ring-v2-panel__settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 4px;
+}
+
+.ring-v2-panel__settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ring-v2-panel__setting-label {
+  font-size: 12px;
+  color: var(--ring-text-muted, #9ca3af);
+  font-weight: 500;
+}
+
+.ring-v2-panel__setting-presets {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ring-v2-panel__preset {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  color: var(--ring-text-secondary, #d1d5db);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.ring-v2-panel__preset.is-active {
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.18));
+  color: var(--ring-text-primary, #f3f4f6);
+  border-color: rgba(188, 116, 237, 0.4);
+}
+
+.ring-v2-panel__setting-input {
+  width: 70px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  color: var(--ring-text-primary, #f3f4f6);
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ring-v2-panel__setting-input--inline {
+  width: 80px;
+}
+
+/* ─── Swap field (FROM / TO card) ─── */
+
+.swap-field {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.swap-field__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.swap-field__label {
+  font-size: 11.5px;
+  color: var(--ring-text-muted, #9ca3af);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.swap-field__balance {
+  font-size: 11.5px;
+  color: var(--ring-text-muted, #9ca3af);
+  font-variant-numeric: tabular-nums;
+}
+
+.swap-field__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.swap-field__pill {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px 5px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
+  cursor: pointer;
+  flex-shrink: 0;
+  font: inherit;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.swap-field__pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.swap-field__pill:disabled {
+  cursor: default;
+}
+
+.swap-field__glyph {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%)
+  );
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
+  overflow: hidden;
+}
+
+.swap-field__glyph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.swap-field__symbol {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+  letter-spacing: -0.01em;
+}
+
+.swap-field__chevron {
+  opacity: 0.6;
+  flex-shrink: 0;
+  margin-left: -2px;
+}
+
+.swap-field__amount,
+.swap-field__quote {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 24px;
+  font-weight: 700;
+  text-align: right;
+  outline: none;
+  padding: 0;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.swap-field__quote {
+  color: var(--ring-text-secondary, #d1d5db);
+}
+
+.swap-field__amount::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.swap-field__quote--skeleton {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: swap-skeleton 1.2s ease-in-out infinite;
+}
+
+.swap-field__quote.is-refreshing {
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.swap-field__subtext {
+  font-size: 11.5px;
+  color: var(--ring-text-muted, #9ca3af);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  margin-top: -2px;
+}
+
+@keyframes swap-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.swap-field__percents {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: -2px;
+}
+
+.swap-field__percent {
+  appearance: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ring-accent-2, #c084fc);
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.12));
+  border: 1px solid rgba(188, 116, 237, 0.25);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.swap-field__percent:hover {
+  background: rgba(188, 116, 237, 0.2);
+}
+
+/* ─── Direction divider with flip button ─── */
+
+.ring-v2-panel__divider {
+  position: relative;
+  height: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.ring-v2-panel__flip {
+  position: relative;
+  z-index: 2;
+  transform: translateY(-50%);
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--ring-bg-page, #0d0f14);
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
+  color: var(--ring-text-primary, #f3f4f6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.2s ease;
+}
+
+.ring-v2-panel__flip:hover:not(:disabled) {
+  background: rgba(188, 116, 237, 0.12);
+  border-color: rgba(188, 116, 237, 0.3);
+  color: var(--ring-accent-2, #c084fc);
+}
+
+.ring-v2-panel__flip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Info card (Rate · Route · Slippage · Min received · Deadline) ─── */
+
+.ring-v2-panel__info {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  overflow: hidden;
+}
+
+.swap-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.swap-info-row--last {
+  border-bottom: none;
+}
+
+.swap-info-row__label {
+  color: var(--ring-text-muted, #9ca3af);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.swap-info-row__value {
+  color: var(--ring-text-primary, #f3f4f6);
+  text-align: right;
+  word-break: break-word;
+}
+
+.swap-info-row__value--mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.ring-v2-info-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ring-v2-info-refresh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ring-accent-2, #c084fc);
+  display: inline-block;
+  animation: swap-refresh-pulse 1.2s ease-in-out infinite;
+}
+
+.ring-v2-info-impact--ok {
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.ring-v2-info-impact--warn {
+  color: #facc15;
+}
+
+.ring-v2-info-impact--bad {
+  color: var(--ring-negative, #f87171);
+  font-weight: 600;
+}
+
+@keyframes swap-refresh-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* ─── Error / status ─── */
+
+.ring-v2-panel__error {
+  font-size: 12px;
+  color: var(--ring-negative, #f87171);
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 10px;
+  padding: 8px 10px;
+  word-break: break-word;
+}
+
+/* ─── Actions ─── */
+
+.ring-v2-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ring-v2-panel__btn {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.ring-v2-panel__btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.ring-v2-panel__btn--primary {
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%)
+  );
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(188, 116, 237, 0.3);
+}
+
+.ring-v2-panel__btn--primary:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(188, 116, 237, 0.4);
+}
+
+.ring-v2-panel__btn--primary:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-muted, #9ca3af);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.ring-v2-panel__btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.ring-v2-panel__btn--secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ring-v2-panel__btn--secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ring-v2-panel__status {
+  font-size: 12px;
+  color: var(--ring-text-secondary, #d1d5db);
+  word-break: break-all;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ─── Token picker modal ─── */
+
+.token-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.token-picker__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: token-picker-fade 0.15s ease;
+}
+
+.token-picker__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  max-height: 82vh;
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.98));
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.12));
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: token-picker-slide 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .token-picker {
+    align-items: center;
+    padding: 24px;
+  }
+  .token-picker__panel {
+    max-height: min(82vh, 640px);
+    border-radius: 18px;
+    animation: token-picker-scale 0.15s ease;
+  }
+}
+
+.token-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  flex-shrink: 0;
+}
+
+.token-picker__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+  letter-spacing: -0.01em;
+}
+
+.token-picker__close {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  color: var(--ring-text-secondary, #d1d5db);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.token-picker__close:hover,
+.token-picker__close:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-primary, #f3f4f6);
+  outline: none;
+}
+
+.token-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 14px 8px;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.token-picker__search:focus-within {
+  border-color: rgba(188, 116, 237, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.token-picker__search-icon {
+  color: var(--ring-text-muted, #9ca3af);
+  flex-shrink: 0;
+}
+
+.token-picker__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 14px;
+  padding: 0;
+}
+
+.token-picker__input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.token-picker__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 6px 14px;
+}
+
+.token-picker__empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ring-text-muted, #9ca3af);
+}
+
+.token-picker__loading-footer {
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ring-text-muted, #9ca3af);
+}
+
+.token-picker__group + .token-picker__group {
+  margin-top: 6px;
+}
+
+.token-picker__group-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ring-text-muted, #9ca3af);
+  padding: 8px 14px 4px;
+}
+
+.token-picker__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.token-picker__row {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  transition: background 0.12s ease;
+}
+
+.token-picker__row:hover,
+.token-picker__row:focus-visible {
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+.token-picker__row.is-selected {
+  background: var(--ring-accent-soft, rgba(188, 116, 237, 0.16));
+}
+
+.token-picker__row-icon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%)
+  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.token-picker__row-icon img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #1c1e26;
+}
+
+.token-picker__row-glyph {
+  position: relative;
+  z-index: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.token-picker__row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-picker__row-symbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+  letter-spacing: -0.01em;
+}
+
+.token-picker__row-addr {
+  font-size: 11px;
+  color: var(--ring-text-muted, #9ca3af);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.token-picker__row-balance {
+  font-size: 12.5px;
+  color: var(--ring-text-secondary, #d1d5db);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.token-picker__import {
+  margin: 6px 12px 10px;
+  padding: 12px;
+  background: rgba(188, 116, 237, 0.08);
+  border: 1px dashed rgba(188, 116, 237, 0.35);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.token-picker__import-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.token-picker__import-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ring-accent-2, #c084fc);
+}
+
+.token-picker__import-addr {
+  font-size: 12px;
+  color: var(--ring-text-secondary, #d1d5db);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.token-picker__import-btn {
+  appearance: none;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%)
+  );
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(188, 116, 237, 0.25);
+}
+
+.token-picker__import-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.token-picker__import-error {
+  font-size: 12px;
+  color: var(--ring-negative, #f87171);
+}
+
+@keyframes token-picker-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes token-picker-slide {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes token-picker-scale {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token-picker__backdrop,
+  .token-picker__panel {
+    animation: none;
+  }
+}

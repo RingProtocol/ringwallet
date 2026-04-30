@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react'
-import { RingSwapFrame, kyberWidgetEngine } from '@ring-protocol/ring-swap-sdk'
-import '@ring-protocol/ring-swap-sdk/styles'
 import { useSwapSigner } from './swap/useSwapSigner'
+import SwapDialog from './swap/SwapDialog'
+import { isRingV2Supported } from './swap/ringV2Constants'
+import { isKyberAggregatorSupported } from './swap/kyberConstants'
 import { useAuth } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import type { ChainToken } from '../models/ChainTokens'
@@ -61,9 +62,8 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   const isNative = token.tokenAddress == null
   const symbol = token.tokenMetadata.symbol ?? token.tokenMetadata.name ?? ''
 
-  const canUseRingSwap = kyberWidgetEngine
-    .supportedChainIds()
-    .includes(swapChainId)
+  const canUseRingSwap =
+    isRingV2Supported(swapChainId) || isKyberAggregatorSupported(swapChainId)
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
@@ -139,7 +139,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   return (
     <div className="token-detail" role="dialog" aria-modal="true">
       {swapOpen && swapSigner && (
-        <RingSwapFrame
+        <SwapDialog
           signer={swapSigner}
           chainId={swapChainId}
           rpcUrl={swapRpcUrl}
