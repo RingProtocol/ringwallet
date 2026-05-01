@@ -44,6 +44,30 @@
   cursor: not-allowed;
 }
 
+.login-button__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: login-spin 0.55s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.login-button--secondary .login-button__spinner {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: var(--ring-text-primary, #fff);
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .login-button--primary {
   background: var(--ring-gradient);
   color: #fff;
