@@ -1,3 +1,5 @@
+import { TOKEN_PRICE_HISTORICAL_URL } from '../../server/urls'
+
 export interface PriceDataPoint {
   value: string
   timestamp: string
@@ -26,9 +28,6 @@ export interface TokenPriceHistoricalResponse {
   data: PriceDataPoint[]
 }
 
-const TOKEN_PRICE_HISTORICAL_URL =
-  'https://rw.testring.org/v1/token_price_historical'
-
 export async function fetchTokenPriceHistorical(
   params: TokenPriceHistoricalRequest,
   signal?: AbortSignal
@@ -37,8 +36,7 @@ export async function fetchTokenPriceHistorical(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key':
-        'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
     },
     body: JSON.stringify(params),
     signal,
