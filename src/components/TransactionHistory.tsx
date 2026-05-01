@@ -18,6 +18,7 @@ import {
   type TxRecord,
 } from '../features/history/types'
 import RpcService from '../services/rpc/rpcService'
+import { ACCOUNT_HISTORY_URL } from '../server/urls'
 import { addToken, getTokenList } from '../utils/tokenStorage'
 import { resolveTokenMetadata } from '../services/rpc/tokenMetadataResolver'
 
@@ -161,10 +162,13 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           limit: String(HISTORY_LIMIT),
         })
 
-        const url = new URL('/v1/acc_history', 'https://wapi.testring.org')
-        url.search = searchParams.toString()
+        const url = `${ACCOUNT_HISTORY_URL}?${searchParams.toString()}`
 
-        const response = await fetch(url.toString())
+        const response = await fetch(url, {
+          headers: {
+            'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+          },
+        })
         if (!response.ok) {
           throw new Error(`Failed to fetch history: ${response.status}`)
         }
