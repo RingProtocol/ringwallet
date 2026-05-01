@@ -17,9 +17,11 @@ const LoginButton: React.FC = () => {
 
   useEffect(() => {
     setHasLoginHistory(!!safeGetItem('user_has_passkey'))
+    setIsReady(true)
   }, [])
   const [isLoading, setIsLoading] = useState(false)
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState('')
   const [showCreateAccount, setShowCreateAccount] = useState(false)
   const [showBiometricGuide, setShowBiometricGuide] = useState(false)
@@ -175,20 +177,37 @@ const LoginButton: React.FC = () => {
           <button
             className="login-button login-button--primary"
             onClick={handlePasskeyLogin}
-            disabled={isLoading}
+            disabled={!isReady || isLoading}
             data-testid={TESTID.LOGIN_BUTTON}
           >
-            {isLoading && !isCreatingAccount
-              ? t('loggingIn')
-              : t('iHaveAWallet')}
+            {!isReady ? (
+              <>
+                <span className="login-button__spinner" />
+                {t('initializing')}
+              </>
+            ) : isLoading && !isCreatingAccount ? (
+              <>
+                <span className="login-button__spinner" />
+                {t('loggingIn')}
+              </>
+            ) : (
+              t('iHaveAWallet')
+            )}
           </button>
           <button
             className="login-button login-button--secondary"
             onClick={handleCreateAccount}
-            disabled={isLoading}
+            disabled={!isReady || isLoading}
             data-testid={TESTID.CREATE_ACCOUNT_BUTTON}
           >
-            {isCreatingAccount ? t('creating') : t('createNewWallet')}
+            {isCreatingAccount ? (
+              <>
+                <span className="login-button__spinner" />
+                {t('creating')}
+              </>
+            ) : (
+              t('createNewWallet')
+            )}
           </button>
           {!hasLoginHistory && !showCreateAccount && (
             <p className="login-tip">{t('loginTipNoPasskey')}</p>
