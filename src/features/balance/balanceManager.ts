@@ -13,6 +13,7 @@ import {
 } from '../../models/ChainTokens'
 import type { AccountBalancesResult } from './balanceTypes'
 import { fetchAccountBalanceByAdapter } from './balanceAdapterRegistry'
+import { ACCOUNT_ASSETS_URL } from '../../server/urls'
 
 /** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
 export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
@@ -26,8 +27,6 @@ export function getAccountBalancePollIntervalMs(): number {
 export function setAccountBalancePollIntervalMs(ms: number): void {
   accountBalancePollIntervalMs = Math.max(5_000, ms)
 }
-
-const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
 
 /** Adapter-only network slugs extracted from unsupported-api-assets.json. */
 const ADAPTER_ONLY_SLUGS: Set<string> = new Set(unsupportedApiAssets.networks)
@@ -311,7 +310,10 @@ async function fetchAccountAssets(
 
     const res = await fetch(ACCOUNT_ASSETS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+      },
       body: JSON.stringify(body),
     })
 

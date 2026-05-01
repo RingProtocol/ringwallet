@@ -5,9 +5,9 @@ import {
   type TokenPriceHistoricalRequest,
   type TokenPriceHistoricalResponse,
 } from '@/features/balance/tokenPriceHistorical'
+import { TOKEN_PRICE_HISTORICAL_URL } from '@/server/urls'
 
-const API_URL = 'https://rw.testring.org/v1/token_price_historical'
-const API_KEY = 'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7'
+const W_API_KEY = 'wallet_s32909i'
 
 const MOCK_POINTS: PriceDataPoint[] = [
   { value: '0.9992620396', timestamp: '2024-01-01T00:00:00Z' },
@@ -60,9 +60,11 @@ describe('fetchTokenPriceHistorical', () => {
 
     expect(fetchSpy).toHaveBeenCalledOnce()
     const [url, init] = fetchSpy.mock.calls[0]
-    expect(url).toBe(API_URL)
+    expect(url).toBe(TOKEN_PRICE_HISTORICAL_URL)
     expect(init?.method).toBe('POST')
-    expect((init?.headers as Record<string, string>)['X-API-Key']).toBe(API_KEY)
+    expect((init?.headers as Record<string, string>)['X-API-Key']).toBe(
+      W_API_KEY
+    )
     expect((init?.headers as Record<string, string>)['Content-Type']).toBe(
       'application/json'
     )

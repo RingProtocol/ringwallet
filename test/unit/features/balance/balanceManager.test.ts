@@ -15,7 +15,7 @@ import {
 import { ChainFamily, type Chain } from '@/models/ChainType'
 import { buildAccountAssetsApi2MockBody } from './api2MockTokens'
 
-const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
+import { ACCOUNT_ASSETS_URL } from '@/server/urls'
 
 const TEST_WALLET = '0x9fe8b07ac19eae1f3548d8379a534070a89ee620'
 // yarn vitest run test/unit/features/balance/balanceManager.test.ts
@@ -115,7 +115,9 @@ describe('balanceManager.fetchAccountBalances', () => {
       ACCOUNT_ASSETS_URL,
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
       })
     )
     const init = fetchMock.mock.calls[0][1] as RequestInit
