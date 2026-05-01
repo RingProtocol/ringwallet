@@ -1,7 +1,10 @@
 import type { Chain } from '../../models/ChainType'
 import type { ChainTokenPrice } from '../../models/ChainTokens'
 import { chainToAccountAssetsNetwork } from '../../config/chains'
-import { TOKEN_PRICE_URL, TOKEN_PRICE_SYMBOL_URL } from '../../server/urls'
+import {
+  TOKEN_PRICE_BY_ADDR_URL,
+  TOKEN_PRICE_BY_SYMBOL_URL,
+} from '../../server/urls'
 
 export type TokenPriceAddress = {
   network: string
@@ -29,7 +32,7 @@ type TokenPriceResponse = {
 export async function fetchTokenPricesByAddr(
   addresses: TokenPriceAddress[]
 ): Promise<TokenPriceResponseItem[]> {
-  const res = await fetch(TOKEN_PRICE_URL, {
+  const res = await fetch(TOKEN_PRICE_BY_ADDR_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,7 +52,7 @@ export async function fetchTokenPricesByAddr(
 export async function fetchTokenPricesBySymbol(
   symbols: string[]
 ): Promise<TokenPriceResponseItem[]> {
-  const res = await fetch(TOKEN_PRICE_SYMBOL_URL, {
+  const res = await fetch(TOKEN_PRICE_BY_SYMBOL_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
