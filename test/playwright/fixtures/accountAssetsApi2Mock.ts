@@ -2,7 +2,7 @@
  * Subset of `src/features/balance/api2.md` “# response” (lines ~22–133) — same shape as
  * `POST https://rw.testring.org/v1/account_assets` JSON. `address` is filled per wallet.
  */
-export const ACCOUNT_ASSETS_URL = 'https://rw.testring.org/v1/account_assets'
+export { ACCOUNT_ASSETS_URL } from '@/server/urls'
 
 /** Token rows from api2.md without `address` (injected per test wallet). */
 export const API2_MOCK_TOKENS_TEMPLATE = [

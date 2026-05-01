@@ -18,7 +18,6 @@ import {
   type TxRecord,
 } from '../features/history/types'
 import RpcService from '../services/rpc/rpcService'
-import { resolveClientApiUrl } from '../utils/apiUrl'
 import { addToken, getTokenList } from '../utils/tokenStorage'
 import { resolveTokenMetadata } from '../services/rpc/tokenMetadataResolver'
 
@@ -162,7 +161,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           limit: String(HISTORY_LIMIT),
         })
 
-        const url = resolveClientApiUrl('/api/v1/history')
+        const url = new URL('/v1/acc_history', 'https://wapi.testring.org')
         url.search = searchParams.toString()
 
         const response = await fetch(url.toString())

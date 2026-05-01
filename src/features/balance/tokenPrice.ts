@@ -1,10 +1,7 @@
 import type { Chain } from '../../models/ChainType'
 import type { ChainTokenPrice } from '../../models/ChainTokens'
 import { chainToAccountAssetsNetwork } from '../../config/chains'
-
-const TOKEN_PRICE_URL = 'https://rw.testring.org/v1/token_price'
-
-const TOKEN_PRICE_SYMBOL_URL = 'https://rw.testring.org/v1/token_price_sym'
+import { TOKEN_PRICE_URL, TOKEN_PRICE_SYMBOL_URL } from '../../server/urls'
 
 export type TokenPriceAddress = {
   network: string
@@ -36,8 +33,7 @@ export async function fetchTokenPricesByAddr(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key':
-        'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
     },
     body: JSON.stringify({ addresses } satisfies TokenPriceRequest),
   })
@@ -57,8 +53,7 @@ export async function fetchTokenPricesBySymbol(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key':
-        'wallet_s32909jfie829384jjsjnfkdnwh22338dhshwbsnw1j2b3h3j4h8d7',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
     },
     body: JSON.stringify({
       symbols: symbols,
