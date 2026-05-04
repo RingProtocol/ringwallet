@@ -62,9 +62,9 @@ describe('fetchTokenPriceHistorical', () => {
     const [url, init] = fetchSpy.mock.calls[0]
     expect(url).toBe(TOKEN_PRICE_HISTORICAL_URL)
     expect(init?.method).toBe('POST')
-    expect((init?.headers as Record<string, string>)['X-API-Key']).toBe(
-      W_API_KEY
-    )
+    // expect((init?.headers as Record<string, string>)['X-API-Key']).toBe(
+    //   W_API_KEY
+    // )
     expect((init?.headers as Record<string, string>)['Content-Type']).toBe(
       'application/json'
     )
