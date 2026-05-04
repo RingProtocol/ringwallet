@@ -16,14 +16,23 @@ function AppContent() {
   //fix: for fullscreen.
   useEffect(() => {
     const setVH = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        `${window.innerHeight * 0.01}px`
-      )
+      const h =
+        window.visualViewport?.height ||
+        window.outerHeight ||
+        window.innerHeight
+      document.documentElement.style.setProperty('--vh', `${h * 0.01}px`)
     }
     window.addEventListener('resize', setVH)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setVH)
+    }
     setVH()
-    return () => window.removeEventListener('resize', setVH)
+    return () => {
+      window.removeEventListener('resize', setVH)
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', setVH)
+      }
+    }
   }, [])
 
   return (
