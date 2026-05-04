@@ -9,6 +9,7 @@ import { isValidDogecoinAddress } from '../../services/chainplugins/dogecoin/dog
 import SendFormLayout from './SendFormLayout'
 import SendConfirmPreview from './SendConfirmPreview'
 import TransactionSheet from './TransactionSheet'
+import OwnWalletAddressDrawer from './OwnWalletAddressDrawer'
 import ChainIcon from '../ChainIcon'
 import '../common/QuickActionBar.css'
 import { formatChainTokenBalance } from '../../features/balance/balanceManager'
@@ -290,51 +291,16 @@ const DogecoinSendForm: React.FC<DogecoinSendFormProps> = ({
         </TransactionSheet>
       )}
 
-      {showOwnWalletSheet && (
-        <TransactionSheet variant="sheet">
-          <div className="own-wallet-sheet">
-            <div className="own-wallet-sheet__head">
-              <h4>Select My Wallet Address</h4>
-            </div>
-            <div className="own-wallet-sheet__list">
-              {selectableWallets.length === 0 ? (
-                <div className="own-wallet-sheet__empty">
-                  No selectable addresses (cannot send to current wallet
-                  address)
-                </div>
-              ) : (
-                selectableWallets.map((wallet) => (
-                  <button
-                    key={`${wallet.address}:${wallet.index}`}
-                    type="button"
-                    className={`own-wallet-sheet__item ${wallet.index === activeWalletIndex ? 'active' : ''}`}
-                    onClick={() => {
-                      setToAddress(wallet.address)
-                      setAddressError('')
-                      setShowOwnWalletSheet(false)
-                    }}
-                  >
-                    <span className="own-wallet-sheet__item-title">
-                      Wallet #{wallet.index + 1}
-                    </span>
-                    <span className="own-wallet-sheet__item-address">
-                      {wallet.address.substring(0, 6)}…
-                      {wallet.address.slice(-4)}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-            <button
-              type="button"
-              className="secondary-btn own-wallet-sheet__close"
-              onClick={() => setShowOwnWalletSheet(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </TransactionSheet>
-      )}
+      <OwnWalletAddressDrawer
+        open={showOwnWalletSheet}
+        onOpenChange={setShowOwnWalletSheet}
+        wallets={selectableWallets}
+        activeWalletIndex={activeWalletIndex}
+        onSelect={(address) => {
+          setToAddress(address)
+          setAddressError('')
+        }}
+      />
     </SendFormLayout>
   )
 }

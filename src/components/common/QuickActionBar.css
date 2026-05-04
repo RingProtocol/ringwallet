@@ -687,7 +687,8 @@
   max-height: min(70vh, 560px);
 }
 
-.own-wallet-sheet__head h4 {
+.own-wallet-sheet__head h4,
+.own-wallet-sheet__head h2 {
   margin: 0;
   font-size: 18px;
   color: var(--ring-text-primary, #f3f4f6);

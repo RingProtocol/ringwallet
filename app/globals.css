@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 @import '../apps/pwa/index.css';
 @import '../apps/pwa/App.css';
 @import '../src/components/LoginButton.css';
@@ -9,3 +12,91 @@
 @import '../src/components/chains/AddChainPage.css';
 @import '../src/components/assets/NativeBalance.css';
 @import '../src/features/dapps/components/DApps.css';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+  }
+  :root {
+    --background: var(--ring-bg-page);
+    --foreground: var(--ring-text-primary);
+    --card: var(--ring-bg-elevated);
+    --card-foreground: var(--ring-text-primary);
+    --popover: var(--ring-bg-elevated);
+    --popover-foreground: var(--ring-text-primary);
+    --primary: var(--ring-accent);
+    --primary-foreground: #ffffff;
+    --secondary: var(--ring-surface);
+    --secondary-foreground: var(--ring-text-primary);
+    --muted: rgba(255, 255, 255, 0.05);
+    --muted-foreground: var(--ring-text-secondary);
+    --accent: var(--ring-accent-soft);
+    --accent-foreground: var(--ring-accent);
+    --destructive: var(--ring-negative);
+    --destructive-foreground: #ffffff;
+    --border: var(--ring-border);
+    --input: var(--ring-border-strong);
+    --ring: var(--ring-accent);
+    --chart-1: #1abee9;
+    --chart-2: #bc74ed;
+    --chart-3: #f15266;
+    --chart-4: #34d399;
+    --chart-5: #f59e0b;
+    --radius: 0.625rem;
+    --sidebar: var(--ring-bg-elevated);
+    --sidebar-foreground: var(--ring-text-primary);
+    --sidebar-primary: var(--ring-accent);
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--ring-accent-soft);
+    --sidebar-accent-foreground: var(--ring-accent);
+    --sidebar-border: var(--ring-border);
+    --sidebar-ring: var(--ring-accent);
+  }
+  .dark {
+    --background: var(--ring-bg-page);
+    --foreground: var(--ring-text-primary);
+    --card: var(--ring-bg-elevated);
+    --card-foreground: var(--ring-text-primary);
+    --popover: var(--ring-bg-elevated);
+    --popover-foreground: var(--ring-text-primary);
+    --primary: var(--ring-accent);
+    --primary-foreground: #ffffff;
+    --secondary: var(--ring-surface);
+    --secondary-foreground: var(--ring-text-primary);
+    --muted: rgba(255, 255, 255, 0.05);
+    --muted-foreground: var(--ring-text-secondary);
+    --accent: var(--ring-accent-soft);
+    --accent-foreground: var(--ring-accent);
+    --destructive: var(--ring-negative);
+    --destructive-foreground: #ffffff;
+    --border: var(--ring-border);
+    --input: var(--ring-border-strong);
+    --ring: var(--ring-accent);
+    --chart-1: #1abee9;
+    --chart-2: #bc74ed;
+    --chart-3: #f15266;
+    --chart-4: #34d399;
+    --chart-5: #f59e0b;
+    --sidebar: var(--ring-bg-elevated);
+    --sidebar-foreground: var(--ring-text-primary);
+    --sidebar-primary: var(--ring-accent);
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--ring-accent-soft);
+    --sidebar-accent-foreground: var(--ring-accent);
+    --sidebar-border: var(--ring-border);
+    --sidebar-ring: var(--ring-accent);
+  }
+  * {
+    @apply border-border;
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

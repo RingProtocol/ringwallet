@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import type { SendTokenOption } from './types'
-import TransactionSheet from './TransactionSheet'
+import OwnWalletAddressDrawer from './OwnWalletAddressDrawer'
 import { TESTID } from '../testids'
 
 interface SendFormFieldsProps {
@@ -147,52 +147,14 @@ const SendFormFields: React.FC<SendFormFieldsProps> = ({
           )}
         </div>
       </div>
-      {showOwnWalletSheet && (
-        <TransactionSheet variant="sheet">
-          <div className="own-wallet-sheet">
-            <div className="own-wallet-sheet__head">
-              <h4>Select My Wallet Address</h4>
-            </div>
-            <div className="own-wallet-sheet__list">
-              {selectableWallets.length === 0 ? (
-                <div className="own-wallet-sheet__empty">
-                  No selectable addresses (cannot send to current wallet
-                  address)
-                </div>
-              ) : (
-                selectableWallets.map((wallet) => {
-                  const isActive = wallet.index === activeWalletIndex
-                  return (
-                    <button
-                      key={`${wallet.address}:${wallet.index}`}
-                      type="button"
-                      className={`own-wallet-sheet__item ${isActive ? 'active' : ''}`}
-                      onClick={() => {
-                        onToAddressChange(wallet.address)
-                        setShowOwnWalletSheet(false)
-                      }}
-                    >
-                      <span className="own-wallet-sheet__item-title">
-                        Wallet #{wallet.index + 1}
-                      </span>
-                      <span className="own-wallet-sheet__item-address">
-                        {shortenAddress(wallet.address)}
-                      </span>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-            <button
-              type="button"
-              className="secondary-btn own-wallet-sheet__close"
-              onClick={() => setShowOwnWalletSheet(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </TransactionSheet>
-      )}
+      <OwnWalletAddressDrawer
+        open={showOwnWalletSheet}
+        onOpenChange={setShowOwnWalletSheet}
+        wallets={selectableWallets}
+        activeWalletIndex={activeWalletIndex}
+        shortenAddress={shortenAddress}
+        onSelect={(address) => onToAddressChange(address)}
+      />
       {!hideTokenSelect && (
         <div className="form-group">
           <label>Token:</label>
