@@ -2,7 +2,7 @@ import React from 'react'
 import { useI18n } from '../../i18n'
 import { TESTID } from '../testids'
 
-export type BottomTab = 'wallet' | 'activity' | 'more'
+export type BottomTab = 'wallet' | 'activity' | 'card' | 'more'
 
 export interface BottomTabBarProps {
   activeTab: BottomTab
@@ -67,6 +67,30 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({
               </svg>
             </span>
             <span className="wallet-bottom-nav__label">{t('activityTab')}</span>
+          </button>
+          <button
+            type="button"
+            className={`wallet-bottom-nav__btn ${activeTab === 'card' ? 'wallet-bottom-nav__btn--active' : ''}`}
+            onClick={() => onSelectTab('card')}
+            data-testid={TESTID.TAB_CARD}
+            aria-label={t('cardTab')}
+          >
+            <span className="wallet-bottom-nav__icon" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="1" y="4" width="22" height="16" rx="3" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </span>
+            <span className="wallet-bottom-nav__label">{t('cardTab')}</span>
           </button>
           <button
             type="button"
