@@ -63,6 +63,7 @@ body.ring-dapp-open .app > .header-actions {
 .app:has(.wallet-main-page) {
   padding: 0;
   display: block;
+  height: 100%;
 }
 
 .card {
