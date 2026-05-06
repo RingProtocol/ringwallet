@@ -1,26 +1,26 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 import './TransactionHistory.css'
-import { useI18n } from '../i18n'
-import { TESTID } from './testids'
-import { ChainFamily } from '../models/ChainType'
+import { useI18n } from '../../i18n'
+import { TESTID } from '../testids'
+import { ChainFamily } from '../../models/ChainType'
 import {
   HISTORY_EVENT_NAME,
   HISTORY_LIMIT,
   mergeTransactions,
   readHistoryCache,
   writeHistoryCache,
-} from '../features/history/client'
+} from '../../features/history/client'
 import {
   getTxRecordKey,
   type HistoryApiResponse,
   type PendingTransactionEventDetail,
   type TxRecord,
-} from '../features/history/types'
-import RpcService from '../services/rpc/rpcService'
-import { ACCOUNT_HISTORY_URL } from '../server/urls'
-import { addToken, getTokenList } from '../utils/tokenStorage'
-import { resolveTokenMetadata } from '../services/rpc/tokenMetadataResolver'
+} from '../../features/history/types'
+import RpcService from '../../services/rpc/rpcService'
+import { ACCOUNT_HISTORY_URL } from '../../server/urls'
+import { addToken, getTokenList } from '../../utils/tokenStorage'
+import { resolveTokenMetadata } from '../../services/rpc/tokenMetadataResolver'
 
 export type TransactionHistoryAssetFilter =
   | { kind: 'native' }

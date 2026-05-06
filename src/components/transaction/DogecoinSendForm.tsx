@@ -10,7 +10,7 @@ import SendFormLayout from './SendFormLayout'
 import SendConfirmPreview from './SendConfirmPreview'
 import TransactionSheet from './TransactionSheet'
 import ChainIcon from '../ChainIcon'
-import '../QuickActionBar.css'
+import '../common/QuickActionBar.css'
 import { formatChainTokenBalance } from '../../features/balance/balanceManager'
 
 interface DogecoinSendFormProps {

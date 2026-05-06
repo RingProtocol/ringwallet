@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import '../QuickActionBar.css'
+import '../common/QuickActionBar.css'
 import { useI18n } from '../../i18n'
 
 interface ReceiveDialogProps {

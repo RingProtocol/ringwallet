@@ -2,7 +2,7 @@ import React from 'react'
 import { useI18n } from '../../i18n'
 import TransactionHistory, {
   type TransactionHistoryAssetFilter,
-} from '../TransactionHistory'
+} from '../history/TransactionHistory'
 import type { ChainToken } from '../../models/ChainTokens'
 
 export interface TokenDetailActivityProps {

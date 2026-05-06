@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { ChainFamily, type Chain } from '../models/ChainType'
-import { safeGetItem, safeSetItem } from '../utils/safeStorage'
-import { TESTID } from './testids'
+import { useAuth } from '../../contexts/AuthContext'
+import { ChainFamily, type Chain } from '../../models/ChainType'
+import { safeGetItem, safeSetItem } from '../../utils/safeStorage'
+import { TESTID } from './../testids'
 import './AddChainPage.css'
 
 const USER_CHAINS_KEY = 'user_added_chain_ids'

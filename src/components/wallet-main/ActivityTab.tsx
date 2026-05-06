@@ -1,5 +1,5 @@
 import React from 'react'
-import TransactionHistory from '../TransactionHistory'
+import TransactionHistory from '../history/TransactionHistory'
 import { useI18n } from '../../i18n'
 
 export const ActivityTabHeader: React.FC = () => {

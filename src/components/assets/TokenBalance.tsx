@@ -2,8 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react'
 import {
   chainToAccountAssetsNetwork,
   FEATURED_TESTNET_IDS,
-} from '../config/chains'
-import { useAuth } from '../contexts/AuthContext'
+} from '../../config/chains'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   chainTokenChangePercentLabel,
   chainTokenDisplayName,
@@ -13,16 +13,16 @@ import {
   formatUsdUnitPrice,
   sortChainTokensForDisplay,
   partitionTokens,
-} from '../features/balance/balanceManager'
-import type { ChainToken } from '../models/ChainTokens'
-import { useTokenCacheNotifier } from '../hooks/useTokenCacheNotifier'
-import { getTokensForNetwork } from '../models/ChainTokens'
-import { addToken } from '../utils/tokenStorage'
+} from '../../features/balance/balanceManager'
+import type { ChainToken } from '../../models/ChainTokens'
+import { useTokenCacheNotifier } from '../../hooks/useTokenCacheNotifier'
+import { getTokensForNetwork } from '../../models/ChainTokens'
+import { addToken } from '../../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
-import ChainIcon from './ChainIcon'
+import ChainIcon from './../ChainIcon'
 import './TokenBalance.css'
-import { useI18n } from '../i18n'
-import { TESTID } from './testids'
+import { useI18n } from '../../i18n'
+import { TESTID } from './../testids'
 
 interface TokenBalanceProps {
   tokens: ChainToken[]

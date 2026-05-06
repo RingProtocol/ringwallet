@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
-import TokenDetailPage from '../TokenDetailPage'
-import AddChainPage from '../AddChainPage'
+import TokenDetailPage from '../detail/TokenDetailPage'
+import AddChainPage from '../chains/AddChainPage'
 import type { ChainToken } from '../../models/ChainTokens'
 import { useAuth } from '../../contexts/AuthContext'
 import { useBalanceManager } from '../../hooks/useBalanceManager'

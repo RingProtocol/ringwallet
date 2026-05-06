@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { useSwapSigner } from './swap/useSwapSigner'
-import SwapDialog from './swap/SwapDialog'
-import { isRingV2Supported } from './swap/ringV2Constants'
-import { isKyberAggregatorSupported } from './swap/kyberConstants'
-import { useAuth } from '../contexts/AuthContext'
-import { WalletType } from '../models/WalletType'
-import type { SendTokenOption } from './transaction/types'
+import { useSwapSigner } from '../swap/useSwapSigner'
+import SwapDialog from '../swap/SwapDialog'
+import { isRingV2Supported } from '../swap/ringV2Constants'
+import { isKyberAggregatorSupported } from '../swap/kyberConstants'
+import { useAuth } from '../../contexts/AuthContext'
+import { WalletType } from '../../models/WalletType'
+import type { SendTokenOption } from '../transaction/types'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -14,18 +14,18 @@ import {
   DogecoinSendForm,
   ReceiveDialog,
   SendTokenPickerSheet,
-} from './transaction'
-import { useI18n } from '../i18n'
-import { TESTID } from './testids'
+} from '../transaction'
+import { useI18n } from '../../i18n'
+import { TESTID } from '../testids'
 import Toast from './Toast'
-import EarnDialog from './earn/EarnDialog'
-import { useIsEarnSupported } from './earn/useEarnSdk'
-import { useDAppList } from '../features/dapps/hooks/useDAppList'
-import DAppContainer from '../features/dapps/components/DAppContainer'
-import DAppCard from '../features/dapps/components/DAppCard'
-import TransactionSheet from './transaction/TransactionSheet'
-import type { DAppInfo } from '../features/dapps/types/dapp'
-import '../features/dapps/components/DApps.css'
+import EarnDialog from '../earn/EarnDialog'
+import { useIsEarnSupported } from '../earn/useEarnSdk'
+import { useDAppList } from '../../features/dapps/hooks/useDAppList'
+import DAppContainer from '../../features/dapps/components/DAppContainer'
+import DAppCard from '../../features/dapps/components/DAppCard'
+import TransactionSheet from '../transaction/TransactionSheet'
+import type { DAppInfo } from '../../features/dapps/types/dapp'
+import '../../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
 /* ── ActionCircleEntry (single action button) ── */

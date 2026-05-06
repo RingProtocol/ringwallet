@@ -1,0 +1,37 @@
+.title-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.title-bar__back {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.title-bar__back:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.title-bar__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title-bar__right {
+  flex-shrink: 0;
+}
