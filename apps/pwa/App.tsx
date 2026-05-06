@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LoginButton from '@/components/LoginButton'
 import Introduce from '@/components/Introduce'
@@ -12,28 +12,6 @@ import './App.css'
 function AppContent() {
   const { isLoggedIn } = useAuth()
   const [guestDrawerOpen, setGuestDrawerOpen] = useState(false)
-
-  //fix: for fullscreen.
-  useEffect(() => {
-    const setVH = () => {
-      const h =
-        window.visualViewport?.height ||
-        window.outerHeight ||
-        window.innerHeight
-      document.documentElement.style.setProperty('--vh', `${h * 0.01}px`)
-    }
-    window.addEventListener('resize', setVH)
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', setVH)
-    }
-    setVH()
-    return () => {
-      window.removeEventListener('resize', setVH)
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', setVH)
-      }
-    }
-  }, [])
 
   return (
     <div className="app">
