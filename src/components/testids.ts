@@ -40,6 +40,7 @@ export const TESTID = {
   // Bottom nav (main wallet shell)
   TAB_WALLET: 'tab-wallet',
   TAB_ACTIVITY: 'tab-activity',
+  TAB_CARD: 'tab-card',
   TAB_MORE: 'tab-more',
   /** @deprecated Use TAB_WALLET; kept for older tests */
   TAB_ASSETS: 'tab-assets',
