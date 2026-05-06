@@ -39,12 +39,24 @@
   --ring-radius-pill: 9999px;
 }
 
-html,
-body,
+html {
+  height: 100%;
+  height: 100dvh;
+  height: -webkit-fill-available;
+}
+
+body {
+  height: 100%;
+  height: 100dvh;
+  height: -webkit-fill-available;
+  min-height: 100dvh;
+}
+
 #root {
   height: 100%;
+  height: 100dvh;
+  height: -webkit-fill-available;
   min-height: 100dvh;
-  min-height: -webkit-fill-available;
   overflow: hidden;
   overscroll-behavior: none;
 }
