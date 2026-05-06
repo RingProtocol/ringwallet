@@ -21,7 +21,7 @@ import Toast from './Toast'
 import EarnDialog from '../earn/EarnDialog'
 import { useIsEarnSupported } from '../earn/useEarnSdk'
 import { useDAppList } from '../../features/dapps/hooks/useDAppList'
-import DAppContainer from '../../features/dapps/components/DAppContainer'
+import DAppContainerPage from '../../features/dapps/components/DAppContainerPage'
 import DAppCard from '../../features/dapps/components/DAppCard'
 import TransactionSheet from '../transaction/TransactionSheet'
 import type { DAppInfo } from '../../features/dapps/types/dapp'
@@ -530,7 +530,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
       )}
 
       {activeDApp && (
-        <DAppContainer dapp={activeDApp} onBack={() => setActiveDApp(null)} />
+        <DAppContainerPage
+          dapp={activeDApp}
+          onBack={() => setActiveDApp(null)}
+        />
       )}
 
       <Toast
