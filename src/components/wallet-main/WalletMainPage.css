@@ -1,6 +1,6 @@
 /* Shell: Wallet tab = gradient hero (nav + balance/actions); Activity/More = slim top strip only + scroll + bottom dock. */
 .wallet-main-page {
-  position: fixed;
+  position: absolute;
   inset: 0;
   min-width: 0;
   display: flex;
