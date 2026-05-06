@@ -4,8 +4,8 @@
 @import '../src/components/Introduce.css';
 @import '../src/components/LegalNotice.css';
 @import '../src/components/RingWalletLogo.css';
-@import '../src/components/WalletSwitcher.css';
-@import '../src/components/fullscreencomps/ChainSwitcher.css';
-@import '../src/components/AddChainPage.css';
-@import '../src/components/NativeBalance.css';
+@import '../src/components/accounts/WalletSwitcher.css';
+@import '../src/components/chains/ChainSwitcher.css';
+@import '../src/components/chains/AddChainPage.css';
+@import '../src/components/assets/NativeBalance.css';
 @import '../src/features/dapps/components/DApps.css';

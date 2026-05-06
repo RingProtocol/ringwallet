@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ethers } from 'ethers'
-import type { Chain } from '../models/ChainType'
-import RpcService from '../services/rpc/rpcService'
+import type { Chain } from '../../models/ChainType'
+import RpcService from '../../services/rpc/rpcService'
 import './ImportTokenDialog.css'
-import { useI18n } from '../i18n'
+import { useI18n } from '../../i18n'
 
 export interface ImportedTokenInfo {
   symbol: string

@@ -1,6 +1,6 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import '../QuickActionBar.css'
+import '../common/QuickActionBar.css'
 
 interface TransactionSheetProps {
   children: React.ReactNode

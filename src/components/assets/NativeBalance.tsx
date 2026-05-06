@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { useI18n } from '../i18n'
+import { useAuth } from '../../contexts/AuthContext'
+import { useI18n } from '../../i18n'
 import './NativeBalance.css'
-import { TESTID } from './testids'
+import { TESTID } from './../testids'
 
 function shortenAddress(address: string): string {
   if (address.length <= 12) return address

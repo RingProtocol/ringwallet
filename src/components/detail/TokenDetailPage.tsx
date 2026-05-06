@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from 'react'
-import { useSwapSigner } from './swap/useSwapSigner'
-import SwapDialog from './swap/SwapDialog'
-import { isRingV2Supported } from './swap/ringV2Constants'
-import { isKyberAggregatorSupported } from './swap/kyberConstants'
-import { useAuth } from '../contexts/AuthContext'
-import { WalletType } from '../models/WalletType'
-import type { ChainToken } from '../models/ChainTokens'
-import type { Chain } from '../models/ChainType'
+import { useSwapSigner } from '../swap/useSwapSigner'
+import SwapDialog from '../swap/SwapDialog'
+import { isRingV2Supported } from '../swap/ringV2Constants'
+import { isKyberAggregatorSupported } from '../swap/kyberConstants'
+import { useAuth } from '../../contexts/AuthContext'
+import { WalletType } from '../../models/WalletType'
+import type { ChainToken } from '../../models/ChainTokens'
+import type { Chain } from '../../models/ChainType'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -14,9 +14,9 @@ import {
   BitcoinSendForm,
   DogecoinSendForm,
   ReceiveDialog,
-} from './transaction'
-import type { SendTokenOption } from './transaction/types'
-import { useI18n } from '../i18n'
+} from '../transaction'
+import type { SendTokenOption } from '../transaction/types'
+import { useI18n } from '../../i18n'
 import './TokenDetailPage.css'
 import {
   TokenDetailHeader,
@@ -24,9 +24,9 @@ import {
   TokenDetailPriceChart,
   TokenDetailInfo,
   TokenDetailActivity,
-} from './detail'
-import { ActionCircleEntry } from './QuickActionBar'
-import { TESTID } from './testids'
+} from '.'
+import { ActionCircleEntry } from '../common/QuickActionBar'
+import { TESTID } from '../testids'
 
 export interface TokenDetailPageProps {
   token: ChainToken
