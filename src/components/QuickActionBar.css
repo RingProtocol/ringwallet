@@ -1392,3 +1392,26 @@
     opacity: 1;
   }
 }
+
+/* ── DApp list inside dark sheet ── */
+
+.modal-content--sheet .dapp-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--ring-border, rgba(255, 255, 255, 0.1));
+}
+
+.modal-content--sheet .dapp-card__name {
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.modal-content--sheet .dapp-card__desc {
+  color: var(--ring-text-secondary, #888);
+}
+
+.modal-content--sheet .dapp-list__empty {
+  color: var(--ring-text-secondary, #888);
+}
+
+.modal-content--sheet .dapp-list__loading {
+  color: var(--ring-text-secondary, #888);
+}
