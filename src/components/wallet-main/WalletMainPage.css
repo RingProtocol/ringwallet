@@ -324,7 +324,7 @@
   align-items: stretch;
   justify-content: space-around;
   gap: 2px;
-  padding: 6px 6px 8px;
+  padding: 6px 6px 2px;
   width: 100%;
   max-width: 100%;
   min-width: 0;

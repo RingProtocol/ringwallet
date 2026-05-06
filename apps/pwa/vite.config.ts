@@ -30,7 +30,7 @@ export default defineConfig({
       workbox: {
         // Exclude large vendor chunks from SW precache; they are loaded on demand
         globPatterns: ['**/*.{html,css}', 'assets/index-*.js'],
-        maximumFileSizeToCacheInBytes: 600 * 1024,
+        maximumFileSizeToCacheInBytes: 2000 * 1024,
         // Use development mode to avoid workbox's internal terser minification
         // which crashes on large precache manifests (workbox-build v7 known issue)
         mode: 'development',
