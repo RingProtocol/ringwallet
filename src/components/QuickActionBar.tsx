@@ -397,7 +397,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
               <path d="M6 20v-6" />
             </svg>
           }
-          label="u卡"
+          label={t('walletActionUCard')}
           onClick={() => showToast('Comming soon')}
           testId={TESTID.PREDICT_BUTTON}
         />
