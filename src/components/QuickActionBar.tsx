@@ -20,6 +20,12 @@ import { TESTID } from './testids'
 import Toast from './Toast'
 import EarnDialog from './earn/EarnDialog'
 import { useIsEarnSupported } from './earn/useEarnSdk'
+import { useDAppList } from '../features/dapps/hooks/useDAppList'
+import DAppContainer from '../features/dapps/components/DAppContainer'
+import DAppCard from '../features/dapps/components/DAppCard'
+import TransactionSheet from './transaction/TransactionSheet'
+import type { DAppInfo } from '../features/dapps/types/dapp'
+import '../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
 /* ── ActionCircleEntry (single action button) ── */
@@ -117,17 +123,22 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
     undefined
   )
+  const [toastMessage, setToastMessage] = useState('Comming soon')
   const [toastVisible, setToastVisible] = useState(false)
-  const [devMode, setDevMode] = useState(
-    () => localStorage.getItem('ring:devMode') === '1'
-  )
+  const [activeDApp, setActiveDApp] = useState<DAppInfo | null>(null)
+  const [dappListOpen, setDappListOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () =>
-      setDevMode(localStorage.getItem('ring:devMode') === '1')
-    window.addEventListener('ring:dev-mode-changed', handler)
-    return () => window.removeEventListener('ring:dev-mode-changed', handler)
-  }, [])
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setToastVisible(true)
+  }
+
+  const {
+    dapps,
+    loading: dappsLoading,
+    error: dappsError,
+    reload,
+  } = useDAppList()
 
   useEffect(() => {
     if (initialToken) {
@@ -224,6 +235,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
   const handleMoonPayClick = () => {
     if (!moonPayApiKey || !moonPayCurrencyCode) {
+      setToastMessage(t('serviceNotAvailable'))
       setToastVisible(true)
       return
     }
@@ -319,133 +331,120 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           title={swapButtonTitle}
           testId={TESTID.SWAP_BUTTON}
         />
-        {showMoonPayEntry && (
-          <ActionCircleEntry
-            variantClass="action-circle-entry--buy"
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            }
-            label={t('walletActionBuy')}
-            onClick={handleMoonPayClick}
-            title={moonPayButtonTitle}
-            testId={TESTID.BUY_BUTTON}
-          />
-        )}
-        {devMode && (
-          <ActionCircleEntry
-            variantClass="action-circle-entry--earn"
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2v20M2 12h20" />
-                <circle cx="12" cy="12" r="10" opacity="0.2" />
-              </svg>
-            }
-            label={t('walletActionEarn')}
-            onClick={() => setShowEarn(true)}
-            disabled={!canUseEarn}
-            title={earnButtonTitle}
-            testId={TESTID.EARN_BUTTON}
-          />
-        )}
-        {devMode && (
-          <ActionCircleEntry
-            variantClass="action-circle-entry--predict"
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 20V10" />
-                <path d="M12 20V4" />
-                <path d="M6 20v-6" />
-              </svg>
-            }
-            label={t('walletActionPredict')}
-            onClick={() => {}}
-            disabled
-            title={t('comingSoon')}
-            testId={TESTID.PREDICT_BUTTON}
-          />
-        )}
-        {devMode && (
-          <ActionCircleEntry
-            variantClass="action-circle-entry--dapp"
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-            }
-            label={t('walletActionDapp')}
-            onClick={() => {}}
-            disabled
-            title={t('comingSoon')}
-            testId={TESTID.DAPP_BUTTON}
-          />
-        )}
-        {devMode && (
-          <ActionCircleEntry
-            variantClass="action-circle-entry--bridge"
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 9l6 6 6-6" />
-                <path d="M6 15l6-6 6 6" />
-              </svg>
-            }
-            label={t('walletActionBridge')}
-            onClick={() => {}}
-            disabled
-            title={t('comingSoon')}
-            testId={TESTID.BRIDGE_BUTTON}
-          />
-        )}
+        <ActionCircleEntry
+          variantClass="action-circle-entry--buy"
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          }
+          label={t('walletActionBuy')}
+          onClick={handleMoonPayClick}
+          disabled={!showMoonPayEntry}
+          title={moonPayButtonTitle}
+          testId={TESTID.BUY_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--earn"
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 2v20M2 12h20" />
+              <circle cx="12" cy="12" r="10" opacity="0.2" />
+            </svg>
+          }
+          label={t('walletActionEarn')}
+          onClick={() =>
+            canUseEarn ? setShowEarn(true) : showToast('Comming soon')
+          }
+          disabled={!canUseEarn}
+          title={earnButtonTitle}
+          testId={TESTID.EARN_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--predict"
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 20V10" />
+              <path d="M12 20V4" />
+              <path d="M6 20v-6" />
+            </svg>
+          }
+          label="u卡"
+          onClick={() => showToast('Comming soon')}
+          testId={TESTID.PREDICT_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--dapp"
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          }
+          label={t('walletActionDapp')}
+          onClick={() => setDappListOpen(true)}
+          testId={TESTID.DAPP_BUTTON}
+        />
+        <ActionCircleEntry
+          variantClass="action-circle-entry--bridge"
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 9l6 6 6-6" />
+              <path d="M6 15l6-6 6 6" />
+            </svg>
+          }
+          label={t('walletActionBridge')}
+          onClick={() => showToast('Comming soon')}
+          testId={TESTID.BRIDGE_BUTTON}
+        />
       </div>
 
       {showSend &&
@@ -471,8 +470,71 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
       {showEarn && <EarnDialog onClose={() => setShowEarn(false)} />}
 
+      {dappListOpen && (
+        <TransactionSheet variant="sheet">
+          <div className="dapp-list">
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  color: 'var(--ring-text-primary, #f3f4f6)',
+                }}
+              >
+                {t('dappsTab')}
+              </h3>
+              <button
+                className="dapp-list__retry-btn"
+                onClick={() => setDappListOpen(false)}
+              >
+                {t('close')}
+              </button>
+            </div>
+            {dappsLoading && (
+              <div className="dapp-list__loading">
+                <div className="dapp-list__spinner" />
+                <span>{t('loadingDapps')}</span>
+              </div>
+            )}
+            {dappsError && (
+              <div className="dapp-list__error">
+                <span>{t('loadingFailed', { error: dappsError })}</span>
+                <button className="dapp-list__retry-btn" onClick={reload}>
+                  {t('retry')}
+                </button>
+              </div>
+            )}
+            {!dappsLoading && !dappsError && (
+              <div className="dapp-list__grid">
+                {dapps.map((d) => (
+                  <DAppCard
+                    key={d.id}
+                    dapp={d}
+                    onClick={(dapp) => {
+                      setActiveDApp(dapp)
+                      setDappListOpen(false)
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </TransactionSheet>
+      )}
+
+      {activeDApp && (
+        <DAppContainer dapp={activeDApp} onBack={() => setActiveDApp(null)} />
+      )}
+
       <Toast
-        message={t('serviceNotAvailable')}
+        message={toastMessage}
         visible={toastVisible}
         onClose={() => setToastVisible(false)}
         duration={2000}
