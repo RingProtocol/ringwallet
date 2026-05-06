@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import DAppList from './DAppList'
-import DAppContainer from './DAppContainer'
+import DAppContainerPage from './DAppContainerPage'
 import type { DAppInfo } from '../types/dapp'
 import './DApps.css'
 
@@ -36,7 +36,7 @@ const DAppsPage: React.FC<DAppsPageProps> = ({ onOpenSettings }) => {
 
   if (activeDApp) {
     return (
-      <DAppContainer
+      <DAppContainerPage
         dapp={activeDApp}
         onBack={() => setActiveDApp(null)}
         onOpenSettings={onOpenSettings}
