@@ -10,6 +10,7 @@ import BottomTabBar from './BottomTabBar'
 import { WalletTabHeader, WalletTabBody } from './WalletTab'
 import { ActivityTabHeader, ActivityTabBody } from './ActivityTab'
 import { MoreTabHeader, MoreTabBody } from './MoreTab'
+import { CardTabHeader, CardTabBody } from '../../features/card/components/CardTab'
 import type { BottomTab } from './BottomTabBar'
 import './WalletMainPage.css'
 
@@ -25,7 +26,7 @@ export interface WalletMainPageProps {
   className?: string
 }
 
-const TAB_QUERY_KEYS: BottomTab[] = ['wallet', 'activity', 'more']
+const TAB_QUERY_KEYS: BottomTab[] = ['wallet', 'activity', 'card', 'more']
 
 function getInitialBottomTab(): BottomTab {
   if (typeof window === 'undefined') return 'wallet'
@@ -140,6 +141,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
         />
       )}
       {bottomTab === 'activity' && <ActivityTabHeader />}
+      {bottomTab === 'card' && <CardTabHeader />}
       {bottomTab === 'more' && <MoreTabHeader />}
 
       {/* ─── Scrollable content (grid row 2) ─── */}
@@ -152,6 +154,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           />
         )}
         {bottomTab === 'activity' && <ActivityTabBody />}
+        {bottomTab === 'card' && <CardTabBody />}
         {bottomTab === 'more' && (
           <MoreTabBody
             appVersion={appVersion}
