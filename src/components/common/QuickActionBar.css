@@ -202,7 +202,7 @@
 .modal-content--sheet {
   width: min(100%, 420px);
   max-width: min(100%, 420px);
-  max-height: min(82vh, 720px);
+  max-height: min(66.67vh, 720px);
   margin: 0 auto;
   padding: 24px 20px 20px;
   border-radius: 24px 24px 0 0;
