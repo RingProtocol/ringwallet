@@ -1,4 +1,6 @@
-const API_BASE = 'https://gamma-api.polymarket.com'
+import { SERVER_URL } from '../server/urls'
+
+const API_BASE = SERVER_URL
 
 export interface PolymarketMarket {
   question: string
@@ -13,18 +15,25 @@ export interface PolymarketMarket {
 export async function fetchPolymarketMarkets(
   limit = 20
 ): Promise<PolymarketMarket[]> {
-  const params = new URLSearchParams({
-    active: 'true',
-    closed: 'false',
-    limit: String(limit),
-    sortBy: 'volume24hr',
-    sortDirection: 'desc',
+  const res = await fetch(`${API_BASE}/v1/prediction_markets`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      source: 'polymarket',
+      active: true,
+      closed: false,
+      limit,
+      order: 'volume_24hr',
+      ascending: false,
+    }),
   })
-  const res = await fetch(`${API_BASE}/markets?${params.toString()}`)
   if (!res.ok) {
-    throw new Error(`Polymarket API error: HTTP ${res.status}`)
+    throw new Error(`Prediction market API error: HTTP ${res.status}`)
   }
-  return res.json()
+  const json = await res.json()
+  return json.data ?? []
 }
 
 export function formatPolymarketVolume(volumeStr: string): string {
