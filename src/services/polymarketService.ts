@@ -41,7 +41,7 @@ export async function fetchPolymarketMarkets(
 }
 
 export async function fetchPolymarketMarketDetail(
-  id: string | number
+  slug: string
 ): Promise<unknown> {
   const res = await fetch(`${API_BASE}/v1/prediction_markets/detail`, {
     method: 'POST',
@@ -51,7 +51,7 @@ export async function fetchPolymarketMarketDetail(
     },
     body: JSON.stringify({
       source: 'polymarket',
-      id,
+      slug,
     }),
   })
   if (!res.ok) {
