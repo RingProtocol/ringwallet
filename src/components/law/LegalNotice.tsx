@@ -1,5 +1,5 @@
 import React from 'react'
-import { useI18n } from '../i18n'
+import { useI18n } from '../../i18n'
 import './LegalNotice.css'
 
 const LegalNotice: React.FC = () => {

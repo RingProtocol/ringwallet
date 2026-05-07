@@ -31,10 +31,13 @@ describe('polymarketService', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(MOCK_MARKETS), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        })
+        new Response(
+          JSON.stringify({ source: 'polymarket', data: MOCK_MARKETS }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
       )
     )
   })
@@ -45,21 +48,26 @@ describe('polymarketService', () => {
   })
 
   describe('fetchPolymarketMarkets', () => {
-    it('fetches markets from Gamma API with correct query params', async () => {
+    it('fetches markets from proxy server with correct body', async () => {
       const markets = await fetchPolymarketMarkets(10)
       const fetchMock = vi.mocked(global.fetch)
       expect(fetchMock).toHaveBeenCalledTimes(1)
 
-      const calledUrl = String(fetchMock.mock.calls[0][0])
-      const url = new URL(calledUrl)
-      expect(url.origin + url.pathname).toBe(
-        'https://gamma-api.polymarket.com/markets'
-      )
-      expect(url.searchParams.get('active')).toBe('true')
-      expect(url.searchParams.get('closed')).toBe('false')
-      expect(url.searchParams.get('limit')).toBe('10')
-      expect(url.searchParams.get('sortBy')).toBe('volume24hr')
-      expect(url.searchParams.get('sortDirection')).toBe('desc')
+      const [calledUrl, calledInit] = fetchMock.mock.calls[0]
+      expect(calledUrl).toBe('https://wapi.testring.org/v1/prediction_markets')
+      expect(calledInit?.method).toBe('POST')
+      expect(calledInit?.headers).toEqual({
+        'Content-Type': 'application/json',
+      })
+      const body = JSON.parse(calledInit?.body as string)
+      expect(body).toEqual({
+        source: 'polymarket',
+        active: true,
+        closed: false,
+        limit: 10,
+        order: 'volume_24hr',
+        ascending: false,
+      })
     })
 
     it('returns parsed market array on success', async () => {
@@ -80,7 +88,7 @@ describe('polymarketService', () => {
           )
       )
       await expect(fetchPolymarketMarkets()).rejects.toThrow(
-        'Polymarket API error: HTTP 500'
+        'Prediction market API error: HTTP 500'
       )
     })
   })
