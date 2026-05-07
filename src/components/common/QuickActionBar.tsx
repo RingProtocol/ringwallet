@@ -30,6 +30,7 @@ import {
   getBridgeNameFromUrl,
   CHAIN_BRIDGE_URLS,
 } from '../../config/bridgeUrls'
+import PolymarketListPage from '../predict/PolymarketListPage'
 import '../../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
@@ -134,6 +135,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [dappListOpen, setDappListOpen] = useState(false)
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
   const [bridgeDApp, setBridgeDApp] = useState<DAppInfo | null>(null)
+  const [predictListOpen, setPredictListOpen] = useState(false)
+  const [predictDApp, setPredictDApp] = useState<DAppInfo | null>(null)
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -431,8 +434,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
               <path d="M6 20v-6" />
             </svg>
           }
-          label={t('walletActionUCard')}
-          onClick={() => showToast('Comming soon')}
+          label={t('walletActionPredict')}
+          onClick={() => setPredictListOpen(true)}
           testId={TESTID.PREDICT_BUTTON}
         />
         <ActionCircleEntry
@@ -604,12 +607,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
                   >
                     <img
                       className="dapp-card__icon"
-                      src=""
+                      src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="%23667eea"/><text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">B</text></svg>'
                       alt={bridgeName}
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).src =
-                          'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect width=%2240%22 height=%2240%22 rx=%228%22 fill=%22%23667eea%22/><text x=%2220%22 y=%2226%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2218%22 font-family=%22sans-serif%22>B</text></svg>'
-                      }}
                     />
                     <div className="dapp-card__info">
                       <span className="dapp-card__name">
@@ -648,6 +647,20 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         <DAppContainerPage
           dapp={bridgeDApp}
           onBack={() => setBridgeDApp(null)}
+        />
+      )}
+
+      {predictListOpen && (
+        <PolymarketListPage
+          onClose={() => setPredictListOpen(false)}
+          onSelectMarket={(dapp) => setPredictDApp(dapp)}
+        />
+      )}
+
+      {predictDApp && (
+        <DAppContainerPage
+          dapp={predictDApp}
+          onBack={() => setPredictDApp(null)}
         />
       )}
 
