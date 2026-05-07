@@ -25,6 +25,11 @@ import DAppContainerPage from '../../features/dapps/components/DAppContainerPage
 import DAppCard from '../../features/dapps/components/DAppCard'
 import TransactionSheet from '../transaction/TransactionSheet'
 import type { DAppInfo } from '../../features/dapps/types/dapp'
+import {
+  getBridgeUrlsForChain,
+  getBridgeNameFromUrl,
+  CHAIN_BRIDGE_URLS,
+} from '../../config/bridgeUrls'
 import '../../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
@@ -127,6 +132,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [toastVisible, setToastVisible] = useState(false)
   const [activeDApp, setActiveDApp] = useState<DAppInfo | null>(null)
   const [dappListOpen, setDappListOpen] = useState(false)
+  const [bridgeListOpen, setBridgeListOpen] = useState(false)
+  const [bridgeDApp, setBridgeDApp] = useState<DAppInfo | null>(null)
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -232,6 +239,33 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (!canUseRingSwap) return
     setSwapDappOpen(true)
   }
+
+  const handleBridgeClick = () => {
+    setBridgeListOpen(true)
+  }
+
+  const handleSelectBridge = (url: string) => {
+    const bridgeInfo: DAppInfo = {
+      id: -Math.abs(
+        url.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)
+      ),
+      name: getBridgeNameFromUrl(url),
+      description: new URL(url).hostname,
+      url,
+      icon: '',
+      chains: [],
+      category: 'bridge',
+      top: 0,
+    }
+    setBridgeDApp(bridgeInfo)
+    setBridgeListOpen(false)
+  }
+
+  const bridgeUrls = getBridgeUrlsForChain(activeChain?.id ?? 0)
+  const recommendedBridgeUrl =
+    typeof activeChain?.id === 'number'
+      ? CHAIN_BRIDGE_URLS[activeChain.id]
+      : undefined
 
   const handleMoonPayClick = () => {
     if (!moonPayApiKey || !moonPayCurrencyCode) {
@@ -442,7 +476,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             </svg>
           }
           label={t('walletActionBridge')}
-          onClick={() => showToast('Comming soon')}
+          onClick={handleBridgeClick}
           testId={TESTID.BRIDGE_BUTTON}
         />
       </div>
@@ -527,6 +561,94 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             )}
           </div>
         </TransactionSheet>
+      )}
+
+      {bridgeListOpen && (
+        <TransactionSheet variant="sheet">
+          <div className="dapp-list">
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  color: 'var(--ring-text-primary, #f3f4f6)',
+                }}
+              >
+                {t('bridgeDapps')}
+              </h3>
+              <button
+                className="dapp-list__retry-btn"
+                onClick={() => setBridgeListOpen(false)}
+              >
+                {t('close')}
+              </button>
+            </div>
+            <div className="dapp-list__grid">
+              {bridgeUrls.map((url, index) => {
+                const isRecommended =
+                  index === 0 && url === recommendedBridgeUrl
+                const bridgeName = getBridgeNameFromUrl(url)
+                return (
+                  <button
+                    key={url}
+                    className="dapp-card"
+                    onClick={() => handleSelectBridge(url)}
+                    style={{ position: 'relative' }}
+                  >
+                    <img
+                      className="dapp-card__icon"
+                      src=""
+                      alt={bridgeName}
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).src =
+                          'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect width=%2240%22 height=%2240%22 rx=%228%22 fill=%22%23667eea%22/><text x=%2220%22 y=%2226%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2218%22 font-family=%22sans-serif%22>B</text></svg>'
+                      }}
+                    />
+                    <div className="dapp-card__info">
+                      <span className="dapp-card__name">
+                        {bridgeName}
+                        {isRecommended && (
+                          <span
+                            style={{
+                              marginLeft: 8,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              background:
+                                'linear-gradient(135deg, #667eea, #764ba2)',
+                              color: '#fff',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {t('recommended')}
+                          </span>
+                        )}
+                      </span>
+                      <span className="dapp-card__desc">
+                        {new URL(url).hostname}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </TransactionSheet>
+      )}
+
+      {bridgeDApp && (
+        <DAppContainerPage
+          dapp={bridgeDApp}
+          onBack={() => setBridgeDApp(null)}
+        />
       )}
 
       {activeDApp && (
