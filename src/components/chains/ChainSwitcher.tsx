@@ -233,11 +233,11 @@ const ChainSwitcher: React.FC = () => {
         onClick={toggleDropdown}
         data-testid={TESTID.CHAIN_SWITCHER_TRIGGER}
       >
-        <div className="chain-icon">
+        <div className="chain-switcher-icon">
           <ChainIcon
             icon={activeChain.icon}
             symbol={activeChain.symbol}
-            size={20}
+            size={18}
           />
         </div>
         <div className="chain-info">
