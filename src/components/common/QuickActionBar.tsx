@@ -18,7 +18,7 @@ import {
 import { useI18n } from '../../i18n'
 import { TESTID } from '../testids'
 import Toast from './Toast'
-import EarnDialog from '../earn/EarnDialog'
+import EarnPage from '../earn/EarnPage'
 import { useIsEarnSupported } from '../earn/useEarnSdk'
 import { useDAppList } from '../../features/dapps/hooks/useDAppList'
 import DAppContainerPage from '../../features/dapps/components/DAppContainerPage'
@@ -505,7 +505,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         />
       )}
 
-      {showEarn && <EarnDialog onClose={() => setShowEarn(false)} />}
+      {showEarn && <EarnPage onClose={() => setShowEarn(false)} />}
 
       {dappListOpen && (
         <TransactionSheet variant="sheet">
