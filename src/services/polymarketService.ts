@@ -13,7 +13,8 @@ export interface PolymarketMarket {
 }
 
 export async function fetchPolymarketMarkets(
-  limit = 20
+  limit = 20,
+  offset = 0
 ): Promise<PolymarketMarket[]> {
   const res = await fetch(`${API_BASE}/v1/prediction_markets`, {
     method: 'POST',
@@ -26,6 +27,7 @@ export async function fetchPolymarketMarkets(
       active: true,
       closed: false,
       limit,
+      offset,
       order: 'volume_24hr',
       ascending: false,
     }),

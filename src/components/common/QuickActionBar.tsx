@@ -136,7 +136,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
   const [bridgeDApp, setBridgeDApp] = useState<DAppInfo | null>(null)
   const [predictListOpen, setPredictListOpen] = useState(false)
-  const [predictDApp, setPredictDApp] = useState<DAppInfo | null>(null)
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -651,17 +650,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
       )}
 
       {predictListOpen && (
-        <PolymarketListPage
-          onClose={() => setPredictListOpen(false)}
-          onSelectMarket={(dapp) => setPredictDApp(dapp)}
-        />
-      )}
-
-      {predictDApp && (
-        <DAppContainerPage
-          dapp={predictDApp}
-          onBack={() => setPredictDApp(null)}
-        />
+        <PolymarketListPage onClose={() => setPredictListOpen(false)} />
       )}
 
       {activeDApp && (
