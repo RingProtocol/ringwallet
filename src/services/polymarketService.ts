@@ -37,6 +37,27 @@ export async function fetchPolymarketMarkets(
   return json.data ?? []
 }
 
+export async function fetchPolymarketMarketDetail(
+  id: string | number
+): Promise<unknown> {
+  const res = await fetch(`${API_BASE}/v1/prediction_markets/detail`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+    },
+    body: JSON.stringify({
+      source: 'polymarket',
+      id,
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`Prediction market detail API error: HTTP ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data ?? null
+}
+
 export function formatPolymarketVolume(volumeStr: string): string {
   const num = parseFloat(volumeStr) / 1_000_000
   if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`
