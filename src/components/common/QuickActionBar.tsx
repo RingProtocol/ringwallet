@@ -23,7 +23,7 @@ import { useIsEarnSupported } from '../earn/useEarnSdk'
 import { useDAppList } from '../../features/dapps/hooks/useDAppList'
 import DAppContainerPage from '../../features/dapps/components/DAppContainerPage'
 import DAppCard from '../../features/dapps/components/DAppCard'
-import TransactionSheet from '../transaction/TransactionSheet'
+import PopupListLayout from './PopupListLayout'
 import type { DAppInfo } from '../../features/dapps/types/dapp'
 import {
   getBridgeUrlsForChain,
@@ -518,141 +518,92 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
       {showEarn && <EarnPage onClose={() => setShowEarn(false)} />}
 
-      {dappListOpen && (
-        <TransactionSheet variant="sheet">
-          <div className="dapp-list">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: 16,
-                  color: 'var(--ring-text-primary, #f3f4f6)',
-                }}
-              >
-                {t('dappsTab')}
-              </h3>
-              <button
-                className="dapp-list__retry-btn"
-                onClick={() => setDappListOpen(false)}
-              >
-                {t('close')}
-              </button>
-            </div>
-            {dappsLoading && (
-              <div className="dapp-list__loading">
-                <div className="dapp-list__spinner" />
-                <span>{t('loadingDapps')}</span>
-              </div>
-            )}
-            {dappsError && (
-              <div className="dapp-list__error">
-                <span>{t('loadingFailed', { error: dappsError })}</span>
-                <button className="dapp-list__retry-btn" onClick={reload}>
-                  {t('retry')}
-                </button>
-              </div>
-            )}
-            {!dappsLoading && !dappsError && (
-              <div className="dapp-list__grid">
-                {dapps.map((d) => (
-                  <DAppCard
-                    key={d.id}
-                    dapp={d}
-                    onClick={(dapp) => {
-                      setActiveDApp(dapp)
-                      setDappListOpen(false)
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+      <PopupListLayout
+        open={dappListOpen}
+        title={t('dappsTab')}
+        onClose={() => setDappListOpen(false)}
+      >
+        {dappsLoading && (
+          <div className="dapp-list__loading">
+            <div className="dapp-list__spinner" />
+            <span>{t('loadingDapps')}</span>
           </div>
-        </TransactionSheet>
-      )}
+        )}
+        {dappsError && (
+          <div className="dapp-list__error">
+            <span>{t('loadingFailed', { error: dappsError })}</span>
+            <button className="dapp-list__retry-btn" onClick={reload}>
+              {t('retry')}
+            </button>
+          </div>
+        )}
+        {!dappsLoading && !dappsError && (
+          <div className="dapp-list__grid">
+            {dapps.map((d) => (
+              <DAppCard
+                key={d.id}
+                dapp={d}
+                onClick={(dapp) => {
+                  setActiveDApp(dapp)
+                  setDappListOpen(false)
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </PopupListLayout>
 
-      {bridgeListOpen && (
-        <TransactionSheet variant="sheet">
-          <div className="dapp-list">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: 16,
-                  color: 'var(--ring-text-primary, #f3f4f6)',
-                }}
-              >
-                {t('bridgeDapps')}
-              </h3>
+      <PopupListLayout
+        open={bridgeListOpen}
+        title={t('bridgeDapps')}
+        onClose={() => setBridgeListOpen(false)}
+      >
+        <div className="dapp-list__grid">
+          {bridgeUrls.map((url, index) => {
+            const isRecommended = index === 0 && url === recommendedBridgeUrl
+            const bridgeName = getBridgeNameFromUrl(url)
+            return (
               <button
-                className="dapp-list__retry-btn"
-                onClick={() => setBridgeListOpen(false)}
+                key={url}
+                className="dapp-card"
+                onClick={() => handleSelectBridge(url)}
+                style={{ position: 'relative' }}
               >
-                {t('close')}
+                <img
+                  className="dapp-card__icon"
+                  src={getBridgeIconSvg(bridgeName)}
+                  alt={bridgeName}
+                />
+                <div className="dapp-card__info">
+                  <span className="dapp-card__name">
+                    {bridgeName}
+                    {isRecommended && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background:
+                            'linear-gradient(135deg, #667eea, #764ba2)',
+                          color: '#fff',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        {t('recommended')}
+                      </span>
+                    )}
+                  </span>
+                  <span className="dapp-card__desc">
+                    {new URL(url).hostname}
+                  </span>
+                </div>
               </button>
-            </div>
-            <div className="dapp-list__grid">
-              {bridgeUrls.map((url, index) => {
-                const isRecommended =
-                  index === 0 && url === recommendedBridgeUrl
-                const bridgeName = getBridgeNameFromUrl(url)
-                return (
-                  <button
-                    key={url}
-                    className="dapp-card"
-                    onClick={() => handleSelectBridge(url)}
-                    style={{ position: 'relative' }}
-                  >
-                    <img
-                      className="dapp-card__icon"
-                      src={getBridgeIconSvg(bridgeName)}
-                      alt={bridgeName}
-                    />
-                    <div className="dapp-card__info">
-                      <span className="dapp-card__name">
-                        {bridgeName}
-                        {isRecommended && (
-                          <span
-                            style={{
-                              marginLeft: 8,
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              background:
-                                'linear-gradient(135deg, #667eea, #764ba2)',
-                              color: '#fff',
-                              verticalAlign: 'middle',
-                            }}
-                          >
-                            {t('recommended')}
-                          </span>
-                        )}
-                      </span>
-                      <span className="dapp-card__desc">
-                        {new URL(url).hostname}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </TransactionSheet>
-      )}
+            )
+          })}
+        </div>
+      </PopupListLayout>
 
       {bridgeDApp && (
         <DAppContainerPage

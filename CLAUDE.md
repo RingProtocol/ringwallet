@@ -5,6 +5,8 @@
 
 ---
 
+disable-model-invocation: true
+
 ## 1. What This Project Is
 
 **Ring Wallet** is a self-custody PWA crypto wallet:

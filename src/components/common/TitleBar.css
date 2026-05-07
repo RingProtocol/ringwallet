@@ -35,3 +35,9 @@
 .title-bar__right {
   flex-shrink: 0;
 }
+
+.title-bar__spacer {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
