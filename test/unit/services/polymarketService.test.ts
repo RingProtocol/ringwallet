@@ -132,7 +132,7 @@ describe('polymarketService', () => {
       const body = JSON.parse(calledInit?.body as string)
       expect(body).toEqual({
         source: 'polymarket',
-        id: 'will-it-rain',
+        slug: 'will-it-rain',
       })
       expect(detail).toEqual({
         question: 'Will it rain?',
@@ -150,7 +150,7 @@ describe('polymarketService', () => {
           })
         )
       )
-      const detail = await fetchPolymarketMarketDetail(123)
+      const detail = await fetchPolymarketMarketDetail('unknown-slug')
       expect(detail).toBeNull()
     })
 

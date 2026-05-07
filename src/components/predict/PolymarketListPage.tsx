@@ -141,7 +141,6 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
       </div>
       {selectedMarket && (
         <PolymarketDetailPage
-          id={selectedMarket.id}
           slug={selectedMarket.slug}
           onBack={() => setSelectedMarket(null)}
         />
