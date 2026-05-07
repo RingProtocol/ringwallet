@@ -74,6 +74,18 @@ export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 
+function getBridgeIconSvg(name: string): string {
+  const initial = name.charAt(0).toUpperCase()
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash % 360)
+  const color = `hsl(${hue}, 65%, 55%)`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="${color}"/><text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">${initial}</text></svg>`
+  return `data:image/svg+xml;base64,${btoa(svg)}`
+}
+
 function getMoonPayCurrencyCode(
   isBitcoinChain: boolean,
   isDogecoinChain: boolean,
@@ -606,7 +618,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
                   >
                     <img
                       className="dapp-card__icon"
-                      src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="%23667eea"/><text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">B</text></svg>'
+                      src={getBridgeIconSvg(bridgeName)}
                       alt={bridgeName}
                     />
                     <div className="dapp-card__info">
