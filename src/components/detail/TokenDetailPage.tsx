@@ -1,12 +1,16 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { ethers } from 'ethers'
 import { useSwapSigner } from '../swap/useSwapSigner'
 import SwapDialog from '../swap/SwapDialog'
 import { isRingV2Supported } from '../swap/ringV2Constants'
 import { isKyberAggregatorSupported } from '../swap/kyberConstants'
 import { useAuth } from '../../contexts/AuthContext'
+import { ChainFamily } from '../../models/ChainType'
 import { WalletType } from '../../models/WalletType'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { Chain } from '../../models/ChainType'
+import RpcService from '../../services/rpc/rpcService'
+import { removeToken, updateTokenLogo } from '../../utils/tokenStorage'
 import {
   EOASendForm,
   SmartAccountSendForm,
@@ -27,6 +31,16 @@ import {
 } from '.'
 import { ActionCircleEntry } from '../common/QuickActionBar'
 import { TESTID } from '../testids'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog'
 
 export interface TokenDetailPageProps {
   token: ChainToken
@@ -55,18 +69,106 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   const [swapOpen, setSwapOpen] = useState(false)
   const [sendOpen, setSendOpen] = useState(false)
   const [showReceive, setShowReceive] = useState(false)
+  const [hideDialogOpen, setHideDialogOpen] = useState(false)
+  const [displayToken, setDisplayToken] = useState(token)
   const [sendTokenOption, setSendTokenOption] = useState<
     SendTokenOption | undefined
   >(undefined)
 
-  const isNative = token.tokenAddress == null
-  const symbol = token.tokenMetadata.symbol ?? token.tokenMetadata.name ?? ''
+  useEffect(() => {
+    setDisplayToken(token)
+  }, [token])
+
+  useEffect(() => {
+    const tokenAddress = token.tokenAddress
+    if (!tokenAddress) return
+    if (token.tokenMetadata.logo?.trim()) return
+    if (!ethers.isAddress(tokenAddress)) return
+    if (chain.family !== ChainFamily.EVM && chain.family !== ChainFamily.Prisma)
+      return
+
+    let cancelled = false
+    const run = async () => {
+      try {
+        const evmService = RpcService.fromChain(chain).getEvmService()
+        const logo = await evmService.getTokenLogo(tokenAddress)
+        if (!logo || cancelled) return
+
+        setDisplayToken((prev) => ({
+          ...prev,
+          tokenMetadata: {
+            ...prev.tokenMetadata,
+            logo,
+          },
+        }))
+
+        if (activeAccount?.address) {
+          const updated = updateTokenLogo(
+            activeAccount.address,
+            chain.id,
+            tokenAddress,
+            logo
+          )
+          if (updated) {
+            window.dispatchEvent(new Event('ring:tokens-updated'))
+          }
+        }
+      } catch {
+        // Ignore logo lookup failures to keep detail page responsive.
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [activeAccount?.address, chain, token])
+
+  const isNative = displayToken.tokenAddress == null
+  const symbol =
+    displayToken.tokenMetadata.symbol ?? displayToken.tokenMetadata.name ?? ''
 
   const canUseRingSwap =
     isRingV2Supported(swapChainId) || isKyberAggregatorSupported(swapChainId)
   const swapButtonTitle = canUseRingSwap
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
+
+  const handleViewInExplorer = useCallback(() => {
+    const explorerBase = chain.explorer?.replace(/\/$/, '')
+    if (!explorerBase) return
+
+    let url = explorerBase
+    if (displayToken.tokenAddress) {
+      if (chain.family === ChainFamily.Solana) {
+        url = `${explorerBase}/address/${displayToken.tokenAddress}`
+      } else {
+        url = `${explorerBase}/token/${displayToken.tokenAddress}`
+      }
+    } else if (activeAccount?.address) {
+      url = `${explorerBase}/address/${activeAccount.address}`
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }, [
+    activeAccount?.address,
+    chain.explorer,
+    chain.family,
+    displayToken.tokenAddress,
+  ])
+
+  const handleRequestHideToken = useCallback(() => {
+    if (!displayToken.tokenAddress || !activeAccount?.address) return
+    setHideDialogOpen(true)
+  }, [activeAccount?.address, displayToken.tokenAddress])
+
+  const handleHideToken = useCallback(() => {
+    if (!displayToken.tokenAddress || !activeAccount?.address) return
+    removeToken(activeAccount.address, chain.id, displayToken.tokenAddress)
+    window.dispatchEvent(new Event('ring:tokens-updated'))
+    setHideDialogOpen(false)
+    onBack()
+  }, [activeAccount?.address, chain.id, displayToken.tokenAddress, onBack])
 
   const handleCloseSend = useCallback(() => {
     setSendOpen(false)
@@ -82,15 +184,15 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
       setSendTokenOption({
         type: 'erc20',
         token: {
-          address: token.tokenAddress!,
+          address: displayToken.tokenAddress!,
           symbol,
-          name: token.tokenMetadata.name ?? '',
-          decimals: token.tokenMetadata.decimals ?? 18,
+          name: displayToken.tokenMetadata.name ?? '',
+          decimals: displayToken.tokenMetadata.decimals ?? 18,
         },
       })
     }
     setSendOpen(true)
-  }, [isNative, symbol, token])
+  }, [displayToken, isNative, symbol])
 
   const handleNavBack = useCallback(() => {
     if (sendOpen) {
@@ -147,11 +249,20 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
         />
       )}
 
-      <TokenDetailHeader token={token} chain={chain} onBack={handleNavBack} />
+      <TokenDetailHeader
+        token={displayToken}
+        chain={chain}
+        onBack={handleNavBack}
+        onViewInExplorer={handleViewInExplorer}
+        onHideToken={handleRequestHideToken}
+        canHideToken={Boolean(
+          displayToken.tokenAddress && activeAccount?.address
+        )}
+      />
 
       <div className="token-detail__scroll">
-        <TokenDetailBalance token={token} chain={chain} />
-        <TokenDetailPriceChart token={token} chain={chain} />
+        <TokenDetailBalance token={displayToken} chain={chain} />
+        <TokenDetailPriceChart token={displayToken} chain={chain} />
 
         <div
           className="token-detail__actions"
@@ -226,8 +337,8 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
           />
         </div>
 
-        <TokenDetailInfo token={token} chain={chain} />
-        <TokenDetailActivity token={token} />
+        <TokenDetailInfo token={displayToken} chain={chain} />
+        <TokenDetailActivity token={displayToken} />
       </div>
 
       {sendOpen && renderSendForm()}
@@ -239,6 +350,44 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
           onClose={() => setShowReceive(false)}
         />
       )}
+
+      <AlertDialog open={hideDialogOpen} onOpenChange={setHideDialogOpen}>
+        <AlertDialogContent className="token-hide-dialog">
+          <AlertDialogHeader className="token-hide-dialog__header">
+            <AlertDialogTitle className="token-hide-dialog__title">
+              {t('tokenDetailHideConfirmTitle')}
+            </AlertDialogTitle>
+            <div className="token-hide-dialog__token">
+              {displayToken.tokenMetadata.logo?.trim() ? (
+                <img
+                  src={displayToken.tokenMetadata.logo.trim()}
+                  alt={symbol}
+                  className="token-hide-dialog__token-logo"
+                />
+              ) : (
+                <span className="token-hide-dialog__token-fallback">
+                  {symbol.charAt(0)}
+                </span>
+              )}
+              <span className="token-hide-dialog__token-symbol">{symbol}</span>
+            </div>
+            <AlertDialogDescription className="token-hide-dialog__description">
+              {t('tokenDetailHideConfirmDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="token-hide-dialog__actions">
+            <AlertDialogCancel className="token-hide-dialog__cancel">
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="token-hide-dialog__confirm"
+              onClick={handleHideToken}
+            >
+              {t('tokenDetailHideConfirmAction')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

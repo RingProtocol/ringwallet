@@ -47,7 +47,7 @@ function makeErc20Token(
     tokenBalance: tokenBalanceHex,
     tokenMetadata: {
       decimals: token.decimals,
-      logo: null,
+      logo: token.logo?.trim() || null,
       name: token.name,
       symbol: token.symbol,
     },

@@ -72,6 +72,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
       symbol: string
       name: string
       decimals: number
+      logo?: string | null
     }) => {
       if (!activeAccount || !activeChain || !supportsTokens) return
       addToken(activeAccount.address, activeChain.id, token)

@@ -1,9 +1,16 @@
 import React from 'react'
+import { EllipsisVertical, ExternalLink, Trash2 } from 'lucide-react'
 import ChainIcon from '../ChainIcon'
 import { useI18n } from '../../i18n'
 import { TESTID } from '../testids'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { Chain } from '../../models/ChainType'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import {
   chainTokenDisplayName,
   chainTokenDisplaySymbol,
@@ -13,12 +20,18 @@ export interface TokenDetailHeaderProps {
   token: ChainToken
   chain: Chain
   onBack: () => void
+  onViewInExplorer?: () => void
+  onHideToken?: () => void
+  canHideToken?: boolean
 }
 
 const TokenDetailHeader: React.FC<TokenDetailHeaderProps> = ({
   token,
   chain,
   onBack,
+  onViewInExplorer,
+  onHideToken,
+  canHideToken = false,
 }) => {
   const { t } = useI18n()
   const symbol = chainTokenDisplaySymbol(token, chain)
@@ -65,7 +78,41 @@ const TokenDetailHeader: React.FC<TokenDetailHeaderProps> = ({
           </div>
         </div>
       </div>
-      <div className="token-detail__menu-btn" aria-hidden="true" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="token-detail__menu-btn"
+            aria-label={t('tokenDetailMenu')}
+          >
+            <EllipsisVertical size={16} />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          align="end"
+          sideOffset={8}
+          className="token-detail__menu-dropdown"
+        >
+          <DropdownMenuItem
+            className="token-detail__menu-item"
+            onClick={onViewInExplorer}
+          >
+            <ExternalLink size={16} />
+            <span>{t('tokenDetailViewInExplorer')}</span>
+          </DropdownMenuItem>
+
+          {canHideToken && (
+            <DropdownMenuItem
+              className="token-detail__menu-item"
+              onClick={onHideToken}
+            >
+              <Trash2 size={16} />
+              <span>{t('tokenDetailHideToken', { symbol })}</span>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   )
 }

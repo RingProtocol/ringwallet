@@ -29,6 +29,11 @@ export interface EvmTokenMetadata {
   decimals: number
 }
 
+type AlchemyTokenMetadataResult = {
+  logo?: string | null
+  logoURI?: string | null
+}
+
 type EvmChainHistoryRecord = TxRecord & {
   id: string
   assetType: 'native'
@@ -328,6 +333,45 @@ export class EvmRpcService
         }
       }
     })
+  }
+
+  async getTokenLogo(tokenAddress: string): Promise<string | null> {
+    if (!ethers.isAddress(tokenAddress)) {
+      throw new Error('Invalid EVM token address')
+    }
+
+    try {
+      return await this.tryRpcUrls(async (_provider, rpcUrl) => {
+        const responses = await this.requestBatch(
+          [
+            {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'alchemy_getTokenMetadata',
+              params: [tokenAddress],
+            },
+          ],
+          rpcUrl
+        )
+
+        const response = responses.find((item) => item.id === 1)
+        if (!response) {
+          throw new Error('Incomplete Alchemy token metadata response')
+        }
+
+        if (this.isFailure(response)) {
+          throw new Error(
+            `EVM RPC error ${response.error.code}: ${response.error.message}`
+          )
+        }
+
+        const result = (response.result ?? {}) as AlchemyTokenMetadataResult
+        const logo = result.logo ?? result.logoURI ?? null
+        return logo?.trim() ? logo : null
+      })
+    } catch {
+      return null
+    }
   }
 
   async getBlockNumber(): Promise<bigint> {

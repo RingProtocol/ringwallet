@@ -10,11 +10,15 @@ export interface TokenInfo {
   symbol: string
   name: string
   decimals: number
+  logo?: string | null
 }
 
 const STORAGE_PREFIX = 'imported_tokens'
 
-function getStorageKey(chainId: number | string, walletAddress: string): string {
+function getStorageKey(
+  chainId: number | string,
+  walletAddress: string
+): string {
   return `${STORAGE_PREFIX}_${chainId}_${walletAddress.toLowerCase()}`
 }
 
@@ -29,7 +33,13 @@ export function addToken(
   )
   if (exists) return
 
-  const next = [...list, tokenInfo]
+  const next = [
+    ...list,
+    {
+      ...tokenInfo,
+      logo: tokenInfo.logo?.trim() || null,
+    },
+  ]
   safeSetItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
 }
 
@@ -56,4 +66,38 @@ export function removeToken(
     (t) => t.address.toLowerCase() !== tokenAddress.toLowerCase()
   )
   safeSetItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
+}
+
+export function updateTokenLogo(
+  walletAddress: string,
+  chainId: number | string,
+  tokenAddress: string,
+  logo: string
+): boolean {
+  const normalizedLogo = logo.trim()
+  if (!normalizedLogo) return false
+
+  const list = getTokenList(walletAddress, chainId)
+  if (list.length === 0) return false
+
+  let changed = false
+  const next = list.map((token) => {
+    if (token.address.toLowerCase() !== tokenAddress.toLowerCase()) {
+      return token
+    }
+
+    if ((token.logo?.trim() || '') === normalizedLogo) {
+      return token
+    }
+
+    changed = true
+    return {
+      ...token,
+      logo: normalizedLogo,
+    }
+  })
+
+  if (!changed) return false
+  safeSetItem(getStorageKey(chainId, walletAddress), JSON.stringify(next))
+  return true
 }

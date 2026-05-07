@@ -2,6 +2,7 @@ import { formatUnits } from 'ethers'
 import type { Chain, ChainFamily } from '../../models/ChainType'
 import type { ChainToken } from '../../models/ChainTokens'
 import type { AccountBalancesResult, BalanceAdapter } from './balanceTypes'
+import type { TokenInfo } from '../../utils/tokenStorage'
 
 class BalanceAdapterRegistry {
   private adapters = new Map<ChainFamily, BalanceAdapter>()
@@ -63,7 +64,8 @@ function sumUsdAcrossTokens(
 
 export async function fetchAccountBalanceByAdapter(
   address: string,
-  activeChain: Chain
+  activeChain: Chain,
+  importedTokens: TokenInfo[] = []
 ): Promise<AccountBalancesResult | null> {
   const adapter = balanceAdapterRegistry.get(activeChain.family!)
   if (!adapter) {
@@ -76,7 +78,7 @@ export async function fetchAccountBalanceByAdapter(
   const [native, tokens] = await Promise.all([
     adapter.fetchNativeBalance(address, activeChain),
     adapter.supportsTokens
-      ? adapter.fetchTokenBalances(address, activeChain, [])
+      ? adapter.fetchTokenBalances(address, activeChain, importedTokens)
       : Promise.resolve([]),
   ])
 

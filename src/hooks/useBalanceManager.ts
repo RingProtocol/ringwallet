@@ -300,7 +300,12 @@ export function useBalanceManager(): BalanceState {
         const chain = activeChainRef.current
         if (!chain) return
         const groups = accountAssetGroupsRef.current
-        await syncAccountBalancesToCache(adapterAddress, chain, groups)
+        await syncAccountBalancesToCache(
+          adapterAddress,
+          chain,
+          groups,
+          importedTokens
+        )
         if (accountAssetsSyncKeyRef.current !== syncKeyAtStart) return
         applyFromCache({ notifyNativeChange: true })
         consecutiveFailures = 0
