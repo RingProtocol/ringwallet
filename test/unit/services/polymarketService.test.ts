@@ -8,6 +8,7 @@ import {
 
 const MOCK_MARKETS = [
   {
+    id: 1,
     question: 'Will it rain tomorrow?',
     slug: 'will-it-rain-tomorrow',
     image: 'https://example.com/rain.png',
@@ -17,6 +18,7 @@ const MOCK_MARKETS = [
     outcomePrices: '["0.6", "0.4"]',
   },
   {
+    id: 2,
     question: 'Who will win the election?',
     slug: 'who-will-win-the-election',
     image: '',
@@ -141,14 +143,12 @@ describe('polymarketService', () => {
     it('returns null when API returns empty data', async () => {
       vi.stubGlobal(
         'fetch',
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response(JSON.stringify({ source: 'polymarket', data: null }), {
-              status: 200,
-              headers: { 'content-type': 'application/json' },
-            })
-          )
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ source: 'polymarket', data: null }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          })
+        )
       )
       const detail = await fetchPolymarketMarketDetail(123)
       expect(detail).toBeNull()

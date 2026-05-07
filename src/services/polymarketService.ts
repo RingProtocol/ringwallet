@@ -3,6 +3,7 @@ import { SERVER_URL } from '../server/urls'
 const API_BASE = SERVER_URL
 
 export interface PolymarketMarket {
+  id: string | number
   question: string
   slug: string
   image: string

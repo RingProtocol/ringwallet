@@ -26,6 +26,7 @@ export interface PolymarketMarketDetail {
 }
 
 interface Props {
+  id: string | number
   slug: string
   onBack: () => void
 }
@@ -39,7 +40,7 @@ function safeJsonParse<T>(value: unknown): T | null {
   }
 }
 
-const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
+const PolymarketDetailPage: React.FC<Props> = ({ id, slug, onBack }) => {
   const { t } = useI18n()
   const [detail, setDetail] = useState<PolymarketMarketDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -49,7 +50,7 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchPolymarketMarketDetail(slug)
+    fetchPolymarketMarketDetail(id)
       .then((data) => {
         if (!cancelled) {
           setDetail((data as PolymarketMarketDetail) || null)
@@ -69,7 +70,7 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
     return () => {
       cancelled = true
     }
-  }, [slug, t])
+  }, [id, t])
 
   const outcomes = safeJsonParse<string[]>(detail?.outcomes) || []
   const outcomePrices = safeJsonParse<string[]>(detail?.outcomePrices) || []
@@ -91,7 +92,7 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
         {error && (
           <TempContent
             status="error"
-            onRetry={() => fetchPolymarketMarketDetail(slug)}
+            onRetry={() => fetchPolymarketMarketDetail(id)}
           >
             {t('loadingFailed', { error })}
           </TempContent>
