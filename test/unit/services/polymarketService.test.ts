@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   fetchPolymarketMarkets,
+  fetchPolymarketMarketDetail,
   formatPolymarketVolume,
   getPolymarketEventUrl,
 } from '@/services/polymarketService'
@@ -66,9 +67,18 @@ describe('polymarketService', () => {
         active: true,
         closed: false,
         limit: 10,
+        offset: 0,
         order: 'volume_24hr',
         ascending: false,
       })
+    })
+
+    it('passes offset to the API', async () => {
+      await fetchPolymarketMarkets(20, 40)
+      const fetchMock = vi.mocked(global.fetch)
+      const [, calledInit] = fetchMock.mock.calls[0]
+      const body = JSON.parse(calledInit?.body as string)
+      expect(body.offset).toBe(40)
     })
 
     it('returns parsed market array on success', async () => {
@@ -90,6 +100,67 @@ describe('polymarketService', () => {
       )
       await expect(fetchPolymarketMarkets()).rejects.toThrow(
         'Prediction market API error: HTTP 500'
+      )
+    })
+  })
+
+  describe('fetchPolymarketMarketDetail', () => {
+    it('fetches detail from proxy server with correct body', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              source: 'polymarket',
+              data: { question: 'Will it rain?', slug: 'will-it-rain' },
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } }
+          )
+        )
+      )
+      const detail = await fetchPolymarketMarketDetail('will-it-rain')
+      const fetchMock = vi.mocked(global.fetch)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+
+      const [calledUrl, calledInit] = fetchMock.mock.calls[0]
+      expect(calledUrl).toBe(
+        'https://wapi.testring.org/v1/prediction_markets/detail'
+      )
+      expect(calledInit?.method).toBe('POST')
+      const body = JSON.parse(calledInit?.body as string)
+      expect(body).toEqual({
+        source: 'polymarket',
+        id: 'will-it-rain',
+      })
+      expect(detail).toEqual({
+        question: 'Will it rain?',
+        slug: 'will-it-rain',
+      })
+    })
+
+    it('returns null when API returns empty data', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ source: 'polymarket', data: null }), {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            })
+          )
+      )
+      const detail = await fetchPolymarketMarketDetail(123)
+      expect(detail).toBeNull()
+    })
+
+    it('throws when detail API returns non-OK status', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(new Response('Not Found', { status: 404 }))
+      )
+      await expect(fetchPolymarketMarketDetail('unknown')).rejects.toThrow(
+        'Prediction market detail API error: HTTP 404'
       )
     })
   })

@@ -1,79 +1,89 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import TitleBar from '../common/TitleBar'
 import TempContent from '../common/TempContent'
+import PolymarketDetailPage from './PolymarketDetailPage'
 import {
   fetchPolymarketMarkets,
   formatPolymarketVolume,
-  getPolymarketEventUrl,
   type PolymarketMarket,
 } from '../../services/polymarketService'
 import { useI18n } from '../../i18n'
-import type { DAppInfo } from '../../features/dapps/types/dapp'
 import './PolymarketListPage.css'
 
 interface Props {
   onClose: () => void
-  onSelectMarket: (dapp: DAppInfo) => void
 }
 
-const PolymarketListPage: React.FC<Props> = ({ onClose, onSelectMarket }) => {
+const PAGE_SIZE = 20
+
+const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
   const { t } = useI18n()
   const [markets, setMarkets] = useState<PolymarketMarket[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(true)
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const offsetRef = useRef(0)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  const loadMarkets = useCallback(
+    async (isInitial: boolean) => {
+      if (isInitial) {
+        setLoading(true)
+        offsetRef.current = 0
+      } else {
+        if (loadingMore || !hasMore) return
+        setLoadingMore(true)
+      }
+      setError(null)
+
+      try {
+        const data = await fetchPolymarketMarkets(PAGE_SIZE, offsetRef.current)
+        if (isInitial) {
+          setMarkets(data)
+        } else {
+          setMarkets((prev) => [...prev, ...data])
+        }
+        setHasMore(data.length === PAGE_SIZE)
+        offsetRef.current += data.length
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t('loadingFailed', { error: 'Unknown error' })
+        )
+      } finally {
+        setLoading(false)
+        setLoadingMore(false)
+      }
+    },
+    [loadingMore, hasMore, t]
+  )
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-    fetchPolymarketMarkets(20)
-      .then((data) => {
-        if (!cancelled) {
-          setMarkets(data)
-          setLoading(false)
+    loadMarkets(true)
+  }, [loadMarkets])
+
+  useEffect(() => {
+    const el = loadMoreRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && hasMore) {
+          loadMarkets(false)
         }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load')
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loadMarkets, loading, loadingMore, hasMore])
 
   const handleRetry = () => {
-    setLoading(true)
-    setError(null)
-    fetchPolymarketMarkets(20)
-      .then((data) => {
-        setMarkets(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load')
-        setLoading(false)
-      })
-  }
-
-  const handleSelect = (market: PolymarketMarket) => {
-    const url = getPolymarketEventUrl(market.slug)
-    const dapp: DAppInfo = {
-      id: -Math.abs(
-        url.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)
-      ),
-      name: market.question,
-      description: 'Polymarket',
-      url,
-      icon: market.image || '',
-      chains: [],
-      category: 'predict',
-      top: 0,
-    }
-    onSelectMarket(dapp)
+    loadMarkets(true)
   }
 
   const content = (
@@ -96,7 +106,7 @@ const PolymarketListPage: React.FC<Props> = ({ onClose, onSelectMarket }) => {
               <button
                 key={market.slug}
                 className="polymarket-list__item"
-                onClick={() => handleSelect(market)}
+                onClick={() => setSelectedSlug(market.slug)}
               >
                 <img
                   className="polymarket-list__icon"
@@ -118,9 +128,21 @@ const PolymarketListPage: React.FC<Props> = ({ onClose, onSelectMarket }) => {
                 </div>
               </button>
             ))}
+            <div ref={loadMoreRef} className="polymarket-list__sentinel" />
+            {loadingMore && (
+              <div className="polymarket-list__loading-more">
+                <div className="dapp-list__spinner" />
+              </div>
+            )}
           </div>
         )}
       </div>
+      {selectedSlug && (
+        <PolymarketDetailPage
+          slug={selectedSlug}
+          onBack={() => setSelectedSlug(null)}
+        />
+      )}
     </div>
   )
 
