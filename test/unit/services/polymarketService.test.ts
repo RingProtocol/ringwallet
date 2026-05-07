@@ -56,8 +56,9 @@ describe('polymarketService', () => {
       const [calledUrl, calledInit] = fetchMock.mock.calls[0]
       expect(calledUrl).toBe('https://wapi.testring.org/v1/prediction_markets')
       expect(calledInit?.method).toBe('POST')
-      expect(calledInit?.headers).toEqual({
+      expect(calledInit?.headers).toMatchObject({
         'Content-Type': 'application/json',
+        'X-API-Key': expect.any(String),
       })
       const body = JSON.parse(calledInit?.body as string)
       expect(body).toEqual({
