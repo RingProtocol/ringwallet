@@ -19,6 +19,7 @@ export async function fetchPolymarketMarkets(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
     },
     body: JSON.stringify({
       source: 'polymarket',
