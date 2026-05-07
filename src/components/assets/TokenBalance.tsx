@@ -19,7 +19,6 @@ import { useTokenCacheNotifier } from '../../hooks/useTokenCacheNotifier'
 import { getTokensForNetwork } from '../../models/ChainTokens'
 import { addToken } from '../../utils/tokenStorage'
 import ImportTokenDialog from './ImportTokenDialog'
-import ChainIcon from './../ChainIcon'
 import './TokenBalance.css'
 import { useI18n } from '../../i18n'
 import { TESTID } from './../testids'
@@ -105,7 +104,11 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
             {logoUrl ? (
               <img src={logoUrl} alt={symbol} className="token-logo-img" />
             ) : isNative && activeChain.icon ? (
-              <ChainIcon icon={activeChain.icon} symbol={symbol} size={40} />
+              <img
+                src={activeChain.icon}
+                alt={symbol}
+                className="token-logo-clean token-logo-clean--contain"
+              />
             ) : (
               <span className="token-icon-placeholder">{symbol.charAt(0)}</span>
             )}

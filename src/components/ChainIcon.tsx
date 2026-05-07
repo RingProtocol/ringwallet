@@ -14,7 +14,14 @@ const ChainIcon: React.FC<ChainIconProps> = ({ icon, symbol, size = 20 }) => {
         alt={symbol}
         width={size}
         height={size}
-        style={{ borderRadius: '50%', objectFit: 'contain', flexShrink: 0 }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'contain',
+          flexShrink: 0,
+          display: 'block',
+        }}
       />
     )
   }
