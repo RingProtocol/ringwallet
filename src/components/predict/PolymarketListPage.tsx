@@ -24,7 +24,9 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const [selectedMarket, setSelectedMarket] = useState<PolymarketMarket | null>(
+    null
+  )
   const offsetRef = useRef(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -106,7 +108,7 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
               <button
                 key={market.slug}
                 className="polymarket-list__item"
-                onClick={() => setSelectedSlug(market.slug)}
+                onClick={() => setSelectedMarket(market)}
               >
                 <img
                   className="polymarket-list__icon"
@@ -137,10 +139,11 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
           </div>
         )}
       </div>
-      {selectedSlug && (
+      {selectedMarket && (
         <PolymarketDetailPage
-          slug={selectedSlug}
-          onBack={() => setSelectedSlug(null)}
+          id={selectedMarket.id}
+          slug={selectedMarket.slug}
+          onBack={() => setSelectedMarket(null)}
         />
       )}
     </div>
