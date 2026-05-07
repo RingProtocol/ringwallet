@@ -122,14 +122,149 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--ring-border);
   color: var(--ring-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+}
+
+.token-detail__menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.token-detail__menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.token-detail__menu-dropdown {
+  min-width: 186px;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.12));
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.98));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  padding: 4px;
+}
+
+.token-detail__menu-item {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--ring-text-primary, #f3f4f6);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.token-detail__menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.token-detail__menu-item svg {
+  color: var(--ring-text-secondary, #a1a1aa);
+  flex-shrink: 0;
+}
+
+.token-hide-dialog {
+  width: min(92vw, 420px);
+  border-radius: 16px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.12));
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.98));
+  color: var(--ring-text-primary, #f3f4f6);
+  padding: 20px;
+}
+
+.token-hide-dialog__header {
+  text-align: center;
+  gap: 12px;
+}
+
+.token-hide-dialog__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-hide-dialog__token {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.token-hide-dialog__token-logo,
+.token-hide-dialog__token-fallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+}
+
+.token-hide-dialog__token-logo {
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.token-hide-dialog__token-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #a78bfa 100%);
+}
+
+.token-hide-dialog__token-symbol {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-hide-dialog__description {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.token-hide-dialog__actions {
+  margin-top: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.token-hide-dialog__cancel,
+.token-hide-dialog__confirm {
+  margin: 0;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.token-hide-dialog__cancel {
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.token-hide-dialog__confirm {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
 }
 
 /* ── Balance ────────────────────────────────────────────────────── */

@@ -195,6 +195,13 @@ const messages = {
     tokenDetailAllowance: 'Approved amount',
     tokenDetailActivity: 'Activity',
     tokenDetailNoPriceData: 'No price data available',
+    tokenDetailMenu: 'Token actions',
+    tokenDetailViewInExplorer: 'View asset in Explorer',
+    tokenDetailHideToken: 'Hide {symbol}',
+    tokenDetailHideConfirmTitle: 'Hide token?',
+    tokenDetailHideConfirmDescription:
+      'You can add this token again later from the "Import token" option in your account menu.',
+    tokenDetailHideConfirmAction: 'Hide',
     tokenDetailAllowanceEditHint:
       'Allowance editing is not available in the wallet yet.',
     noTransactions: 'No transactions yet',
@@ -533,6 +540,13 @@ const messages = {
     tokenDetailAllowance: '授权额度',
     tokenDetailActivity: '活动',
     tokenDetailNoPriceData: '暂无价格数据',
+    tokenDetailMenu: '代币操作',
+    tokenDetailViewInExplorer: '在 Explorer 中查看资产',
+    tokenDetailHideToken: '隐藏 {symbol}',
+    tokenDetailHideConfirmTitle: '隐藏代币？',
+    tokenDetailHideConfirmDescription:
+      '将来您还可以通过账户选项菜单中的“导入代币”来添加此代币。',
+    tokenDetailHideConfirmAction: '隐藏',
     tokenDetailAllowanceEditHint: '钱包暂不支持在此编辑授权额度。',
     noTransactions: '暂无交易记录',
     tokensTab: '资产',

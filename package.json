@@ -92,6 +92,8 @@
   "dependencies": {
     "@morpho-org/morpho-ts": "^2.5.1",
     "@neondatabase/serverless": "^1.0.2",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@ring-protocol/ring-swap-sdk": "^0.1.0",
     "@ring-protocol/ringearnsdk": "0.0.10",
     "@solana/spl-token": "^0.4.14",

@@ -14,6 +14,7 @@ import {
 import type { AccountBalancesResult } from './balanceTypes'
 import { fetchAccountBalanceByAdapter } from './balanceAdapterRegistry'
 import { ACCOUNT_ASSETS_URL } from '../../server/urls'
+import type { TokenInfo } from '../../utils/tokenStorage'
 
 /** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
 export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
@@ -405,14 +406,16 @@ export function readAccountBalancesFromCache(
 export async function syncAccountBalancesToCache(
   adapterAddress: string,
   activeChain: Chain,
-  accountAssetGroups: AccountAssetsAddressEntry[]
+  accountAssetGroups: AccountAssetsAddressEntry[],
+  importedTokens: TokenInfo[] = []
 ): Promise<void> {
   if (activeChain == null) return
 
   if (usesAdapterOnlyAccountAssetsSync(activeChain)) {
     const result = await fetchAccountBalanceByAdapter(
       adapterAddress,
-      activeChain
+      activeChain,
+      importedTokens
     )
     if (result == null) {
       console.warn(
@@ -448,6 +451,35 @@ export async function syncAccountBalancesToCache(
       list.push(t)
       byNetwork.set(t.network, list)
     }
+
+    const importedByAddress = new Map(
+      importedTokens.map((token) => [token.address.toLowerCase(), token])
+    )
+    const activeList = byNetwork.get(activeNetwork) ?? []
+    const activeTokenAddressSet = new Set(
+      activeList
+        .map((token) => token.tokenAddress?.toLowerCase())
+        .filter((tokenAddress): tokenAddress is string => Boolean(tokenAddress))
+    )
+
+    for (const [tokenAddress, tokenInfo] of importedByAddress) {
+      if (activeTokenAddressSet.has(tokenAddress)) continue
+      activeList.push({
+        address: adapterAddress,
+        network: activeNetwork,
+        tokenAddress: tokenInfo.address,
+        tokenBalance: '0x0',
+        tokenMetadata: {
+          decimals: tokenInfo.decimals,
+          logo: tokenInfo.logo?.trim() || null,
+          name: tokenInfo.name,
+          symbol: tokenInfo.symbol,
+        },
+        tokenPrices: [],
+      })
+    }
+    byNetwork.set(activeNetwork, activeList)
+
     for (const [n, list] of byNetwork) {
       const networkUsd = sumUsdAcrossTokens(list, 18)
       cacheTokensForNetwork(n, list, formatUsdAmount(networkUsd))
