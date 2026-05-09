@@ -94,7 +94,7 @@ const EarnPage: React.FC<EarnPageProps> = ({ onClose }) => {
                   <div className="earn-strategy-info">
                     <span className="earn-strategy-name">{s.name}</span>
                     <span className="earn-strategy-apy">
-                      {(s.apy * 100).toFixed(2)}% APY
+                      {s.apy.toFixed(2)}% APY
                     </span>
                   </div>
                   <button
