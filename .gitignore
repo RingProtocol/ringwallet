@@ -13,7 +13,7 @@ skill
 
 dist-extension
 *.zip
-
+*.png
 
 **/node_modules
 .env

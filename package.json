@@ -17,6 +17,7 @@
     "vite:preview": "vite preview --config apps/pwa/vite.config.ts",
     "ext:dev": "vite --config apps/extension/vite.config.ts",
     "ext:build": "vite build --config apps/extension/vite.config.ts && node apps/extension/copy-assets.ts",
+    "issue:create": "node scripts/auto-issue.mjs",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -150,7 +151,7 @@
     "vitest": "^1.6.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+    "*.{js,jsx,ts,tsx,cjs}": [
       "eslint --fix --max-warnings=0 --no-warn-ignored",
       "prettier --write"
     ],
