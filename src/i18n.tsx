@@ -45,7 +45,7 @@ const messages = {
     introSelfCustodySub:
       'Keys are encrypted on-device. Only you can sign transactions.',
     introMultiChainTitle: 'Multi-chain, one place',
-    introMultiChainSub: 'Ethereum, Polygon, Arbitrum, Optimism, BNB, and more.',
+    introMultiChainSub: 'Ethereum, Polygon, Arbitrum, Optimism, BSC, and more.',
     introSwapTitle: 'Swap in one tap',
     introSwapSub: 'Best-price routing across decentralised exchanges.',
     introNoPasswordTitle: 'No password, no mnemonic',
@@ -436,7 +436,7 @@ const messages = {
     introSelfCustodyTitle: '自托管，您的密钥',
     introSelfCustodySub: '密钥在设备端加密。只有您可以签署交易。',
     introMultiChainTitle: '多链合一',
-    introMultiChainSub: 'Ethereum、Polygon、Arbitrum、Optimism、BNB 等。',
+    introMultiChainSub: 'Ethereum、Polygon、Arbitrum、Optimism、BSC 等。',
     introSwapTitle: '一键兑换',
     introSwapSub: '跨去中心化交易所的最优价格路由。',
     introNoPasswordTitle: '无密码，无助记词',
