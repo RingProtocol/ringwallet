@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import TitleBar from '../common/TitleBar'
 import TempContent from '../common/TempContent'
+import PolymarketBettingPanel from './PolymarketBettingPanel'
 import {
   fetchPolymarketMarketDetail,
   formatPolymarketVolume,
@@ -183,6 +184,12 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
                 </div>
               </div>
             )}
+
+            <PolymarketBettingPanel
+              slug={slug}
+              outcomes={outcomes}
+              outcomePrices={outcomePrices}
+            />
 
             <button
               className="polymarket-detail__external-btn"

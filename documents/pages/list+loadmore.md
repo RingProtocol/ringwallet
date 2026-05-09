@@ -93,3 +93,11 @@ useEffect(() => {
 - [ ] 切换分类后，是否从第 1 页重新开始？
 - [ ] 切换分类后，滚动是否回到顶部？
 - [ ] Hook 中 `loadMarkets` 的依赖数组是否没有包含 `loadingMore` / `hasMore`？
+
+## 在 Polymarket 相关页面中的应用
+
+`PolymarketListPage`（市场列表）和 `PolymarketPositionsPage`（我的持仓）均遵循上述规范：
+
+- `PolymarketListPage`: 使用 `usePolymarketMarkets` hook，已通过 `useRef` 隔离 `loadingMore` / `hasMore`，避免依赖陷阱。
+- `PolymarketPositionsPage`: 持仓列表和订单历史列表均使用独立的状态管理，加载时显示 `TempContent` 全屏 loading，不混用 `loadingMore` 追加模式（因 Subgraph 查询一次性返回）。
+- 两个页面的 Tab 栏均使用 `flex-shrink: 0` 固定在顶部，内容区域独立滚动。

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import TitleBar from '../common/TitleBar'
 import TempContent from '../common/TempContent'
 import PolymarketDetailPage from './PolymarketDetailPage'
+import PolymarketPositionsPage from './PolymarketPositionsPage'
 import {
   formatPolymarketVolume,
   CATEGORY_TABS,
@@ -34,6 +35,7 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
   const [selectedMarket, setSelectedMarket] = useState<PolymarketMarket | null>(
     null
   )
+  const [showPositions, setShowPositions] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -65,7 +67,19 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
 
   const content = (
     <div className="polymarket-page">
-      <TitleBar onBack={onClose} backLabel={t('close')}>
+      <TitleBar
+        onBack={onClose}
+        backLabel={t('close')}
+        right={
+          <button
+            className="polymarket-list__positions-btn"
+            onClick={() => setShowPositions(true)}
+            type="button"
+          >
+            {t('predictMyPositions')}
+          </button>
+        }
+      >
         <span style={{ fontSize: 15, fontWeight: 600 }}>
           {t('predictTitle')}
         </span>
@@ -139,6 +153,9 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
           slug={selectedMarket.slug}
           onBack={() => setSelectedMarket(null)}
         />
+      )}
+      {showPositions && (
+        <PolymarketPositionsPage onBack={() => setShowPositions(false)} />
       )}
     </div>
   )
