@@ -4,10 +4,12 @@ import TitleBar from '../common/TitleBar'
 import TempContent from '../common/TempContent'
 import PolymarketDetailPage from './PolymarketDetailPage'
 import {
-  fetchPolymarketMarkets,
   formatPolymarketVolume,
+  CATEGORY_TABS,
   type PolymarketMarket,
+  type MarketCategory,
 } from '../../services/polymarketService'
+import { usePolymarketMarkets } from '../../hooks/usePolymarketMarkets'
 import { useI18n } from '../../i18n'
 import './PolymarketListPage.css'
 
@@ -15,58 +17,25 @@ interface Props {
   onClose: () => void
 }
 
-const PAGE_SIZE = 20
-
 const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
   const { t } = useI18n()
-  const [markets, setMarkets] = useState<PolymarketMarket[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasMore, setHasMore] = useState(true)
+  const {
+    markets,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    activeCategory,
+    setActiveCategory,
+    loadMarkets,
+    handleRetry,
+  } = usePolymarketMarkets()
+
   const [selectedMarket, setSelectedMarket] = useState<PolymarketMarket | null>(
     null
   )
-  const offsetRef = useRef(0)
+  const contentRef = useRef<HTMLDivElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
-
-  const loadMarkets = useCallback(
-    async (isInitial: boolean) => {
-      if (isInitial) {
-        setLoading(true)
-        offsetRef.current = 0
-      } else {
-        if (loadingMore || !hasMore) return
-        setLoadingMore(true)
-      }
-      setError(null)
-
-      try {
-        const data = await fetchPolymarketMarkets(PAGE_SIZE, offsetRef.current)
-        if (isInitial) {
-          setMarkets(data)
-        } else {
-          setMarkets((prev) => [...prev, ...data])
-        }
-        setHasMore(data.length === PAGE_SIZE)
-        offsetRef.current += data.length
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : t('loadingFailed', { error: 'Unknown error' })
-        )
-      } finally {
-        setLoading(false)
-        setLoadingMore(false)
-      }
-    },
-    [loadingMore, hasMore, t]
-  )
-
-  useEffect(() => {
-    loadMarkets(true)
-  }, [loadMarkets])
 
   useEffect(() => {
     const el = loadMoreRef.current
@@ -84,9 +53,15 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
     return () => observer.disconnect()
   }, [loadMarkets, loading, loadingMore, hasMore])
 
-  const handleRetry = () => {
-    loadMarkets(true)
-  }
+  const handleCategoryClick = useCallback(
+    (category: MarketCategory) => {
+      setActiveCategory(category)
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0
+      }
+    },
+    [setActiveCategory]
+  )
 
   const content = (
     <div className="polymarket-page">
@@ -95,20 +70,40 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
           {t('predictTitle')}
         </span>
       </TitleBar>
-      <div className="polymarket-page__content">
+
+      <div className="polymarket-tabs">
+        {CATEGORY_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`polymarket-tabs__item${
+              activeCategory === tab.key ? ' polymarket-tabs__item--active' : ''
+            }`}
+            onClick={() => handleCategoryClick(tab.key)}
+            type="button"
+          >
+            {t(tab.labelKey as Parameters<typeof t>[0])}
+          </button>
+        ))}
+      </div>
+
+      <div className="polymarket-page__content" ref={contentRef}>
         {loading && <TempContent status="loading" />}
         {error && (
           <TempContent status="error" onRetry={handleRetry}>
             {t('loadingFailed', { error })}
           </TempContent>
         )}
-        {!loading && !error && (
+        {!loading && !error && markets.length === 0 && (
+          <div className="polymarket-list__empty">{t('noDapps')}</div>
+        )}
+        {!loading && !error && markets.length > 0 && (
           <div className="polymarket-list">
             {markets.map((market) => (
               <button
                 key={market.slug}
                 className="polymarket-list__item"
                 onClick={() => setSelectedMarket(market)}
+                type="button"
               >
                 <img
                   className="polymarket-list__icon"

@@ -4,9 +4,13 @@ import {
   fetchPolymarketMarketDetail,
   formatPolymarketVolume,
   getPolymarketEventUrl,
+  marketMatchesCategory,
+  filterMarketsByCategory,
+  CATEGORY_TABS,
+  type PolymarketMarket,
 } from '@/services/polymarketService'
 
-const MOCK_MARKETS = [
+const MOCK_MARKETS: PolymarketMarket[] = [
   {
     id: 1,
     question: 'Will it rain tomorrow?',
@@ -26,6 +30,26 @@ const MOCK_MARKETS = [
     volume: '2100000000000',
     outcomes: '["Candidate A", "Candidate B"]',
     outcomePrices: '["0.55", "0.45"]',
+  },
+  {
+    id: 3,
+    question: 'Will Bitcoin hit $100k this year?',
+    slug: 'will-bitcoin-hit-100k',
+    image: '',
+    volume24hr: '2000000000000',
+    volume: '8000000000000',
+    outcomes: '["Yes", "No"]',
+    outcomePrices: '["0.3", "0.7"]',
+  },
+  {
+    id: 4,
+    question: 'NBA Finals 2025 Champion?',
+    slug: 'nba-finals-2025-champion',
+    image: '',
+    volume24hr: '1500000000000',
+    volume: '4000000000000',
+    outcomes: '["Lakers", "Celtics"]',
+    outcomePrices: '["0.5", "0.5"]',
   },
 ]
 
@@ -83,9 +107,25 @@ describe('polymarketService', () => {
       expect(body.offset).toBe(40)
     })
 
+    it('passes category to the API when provided', async () => {
+      await fetchPolymarketMarkets(20, 0, 'sports')
+      const fetchMock = vi.mocked(global.fetch)
+      const [, calledInit] = fetchMock.mock.calls[0]
+      const body = JSON.parse(calledInit?.body as string)
+      expect(body.category).toBe('sports')
+    })
+
+    it('does not include category in body when omitted', async () => {
+      await fetchPolymarketMarkets(20)
+      const fetchMock = vi.mocked(global.fetch)
+      const [, calledInit] = fetchMock.mock.calls[0]
+      const body = JSON.parse(calledInit?.body as string)
+      expect(body).not.toHaveProperty('category')
+    })
+
     it('returns parsed market array on success', async () => {
       const markets = await fetchPolymarketMarkets(20)
-      expect(markets).toHaveLength(2)
+      expect(markets).toHaveLength(4)
       expect(markets[0].question).toBe('Will it rain tomorrow?')
       expect(markets[0].slug).toBe('will-it-rain-tomorrow')
       expect(markets[1].volume24hr).toBe('890000000000')
@@ -192,6 +232,84 @@ describe('polymarketService', () => {
       expect(getPolymarketEventUrl('will-it-rain-tomorrow')).toBe(
         'https://polymarket.com/event/will-it-rain-tomorrow'
       )
+    })
+  })
+
+  describe('marketMatchesCategory', () => {
+    it('matches all category for any market', () => {
+      expect(marketMatchesCategory(MOCK_MARKETS[0], 'all')).toBe(true)
+      expect(marketMatchesCategory(MOCK_MARKETS[1], 'all')).toBe(true)
+    })
+
+    it('matches crypto keywords', () => {
+      expect(marketMatchesCategory(MOCK_MARKETS[2], 'crypto')).toBe(true)
+      expect(marketMatchesCategory(MOCK_MARKETS[0], 'crypto')).toBe(false)
+    })
+
+    it('matches sports keywords', () => {
+      expect(marketMatchesCategory(MOCK_MARKETS[3], 'sports')).toBe(true)
+      expect(marketMatchesCategory(MOCK_MARKETS[1], 'sports')).toBe(false)
+    })
+
+    it('matches politics keywords', () => {
+      expect(marketMatchesCategory(MOCK_MARKETS[1], 'politics')).toBe(true)
+      expect(marketMatchesCategory(MOCK_MARKETS[3], 'politics')).toBe(false)
+    })
+
+    it('is case-insensitive', () => {
+      const market: PolymarketMarket = {
+        ...MOCK_MARKETS[0],
+        question: 'Will The NBA Finals Be Cancelled?',
+      }
+      expect(marketMatchesCategory(market, 'sports')).toBe(true)
+    })
+
+    it('checks slug as well as question', () => {
+      const market: PolymarketMarket = {
+        ...MOCK_MARKETS[0],
+        question: 'Will this happen?',
+        slug: 'presidential-election-2024',
+      }
+      expect(marketMatchesCategory(market, 'politics')).toBe(true)
+    })
+  })
+
+  describe('filterMarketsByCategory', () => {
+    it('returns all markets for all category', () => {
+      expect(filterMarketsByCategory(MOCK_MARKETS, 'all')).toHaveLength(4)
+    })
+
+    it('filters to sports markets only', () => {
+      const sports = filterMarketsByCategory(MOCK_MARKETS, 'sports')
+      expect(sports).toHaveLength(1)
+      expect(sports[0].slug).toBe('nba-finals-2025-champion')
+    })
+
+    it('filters to crypto markets only', () => {
+      const crypto = filterMarketsByCategory(MOCK_MARKETS, 'crypto')
+      expect(crypto).toHaveLength(1)
+      expect(crypto[0].slug).toBe('will-bitcoin-hit-100k')
+    })
+
+    it('returns empty array when no markets match', () => {
+      expect(filterMarketsByCategory(MOCK_MARKETS, 'world')).toHaveLength(0)
+    })
+  })
+
+  describe('CATEGORY_TABS', () => {
+    it('has all as the first tab', () => {
+      expect(CATEGORY_TABS[0].key).toBe('all')
+    })
+
+    it('has unique keys', () => {
+      const keys = CATEGORY_TABS.map((t) => t.key)
+      expect(new Set(keys).size).toBe(keys.length)
+    })
+
+    it('has non-empty keywords for non-all tabs', () => {
+      CATEGORY_TABS.slice(1).forEach((tab) => {
+        expect(tab.keywords.length).toBeGreaterThan(0)
+      })
     })
   })
 })

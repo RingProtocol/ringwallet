@@ -13,25 +13,250 @@ export interface PolymarketMarket {
   outcomePrices: string
 }
 
+export type MarketCategory =
+  | 'all'
+  | 'sports'
+  | 'politics'
+  | 'crypto'
+  | 'world'
+  | 'entertainment'
+  | 'science'
+
+export interface CategoryTab {
+  key: MarketCategory
+  labelKey: string
+  keywords: string[]
+}
+
+export const CATEGORY_TABS: CategoryTab[] = [
+  { key: 'all', labelKey: 'predictTabAll', keywords: [] },
+  {
+    key: 'sports',
+    labelKey: 'predictTabSports',
+    keywords: [
+      'sports',
+      'nba',
+      'nfl',
+      'soccer',
+      'football',
+      'olympic',
+      'match',
+      'team',
+      'player',
+      'champion',
+      'tournament',
+      'super bowl',
+      'world cup',
+      'premier league',
+      'mlb',
+      'nhl',
+      'tennis',
+      'golf',
+      'cricket',
+      'rugby',
+      'f1',
+      'racing',
+      'esports',
+      'ufc',
+      'mma',
+      'boxing',
+      'basketball',
+      'baseball',
+      'hockey',
+      'formula 1',
+    ],
+  },
+  {
+    key: 'politics',
+    labelKey: 'predictTabPolitics',
+    keywords: [
+      'politic',
+      'election',
+      'president',
+      'congress',
+      'senate',
+      'vote',
+      'trump',
+      'biden',
+      'government',
+      'parliament',
+      'campaign',
+      'governor',
+      'mayor',
+      'referendum',
+      'ballot',
+      'democrat',
+      'republican',
+      'conservative',
+      'labour',
+      'liberal',
+      'midterm',
+      'primary',
+      'nomination',
+      'impeach',
+    ],
+  },
+  {
+    key: 'crypto',
+    labelKey: 'predictTabCrypto',
+    keywords: [
+      'crypto',
+      'bitcoin',
+      'ethereum',
+      'btc',
+      'eth',
+      'blockchain',
+      'token',
+      'nft',
+      'defi',
+      'solana',
+      'cardano',
+      'xrp',
+      'cryptocurrency',
+      'altcoin',
+      'mining',
+      'halving',
+      'dex',
+      'cex',
+      'binance',
+      'coinbase',
+      'etf',
+    ],
+  },
+  {
+    key: 'world',
+    labelKey: 'predictTabWorld',
+    keywords: [
+      'war',
+      'military',
+      'conflict',
+      'ukraine',
+      'gaza',
+      'israel',
+      'russia',
+      'invasion',
+      'attack',
+      'defense',
+      'nato',
+      'missile',
+      'drone',
+      'army',
+      'troop',
+      'ceasefire',
+      'peace',
+      'iran',
+      'north korea',
+      'taiwan',
+      'terror',
+      'sanction',
+      'diplomat',
+      'embassy',
+      'border',
+    ],
+  },
+  {
+    key: 'entertainment',
+    labelKey: 'predictTabEntertainment',
+    keywords: [
+      'movie',
+      'film',
+      'music',
+      'oscar',
+      'grammy',
+      'emmy',
+      'celebrity',
+      'actor',
+      'album',
+      'song',
+      'entertainment',
+      'hollywood',
+      'box office',
+      'streaming',
+      'netflix',
+      'disney',
+      'marvel',
+      'tv show',
+      'series',
+      'concert',
+      'festival',
+      'game of thrones',
+      'kardashian',
+    ],
+  },
+  {
+    key: 'science',
+    labelKey: 'predictTabScience',
+    keywords: [
+      'science',
+      'space',
+      'nasa',
+      'mars',
+      'ai',
+      'artificial intelligence',
+      'climate',
+      'weather',
+      'temperature',
+      'vaccine',
+      'medicine',
+      'physics',
+      'biology',
+      'chemistry',
+      'spacex',
+      'rocket',
+      'satellite',
+      'eclipse',
+      'pandemic',
+      'covid',
+      'virus',
+      'fda',
+      'approval drug',
+    ],
+  },
+]
+
+export function marketMatchesCategory(
+  market: PolymarketMarket,
+  category: MarketCategory
+): boolean {
+  if (category === 'all') return true
+  const text = `${market.question} ${market.slug}`.toLowerCase()
+  const tab = CATEGORY_TABS.find((t) => t.key === category)
+  if (!tab) return false
+  return tab.keywords.some((kw) => text.includes(kw.toLowerCase()))
+}
+
+export function filterMarketsByCategory(
+  markets: PolymarketMarket[],
+  category: MarketCategory
+): PolymarketMarket[] {
+  if (category === 'all') return markets
+  return markets.filter((m) => marketMatchesCategory(m, category))
+}
+
 export async function fetchPolymarketMarkets(
   limit = 20,
-  offset = 0
+  offset = 0,
+  category?: string
 ): Promise<PolymarketMarket[]> {
+  const body: Record<string, unknown> = {
+    source: 'polymarket',
+    active: true,
+    closed: false,
+    limit,
+    offset,
+    order: 'volume_24hr',
+    ascending: false,
+  }
+  if (category) {
+    body.category = category
+  }
   const res = await fetch(`${API_BASE}/v1/prediction_markets`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
     },
-    body: JSON.stringify({
-      source: 'polymarket',
-      active: true,
-      closed: false,
-      limit,
-      offset,
-      order: 'volume_24hr',
-      ascending: false,
-    }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     throw new Error(`Prediction market API error: HTTP ${res.status}`)

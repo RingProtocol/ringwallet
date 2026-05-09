@@ -18,6 +18,47 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.polymarket-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.polymarket-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.polymarket-tabs__item {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ring-text-secondary, rgba(255, 255, 255, 0.55));
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.polymarket-tabs__item--active {
+  color: #fff;
+  background: rgba(102, 126, 234, 0.18);
+  border-color: rgba(102, 126, 234, 0.35);
+}
+
+.polymarket-tabs__item:active {
+  transform: scale(0.96);
+}
+
 .polymarket-list {
   display: flex;
   flex-direction: column;
@@ -79,6 +120,16 @@
 
 .polymarket-list__sentinel {
   height: 1px;
+}
+
+.polymarket-list__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  font-size: 14px;
+  color: var(--ring-text-secondary, rgba(255, 255, 255, 0.55));
+  text-align: center;
 }
 
 .polymarket-list__loading-more {
