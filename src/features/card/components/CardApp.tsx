@@ -29,6 +29,12 @@ const CardApp: React.FC = () => {
   const { accounts, activeCard, loading: accountsLoading, reload: reloadAccounts } = useCardAccounts()
   const topUp = useCardTopUp()
 
+  // Keep a ref to the latest reloadAccounts so KYC poll closures never capture
+  // a stale version (adapter was null when handleApply ran but becomes non-null
+  // after the first re-render triggered by setKycUrl).
+  const reloadAccountsRef = useRef(reloadAccounts)
+  reloadAccountsRef.current = reloadAccounts
+
   const walletAddress = activeWallet?.address ?? ZERO_EVM
 
   useEffect(() => {
@@ -76,7 +82,7 @@ const CardApp: React.FC = () => {
               if (status === 'approved') {
                 await impl.createCard('virtual')
                 setKycUrl(null)
-                reloadAccounts()
+                reloadAccountsRef.current()
                 setCurrentView('main')
               } else if (status === 'rejected') {
                 setKycUrl(null)
@@ -100,7 +106,7 @@ const CardApp: React.FC = () => {
         setCurrentView('main')
       }
     },
-    [clearKycPollTimeouts, reloadAccounts, walletAddress],
+    [clearKycPollTimeouts, walletAddress],
   )
 
   const handleKYCComplete = useCallback(() => {

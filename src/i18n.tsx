@@ -934,6 +934,8 @@ export function I18nProvider({
     const stored = safeGetItem(STORAGE_KEY)
     if (explicit === 'true' && isLang(stored)) {
       setLangState(stored)
+    } else {
+      setLangState(getPreferredLang())
     }
   }, [])
 
