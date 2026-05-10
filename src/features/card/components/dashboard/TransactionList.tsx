@@ -1,4 +1,5 @@
 import React from 'react'
+import { useI18n } from '../../../../i18n'
 import type { CardTransaction } from '../../types'
 import CurrencyAmount from '../shared/CurrencyAmount'
 import EmptyCardState from '../shared/EmptyCardState'
@@ -67,12 +68,14 @@ const TransactionList: React.FC<Props> = ({
   hasMore = false,
   onLoadMore,
 }) => {
+  const { t } = useI18n()
+
   if (loading && transactions.length === 0) {
     return (
       <div className="transaction-list">
         <div className="transaction-list__loading">
           <div className="transaction-list__spinner" />
-          <span>Loading transactions...</span>
+          <span>{t('cardTransactionsLoading')}</span>
         </div>
       </div>
     )
@@ -82,8 +85,8 @@ const TransactionList: React.FC<Props> = ({
     return (
       <div className="transaction-list">
         <EmptyCardState
-          title="No Transactions"
-          description="Your card transactions will appear here."
+          title={t('cardNoTransactions')}
+          description={t('cardNoTransactionsHint')}
         />
       </div>
     )
@@ -138,7 +141,7 @@ const TransactionList: React.FC<Props> = ({
           onClick={onLoadMore}
           disabled={loading}
         >
-          {loading ? 'Loading...' : 'Load More'}
+          {loading ? t('loading') : t('cardLoadMore')}
         </button>
       )}
     </div>

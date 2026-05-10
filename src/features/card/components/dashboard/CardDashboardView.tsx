@@ -1,5 +1,9 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
+import TitleBar from '../../../../components/common/TitleBar'
+import { useI18n } from '../../../../i18n'
 import type { CardAccount } from '../../types'
+import { useCardTransactions } from '../../hooks/useCardTransactions'
 import CardOverview from './CardOverview'
 import TransactionList from './TransactionList'
 import '../Card.css'
@@ -8,43 +12,23 @@ interface Props {
   card: CardAccount
   onTopUp: () => void
   onSettings: () => void
+  /** Full-screen overlay vs scroll inside Card tab. */
+  presentation?: 'fullscreen' | 'inline'
+  /** Collapses fullscreen detail into the Card tab (only used when presentation is fullscreen). */
+  onBack: () => void
 }
 
-const MOCK_TRANSACTIONS = [
-  {
-    id: 'tx-1',
-    cardId: 'card-1',
-    type: 'purchase' as const,
-    amount: '-25.50',
-    currency: 'USD',
-    merchant: 'Starbucks',
-    status: 'completed' as const,
-    timestamp: Date.now() - 3600000,
-  },
-  {
-    id: 'tx-2',
-    cardId: 'card-1',
-    type: 'topup' as const,
-    amount: '100.00',
-    currency: 'USD',
-    merchant: 'Crypto Top Up',
-    status: 'completed' as const,
-    timestamp: Date.now() - 86400000,
-  },
-  {
-    id: 'tx-3',
-    cardId: 'card-1',
-    type: 'purchase' as const,
-    amount: '-9.99',
-    currency: 'USD',
-    merchant: 'Netflix',
-    status: 'completed' as const,
-    timestamp: Date.now() - 172800000,
-  },
-]
+const CardDashboardView: React.FC<Props> = ({
+  card,
+  onTopUp,
+  onSettings,
+  presentation = 'fullscreen',
+  onBack,
+}) => {
+  const { t } = useI18n()
+  const { transactions, loading, hasMore, loadMore } = useCardTransactions()
 
-const CardDashboardView: React.FC<Props> = ({ card, onTopUp, onSettings }) => {
-  return (
+  const body = (
     <div className="card-dashboard">
       <CardOverview
         card={card}
@@ -53,11 +37,14 @@ const CardDashboardView: React.FC<Props> = ({ card, onTopUp, onSettings }) => {
       />
 
       <div className="card-dashboard__section">
-        <h3 className="card-dashboard__section-title">Recent Transactions</h3>
+        <h3 className="card-dashboard__section-title">
+          {t('cardRecentTransactions')}
+        </h3>
         <TransactionList
-          transactions={MOCK_TRANSACTIONS}
-          loading={false}
-          hasMore={false}
+          transactions={transactions}
+          loading={loading}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
         />
       </div>
 
@@ -85,6 +72,28 @@ const CardDashboardView: React.FC<Props> = ({ card, onTopUp, onSettings }) => {
       </div>
     </div>
   )
+
+  if (presentation === 'inline') {
+    return (
+      <div className="card-dashboard-page card-dashboard-page--inline">
+        <div className="card-dashboard-page__content">{body}</div>
+      </div>
+    )
+  }
+
+  const content = (
+    <div className="card-dashboard-page">
+      <TitleBar onBack={onBack} backLabel={t('back')}>
+        <span className="card-dashboard-page__title">{t('cardTab')}</span>
+      </TitleBar>
+      <div className="card-dashboard-page__content">{body}</div>
+    </div>
+  )
+
+  if (typeof document === 'undefined') {
+    return content
+  }
+  return createPortal(content, document.body)
 }
 
 export default CardDashboardView

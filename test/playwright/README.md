@@ -26,5 +26,5 @@ yarn test:e2e:ui
 - `env.ts` — 测试链配置（chainId、端口、RPC URL）
 - `fixtures/` — 共享 fixture（wallet、mock 数据）
 - `helpers/` — WebAuthn 模拟、路由代理等工具函数
-- `tests/` — 测试文件（EVM 转账、Solana smoke、账户余额等）
+- `tests/` — 测试文件（EVM 转账、Solana smoke、账户余额、Card Tab / Immersve KYC 壳层等）
 - `scripts/start-anvil.mjs` — 启动指定 chainId + 端口的 Anvil 实例

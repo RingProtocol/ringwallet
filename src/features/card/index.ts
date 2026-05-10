@@ -42,8 +42,5 @@ export {
   removeCardSettings,
 } from './services/cardStorage'
 export type { ProviderState, CardSettings } from './services/cardStorage'
-export {
-  mockAdapter,
-  immersveAdapter,
-} from './services/adapter'
+export { immersveAdapter } from './services/adapter'
 export type { CardProviderAdapter } from './services/adapter'

@@ -27,9 +27,11 @@ export function useCardTransactions(pageSize = DEFAULT_PAGE_SIZE) {
         return
       }
 
-      // Cache-first strategy for the first page
+      // Cache-first for first page (only rows for this card)
       if (pageNum === 1 && !append) {
-        const cached = getCardTransactionsFromCache()
+        const cached = getCardTransactionsFromCache().filter(
+          (tx) => tx.cardId === activeCard.id,
+        )
         if (cached.length > 0) {
           setTransactions(cached)
           setLoading(false)
@@ -62,7 +64,9 @@ export function useCardTransactions(pageSize = DEFAULT_PAGE_SIZE) {
         }
       } catch (err) {
         if (pageNum === 1 && !append) {
-          const cached = getCardTransactionsFromCache()
+          const cached = getCardTransactionsFromCache().filter(
+            (tx) => tx.cardId === activeCard.id,
+          )
           if (cached.length === 0) {
             setError((err as Error).message || 'Failed to load transactions')
           }
@@ -76,12 +80,17 @@ export function useCardTransactions(pageSize = DEFAULT_PAGE_SIZE) {
     [adapter, activeCard, pageSize],
   )
 
-  // Initial load
   useEffect(() => {
-    if (!adapterLoading && activeCard) {
-      load(1)
+    if (adapterLoading) return
+    if (!activeCard) {
+      setTransactions([])
+      setLoading(false)
+      setPage(1)
+      return
     }
-  }, [load, adapterLoading, activeCard])
+    setPage(1)
+    void load(1)
+  }, [load, adapterLoading, activeCard?.id])
 
   const loadMore = useCallback(() => {
     const nextPage = page + 1

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useI18n } from '../../../i18n'
 import type { CardProvider } from '../../../config/cardProviders'
 
 interface Props {
@@ -15,6 +16,7 @@ const BRAND_COLORS: Record<string, string> = {
 }
 
 const CardProviderCard: React.FC<Props> = ({ provider, onApply }) => {
+  const { t } = useI18n()
   const brandColor = BRAND_COLORS[provider.id] || '#667eea'
 
   const handleVisitSite = (e: React.MouseEvent) => {
@@ -72,7 +74,7 @@ const CardProviderCard: React.FC<Props> = ({ provider, onApply }) => {
         onClick={handleApply}
         style={onApply ? {} : { opacity: 0.45, pointerEvents: 'none' as const }}
       >
-        Apply now
+        {t('cardApplyNow')}
         <svg className="card-provider-row__apply-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

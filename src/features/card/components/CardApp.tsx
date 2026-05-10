@@ -1,5 +1,8 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
+import { useAuth } from '../../../contexts/AuthContext'
 import { useCardProvider, useCardAccounts, useCardTopUp } from '../hooks'
+import '../services/adapter'
+import { cardProviderRegistry } from '../services/registry'
 import CardOnboardingView from './onboarding/CardOnboardingView'
 import KYCWebView from './onboarding/KYCWebView'
 import CardDashboardView from './dashboard/CardDashboardView'
@@ -13,61 +16,121 @@ import './Card.css'
 
 type CardView = 'main' | 'topup' | 'settings' | 'kyc'
 
+const ZERO_EVM = '0x0000000000000000000000000000000000000000'
+
 const CardApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<CardView>('main')
-  const { adapter, loading: adapterLoading } = useCardProvider()
+  const [kycUrl, setKycUrl] = useState<string | null>(null)
+  /** Full-screen card detail (from Card tab); back collapses into tab body, does not switch tab. */
+  const [cardDetailFullscreen, setCardDetailFullscreen] = useState(true)
+  const kycPollTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
+  const { activeWallet } = useAuth()
+  const { loading: adapterLoading } = useCardProvider()
   const { accounts, activeCard, loading: accountsLoading, reload: reloadAccounts } = useCardAccounts()
   const topUp = useCardTopUp()
 
+  const walletAddress = activeWallet?.address ?? ZERO_EVM
+
+  useEffect(() => {
+    if (activeCard) setCardDetailFullscreen(true)
+  }, [activeCard?.id])
+
+  const clearKycPollTimeouts = useCallback(() => {
+    for (const id of kycPollTimeoutsRef.current) {
+      clearTimeout(id)
+    }
+    kycPollTimeoutsRef.current = []
+  }, [])
+
+  useEffect(() => () => clearKycPollTimeouts(), [clearKycPollTimeouts])
+
+  const handleLeaveCardDetailFullscreen = useCallback(() => {
+    setCardDetailFullscreen(false)
+  }, [])
+
   // ─── KYC Flow ──────────────────────────────────────
 
-  const handleApply = useCallback(async (providerId: string) => {
-    if (!adapter) return
+  const handleApply = useCallback(
+    async (providerId: string) => {
+      clearKycPollTimeouts()
+      const impl = cardProviderRegistry.get(providerId)
+      if (!impl) return
 
-    try {
-      const session = await adapter.startKYC()
-      setCurrentView('kyc')
-
-      // Poll KYC status until approved
-      const pollKYC = async () => {
-        const status = await adapter.getKYCStatus()
-        if (status === 'approved') {
-          // Auto-create card after KYC approval
-          const card = await adapter.createCard('virtual')
-          reloadAccounts()
-          setCurrentView('main')
-        } else if (status === 'rejected') {
-          setCurrentView('main')
-        } else {
-          setTimeout(pollKYC, 2000)
-        }
+      if (!impl.isLinked()) {
+        await impl.initialize({
+          apiKey: '',
+          environment: 'sandbox',
+          walletAddress,
+        })
       }
 
-      // Start polling after a short delay to let the mock auto-approve
-      setTimeout(pollKYC, 3500)
-    } catch (err) {
-      console.error('Failed to start KYC:', err)
-    }
-  }, [adapter, reloadAccounts])
+      try {
+        const session = await impl.startKYC()
+        setKycUrl(session.url)
+        setCurrentView('kyc')
+
+        const pollKYC = () => {
+          void (async () => {
+            try {
+              const status = await impl.getKYCStatus()
+              if (status === 'approved') {
+                await impl.createCard('virtual')
+                setKycUrl(null)
+                reloadAccounts()
+                setCurrentView('main')
+              } else if (status === 'rejected') {
+                setKycUrl(null)
+                setCurrentView('main')
+              } else {
+                const id = setTimeout(pollKYC, 2000)
+                kycPollTimeoutsRef.current.push(id)
+              }
+            } catch {
+              setKycUrl(null)
+              setCurrentView('main')
+            }
+          })()
+        }
+
+        const firstPoll = setTimeout(pollKYC, 3500)
+        kycPollTimeoutsRef.current.push(firstPoll)
+      } catch (err) {
+        console.error('Failed to start KYC:', err)
+        setKycUrl(null)
+        setCurrentView('main')
+      }
+    },
+    [clearKycPollTimeouts, reloadAccounts, walletAddress],
+  )
 
   const handleKYCComplete = useCallback(() => {
-    if (!adapter) return
+    clearKycPollTimeouts()
+    const active = cardProviderRegistry.getActiveProvider()
+    setKycUrl(null)
+    if (!active) {
+      setCurrentView('main')
+      return
+    }
 
-    // KYC web view closed — check status and proceed
-    adapter.getKYCStatus().then(async (status) => {
-      if (status === 'approved') {
-        const card = await adapter.createCard('virtual')
-        reloadAccounts()
-      }
-      setCurrentView('main')
-    }).catch(() => {
-      setCurrentView('main')
-    })
-  }, [adapter, reloadAccounts])
+    active
+      .getKYCStatus()
+      .then(async (status) => {
+        if (status === 'approved') {
+          await active.createCard('virtual')
+          reloadAccounts()
+        }
+        setCurrentView('main')
+      })
+      .catch(() => {
+        setCurrentView('main')
+      })
+  }, [clearKycPollTimeouts, reloadAccounts])
 
   const handleKYCError = useCallback((_error: string) => {
-    // Keep KYC view open so user can retry
-  }, [])
+    clearKycPollTimeouts()
+    setKycUrl(null)
+    setCurrentView('main')
+  }, [clearKycPollTimeouts])
 
   // ─── Navigation ────────────────────────────────────
 
@@ -113,24 +176,22 @@ const CardApp: React.FC = () => {
     )
   }
 
-  // No adapter or no cards — show onboarding
-  if (!adapter || accounts.length === 0) {
+  if (currentView === 'kyc' && kycUrl) {
     return (
       <div className="card-app">
-        <CardOnboardingView onApply={handleApply} />
+        <KYCWebView
+          url={kycUrl}
+          onComplete={handleKYCComplete}
+          onError={handleKYCError}
+        />
       </div>
     )
   }
 
-  // KYC Flow
-  if (currentView === 'kyc') {
+  if (accounts.length === 0 && currentView !== 'kyc') {
     return (
       <div className="card-app">
-        <KYCWebView
-          url="https://mock-kyc.example.com/verify"
-          onComplete={handleKYCComplete}
-          onError={handleKYCError}
-        />
+        <CardOnboardingView onApply={handleApply} />
       </div>
     )
   }
@@ -232,9 +293,12 @@ const CardApp: React.FC = () => {
     return (
       <div className="card-app">
         <CardDashboardView
+          key={`${activeCard.id}-${cardDetailFullscreen ? 'fs' : 'inline'}`}
           card={activeCard}
           onTopUp={handleNavigateToTopUp}
           onSettings={handleNavigateToSettings}
+          presentation={cardDetailFullscreen ? 'fullscreen' : 'inline'}
+          onBack={handleLeaveCardDetailFullscreen}
         />
       </div>
     )

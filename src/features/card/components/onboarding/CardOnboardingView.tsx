@@ -1,13 +1,12 @@
 import React from 'react'
 import { CARD_PROVIDERS } from '../../../../config/cardProviders'
+import { cardProviderRegistry } from '../../services/registry'
 import CardProviderCard from '../CardProviderCard'
 import '../Card.css'
 
 interface Props {
   onApply: (providerId: string) => void
 }
-
-const INTEGRATED_PROVIDERS = new Set(['immersve'])
 
 const CardOnboardingView: React.FC<Props> = ({ onApply }) => {
   return (
@@ -26,7 +25,7 @@ const CardOnboardingView: React.FC<Props> = ({ onApply }) => {
             key={provider.id}
             provider={provider}
             onApply={
-              INTEGRATED_PROVIDERS.has(provider.id)
+              cardProviderRegistry.has(provider.id)
                 ? () => onApply(provider.id)
                 : undefined
             }

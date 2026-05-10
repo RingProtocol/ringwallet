@@ -41,18 +41,7 @@ function randomHex(bytes: number): string {
     .join('')
 }
 
-// ─── Mock Data ────────────────────────────────────────
-
-const MOCK_MERCHANTS = [
-  'Amazon',
-  'Starbucks',
-  'Apple',
-  'Uber',
-  'Netflix',
-  'Spotify',
-  'McDonald\'s',
-  'Walmart',
-]
+// ─── Sample top-up assets (in-memory until issuer API) ─────────────────
 
 const MOCK_TOP_UP_ASSETS: TopUpAsset[] = [
   {
@@ -87,22 +76,30 @@ const MOCK_TOP_UP_ASSETS: TopUpAsset[] = [
   },
 ]
 
-// ─── MockAdapter ──────────────────────────────────────
+// ─── Memory-backed adapter (dev / sandbox parity) ───
+
+export type MemoryBackedCardAdapterSpec = {
+  id: string
+  displayName: string
+  supportedAssets: string[]
+  supportedChains: string[]
+  supportedCurrencies: string[]
+  supportedRegions: string[]
+  cardTypes: CardType[]
+}
 
 /**
- * In-memory mock implementation of {@link CardProviderAdapter}.
- * Suitable for development and unit testing.
+ * In-memory implementation of {@link CardProviderAdapter}.
+ * Used for automated tests and sandbox-style flows until a provider ships real APIs.
  */
-class MockAdapter implements CardProviderAdapter {
-  // ─── Identity ──────────────────────────────────────
-
-  readonly id = 'mock'
-  readonly displayName = 'Mock Card Provider'
-  readonly supportedAssets = ['USDC', 'ETH', 'USDT']
-  readonly supportedChains = ['ethereum', 'polygon', 'arbitrum']
-  readonly supportedCurrencies = ['USD']
-  readonly supportedRegions = ['Global']
-  readonly cardTypes: CardType[] = ['virtual', 'physical']
+export class MemoryBackedCardAdapter implements CardProviderAdapter {
+  readonly id: string
+  readonly displayName: string
+  readonly supportedAssets: string[]
+  readonly supportedChains: string[]
+  readonly supportedCurrencies: string[]
+  readonly supportedRegions: string[]
+  readonly cardTypes: CardType[]
 
   // ─── Internal State ────────────────────────────────
 
@@ -114,6 +111,16 @@ class MockAdapter implements CardProviderAdapter {
   private kycTimer: ReturnType<typeof setTimeout> | null = null
   private spendingLimits = new Map<string, SpendingLimits>()
   private txCallbacks: Array<(tx: CardTransaction) => void> = []
+
+  constructor(spec: MemoryBackedCardAdapterSpec) {
+    this.id = spec.id
+    this.displayName = spec.displayName
+    this.supportedAssets = spec.supportedAssets
+    this.supportedChains = spec.supportedChains
+    this.supportedCurrencies = spec.supportedCurrencies
+    this.supportedRegions = spec.supportedRegions
+    this.cardTypes = spec.cardTypes
+  }
 
   // ─── Lifecycle ─────────────────────────────────────
 
@@ -159,7 +166,8 @@ class MockAdapter implements CardProviderAdapter {
 
     return {
       sessionId: `kyc_${randomHex(8)}`,
-      url: 'https://mock-kyc.example.com/verify?session=' + randomHex(8),
+      // Placeholder until the real issuer returns a hosted KYC URL (no fake third-party domain).
+      url: 'about:blank',
       expiresAt: Date.now() + 3600_000,
     }
   }
@@ -179,14 +187,14 @@ class MockAdapter implements CardProviderAdapter {
       status: 'active',
       type,
       last4: randomLast4(),
-      balance: '100.00',
+      balance: '0.00',
       currency: 'USD',
       createdAt: now,
-      cardholderName: 'Mock User',
+      cardholderName: '',
     }
 
     this.cards.set(card.id, card)
-    this.transactions.set(card.id, this.generateMockTransactions(card.id))
+    this.transactions.set(card.id, [])
 
     this.spendingLimits.set(card.id, {
       daily: '500.00',
@@ -414,7 +422,7 @@ class MockAdapter implements CardProviderAdapter {
       encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="340" height="214" viewBox="0 0 340 214">' +
           '<rect width="340" height="214" rx="16" fill="#6366f1"/>' +
-          '<text x="24" y="40" fill="rgba(255,255,255,0.7)" font-family="sans-serif" font-size="14">MOCK CARD</text>' +
+          '<text x="24" y="40" fill="rgba(255,255,255,0.7)" font-family="sans-serif" font-size="14">CARD</text>' +
           '<text x="24" y="130" fill="white" font-family="monospace" font-size="20" letter-spacing="3">•••• •••• •••• ' +
           (this.cards.get(cardId)?.last4 ?? '0000') +
           '</text>' +
@@ -425,39 +433,10 @@ class MockAdapter implements CardProviderAdapter {
 
   // ─── Private Helpers ───────────────────────────────
 
-  /** Generate a set of mock transactions for a new card. */
-  private generateMockTransactions(cardId: string): CardTransaction[] {
-    const now = Date.now()
-    const DAY = 86400_000
-    const txs: CardTransaction[] = []
-
-    for (let i = 0; i < 8; i++) {
-      const isPurchase = Math.random() > 0.3
-      txs.push({
-        id: `tx_${randomHex(8)}`,
-        cardId,
-        type: isPurchase ? 'purchase' : 'topup',
-        amount: isPurchase
-          ? `-${(Math.random() * 50 + 5).toFixed(2)}`
-          : `+${(Math.random() * 200 + 20).toFixed(2)}`,
-        currency: 'USD',
-        merchant: isPurchase
-          ? MOCK_MERCHANTS[Math.floor(Math.random() * MOCK_MERCHANTS.length)]
-          : undefined,
-        status: 'completed',
-        timestamp: now - i * DAY * Math.floor(Math.random() * 3 + 1),
-      })
-    }
-
-    return txs.sort((a, b) => b.timestamp - a.timestamp)
-  }
-
   /** Best-effort lookup of a cardId associated with a top-up order. */
   private findCardIdByTopUpOrder(_order: TopUpOrder): string {
-    // In a real adapter this would be tracked; for the mock just return the first card.
+    // In a real adapter this would be tracked; in-memory impl returns the first card.
     const first = this.cards.keys().next()
     return first.done ? '' : first.value
   }
 }
-
-export const mockAdapter = new MockAdapter()

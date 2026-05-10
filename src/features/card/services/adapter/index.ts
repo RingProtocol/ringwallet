@@ -1,9 +1,11 @@
 import { cardProviderRegistry } from '../registry'
-import { mockAdapter } from './MockAdapter'
+import { immersveAdapter } from './ImmersveAdapter'
 
-// Register mock adapter for development
-cardProviderRegistry.register(mockAdapter)
+cardProviderRegistry.register(immersveAdapter)
 
 export type { CardProviderAdapter, CardType } from './types'
-export { mockAdapter } from './MockAdapter'
+export {
+  MemoryBackedCardAdapter,
+} from './memoryBackedCardAdapter'
+export type { MemoryBackedCardAdapterSpec } from './memoryBackedCardAdapter'
 export { immersveAdapter } from './ImmersveAdapter'

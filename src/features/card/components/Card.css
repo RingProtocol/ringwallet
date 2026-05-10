@@ -182,11 +182,12 @@
 .card-onboarding {
   display: flex;
   flex-direction: column;
-  padding: 20px 16px;
+  padding: 20px 0;
   gap: 20px;
 }
 
 .card-onboarding__header {
+  padding: 0 16px;
   text-align: center;
 }
 
@@ -364,6 +365,7 @@
 
 .card-onboarding__footer {
   margin: 0;
+  padding: 0 16px;
   text-align: center;
   font-size: 0.75rem;
   color: var(--ring-text-muted, #6b7280);
@@ -493,6 +495,53 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ─── Dashboard: full-screen page (documents/specs/pages/page-style.md) ─ */
+
+.card-dashboard-page {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  background: var(--ring-bg-page, #0d0f14);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.card-dashboard-page__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.card-dashboard-page__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card-dashboard-page--inline {
+  /* Reset full-screen positioning inherited from .card-dashboard-page */
+  position: static;
+  inset: auto;
+  z-index: auto;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+.card-dashboard-page--inline .card-dashboard-page__content {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* ─── Dashboard: CardDashboardView ─────────────────── */

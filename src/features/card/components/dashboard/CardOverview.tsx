@@ -1,4 +1,5 @@
 import React from 'react'
+import { CARD_PROVIDERS } from '../../../../config/cardProviders'
 import type { CardAccount } from '../../types'
 import CardStatusBadge from './CardStatusBadge'
 import CurrencyAmount from '../shared/CurrencyAmount'
@@ -12,13 +13,17 @@ interface Props {
 
 const CardOverview: React.FC<Props> = ({ card, onTopUp, onSettings }) => {
   const isFrozen = card.status === 'frozen'
+  const providerMeta = CARD_PROVIDERS.find((p) => p.id === card.provider)
+  const providerLabel = providerMeta?.name ?? card.provider
+  const holderDisplay =
+    card.cardholderName.trim().length > 0 ? card.cardholderName : '—'
 
   return (
     <div className="card-overview">
       <div className={`card-overview__visual ${isFrozen ? 'card-overview__visual--frozen' : ''}`}>
         <div className="card-overview__card-face">
           <div className="card-overview__card-header">
-            <span className="card-overview__card-provider">Immersve</span>
+            <span className="card-overview__card-provider">{providerLabel}</span>
             <CardStatusBadge status={card.status} />
           </div>
 
@@ -30,7 +35,7 @@ const CardOverview: React.FC<Props> = ({ card, onTopUp, onSettings }) => {
             <div className="card-overview__card-holder">
               <span className="card-overview__card-holder-label">Cardholder</span>
               <span className="card-overview__card-holder-name">
-                {card.cardholderName}
+                {holderDisplay}
               </span>
             </div>
             <div className="card-overview__card-balance">

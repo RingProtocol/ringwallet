@@ -26,7 +26,7 @@ Transform UCard from a link directory into a deeply integrated in-app card manag
 ### Constraints
 
 - Design a generic adapter framework first; actual Immersve API details will be filled in during integration
-- Use MockAdapter for development and testing before real API access
+- Use `MemoryBackedCardAdapter` / `immersveAdapter` for sandbox UX until real issuer HTTP client ships
 - Follow existing project patterns (chainplugins registry, hooks, services structure)
 
 ---
@@ -59,7 +59,7 @@ Transform UCard from a link directory into a deeply integrated in-app card manag
 │  │  - card management                   │    │
 │  └──────────────────────────────────────┘    │
 │  ┌──────────────────────────────────────┐    │
-│  │ MockAdapter (development / testing)  │    │
+│  │ memoryBackedCardAdapter (sandbox UX)  │    │
 │  └──────────────────────────────────────┘    │
 ├──────────────────────────────────────────────┤
 │         Storage Layer                         │
@@ -353,7 +353,7 @@ src/features/card/
 │   ├── adapter/
 │   │   ├── types.ts                   # Adapter interface + all type definitions
 │   │   ├── ImmersveAdapter.ts         # Immersve implementation (stub)
-│   │   └── MockAdapter.ts             # Mock implementation for dev/test
+│   │   └── memoryBackedCardAdapter.ts # In-memory adapter base (Immersve until HTTP)
 │   ├── registry.ts                    # Provider registry
 │   └── cardStorage.ts                 # IndexedDB persistence for card state
 │
@@ -448,10 +448,10 @@ cardStore
 
 | Layer | Tool | Scope |
 |-------|------|-------|
-| Adapter unit tests | Vitest | MockAdapter behavior, interface compliance |
+| Adapter unit tests | Vitest | MemoryBackedCardAdapter behavior, interface compliance |
 | Hook tests | Vitest | useCardAccounts, useCardTopUp state machines |
 | Component tests | Vitest + Testing Library | Rendering, user interactions |
-| Integration tests | Vitest | Full top-up flow with MockAdapter |
+| Integration tests | Vitest | Full top-up flow with immersve / in-memory adapter |
 | E2E tests | Playwright | KYC → top-up → balance check flow |
 
 ---
