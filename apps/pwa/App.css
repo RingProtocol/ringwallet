@@ -1,0 +1,190 @@
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px;
+  position: relative;
+  /* background: pink; */
+}
+
+.app-version {
+  margin-top: auto;
+  padding: 2px;
+  font-size: 12px;
+  color: var(--ring-text-muted);
+  user-select: none;
+}
+
+.header-actions {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  z-index: 1000;
+}
+
+.header-actions:has(.chain-switcher-container) {
+  left: 20px;
+  justify-content: space-between;
+}
+
+/* Logged-in wallet shell: chain switcher only (More tab holds account menu). */
+.header-actions--wallet-main:has(.chain-switcher-container) {
+  justify-content: flex-start;
+}
+
+body.ring-dapp-open .app > .header-actions .chain-switcher-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .app > .header-actions .menu-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .app > .header-actions {
+  left: auto;
+  justify-content: flex-end;
+  z-index: 2600;
+}
+
+.app:has(.card--guest) {
+  align-items: flex-start;
+}
+
+.app:has(.wallet-main-page) {
+  padding: 0;
+  display: block;
+  height: 100%;
+}
+
+.card {
+  background: var(--ring-bg-elevated);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 6px;
+  text-align: center;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--ring-border);
+  width: min(100%, 100%);
+  min-height: 100%;
+}
+
+.card:not(.card--guest) {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  margin-inline: auto;
+}
+
+.card--guest {
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: calc(100dvh - 12px);
+}
+
+.card--guest-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 24px 0;
+}
+
+.card--guest .login-container {
+  margin-top: 0;
+  padding: 0 24px 20px;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: var(--ring-text-secondary);
+  margin-bottom: 30px;
+}
+
+.welcome-message {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px 0;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.welcome-message h2 {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+.guest-message {
+  background: var(--ring-accent-soft);
+  color: var(--ring-accent);
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 1px solid rgba(165, 180, 252, 0.28);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card {
+    padding: 30px 20px;
+    margin: 0 auto;
+  }
+
+  .card:not(.card--guest) {
+    min-height: calc(100vh - 12px);
+    min-height: calc(100dvh - 12px);
+  }
+
+  .card--guest {
+    padding: 0;
+  }
+
+  .card--guest-content {
+    padding: 20px 20px 0;
+  }
+
+  .card--guest .login-container {
+    padding: 0 20px 20px;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+  }
+}

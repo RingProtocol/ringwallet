@@ -1,0 +1,182 @@
+import React, { useCallback, useState, useEffect } from 'react'
+import TokenDetailPage from '../detail/TokenDetailPage'
+import AddChainPage from '../chains/AddChainPage'
+import type { ChainToken } from '../../models/ChainTokens'
+import { useAuth } from '../../contexts/AuthContext'
+import { useBalanceManager } from '../../hooks/useBalanceManager'
+import type { SendTokenOption } from '../transaction/types'
+
+import BottomTabBar from './BottomTabBar'
+import { WalletTabHeader, WalletTabBody } from './WalletTab'
+import { ActivityTabHeader, ActivityTabBody } from './ActivityTab'
+import { MoreTabHeader, MoreTabBody } from './MoreTab'
+import { CardTabHeader, CardTabBody } from '../../features/card/components/CardTab'
+import type { BottomTab } from './BottomTabBar'
+import './WalletMainPage.css'
+
+const OPEN_ADD_CHAIN_EVENT = 'ring:open-add-chain'
+
+export interface WalletMainPageProps {
+  /** Shown at the bottom of the More tab only (not on Wallet / Activity). */
+  appVersion?: string
+  /** When set, shows a close control and overlay layout (e.g. DApp fullscreen peek). */
+  onClose?: () => void
+  /** Narrow panel over DApp: same tabs, compact layout. */
+  peekOverDapp?: boolean
+  className?: string
+}
+
+const TAB_QUERY_KEYS: BottomTab[] = ['wallet', 'activity', 'card', 'more']
+
+function getInitialBottomTab(): BottomTab {
+  if (typeof window === 'undefined') return 'wallet'
+  const p = new URLSearchParams(window.location.search)
+  const t = p.get('tab')
+  if (t === 'tokens') return 'wallet'
+  if (t === 'dapps') return 'wallet'
+  if (t && TAB_QUERY_KEYS.includes(t as BottomTab)) return t as BottomTab
+  return 'wallet'
+}
+
+const WalletMainPage: React.FC<WalletMainPageProps> = ({
+  appVersion,
+  onClose,
+  peekOverDapp = true,
+  className,
+}) => {
+  const { activeChain } = useAuth()
+  const [bottomTab, setBottomTab] = useState<BottomTab>(getInitialBottomTab)
+  const [moreExpandWalletListOnOpen, setMoreExpandWalletListOnOpen] =
+    useState(false)
+  const [moreWalletListPulse, setMoreWalletListPulse] = useState(0)
+  const [pendingSendToken, setPendingSendToken] = useState<
+    SendTokenOption | undefined
+  >(undefined)
+  const [tokenDetail, setTokenDetail] = useState<ChainToken | null>(null)
+  const [showAddChain, setShowAddChain] = useState(false)
+
+  const { totalAssetUsd, tokens, supportsTokens } = useBalanceManager()
+
+  useEffect(() => {
+    const handleOpenAddChain = () => setShowAddChain(true)
+    window.addEventListener(OPEN_ADD_CHAIN_EVENT, handleOpenAddChain)
+    return () => {
+      window.removeEventListener(OPEN_ADD_CHAIN_EVENT, handleOpenAddChain)
+    }
+  }, [])
+
+  const goToMore = useCallback((expandWalletList: boolean) => {
+    setMoreExpandWalletListOnOpen(expandWalletList)
+    if (expandWalletList) {
+      setMoreWalletListPulse((n) => n + 1)
+    }
+    setBottomTab('more')
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', 'more')
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [])
+
+  const openMoreFromAddress = useCallback(() => {
+    goToMore(true)
+  }, [goToMore])
+
+  const selectTab = useCallback((tab: BottomTab) => {
+    setBottomTab(tab)
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', tab)
+    window.history.replaceState(null, '', url.toString())
+  }, [])
+
+  const openTokenDetail = useCallback((token: ChainToken) => {
+    setTokenDetail(token)
+  }, [])
+
+  const closeTokenDetail = useCallback(() => {
+    setTokenDetail(null)
+  }, [])
+
+  return (
+    <div
+      className={[
+        'wallet-main-page',
+        onClose ? 'wallet-main-page--overlay' : '',
+        peekOverDapp ? 'wallet-main-page--peek' : '',
+        className ?? '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {onClose && (
+        <button
+          type="button"
+          className="wallet-main-page__close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
+
+      {/* ─── Fixed header area (grid row 1) ─── */}
+      {bottomTab === 'wallet' && (
+        <WalletTabHeader
+          totalAssetUsd={totalAssetUsd}
+          pendingSendToken={pendingSendToken}
+          onSendFormClosed={() => setPendingSendToken(undefined)}
+          onAddressClick={openMoreFromAddress}
+        />
+      )}
+      {bottomTab === 'activity' && <ActivityTabHeader />}
+      {bottomTab === 'card' && <CardTabHeader />}
+      {bottomTab === 'more' && <MoreTabHeader />}
+
+      {/* ─── Scrollable content (grid row 2) ─── */}
+      <div className="wallet-main-page__scroll">
+        {bottomTab === 'wallet' && (
+          <WalletTabBody
+            tokens={tokens}
+            supportsTokens={supportsTokens}
+            onTokenSelect={openTokenDetail}
+          />
+        )}
+        {bottomTab === 'activity' && <ActivityTabBody />}
+        {bottomTab === 'card' && <CardTabBody />}
+        {bottomTab === 'more' && (
+          <MoreTabBody
+            appVersion={appVersion}
+            expandWalletListOnOpen={moreExpandWalletListOnOpen}
+            pulseExpandWalletList={moreWalletListPulse}
+          />
+        )}
+      </div>
+
+      <BottomTabBar activeTab={bottomTab} onSelectTab={selectTab} />
+
+      {tokenDetail && activeChain && (
+        <TokenDetailPage
+          token={tokenDetail}
+          chain={activeChain}
+          onBack={closeTokenDetail}
+        />
+      )}
+
+      {showAddChain && <AddChainPage onBack={() => setShowAddChain(false)} />}
+    </div>
+  )
+}
+
+export default WalletMainPage

@@ -1,0 +1,149 @@
+.tx-history {
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.tx-row:last-child {
+  border-bottom: none;
+}
+
+.tx-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tx-direction {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tx-direction--in {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  color: var(--ring-positive, #34d399);
+}
+
+.tx-direction--out {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: var(--ring-negative, #f87171);
+}
+
+.tx-detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.tx-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tx-peer {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.tx-pending-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.tx-time {
+  font-size: 11.5px;
+  color: var(--ring-text-muted, #6b7280);
+  font-family: monospace;
+  letter-spacing: 0.2px;
+}
+
+.tx-value {
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tx-value--in {
+  color: var(--ring-positive, #34d399);
+}
+
+.tx-value--out {
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.tx-symbol {
+  font-weight: 400;
+  color: var(--ring-text-muted, #6b7280);
+  font-size: 12px;
+}
+
+.tx-loading,
+.tx-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--ring-text-muted, #6b7280);
+  font-size: 14px;
+}
+
+.tx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tx-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tx-loading {
+  animation: txPulse 1.5s infinite;
+}
+
+@keyframes txPulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}

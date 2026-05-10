@@ -1,0 +1,146 @@
+.app {
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 16px;
+  position: relative;
+}
+
+.app-version {
+  margin-top: auto;
+  padding: 8px;
+  font-size: 11px;
+  color: var(--ring-text-muted);
+  user-select: none;
+}
+
+.header-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  z-index: 1000;
+}
+
+.header-actions:has(.chain-switcher-container) {
+  left: 12px;
+  justify-content: space-between;
+}
+
+.header-actions--wallet-main:has(.chain-switcher-container) {
+  justify-content: flex-start;
+}
+
+body.ring-dapp-open .app > .header-actions .chain-switcher-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .app > .header-actions .menu-trigger {
+  display: none;
+}
+
+body.ring-dapp-open .app > .header-actions {
+  left: auto;
+  justify-content: flex-end;
+  z-index: 2600;
+}
+
+.app:has(.card--guest) {
+  align-items: flex-start;
+}
+
+.app > .wallet-main-page {
+  flex: 1;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+}
+
+.card {
+  background: var(--ring-bg-elevated);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--ring-border);
+  width: 100%;
+}
+
+.card--guest {
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 520px;
+}
+
+.card--guest-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 8px 0;
+}
+
+.card--guest .login-container {
+  margin-top: 0;
+  padding: 0 8px 16px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--ring-text-secondary);
+  margin-bottom: 20px;
+}
+
+.welcome-message {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 16px 0;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.welcome-message h2 {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.guest-message {
+  background: var(--ring-accent-soft);
+  color: var(--ring-accent);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 16px 0;
+  border: 1px solid rgba(165, 180, 252, 0.28);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

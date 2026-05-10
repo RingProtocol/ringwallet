@@ -1,0 +1,90 @@
+# Ring Wallet
+
+## Vision
+
+Ring Wallet is a new kind of crypto wallet: **no passwords, no mnemonics, no friction.** You sign in with your fingerprint. You keep full control of your keys. You pay no extra fees on transactions.
+
+We believe ownership should feel natural, safe, and open. Ring Wallet is our step toward that future.
+
+| Principle                    | What it means                                                                                             |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **No password, no mnemonic** | Log in with your fingerprint. No seed phrases to write down or lose.                                      |
+| **Self-custody**             | Your keys, your assets. We don’t hold them for you.                                                       |
+| **No extra fee**             | We don’t add transaction fees on top of network costs.                                                    |
+| **AI Agent friendly**        | Built so agents and automation can interact with your wallet in a secure, programmable way.               |
+| **Listener to your voice**   | Designed to respond to how you want to use crypto—simple when you want simple, powerful when you need it. |
+
+---
+
+## License
+
+Ring Wallet is **open source** under the **GPL License**.  
+You are free to use, modify, and distribute the code for **personal and non-commercial purposes** at no cost. Commercial use is not permitted.
+
+---
+
+## Contributing
+
+**Let's build together.**
+
+Ring Wallet is open source, and we welcome contributions from everyone. If you want to contribute code, report issues, or extend the wallet for your own use case, this repo is the place. Ideas, code, and feedback are welcome.
+
+Check out our [issues](https://github.com/ringprotocol/wallet/issues) for current goals and tasks.
+
+---
+
+## Powered by Ring
+
+Ring Wallet is powered by **[Ring](https://ring.exchange)**.  
+Live at [wallet.ring.exchange](https://wallet.ring.exchange).
+
+---
+
+## Get started
+
+Clone the repository:
+
+```bash
+git clone <repo-url>
+```
+
+Then install
+
+```bash
+yarn install
+```
+
+### Server deploy
+
+```bash
+yarn build
+yarn start
+```
+
+**`yarn start` serves a production build** (`.next`). After you change `app/api/**` or env handling, run **`yarn build`** again, then restart `yarn start`. For day-to-day API work, prefer **`yarn dev`** (no rebuild needed).
+
+### Local dev
+
+The wallet UI (`apps/pwa/App.tsx`) is mounted from `app/page.tsx`, so **Next.js already serves the PWA and the API on one origin** — same idea as Vercel (one deployment, `/api/*` and the app share `http://localhost:3000` in dev).
+
+```bash
+yarn dev
+```
+
+---
+
+## This wallet is PWA
+
+For installation and usage instructions, visit our docs:  
+[https://docs.ring.exchange/wallet/install-pwa](https://docs.ring.exchange/wallet/install-pwa)
+
+# tx history
+
+- if activity is empty, search one time from etherscan;
+- if transaction happen, insert a pending transaction record, poll from blockchain every 8 seconds with rpc endpoint
+- after transaction is confirmed, update the status
+- fetch from rpc when open the wallet first time.
+
+## Other info about Ring Wallet
+
+[Docs](https://docs.ring.exchange)

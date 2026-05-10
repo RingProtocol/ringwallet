@@ -1,0 +1,507 @@
+import { formatUnits } from 'ethers'
+import {
+  chainToAccountAssetsNetwork,
+  DEFAULT_CHAINS,
+} from '../../config/chains'
+import unsupportedApiAssets from '../../config/unsupported-api-assets.json'
+import { ChainFamily, type Chain } from '../../models/ChainType'
+import {
+  cacheTokensForNetwork,
+  getTokensForNetwork,
+  type ChainToken,
+  notifyTokenCacheUpdated,
+} from '../../models/ChainTokens'
+import type { AccountBalancesResult } from './balanceTypes'
+import { fetchAccountBalanceByAdapter } from './balanceAdapterRegistry'
+import { ACCOUNT_ASSETS_URL } from '../../server/urls'
+import type { TokenInfo } from '../../utils/tokenStorage'
+
+/** Default interval for refreshing account_assets; override with `setAccountBalancePollIntervalMs`. */
+export const ACCOUNT_BALANCE_POLL_INTERVAL_MS = 10_000
+
+let accountBalancePollIntervalMs = ACCOUNT_BALANCE_POLL_INTERVAL_MS
+
+export function getAccountBalancePollIntervalMs(): number {
+  return accountBalancePollIntervalMs
+}
+
+export function setAccountBalancePollIntervalMs(ms: number): void {
+  accountBalancePollIntervalMs = Math.max(5_000, ms)
+}
+
+/** Adapter-only network slugs extracted from unsupported-api-assets.json. */
+const ADAPTER_ONLY_SLUGS: Set<string> = new Set(unsupportedApiAssets.networks)
+
+/**
+ * Returns true when a chain should use local adapter instead of account_assets API.
+ * Looks up the chain's Alchemy network slug in unsupported-api-assets.json.
+ */
+export function usesAdapterOnlyAccountAssetsSync(c: Chain): boolean {
+  const slug = chainToAccountAssetsNetwork(c)
+  if (slug == null) return true
+  return ADAPTER_ONLY_SLUGS.has(slug)
+}
+
+function accountAssetGroupsForAccountAssetsApi(
+  groups: AccountAssetsAddressEntry[]
+): AccountAssetsAddressEntry[] {
+  return groups
+    .map((g) => ({
+      address: g.address,
+      networks: g.networks.filter((n) => !ADAPTER_ONLY_SLUGS.has(n)),
+    }))
+    .filter((g) => g.networks.length > 0)
+}
+
+/** One wallet address and the `account_assets` network slugs to query for it. */
+export type AccountAssetsAddressEntry = {
+  address: string
+  networks: string[]
+}
+
+type AccountAssetsRequest = {
+  addresses: AccountAssetsAddressEntry[]
+}
+
+type AccountAssetsResponse = {
+  data: {
+    tokens: ChainToken[]
+    pageKey?: string
+  }
+}
+
+function defaultTokenMetadata(): ChainToken['tokenMetadata'] {
+  return { decimals: null, logo: null, name: null, symbol: null }
+}
+
+function nativeDecimalsForChainFamily(family: ChainFamily | undefined): number {
+  switch (family) {
+    case ChainFamily.Solana:
+      return 9
+    case ChainFamily.Tron:
+      return 6
+    case ChainFamily.Bitcoin:
+    case ChainFamily.Dogecoin:
+      return 8
+    default:
+      return 18
+  }
+}
+
+function chainForAccountAssetsNetwork(network: string): Chain | undefined {
+  return DEFAULT_CHAINS.find((c) => chainToAccountAssetsNetwork(c) === network)
+}
+
+/**
+ * `account_assets` often returns native rows with `tokenAddress: null` and
+ * missing or all-null `tokenMetadata`; testnets may have empty `tokenPrices`.
+ */
+function normalizeAccountAssetToken(raw: ChainToken): ChainToken {
+  const metaIn = raw.tokenMetadata
+  const base =
+    metaIn == null
+      ? defaultTokenMetadata()
+      : {
+          decimals: metaIn.decimals ?? null,
+          logo: metaIn.logo ?? null,
+          name: metaIn.name ?? null,
+          symbol: metaIn.symbol ?? null,
+        }
+
+  const isNative = raw.tokenAddress == null
+  const chain = isNative ? chainForAccountAssetsNetwork(raw.network) : undefined
+
+  let decimals = base.decimals
+  if (decimals == null && isNative) {
+    decimals = nativeDecimalsForChainFamily(chain?.family ?? ChainFamily.EVM)
+  }
+
+  return {
+    address: raw.address ?? '',
+    network: raw.network,
+    tokenAddress: raw.tokenAddress,
+    tokenBalance: raw.tokenBalance,
+    tokenMetadata: {
+      decimals,
+      logo: base.logo,
+      name: base.name ?? (isNative && chain ? chain.name : null),
+      symbol: base.symbol ?? (isNative && chain ? chain.symbol : null),
+    },
+    tokenPrices: Array.isArray(raw.tokenPrices) ? raw.tokenPrices : [],
+  }
+}
+
+function normalizeAccountAssetsTokens(tokens: ChainToken[]): ChainToken[] {
+  return tokens.map(normalizeAccountAssetToken)
+}
+
+function formatTokenQuantity(
+  balanceHex: string,
+  decimals: number,
+  displayDecimals: number
+): string {
+  try {
+    const raw = BigInt(balanceHex)
+    const qty = formatUnits(raw, decimals)
+    const num = Number(qty)
+    if (!Number.isFinite(num)) return '0'
+    return num.toFixed(displayDecimals)
+  } catch {
+    return '0'
+  }
+}
+
+export function formatUsdAmount(value: string | number): string {
+  const n = typeof value === 'string' ? Number(value) : value
+  if (!Number.isFinite(n)) return '$0.00'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(n)
+}
+
+export function emptyBalance(family: ChainFamily): string {
+  switch (family) {
+    case ChainFamily.EVM:
+    case ChainFamily.Prisma:
+      return '0.0000'
+    default:
+      return '0.0000'
+  }
+}
+
+export function sortChainTokensForDisplay(tokens: ChainToken[]): ChainToken[] {
+  return [...tokens].sort(
+    (a, b) => Number(b.tokenAddress == null) - Number(a.tokenAddress == null)
+  )
+}
+
+function usdUnitPrice(token: ChainToken): number {
+  const p = token.tokenPrices?.find((x) => x.currency?.toLowerCase() === 'usd')
+  const n = p ? Number(p.value) : 0
+  return Number.isFinite(n) ? n : 0
+}
+
+export function chainTokenDisplaySymbol(
+  token: ChainToken,
+  chain: Chain
+): string {
+  const sym = token.tokenMetadata?.symbol
+  if (sym) return sym
+  if (token.tokenAddress == null) return chain.symbol
+  return 'UNKNOWN'
+}
+
+export function chainTokenDisplayName(token: ChainToken, chain: Chain): string {
+  const name = token.tokenMetadata?.name
+  if (name) return name
+  if (token.tokenAddress == null) return chain.name
+  return chainTokenDisplaySymbol(token, chain)
+}
+
+export function formatChainTokenBalance(
+  token: ChainToken,
+  chain: Chain,
+  displayDecimals: number
+): string {
+  const decimals = token.tokenMetadata?.decimals ?? 18
+  return formatTokenQuantity(token.tokenBalance, decimals, displayDecimals)
+}
+
+export function chainTokenPositionUsd(token: ChainToken): number {
+  const decimals = token.tokenMetadata?.decimals ?? 18
+  const qtyStr = formatTokenQuantity(token.tokenBalance, decimals, 18)
+  const qtyNum = Number(qtyStr)
+  if (!Number.isFinite(qtyNum) || qtyNum <= 0) return 0
+  const unit = usdUnitPrice(token)
+  if (!Number.isFinite(unit) || unit <= 0) return 0
+  return qtyNum * unit
+}
+
+export function formatChainTokenPositionUsd(token: ChainToken): string {
+  return formatUsdAmount(chainTokenPositionUsd(token))
+}
+
+export function chainTokenChangePercentLabel(token: ChainToken): string | null {
+  const usd = token.tokenPrices?.find(
+    (x) => x.currency?.toLowerCase() === 'usd'
+  )
+  const raw = usd?.changePercent24h
+  if (raw == null || raw === '') return null
+  const n = Number(raw)
+  if (Number.isFinite(n)) {
+    return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
+  }
+  return String(raw)
+}
+
+/** Formatted USD unit price from `tokenPrices`, or em dash when missing. */
+export function formatUsdUnitPrice(token: ChainToken): string {
+  const p = token.tokenPrices?.find((x) => x.currency?.toLowerCase() === 'usd')
+  if (!p) return '—'
+  const n = Number(p.value)
+  if (!Number.isFinite(n)) return '—'
+  return formatUsdAmount(n)
+}
+
+export { partitionTokens, isSuspiciousFakeToken } from './fakeTokenDetector'
+
+function nativeBalanceFromTokens(
+  sortedTokens: ChainToken[],
+  chain: Chain,
+  displayDecimals: number
+): string {
+  const native = sortedTokens.find((t) => t.tokenAddress == null)
+  if (!native) return emptyBalance(chain.family ?? ChainFamily.EVM)
+  return formatChainTokenBalance(native, chain, displayDecimals)
+}
+
+function makeNativePlaceholderToken(chain: Chain, network: string): ChainToken {
+  return {
+    address: '',
+    network,
+    tokenAddress: null,
+    tokenBalance: '0x0',
+    tokenMetadata: {
+      decimals: nativeDecimalsForChainFamily(chain.family),
+      logo: null,
+      name: chain.name,
+      symbol: chain.symbol,
+    },
+    tokenPrices: [],
+  }
+}
+
+/** Maximum networks per address entry allowed by the account_assets API. */
+const MAX_NETWORKS_PER_REQUEST = 20
+/** Maximum address entries per request allowed by the account_assets API. */
+const MAX_ADDRESSES_PER_REQUEST = 3
+
+function chunkNetworks(
+  entries: AccountAssetsAddressEntry[]
+): AccountAssetsAddressEntry[] {
+  const out: AccountAssetsAddressEntry[] = []
+  for (const e of entries) {
+    if (e.networks.length === 0) continue
+    for (let i = 0; i < e.networks.length; i += MAX_NETWORKS_PER_REQUEST) {
+      out.push({
+        address: e.address,
+        networks: e.networks.slice(i, i + MAX_NETWORKS_PER_REQUEST),
+      })
+    }
+  }
+  return out
+}
+
+async function fetchAccountAssets(
+  addresses: AccountAssetsAddressEntry[]
+): Promise<ChainToken[]> {
+  const chunks = chunkNetworks(
+    addresses.filter((a) => a.address.length > 0 && a.networks.length > 0)
+  )
+  if (chunks.length === 0) {
+    return []
+  }
+
+  const allTokens: ChainToken[] = []
+  for (let i = 0; i < chunks.length; i += MAX_ADDRESSES_PER_REQUEST) {
+    const batch = chunks.slice(i, i + MAX_ADDRESSES_PER_REQUEST)
+    const body: AccountAssetsRequest = { addresses: batch }
+
+    const res = await fetch(ACCOUNT_ASSETS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      throw new Error(`account_assets failed: ${res.status} ${res.statusText}`)
+    }
+
+    const json = (await res.json()) as AccountAssetsResponse
+    const raw = (json.data?.tokens ?? []) as ChainToken[]
+    allTokens.push(...normalizeAccountAssetsTokens(raw))
+  }
+
+  return allTokens
+}
+
+function sumUsdAcrossTokens(
+  tokens: ChainToken[],
+  displayDecimals = 18
+): number {
+  let total = 0
+  for (const t of tokens) {
+    const decimals =
+      (t.tokenMetadata?.decimals ?? null) != null
+        ? t.tokenMetadata!.decimals!
+        : 18
+    const qtyStr = formatTokenQuantity(
+      t.tokenBalance,
+      decimals,
+      displayDecimals
+    )
+    const qtyNum = Number(qtyStr)
+    if (!Number.isFinite(qtyNum) || qtyNum <= 0) continue
+    const unit = usdUnitPrice(t)
+    if (!Number.isFinite(unit) || unit <= 0) continue
+    total += qtyNum * unit
+  }
+  return total
+}
+
+/**
+ * Read balances for the active chain from the in-memory token cache (see `ChainTokens`).
+ * Safe to call synchronously on chain switch; shows zeros when nothing is cached yet.
+ */
+export function readAccountBalancesFromCache(
+  activeChain: Chain,
+  portfolioNetworkSlugs: string[]
+): AccountBalancesResult {
+  const family = activeChain.family ?? ChainFamily.EVM
+  const activeNetwork = chainToAccountAssetsNetwork(activeChain) ?? ''
+  const cachedActive =
+    activeNetwork.length > 0 ? getTokensForNetwork(activeNetwork) : undefined
+  let sortedActive = cachedActive?.length
+    ? sortChainTokensForDisplay([...cachedActive])
+    : []
+
+  // If the cache is empty, show a native placeholder so the UI never
+  // renders "No tokens found" for a valid chain.
+  if (sortedActive.length === 0 && activeNetwork.length > 0) {
+    sortedActive = [makeNativePlaceholderToken(activeChain, activeNetwork)]
+  }
+
+  const nativeBalance =
+    sortedActive.length > 0
+      ? nativeBalanceFromTokens(sortedActive, activeChain, 4)
+      : emptyBalance(family)
+
+  let totalUsd = 0
+  for (const n of portfolioNetworkSlugs) {
+    if (!n) continue
+    const list = getTokensForNetwork(n)
+    if (list?.length) totalUsd += sumUsdAcrossTokens(list, 18)
+  }
+
+  const currentUsd =
+    sortedActive.length > 0 ? sumUsdAcrossTokens(sortedActive, 18) : 0
+
+  return {
+    nativeBalance,
+    totalAssetUsd: formatUsdAmount(totalUsd),
+    currentChainUsd: formatUsdAmount(currentUsd),
+    tokens: sortedActive,
+  }
+}
+
+/**
+ * Fetches remote balances and writes per-network rows into `ChainTokens` cache.
+ * Call on an interval; UI should read via `readAccountBalancesFromCache`.
+ */
+export async function syncAccountBalancesToCache(
+  adapterAddress: string,
+  activeChain: Chain,
+  accountAssetGroups: AccountAssetsAddressEntry[],
+  importedTokens: TokenInfo[] = []
+): Promise<void> {
+  if (activeChain == null) return
+
+  if (usesAdapterOnlyAccountAssetsSync(activeChain)) {
+    const result = await fetchAccountBalanceByAdapter(
+      adapterAddress,
+      activeChain,
+      importedTokens
+    )
+    if (result == null) {
+      console.warn(
+        `Failed to fetch account balance by adapter for chain: ${activeChain.name}`
+      )
+      return
+    }
+    const net = chainToAccountAssetsNetwork(activeChain)
+    if (net == null) {
+      console.warn(`No network found for chain: ${activeChain.name}`)
+      return
+    }
+    const networkUsd = sumUsdAcrossTokens(result.tokens, 18)
+    cacheTokensForNetwork(net, result.tokens, formatUsdAmount(networkUsd))
+    notifyTokenCacheUpdated()
+    return
+  }
+
+  const activeNetwork = chainToAccountAssetsNetwork(activeChain)
+  if (activeNetwork == null) {
+    console.warn(`No network found for chain: ${activeChain.name}`)
+    return
+  }
+
+  try {
+    const fetched = await fetchAccountAssets(
+      accountAssetGroupsForAccountAssetsApi(accountAssetGroups)
+    )
+
+    const byNetwork = new Map<string, ChainToken[]>()
+    for (const t of fetched) {
+      const list = byNetwork.get(t.network) ?? []
+      list.push(t)
+      byNetwork.set(t.network, list)
+    }
+
+    const importedByAddress = new Map(
+      importedTokens.map((token) => [token.address.toLowerCase(), token])
+    )
+    const activeList = byNetwork.get(activeNetwork) ?? []
+    const activeTokenAddressSet = new Set(
+      activeList
+        .map((token) => token.tokenAddress?.toLowerCase())
+        .filter((tokenAddress): tokenAddress is string => Boolean(tokenAddress))
+    )
+
+    for (const [tokenAddress, tokenInfo] of importedByAddress) {
+      if (activeTokenAddressSet.has(tokenAddress)) continue
+      activeList.push({
+        address: adapterAddress,
+        network: activeNetwork,
+        tokenAddress: tokenInfo.address,
+        tokenBalance: '0x0',
+        tokenMetadata: {
+          decimals: tokenInfo.decimals,
+          logo: tokenInfo.logo?.trim() || null,
+          name: tokenInfo.name,
+          symbol: tokenInfo.symbol,
+        },
+        tokenPrices: [],
+      })
+    }
+    byNetwork.set(activeNetwork, activeList)
+
+    for (const [n, list] of byNetwork) {
+      const networkUsd = sumUsdAcrossTokens(list, 18)
+      cacheTokensForNetwork(n, list, formatUsdAmount(networkUsd))
+    }
+    notifyTokenCacheUpdated()
+  } catch (error) {
+    console.error('Failed to fetch account assets:', error)
+  }
+}
+
+//for test
+export async function fetchAccountBalances(
+  address: string,
+  activeChain: Chain,
+  allChains: string[]
+): Promise<AccountBalancesResult | null> {
+  if (activeChain == null) {
+    return null
+  }
+
+  await syncAccountBalancesToCache(address, activeChain, [
+    { address, networks: allChains },
+  ])
+  return readAccountBalancesFromCache(activeChain, allChains)
+}

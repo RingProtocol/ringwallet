@@ -1,0 +1,124 @@
+.introduce {
+  color-scheme: dark;
+  text-align: center;
+  color: var(--ring-text-secondary, #d1d5db);
+  padding: 0 4px;
+}
+
+.introduce-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ring-text-primary, #f3f4f6);
+  text-align: center;
+}
+
+.introduce-title__gradient {
+  background: var(--ring-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.introduce-subtitle {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: var(--ring-text-muted, #6b7280);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.introduce-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.introduce-dot {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.introduce-dot__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  background: rgba(188, 116, 237, 0.12);
+  border: 1px solid rgba(188, 116, 237, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ring-accent-2, #c084fc);
+}
+
+.introduce-dot__text {
+  flex: 1;
+}
+
+.introduce-dot__title {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.introduce-dot__sub {
+  font-size: 13px;
+  color: var(--ring-text-muted, #6b7280);
+  line-height: 1.5;
+}
+
+.introduce-open {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.introduce-open strong {
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.introduce-open a {
+  color: var(--ring-accent, #bc74ed);
+  text-decoration: none;
+}
+
+.introduce-open a:hover {
+  text-decoration: underline;
+}
+
+.introduce-tagline {
+  margin: 16px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ring-accent, #bc74ed);
+}
+
+@media (max-width: 768px) {
+  .introduce-title {
+    font-size: 24px;
+  }
+
+  .introduce-subtitle {
+    font-size: 13.5px;
+  }
+
+  .introduce-dot__title {
+    font-size: 14px;
+  }
+
+  .introduce-dot__sub {
+    font-size: 12.5px;
+  }
+
+  .introduce-open,
+  .introduce-tagline {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,32 @@
+#agent
+.agent
+.windsurf
+.claude
+.qwen
+.trae
+node_modules
+dist
+.next
+next-env.d.ts
+project.zip
+skill
+
+dist-extension
+*.zip
+*.png
+
+**/node_modules
+.env
+.env.test
+.venv
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+test-ledger
+
+# oh-my-claudecode
+.omc/
+design
+.gstack/

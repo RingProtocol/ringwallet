@@ -1,0 +1,317 @@
+.chain-switcher-container {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  position: relative;
+}
+
+.chain-switcher-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 0;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chain-switcher-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chain-switcher-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.chain-switcher-icon img,
+.chain-switcher-icon span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chain-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.chain-name {
+  font-size: 12px;
+  color: var(--ring-text-primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  font-size: 10px;
+  color: var(--ring-text-muted);
+  transition: transform 0.2s;
+  opacity: 0.7;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.chain-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: auto;
+  margin-top: 10px;
+  background: var(--ring-bg-elevated, #14171f);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--ring-border);
+  width: min(280px, calc(100vw - 24px));
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+  z-index: 1000;
+}
+
+.chain-dropdown--anchored {
+  position: fixed;
+}
+
+.chain-switcher-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: default;
+  z-index: 999;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-top-section {
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--ring-border);
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 6px 12px;
+}
+
+.chain-search-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--ring-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--ring-text-primary);
+  font-family: inherit;
+}
+
+.chain-search-input:focus {
+  border-color: var(--ring-accent);
+}
+
+@media (pointer: coarse) {
+  .chain-search-input {
+    font-size: 16px;
+  }
+}
+
+.add-network-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ring-text-secondary);
+  font-size: 1.2rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.add-network-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ring-text-primary);
+}
+
+.tabs-row {
+  display: flex;
+  padding: 0 12px;
+  margin-top: 6px;
+}
+
+.chain-dropdown .tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  color: var(--ring-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.chain-dropdown .tab-btn:hover {
+  color: var(--ring-text-secondary);
+}
+
+.chain-dropdown .tab-btn.active {
+  color: var(--ring-accent);
+  border-bottom-color: var(--ring-accent);
+}
+
+.no-chains-found {
+  padding: 20px;
+  text-align: center;
+  color: var(--ring-text-muted);
+  font-size: 14px;
+}
+
+.dropdown-header {
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--ring-border);
+  font-size: 13px;
+  color: var(--ring-text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+.chain-list-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.chain-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid var(--ring-border);
+}
+
+.chain-option:last-child {
+  border-bottom: none;
+}
+
+.chain-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.chain-option.active {
+  background: var(--ring-accent-soft);
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.option-icon img,
+.option-icon span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.option-name {
+  font-weight: 500;
+  color: var(--ring-text-primary);
+  font-size: 14px;
+}
+
+.check-mark {
+  color: var(--ring-accent);
+  font-weight: bold;
+}
+
+/* ── Action area (check / remove) ── */
+.option-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.remove-chain-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.remove-chain-btn:hover {
+  color: #f87171;
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* ── Add chain panel items ── */
+.add-chain-option:hover {
+  background: rgba(188, 116, 237, 0.1);
+}
+
+.add-chain-icon {
+  margin-left: auto;
+  color: var(--ring-accent);
+  font-size: 1.1rem;
+  font-weight: 600;
+}

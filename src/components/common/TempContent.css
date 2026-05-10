@@ -1,0 +1,50 @@
+.temp-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  min-height: 120px;
+}
+
+.temp-content__message {
+  font-size: 14px;
+  color: var(--ring-text-secondary, rgba(255, 255, 255, 0.55));
+  text-align: center;
+  line-height: 1.5;
+}
+
+.temp-content__retry {
+  margin-top: 16px;
+  padding: 8px 24px;
+  border-radius: 10px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.temp-content__retry:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.temp-content__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--ring-text-secondary, rgba(255, 255, 255, 0.55));
+  border-radius: 50%;
+  animation: temp-content-spin 0.7s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes temp-content-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

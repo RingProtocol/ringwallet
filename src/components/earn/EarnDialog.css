@@ -1,0 +1,150 @@
+/* ── EarnDialog ── */
+
+.earn-dialog {
+  text-align: left;
+}
+
+.earn-dialog h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.earn-dialog h4 {
+  margin: 16px 0 10px;
+  font-size: 0.9rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.earn-hint {
+  text-align: center;
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 0.9rem;
+  margin: 20px 0;
+}
+
+.earn-positions {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.earn-position-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.06));
+}
+
+.earn-position-row:last-child {
+  border-bottom: none;
+}
+
+.earn-position-protocol {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.earn-position-balance {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.85rem;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.earn-total-yield {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.14));
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.earn-strategies {
+  margin-bottom: 16px;
+}
+
+.earn-strategy-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.earn-strategy-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.earn-strategy-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.earn-strategy-apy {
+  font-size: 0.85rem;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.earn-stake-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(
+    --ring-gradient,
+    linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+  );
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.earn-stake-btn:hover {
+  opacity: 0.9;
+}
+
+.earn-stake-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.earn-loading {
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 10px;
+}
+
+.earn-tx-hash {
+  font-size: 0.8rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  margin-top: 10px;
+  word-break: break-all;
+}
+
+.earn-tx-hash a {
+  color: var(--ring-accent, #a5b4fc);
+  text-decoration: none;
+}
+
+.earn-tx-hash a:hover {
+  text-decoration: underline;
+}
