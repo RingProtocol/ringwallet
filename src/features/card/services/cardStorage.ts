@@ -69,19 +69,23 @@ export function removeCardAccounts(): void {
 
 // ─── Card Transactions ────────────────────────────────
 
-/** Retrieve all cached card transactions. */
-export function getCardTransactions(): CardTransaction[] {
-  return getJSON<CardTransaction[]>(KEYS.cardTransactions, [])
+function txKey(cardId: string): string {
+  return `${KEYS.cardTransactions}_${cardId}`
 }
 
-/** Persist the full list of card transactions (replaces previous data). */
-export function setCardTransactions(transactions: CardTransaction[]): void {
-  setJSON(KEYS.cardTransactions, transactions)
+/** Retrieve cached transactions for a specific card. */
+export function getCardTransactions(cardId: string): CardTransaction[] {
+  return getJSON<CardTransaction[]>(txKey(cardId), [])
 }
 
-/** Remove cached card transactions. */
-export function removeCardTransactions(): void {
-  removeKey(KEYS.cardTransactions)
+/** Persist transactions for a specific card (replaces previous data for that card). */
+export function setCardTransactions(cardId: string, transactions: CardTransaction[]): void {
+  setJSON(txKey(cardId), transactions)
+}
+
+/** Remove cached transactions for a specific card. */
+export function removeCardTransactions(cardId: string): void {
+  removeKey(txKey(cardId))
 }
 
 // ─── Provider State ───────────────────────────────────

@@ -27,11 +27,9 @@ export function useCardTransactions(pageSize = DEFAULT_PAGE_SIZE) {
         return
       }
 
-      // Cache-first for first page (only rows for this card)
+      // Cache-first for first page — keyed by cardId to avoid multi-card pollution
       if (pageNum === 1 && !append) {
-        const cached = getCardTransactionsFromCache().filter(
-          (tx) => tx.cardId === activeCard.id,
-        )
+        const cached = getCardTransactionsFromCache(activeCard.id)
         if (cached.length > 0) {
           setTransactions(cached)
           setLoading(false)
@@ -58,15 +56,13 @@ export function useCardTransactions(pageSize = DEFAULT_PAGE_SIZE) {
 
         setHasMore(result.hasMore)
 
-        // Update cache on first page load
+        // Update per-card cache on first page load
         if (pageNum === 1) {
-          setCardTransactions(result.items)
+          setCardTransactions(activeCard.id, result.items)
         }
       } catch (err) {
         if (pageNum === 1 && !append) {
-          const cached = getCardTransactionsFromCache().filter(
-            (tx) => tx.cardId === activeCard.id,
-          )
+          const cached = getCardTransactionsFromCache(activeCard.id)
           if (cached.length === 0) {
             setError((err as Error).message || 'Failed to load transactions')
           }
