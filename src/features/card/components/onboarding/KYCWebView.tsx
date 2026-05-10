@@ -3,11 +3,15 @@ import '../Card.css'
 
 interface Props {
   url: string
+  /** Called when the hosted KYC page signals completion (e.g. postMessage). */
   onComplete: () => void
+  /** Called when the user explicitly closes the KYC view without completing. */
+  onDismiss: () => void
+  /** Called when the iframe fails to load. */
   onError: (error: string) => void
 }
 
-const KYCWebView: React.FC<Props> = ({ url, onComplete, onError }) => {
+const KYCWebView: React.FC<Props> = ({ url, onComplete, onDismiss, onError }) => {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -24,8 +28,8 @@ const KYCWebView: React.FC<Props> = ({ url, onComplete, onError }) => {
   }, [onError])
 
   const handleClose = useCallback(() => {
-    onComplete()
-  }, [onComplete])
+    onDismiss()
+  }, [onDismiss])
 
   return (
     <div className="kyc-webview">

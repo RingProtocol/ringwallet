@@ -32,6 +32,34 @@ describe('MemoryBackedCardAdapter', () => {
     expect(session.sessionId).toMatch(/^kyc_/)
   })
 
+  it('getKYCStatus returns not_started before startKYC is called', async () => {
+    const adapter = new MemoryBackedCardAdapter(testSpec)
+    await adapter.initialize(providerConfig)
+    const status = await adapter.getKYCStatus()
+    expect(status).toBe('not_started')
+  })
+
+  it(
+    'getKYCStatus returns in_progress immediately after startKYC (before auto-approve timer)',
+    async () => {
+      vi.useFakeTimers()
+      const adapter = new MemoryBackedCardAdapter(testSpec)
+      const init = adapter.initialize(providerConfig)
+      await vi.advanceTimersByTimeAsync(600)
+      await init
+
+      const kyc = adapter.startKYC()
+      await vi.advanceTimersByTimeAsync(600)
+      await kyc
+
+      // Auto-approve timer fires after 3000ms; we're at ~1200ms — status must be in_progress
+      const statusPromise = adapter.getKYCStatus()
+      await vi.advanceTimersByTimeAsync(600)
+      expect(await statusPromise).toBe('in_progress')
+    },
+    10_000,
+  )
+
   it(
     'KYC transitions to approved and createCard issues a card for this issuer',
     async () => {

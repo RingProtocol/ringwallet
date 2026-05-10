@@ -3,7 +3,6 @@
  * Auto-create GitHub issue via GitHub REST API.
  * Usage:
  *   node scripts/auto-issue.mjs --title "Bug title" --body "Bug description"
- *   node scripts/auto-issue.mjs --file /path/to/issue-body.md --title "Bug title"
  *   node scripts/auto-issue.mjs --title "Bug" --body-file bug.md --labels "bug,frontend"
  */
 import fs from 'fs'

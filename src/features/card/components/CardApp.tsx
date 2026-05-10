@@ -126,6 +126,14 @@ const CardApp: React.FC = () => {
       })
   }, [clearKycPollTimeouts, reloadAccounts])
 
+  /** User explicitly closed the KYC view — cancel pending polls. */
+  const handleKYCDismiss = useCallback(() => {
+    clearKycPollTimeouts()
+    setKycUrl(null)
+    setCurrentView('main')
+  }, [clearKycPollTimeouts])
+
+  /** Iframe failed to load — cancel pending polls and return to main. */
   const handleKYCError = useCallback((_error: string) => {
     clearKycPollTimeouts()
     setKycUrl(null)
@@ -176,12 +184,13 @@ const CardApp: React.FC = () => {
     )
   }
 
-  if (currentView === 'kyc' && kycUrl) {
+  if (kycUrl) {
     return (
       <div className="card-app">
         <KYCWebView
           url={kycUrl}
           onComplete={handleKYCComplete}
+          onDismiss={handleKYCDismiss}
           onError={handleKYCError}
         />
       </div>
