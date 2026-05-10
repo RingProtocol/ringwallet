@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import { useI18n } from '../../../../i18n'
 import '../Card.css'
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const KYCWebView: React.FC<Props> = ({ url, onComplete, onDismiss, onError }) => {
+  const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -22,14 +24,16 @@ const KYCWebView: React.FC<Props> = ({ url, onComplete, onDismiss, onError }) =>
 
   const handleError = useCallback(() => {
     setLoading(false)
-    const errorMsg = 'Failed to load KYC page. Please check your connection and try again.'
+    const errorMsg = t('cardKYCLoadError')
     setLoadError(errorMsg)
     onError(errorMsg)
-  }, [onError])
+  }, [onError, t])
 
   const handleClose = useCallback(() => {
     onDismiss()
   }, [onDismiss])
+
+  const isBlank = url === 'about:blank'
 
   return (
     <div className="kyc-webview">
@@ -54,15 +58,15 @@ const KYCWebView: React.FC<Props> = ({ url, onComplete, onDismiss, onError }) =>
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
-        <span className="kyc-webview__toolbar-title">Identity Verification</span>
+        <span className="kyc-webview__toolbar-title">{t('cardKYCTitle')}</span>
         <div className="kyc-webview__toolbar-spacer" />
       </div>
 
       <div className="kyc-webview__content">
-        {loading && (
+        {loading && !isBlank && (
           <div className="kyc-webview__loading">
             <div className="kyc-webview__spinner" />
-            <p className="kyc-webview__loading-text">Loading verification...</p>
+            <p className="kyc-webview__loading-text">{t('cardKYCLoading')}</p>
           </div>
         )}
 
@@ -77,20 +81,28 @@ const KYCWebView: React.FC<Props> = ({ url, onComplete, onDismiss, onError }) =>
                 setLoadError(null)
               }}
             >
-              Retry
+              {t('cardKYCRetry')}
             </button>
           </div>
         )}
 
-        {!loadError && (
-          <iframe
-            className="kyc-webview__iframe"
-            src={url}
-            title="KYC Verification"
-            onLoad={handleLoad}
-            onError={handleError}
-            sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
-          />
+        {isBlank ? (
+          <div className="kyc-webview__placeholder">
+            <div className="kyc-webview__spinner" />
+            <p className="kyc-webview__placeholder-title">{t('cardKYCPlaceholderTitle')}</p>
+            <p className="kyc-webview__placeholder-desc">{t('cardKYCPlaceholderDesc')}</p>
+          </div>
+        ) : (
+          !loadError && (
+            <iframe
+              className="kyc-webview__iframe"
+              src={url}
+              title={t('cardKYCTitle')}
+              onLoad={handleLoad}
+              onError={handleError}
+              sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+            />
+          )
         )}
       </div>
     </div>

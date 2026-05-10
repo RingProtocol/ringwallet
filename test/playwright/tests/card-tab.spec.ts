@@ -10,7 +10,12 @@ import { TESTID } from '../../../src/components/testids'
  * 15 s for the flow to complete.
  */
 test.describe('Card tab', () => {
-  test('Apply Now on Immersve shows KYC view with blank iframe (no mock-kyc host)', async ({
+  /**
+   * When the memory adapter returns about:blank as the KYC URL, the component
+   * should show a placeholder (not a blank iframe) and must NOT attempt to load
+   * any third-party KYC host.
+   */
+  test('Apply Now on Immersve shows KYC placeholder (no real KYC host loaded)', async ({
     wallet: { page, evmAddresses: [sender] },
   }) => {
     let mockKycRequested = false
@@ -35,10 +40,11 @@ test.describe('Card tab', () => {
       timeout: 15000,
     })
 
-    const iframe = page.locator('.kyc-webview__iframe')
-    await expect(iframe).toHaveAttribute('src', 'about:blank', {
+    // about:blank → placeholder shown instead of iframe
+    await expect(page.locator('.kyc-webview__placeholder')).toBeVisible({
       timeout: 10000,
     })
+    // No real KYC host should have been requested
     expect(mockKycRequested).toBe(false)
     void sender // fixture requires destructuring even if unused
   })

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
+import { useI18n } from '../../../i18n'
 import { useCardProvider, useCardAccounts, useCardTopUp } from '../hooks'
 import '../services/adapter'
 import { cardProviderRegistry } from '../services/registry'
@@ -19,14 +20,17 @@ type CardView = 'main' | 'topup' | 'settings' | 'kyc'
 const ZERO_EVM = '0x0000000000000000000000000000000000000000'
 
 const CardApp: React.FC = () => {
+  const { t } = useI18n()
   const [currentView, setCurrentView] = useState<CardView>('main')
   const [kycUrl, setKycUrl] = useState<string | null>(null)
+  /** Provider that initiated the current KYC session — cleared on exit. */
+  const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
   /** Full-screen card detail (from Card tab); back collapses into tab body, does not switch tab. */
   const [cardDetailFullscreen, setCardDetailFullscreen] = useState(true)
   const kycPollTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const { activeWallet } = useAuth()
   const { loading: adapterLoading } = useCardProvider()
-  const { accounts, activeCard, loading: accountsLoading, reload: reloadAccounts } = useCardAccounts()
+  const { accounts, activeCard, loading: accountsLoading, error: accountsError, reload: reloadAccounts } = useCardAccounts()
   const topUp = useCardTopUp()
 
   // Keep a ref to the latest reloadAccounts so KYC poll closures never capture
@@ -73,6 +77,7 @@ const CardApp: React.FC = () => {
       try {
         const session = await impl.startKYC()
         setKycUrl(session.url)
+        setActiveProviderId(providerId)
         setCurrentView('kyc')
 
         const pollKYC = () => {
@@ -82,10 +87,12 @@ const CardApp: React.FC = () => {
               if (status === 'approved') {
                 await impl.createCard('virtual')
                 setKycUrl(null)
+                setActiveProviderId(null)
                 reloadAccountsRef.current()
                 setCurrentView('main')
               } else if (status === 'rejected') {
                 setKycUrl(null)
+                setActiveProviderId(null)
                 setCurrentView('main')
               } else {
                 const id = setTimeout(pollKYC, 2000)
@@ -93,6 +100,7 @@ const CardApp: React.FC = () => {
               }
             } catch {
               setKycUrl(null)
+              setActiveProviderId(null)
               setCurrentView('main')
             }
           })()
@@ -103,6 +111,7 @@ const CardApp: React.FC = () => {
       } catch (err) {
         console.error('Failed to start KYC:', err)
         setKycUrl(null)
+        setActiveProviderId(null)
         setCurrentView('main')
       }
     },
@@ -111,31 +120,35 @@ const CardApp: React.FC = () => {
 
   const handleKYCComplete = useCallback(() => {
     clearKycPollTimeouts()
-    const active = cardProviderRegistry.getActiveProvider()
+    // Use the provider that initiated this KYC session, not getActiveProvider()
+    // which would return whichever adapter happens to be first in the registry.
+    const impl = activeProviderId ? cardProviderRegistry.get(activeProviderId) : null
     setKycUrl(null)
-    if (!active) {
+    setActiveProviderId(null)
+    if (!impl) {
       setCurrentView('main')
       return
     }
 
-    active
+    impl
       .getKYCStatus()
       .then(async (status) => {
         if (status === 'approved') {
-          await active.createCard('virtual')
-          reloadAccounts()
+          await impl.createCard('virtual')
+          reloadAccountsRef.current()
         }
         setCurrentView('main')
       })
       .catch(() => {
         setCurrentView('main')
       })
-  }, [clearKycPollTimeouts, reloadAccounts])
+  }, [clearKycPollTimeouts, activeProviderId])
 
   /** User explicitly closed the KYC view — cancel pending polls. */
   const handleKYCDismiss = useCallback(() => {
     clearKycPollTimeouts()
     setKycUrl(null)
+    setActiveProviderId(null)
     setCurrentView('main')
   }, [clearKycPollTimeouts])
 
@@ -143,6 +156,7 @@ const CardApp: React.FC = () => {
   const handleKYCError = useCallback((_error: string) => {
     clearKycPollTimeouts()
     setKycUrl(null)
+    setActiveProviderId(null)
     setCurrentView('main')
   }, [clearKycPollTimeouts])
 
@@ -185,7 +199,7 @@ const CardApp: React.FC = () => {
     return (
       <div className="card-app card-app--loading">
         <div className="card-app__spinner" />
-        <p className="card-app__loading-text">Loading...</p>
+        <p className="card-app__loading-text">{t('cardLoading')}</p>
       </div>
     )
   }
@@ -204,6 +218,22 @@ const CardApp: React.FC = () => {
   }
 
   if (accounts.length === 0 && currentView !== 'kyc') {
+    if (accountsError) {
+      return (
+        <div className="card-app">
+          <div className="card-app__error">
+            <p className="card-app__error-text">{t('cardLoadError')}</p>
+            <button
+              type="button"
+              className="card-app__error-btn"
+              onClick={reloadAccounts}
+            >
+              {t('cardRetry')}
+            </button>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="card-app">
         <CardOnboardingView onApply={handleApply} />
@@ -264,7 +294,7 @@ const CardApp: React.FC = () => {
         return (
           <div className="card-app card-app--loading">
             <div className="card-app__spinner" />
-            <p className="card-app__loading-text">Processing...</p>
+            <p className="card-app__loading-text">{t('cardProcessing')}</p>
           </div>
         )
       case 'success':
@@ -288,7 +318,7 @@ const CardApp: React.FC = () => {
                 className="card-app__error-btn"
                 onClick={handleBackToMain}
               >
-                Back
+                {t('cardBack')}
               </button>
             </div>
           </div>

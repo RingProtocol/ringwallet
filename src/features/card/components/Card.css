@@ -497,6 +497,33 @@
   cursor: pointer;
 }
 
+.kyc-webview__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.kyc-webview__placeholder-title {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.kyc-webview__placeholder-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
 /* ─── Dashboard: full-screen page (documents/specs/pages/page-style.md) ─ */
 
 .card-dashboard-page {
