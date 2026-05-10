@@ -5,6 +5,7 @@ import type { CardProvider } from '../../../config/cardProviders'
 interface Props {
   provider: CardProvider
   onApply?: () => void
+  onViewDetails?: () => void
 }
 
 const BRAND_COLORS: Record<string, string> = {
@@ -15,7 +16,7 @@ const BRAND_COLORS: Record<string, string> = {
   reap: '#059669',
 }
 
-const CardProviderCard: React.FC<Props> = ({ provider, onApply }) => {
+const CardProviderCard: React.FC<Props> = ({ provider, onApply, onViewDetails }) => {
   const { t } = useI18n()
   const brandColor = BRAND_COLORS[provider.id] || '#667eea'
 
@@ -27,6 +28,11 @@ const CardProviderCard: React.FC<Props> = ({ provider, onApply }) => {
   const handleApply = (e: React.MouseEvent) => {
     e.stopPropagation()
     onApply?.()
+  }
+
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onViewDetails?.()
   }
 
   return (
@@ -67,18 +73,29 @@ const CardProviderCard: React.FC<Props> = ({ provider, onApply }) => {
         </svg>
       </button>
 
-      {/* Right: Apply Now button */}
-      <button
-        type="button"
-        className="card-provider-row__apply"
-        onClick={handleApply}
-        style={onApply ? {} : { opacity: 0.45, pointerEvents: 'none' as const }}
-      >
-        {t('cardApplyNow')}
-        <svg className="card-provider-row__apply-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      {/* Right: action buttons */}
+      <div className="card-provider-row__actions">
+        {onViewDetails && (
+          <button
+            type="button"
+            className="card-provider-row__details"
+            onClick={handleViewDetails}
+          >
+            {t('cardViewDetails')}
+          </button>
+        )}
+        <button
+          type="button"
+          className="card-provider-row__apply"
+          onClick={handleApply}
+          style={onApply ? {} : { opacity: 0.45, pointerEvents: 'none' as const }}
+        >
+          {t('cardApplyNow')}
+          <svg className="card-provider-row__apply-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

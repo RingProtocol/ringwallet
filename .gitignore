@@ -4,6 +4,7 @@
 .claude
 .qwen
 .trae
+.workflow
 node_modules
 dist
 .next

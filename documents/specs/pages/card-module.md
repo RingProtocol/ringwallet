@@ -1,23 +1,59 @@
 # Card Module — Architecture Note
 
+## Component hierarchy
+
+```
+WalletMainPage (底部 tab 控制)
+  ├── CardTabHeader          → 标题栏 "Card"
+  └── CardTabBody
+       └── CardApp           → 核心状态机，管理所有子视图
+            ├── Loading          (adapterLoading || accountsLoading)
+            ├── CardOnboardingView  (供应商列表 — 始终作为 main 视图)
+            │    └── CardProviderCard × N
+            │         ├── "Apply Now"    → KYC 流程
+            │         └── "View Details" → 全屏 Dashboard (仅已连接供应商)
+            ├── KYCWebView          (KYC iframe)
+            ├── CardDashboardView   (全屏 portal → document.body)
+            │    ├── CardOverview
+            │    └── TransactionList
+            ├── CardSettingsView    (设置页)
+            └── TopUp 系列
+                 ├── TopUpAssetSelect
+                 ├── TopUpAmountInput
+                 ├── TopUpConfirm
+                 └── TopUpResult
+```
+
 ## Views matrix
 
 | View | Trigger | Component | Exits to |
 |------|---------|-----------|----------|
-| Onboarding list | `accounts.length === 0` | `CardOnboardingView` | KYC (Apply Now) |
-| KYC | `kycUrl !== null` | `KYCWebView` | Main (onDismiss / onError / onComplete) |
-| Dashboard fullscreen | `activeCard && cardDetailFullscreen` | `CardDashboardView presentation="fullscreen"` → portal | Dashboard inline (Back) |
-| Dashboard inline | `activeCard && !cardDetailFullscreen` | `CardDashboardView presentation="inline"` | — |
-| Top-up | `currentView === 'topup'` | `TopUp*` components | Main |
-| Settings | `currentView === 'settings'` | `CardSettingsView` | Main |
+| Provider list | `currentView === 'main'` | `CardOnboardingView` | KYC (Apply) / Detail (View Details) |
+| KYC | `kycUrl !== null` | `KYCWebView` | Provider list |
+| Dashboard | `currentView === 'detail'` | `CardDashboardView` → fullscreen portal | Provider list (Back) |
+| Top-up | `currentView === 'topup'` | `TopUp*` components | Provider list |
+| Settings | `currentView === 'settings'` | `CardSettingsView` | Provider list |
+
+## Navigation flow
+
+```
+[Card Tab] → Provider List (main)
+  ├── "Apply Now"     → KYC → (approved) → reload accounts → Provider List
+  ├── "View Details"  → Dashboard (fullscreen portal, z-index:500)
+  │    ├── Back       → Provider List
+  │    ├── Top Up     → TopUp flow → Provider List
+  │    └── Settings   → CardSettingsView → Provider List
+  └── "Visit site"    → external link (new tab)
+```
 
 ## State ownership
 
 All navigation and KYC state lives in `CardApp` (the router):
 
+- `currentView: 'main' | 'detail' | 'topup' | 'settings' | 'kyc'` — primary routing.
+- `detailProviderId: string | null` — which provider's card is shown in the dashboard.
 - `kycUrl: string | null` — non-null ↔ KYC view is visible; cleared on dismiss, error, or complete.
-- `currentView: 'main' | 'topup' | 'settings'` — secondary routing for post-dashboard flows.
-- `cardDetailFullscreen: boolean` — controls portal vs inline presentation of the dashboard; resets to `true` whenever a new `activeCard.id` appears.
+- `activeProviderId: string | null` — provider that initiated the current KYC session.
 - `kycPollTimeoutsRef` — holds pending `setTimeout` IDs for the KYC status poll loop; must be cleared on any KYC exit path.
 
 Domain data is in dedicated hooks:
@@ -39,14 +75,9 @@ Three distinct exits from the KYC view, each must clear `kycPollTimeoutsRef`:
 | iframe load error | `handleKYCError` | Clear timers → `kycUrl = null` → `main` |
 | KYC page signals done | `handleKYCComplete` | Clear timers → check status → create card if approved → `main` |
 
-## Presentation modes — Dashboard
+## Dashboard presentation
 
-`CardDashboardView` supports two presentations:
-
-- **`fullscreen`** — rendered via `createPortal` into `document.body`; uses `position: fixed; inset: 0; z-index: 500`. Includes a `TitleBar` with Back.
-- **`inline`** — rendered in the normal DOM flow inside the Card tab; `.card-dashboard-page--inline` resets `position/inset/z-index` so it does not escape its container.
-
-The `Back` button in fullscreen mode sets `cardDetailFullscreen = false`, switching to inline. There is no navigation back from inline (the tab itself is the exit).
+`CardDashboardView` is always rendered fullscreen via `createPortal` into `document.body` (`position: fixed; inset: 0; z-index: 500`). It includes a `TitleBar` with a Back button that returns to the provider list (`currentView = 'main'`).
 
 ## Adapter boundary
 

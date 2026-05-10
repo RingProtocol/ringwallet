@@ -12,9 +12,6 @@ interface Props {
   card: CardAccount
   onTopUp: () => void
   onSettings: () => void
-  /** Full-screen overlay vs scroll inside Card tab. */
-  presentation?: 'fullscreen' | 'inline'
-  /** Collapses fullscreen detail into the Card tab (only used when presentation is fullscreen). */
   onBack: () => void
 }
 
@@ -22,7 +19,6 @@ const CardDashboardView: React.FC<Props> = ({
   card,
   onTopUp,
   onSettings,
-  presentation = 'fullscreen',
   onBack,
 }) => {
   const { t } = useI18n()
@@ -72,14 +68,6 @@ const CardDashboardView: React.FC<Props> = ({
       </div>
     </div>
   )
-
-  if (presentation === 'inline') {
-    return (
-      <div className="card-dashboard-page card-dashboard-page--inline">
-        <div className="card-dashboard-page__content">{body}</div>
-      </div>
-    )
-  }
 
   const content = (
     <div className="card-dashboard-page">

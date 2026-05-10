@@ -15,7 +15,7 @@ import TopUpConfirm from './topup/TopUpConfirm'
 import TopUpResult from './topup/TopUpResult'
 import './Card.css'
 
-type CardView = 'main' | 'topup' | 'settings' | 'kyc'
+type CardView = 'main' | 'detail' | 'topup' | 'settings' | 'kyc'
 
 const ZERO_EVM = '0x0000000000000000000000000000000000000000'
 
@@ -25,8 +25,8 @@ const CardApp: React.FC = () => {
   const [kycUrl, setKycUrl] = useState<string | null>(null)
   /** Provider that initiated the current KYC session — cleared on exit. */
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
-  /** Full-screen card detail (from Card tab); back collapses into tab body, does not switch tab. */
-  const [cardDetailFullscreen, setCardDetailFullscreen] = useState(true)
+  /** Provider whose card detail is currently being viewed. */
+  const [detailProviderId, setDetailProviderId] = useState<string | null>(null)
   const kycPollTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const { activeWallet } = useAuth()
   const { loading: adapterLoading } = useCardProvider()
@@ -41,10 +41,6 @@ const CardApp: React.FC = () => {
 
   const walletAddress = activeWallet?.address ?? ZERO_EVM
 
-  useEffect(() => {
-    if (activeCard) setCardDetailFullscreen(true)
-  }, [activeCard?.id])
-
   const clearKycPollTimeouts = useCallback(() => {
     for (const id of kycPollTimeoutsRef.current) {
       clearTimeout(id)
@@ -54,8 +50,16 @@ const CardApp: React.FC = () => {
 
   useEffect(() => () => clearKycPollTimeouts(), [clearKycPollTimeouts])
 
-  const handleLeaveCardDetailFullscreen = useCallback(() => {
-    setCardDetailFullscreen(false)
+  /** Navigate into a provider's card detail (fullscreen dashboard). */
+  const handleViewDetails = useCallback((providerId: string) => {
+    setDetailProviderId(providerId)
+    setCurrentView('detail')
+  }, [])
+
+  /** Back from card detail to provider list. */
+  const handleDetailBack = useCallback(() => {
+    setDetailProviderId(null)
+    setCurrentView('main')
   }, [])
 
   // ─── KYC Flow ──────────────────────────────────────
@@ -172,6 +176,7 @@ const CardApp: React.FC = () => {
   }, [])
 
   const handleBackToMain = useCallback(() => {
+    setDetailProviderId(null)
     setCurrentView('main')
     topUp.reset()
   }, [topUp])
@@ -217,28 +222,40 @@ const CardApp: React.FC = () => {
     )
   }
 
-  if (accounts.length === 0 && currentView !== 'kyc') {
-    if (accountsError) {
+  if (accountsError && accounts.length === 0 && currentView !== 'kyc') {
+    return (
+      <div className="card-app">
+        <div className="card-app__error">
+          <p className="card-app__error-text">{t('cardLoadError')}</p>
+          <button
+            type="button"
+            className="card-app__error-btn"
+            onClick={reloadAccounts}
+          >
+            {t('cardRetry')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Card Detail (fullscreen dashboard)
+  if (currentView === 'detail') {
+    const detailCard = detailProviderId
+      ? accounts.find((a) => a.provider === detailProviderId) ?? activeCard
+      : activeCard
+    if (detailCard) {
       return (
         <div className="card-app">
-          <div className="card-app__error">
-            <p className="card-app__error-text">{t('cardLoadError')}</p>
-            <button
-              type="button"
-              className="card-app__error-btn"
-              onClick={reloadAccounts}
-            >
-              {t('cardRetry')}
-            </button>
-          </div>
+          <CardDashboardView
+            card={detailCard}
+            onTopUp={handleNavigateToTopUp}
+            onSettings={handleNavigateToSettings}
+            onBack={handleDetailBack}
+          />
         </div>
       )
     }
-    return (
-      <div className="card-app">
-        <CardOnboardingView onApply={handleApply} />
-      </div>
-    )
   }
 
   // Settings
@@ -333,23 +350,16 @@ const CardApp: React.FC = () => {
     }
   }
 
-  // Main Dashboard
-  if (activeCard) {
-    return (
-      <div className="card-app">
-        <CardDashboardView
-          key={`${activeCard.id}-${cardDetailFullscreen ? 'fs' : 'inline'}`}
-          card={activeCard}
-          onTopUp={handleNavigateToTopUp}
-          onSettings={handleNavigateToSettings}
-          presentation={cardDetailFullscreen ? 'fullscreen' : 'inline'}
-          onBack={handleLeaveCardDetailFullscreen}
-        />
-      </div>
-    )
-  }
-
-  return null
+  // Main: always show provider list
+  return (
+    <div className="card-app">
+      <CardOnboardingView
+        onApply={handleApply}
+        accounts={accounts}
+        onViewDetails={handleViewDetails}
+      />
+    </div>
+  )
 }
 
 export default CardApp
