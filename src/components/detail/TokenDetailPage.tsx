@@ -181,6 +181,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
     if (isNative) {
       setSendTokenOption({ type: 'native', symbol })
     } else {
+      const logo = displayToken.tokenMetadata.logo?.trim() || null
       setSendTokenOption({
         type: 'erc20',
         token: {
@@ -188,6 +189,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
           symbol,
           name: displayToken.tokenMetadata.name ?? '',
           decimals: displayToken.tokenMetadata.decimals ?? 18,
+          logo,
         },
       })
     }

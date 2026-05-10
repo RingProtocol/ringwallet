@@ -26,8 +26,35 @@ export function useSendForm(initialToken?: SendTokenOption) {
             token: t,
           }))
         : []
-    return [native, ...imported]
-  }, [activeWallet?.address, activeChain?.id, activeChain?.symbol])
+
+    // Keep the token selected from detail page even if it is not imported yet.
+    const initialErc20 =
+      initialToken?.type === 'erc20'
+        ? ({
+            type: 'erc20',
+            token: initialToken.token,
+          } as const)
+        : null
+
+    const hasInitial =
+      initialErc20 != null &&
+      imported.some(
+        (option) =>
+          option.token.address.toLowerCase() ===
+          initialErc20.token.address.toLowerCase()
+      )
+
+    return hasInitial
+      ? [native, ...imported]
+      : initialErc20
+        ? [native, initialErc20, ...imported]
+        : [native, ...imported]
+  }, [
+    activeWallet?.address,
+    activeChain?.id,
+    activeChain?.symbol,
+    initialToken,
+  ])
 
   const amountLabel =
     selectedToken.type === 'native'

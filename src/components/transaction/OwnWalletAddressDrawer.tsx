@@ -34,8 +34,11 @@ const OwnWalletAddressDrawer: React.FC<OwnWalletAddressDrawerProps> = ({
   shortenAddress = defaultShortenAddress,
 }) => {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+    <Drawer open={open} onOpenChange={onOpenChange} dismissible>
+      <DrawerContent
+        onPointerDownOutside={() => onOpenChange(false)}
+        onInteractOutside={() => onOpenChange(false)}
+      >
         <div className="own-wallet-sheet">
           <DrawerHeader className="own-wallet-sheet__head px-0 pb-1 pt-2 text-left">
             <DrawerTitle>Select My Wallet Address</DrawerTitle>
