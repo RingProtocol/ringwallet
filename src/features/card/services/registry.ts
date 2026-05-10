@@ -6,7 +6,7 @@ import type { CardProviderAdapter } from './adapter/types'
  * Follows the same pattern as `chainRegistry` in
  * `src/services/chainplugins/registry.ts`.
  */
-class CardProviderRegistry {
+export class CardProviderRegistry {
   private providers = new Map<string, CardProviderAdapter>()
 
   /** Register a card provider adapter. */
