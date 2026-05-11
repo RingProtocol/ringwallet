@@ -45,6 +45,7 @@ const mockAuth = {
   activeWallet: MOCK_WALLET,
   activeWalletIndex: 0,
   switchWallet: () => {},
+  addWallet: () => true,
   login: async () => {},
   logout: () => {},
   CHAINS: MOCK_CHAINS,

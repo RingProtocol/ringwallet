@@ -12,6 +12,14 @@ import {
   requestDeviceNotificationPermission,
   type DeviceNotificationPermission,
 } from '../services/devices/notificationService'
+import { Button } from './ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu'
 import Introduce from './Introduce'
 import './AccountDrawer.css'
 import { useI18n } from '../i18n'
@@ -45,6 +53,7 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
   const {
     activeWalletIndex,
     switchWallet,
+    addWallet,
     logout,
     activeChain,
     accountsByFamily,
@@ -52,12 +61,20 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
   } = useAuth()
   const { lang, setLang, t } = useI18n()
   const [showWalletList, setShowWalletList] = useState(false)
+  const [openWalletMenuIndex, setOpenWalletMenuIndex] = useState<number | null>(
+    null
+  )
+  const [copiedWalletMenuIndex, setCopiedWalletMenuIndex] = useState<
+    number | null
+  >(null)
+  const [hiddenWalletIndexes, setHiddenWalletIndexes] = useState<number[]>([])
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
 
   const devTapCountRef = useRef(0)
   const devTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const keepWalletMenuOpenRef = useRef<number | null>(null)
 
   const handleDevTap = () => {
     devTapCountRef.current++
@@ -78,12 +95,61 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
   const wasActive = useRef(false)
 
+  const getActiveAccountsKey = () => {
+    const family = activeChain?.family
+    let key: string = family ?? ChainFamily.EVM
+    if (family === ChainFamily.Bitcoin && activeChain?.network === 'testnet') {
+      key = BITCOIN_TESTNET_ACCOUNTS_KEY
+    } else if (
+      family === ChainFamily.Dogecoin &&
+      activeChain?.network === 'testnet'
+    ) {
+      key = DOGECOIN_TESTNET_ACCOUNTS_KEY
+    } else if (family === ChainFamily.Cosmos && activeChain?.addressPrefix) {
+      const variant = COSMOS_CHAIN_VARIANTS.find(
+        (v) => v.addressPrefix === activeChain.addressPrefix
+      )
+      if (variant) key = cosmosAccountsKey(variant.key)
+    }
+    return key
+  }
+
+  const accountsKey = getActiveAccountsKey()
+  const wallets = accountsByFamily[accountsKey] ?? []
+  const hiddenStorageKey = `hidden_wallet_indexes:${accountsKey}`
+  const visibleWallets = wallets
+    .map((wallet, index) => ({ wallet, index }))
+    .filter(({ index }) => !hiddenWalletIndexes.includes(index))
+
   useEffect(() => {
     if (!active) {
       setShowWalletList(false)
+      setOpenWalletMenuIndex(null)
+      setCopiedWalletMenuIndex(null)
       setFeatureError('')
     }
   }, [active])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(hiddenStorageKey)
+      if (!raw) {
+        setHiddenWalletIndexes([])
+        return
+      }
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        setHiddenWalletIndexes([])
+        return
+      }
+      const normalized = parsed
+        .filter((v): v is number => Number.isInteger(v) && v >= 5)
+        .filter((v) => v < wallets.length)
+      setHiddenWalletIndexes(normalized)
+    } catch {
+      setHiddenWalletIndexes([])
+    }
+  }, [hiddenStorageKey, wallets.length])
 
   useEffect(() => {
     if (active && !wasActive.current) {
@@ -122,6 +188,63 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
   const handleSelectWallet = (index: number) => {
     switchWallet(index)
+    setOpenWalletMenuIndex(null)
+  }
+
+  const handleCopyAddressMenu = (
+    event: Event,
+    index: number,
+    address: string
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+    keepWalletMenuOpenRef.current = index
+    setOpenWalletMenuIndex(index)
+
+    navigator.clipboard
+      .writeText(address)
+      .then(() => {
+        setCopiedWalletMenuIndex(index)
+        setTimeout(() => {
+          setCopiedWalletMenuIndex(null)
+        }, 900)
+      })
+      .catch((err) => console.error('Failed to copy:', err))
+  }
+
+  const handleHideAccount = (index: number) => {
+    if (index < 5) {
+      setFeatureError(t('hideAccountDefaultBlocked'))
+      return
+    }
+
+    const nextHidden = Array.from(new Set([...hiddenWalletIndexes, index]))
+    const nextVisible = wallets
+      .map((_, i) => i)
+      .filter((i) => !nextHidden.includes(i))
+    if (nextVisible.length === 0) {
+      setFeatureError(t('hideAccountAtLeastOneVisible'))
+      return
+    }
+
+    setHiddenWalletIndexes(nextHidden)
+    localStorage.setItem(hiddenStorageKey, JSON.stringify(nextHidden))
+
+    if (activeWalletIndex === index) {
+      switchWallet(nextVisible[0])
+    }
+
+    setFeatureError('')
+  }
+
+  const handleAddWallet = () => {
+    setFeatureError('')
+    const added = addWallet({ activateNew: false })
+    if (!added) {
+      setFeatureError(t('addWalletFailedMessage'))
+      return
+    }
+    setShowWalletList(true)
   }
 
   const handleLogout = () => {
@@ -453,26 +576,48 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
               {formatAddress(activeAccount.address)}
             </div>
           </div>
-          <button
-            type="button"
-            className="drawer-header-card__copy"
-            onClick={(e) => copyToClipboard(e, activeAccount.address)}
-          >
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="drawer-header-card__actions">
+            <button
+              type="button"
+              className="drawer-header-card__add"
+              onClick={handleAddWallet}
             >
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-            {t('copy')}
-          </button>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {t('add')}
+            </button>
+            <button
+              type="button"
+              className="drawer-header-card__copy"
+              onClick={(e) => copyToClipboard(e, activeAccount.address)}
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              {t('copy')}
+            </button>
+          </div>
         </div>
       )}
 
@@ -518,30 +663,7 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
               {item.key === 'switch' && showWalletList && (
                 <div className="drawer-wallet-list">
-                  {(() => {
-                    const family = activeChain?.family
-                    let key: string = family ?? ChainFamily.EVM
-                    if (
-                      family === ChainFamily.Bitcoin &&
-                      activeChain?.network === 'testnet'
-                    ) {
-                      key = BITCOIN_TESTNET_ACCOUNTS_KEY
-                    } else if (
-                      family === ChainFamily.Dogecoin &&
-                      activeChain?.network === 'testnet'
-                    ) {
-                      key = DOGECOIN_TESTNET_ACCOUNTS_KEY
-                    } else if (
-                      family === ChainFamily.Cosmos &&
-                      activeChain?.addressPrefix
-                    ) {
-                      const variant = COSMOS_CHAIN_VARIANTS.find(
-                        (v) => v.addressPrefix === activeChain.addressPrefix
-                      )
-                      if (variant) key = cosmosAccountsKey(variant.key)
-                    }
-                    return accountsByFamily[key] ?? []
-                  })().map((wallet, index) => (
+                  {visibleWallets.map(({ wallet, index }) => (
                     <div
                       key={index}
                       className="drawer-wallet-option"
@@ -572,33 +694,131 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
                         <span className="drawer-wallet-addr">
                           {formatAddress(wallet.address)}
                         </span>
-                        <button
-                          className="drawer-copy-btn"
-                          onClick={(e) => copyToClipboard(e, wallet.address)}
-                          title={t('copy')}
-                        >
-                          <svg
-                            width="11"
-                            height="11"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                        <div className="drawer-wallet-actions">
+                          <DropdownMenu
+                            open={openWalletMenuIndex === index}
+                            onOpenChange={(open) => {
+                              if (
+                                !open &&
+                                keepWalletMenuOpenRef.current === index
+                              ) {
+                                setOpenWalletMenuIndex(index)
+                                keepWalletMenuOpenRef.current = null
+                                return
+                              }
+
+                              setOpenWalletMenuIndex(open ? index : null)
+                              if (!open) {
+                                setCopiedWalletMenuIndex((prev) =>
+                                  prev === index ? null : prev
+                                )
+                              }
+                            }}
                           >
-                            <rect
-                              x="9"
-                              y="9"
-                              width="13"
-                              height="13"
-                              rx="2"
-                              ry="2"
-                            />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                          {t('copy')}
-                        </button>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="drawer-wallet-menu-trigger"
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={t('more')}
+                                title={t('more')}
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <circle cx="12" cy="5" r="2" />
+                                  <circle cx="12" cy="12" r="2" />
+                                  <circle cx="12" cy="19" r="2" />
+                                </svg>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              side="left"
+                              align="start"
+                              sideOffset={6}
+                              className="drawer-wallet-dropdown-content"
+                              onClick={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              <DropdownMenuItem
+                                className="drawer-wallet-dropdown-item"
+                                onClick={(e) => e.stopPropagation()}
+                                onSelect={(event) =>
+                                  handleCopyAddressMenu(
+                                    event,
+                                    index,
+                                    wallet.address
+                                  )
+                                }
+                              >
+                                <span>{t('addressCopy')}</span>
+                                {copiedWalletMenuIndex === index ? (
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <rect
+                                      x="9"
+                                      y="9"
+                                      width="13"
+                                      height="13"
+                                      rx="2"
+                                      ry="2"
+                                    />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                  </svg>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="drawer-wallet-dropdown-separator" />
+                              <DropdownMenuItem
+                                className="drawer-wallet-dropdown-item drawer-wallet-dropdown-danger"
+                                onClick={(e) => e.stopPropagation()}
+                                onSelect={() => handleHideAccount(index)}
+                              >
+                                <span>{t('hideAccount')}</span>
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M17.94 17.94A10.94 10.94 0 0112 20c-5 0-9.27-3.11-11-8 1.04-2.94 2.96-5.08 5.44-6.32" />
+                                  <path d="M10.58 10.58A2 2 0 0013.42 13.42" />
+                                  <path d="M1 1l22 22" />
+                                  <path d="M9.88 4.24A10.94 10.94 0 0112 4c5 0 9.27 3.11 11 8a11.83 11.83 0 01-3.06 4.94" />
+                                </svg>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </div>
                   ))}

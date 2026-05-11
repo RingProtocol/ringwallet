@@ -120,6 +120,34 @@
   letter-spacing: 0.3px;
 }
 
+.drawer-header-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drawer-header-card__add {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(188, 116, 237, 0.18);
+  color: #f7f1ff;
+  border: 1px solid rgba(188, 116, 237, 0.35);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.drawer-header-card__add:hover {
+  background: rgba(188, 116, 237, 0.28);
+}
+
 .drawer-header-card__copy {
   padding: 6px 10px;
   border-radius: 8px;
@@ -292,29 +320,40 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.drawer-copy-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  opacity: 0.65;
-  color: var(--ring-text-secondary, #9ca3af);
-  transition:
-    opacity 0.2s,
-    background 0.2s,
-    color 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: inherit;
+.drawer-wallet-actions {
+  position: relative;
 }
 
-.drawer-copy-btn:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--ring-accent, #bc74ed);
+.drawer-wallet-menu-trigger {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.drawer-wallet-menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.drawer-wallet-dropdown-content {
+  min-width: 176px;
+  padding: 6px;
+}
+
+.drawer-wallet-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.drawer-wallet-dropdown-danger {
+  color: #fca5a5;
+}
+
+.drawer-wallet-dropdown-separator {
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .drawer-menu-item.disabled {
