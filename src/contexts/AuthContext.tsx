@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react'
 import {
@@ -19,6 +20,7 @@ import { WalletType } from '../models/WalletType'
 import { ChainFamily, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
+import { activateWalletReward } from '../services/walletRewardActivationService'
 
 export type { ChainFamily, Chain }
 
@@ -255,6 +257,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     bitcoinWallets.length > 0 ? bitcoinWallets[activeWalletIndex] : null
   const activeDogecoinWallet =
     dogecoinWallets.length > 0 ? dogecoinWallets[activeWalletIndex] : null
+  const lastActivatedEthWalletRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const isEthereumMainnet = Number(activeChain?.id) === 1
+    const address = activeWallet?.address
+
+    if (!isEthereumMainnet || !address) {
+      return
+    }
+
+    const activationKey = `${activeChain.id}:${address.toLowerCase()}`
+    if (lastActivatedEthWalletRef.current === activationKey) {
+      return
+    }
+
+    lastActivatedEthWalletRef.current = activationKey
+    void activateWalletReward(address)
+  }, [activeChain?.id, activeWallet?.address])
 
   const activeAccount = useMemo(() => {
     const family = activeChain?.family
