@@ -4,8 +4,10 @@ import { useI18n } from '../../../i18n'
 import { useCardProvider, useCardAccounts, useCardTopUp } from '../hooks'
 import '../services/adapter'
 import { cardProviderRegistry } from '../services/registry'
+import { CARD_PROVIDERS } from '../../../config/cardProviders'
+import type { CardAccount } from '../types'
 import CardOnboardingView from './onboarding/CardOnboardingView'
-import KYCWebView from './onboarding/KYCWebView'
+import CardApplyPage from './onboarding/CardApplyPage'
 import CardDashboardView from './dashboard/CardDashboardView'
 import CardSettingsView from './management/CardSettingsView'
 import TopUpEntry from './topup/TopUpEntry'
@@ -15,7 +17,17 @@ import TopUpConfirm from './topup/TopUpConfirm'
 import TopUpResult from './topup/TopUpResult'
 import './Card.css'
 
-type CardView = 'main' | 'detail' | 'topup' | 'settings' | 'kyc'
+type CardView = 'main' | 'detail' | 'topup' | 'settings' | 'apply'
+
+/**
+ * Sub-state of the apply page. Drives the loading copy shown by
+ * `CardApplyPage` when no iframe is being rendered.
+ *
+ *  - `checking`: querying the provider adapter for an existing card.
+ *  - `starting`: linking the adapter and starting the KYC session.
+ *  - `creating`: KYC approved, issuing the card.
+ */
+type ApplyStage = 'checking' | 'starting' | 'creating' | null
 
 const ZERO_EVM = '0x0000000000000000000000000000000000000000'
 
@@ -23,10 +35,20 @@ const CardApp: React.FC = () => {
   const { t } = useI18n()
   const [currentView, setCurrentView] = useState<CardView>('main')
   const [kycUrl, setKycUrl] = useState<string | null>(null)
-  /** Provider that initiated the current KYC session — cleared on exit. */
+  /** Sub-stage of the apply flow, used for loading-state copy. */
+  const [applyStage, setApplyStage] = useState<ApplyStage>(null)
+  /** Fatal error encountered while running the apply flow (query or apply). */
+  const [applyError, setApplyError] = useState<string | null>(null)
+  /** Provider that initiated the current apply flow — cleared on exit. */
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
   /** Provider whose card detail is currently being viewed. */
   const [detailProviderId, setDetailProviderId] = useState<string | null>(null)
+  /**
+   * Card just returned by `getCards()` or `createCard()` — held locally so
+   * the dashboard renders immediately without waiting for the
+   * `useCardAccounts` reload round-trip. Cleared on detail-back.
+   */
+  const [pendingDetailCard, setPendingDetailCard] = useState<CardAccount | null>(null)
   const kycPollTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const { activeWallet } = useAuth()
   const { loading: adapterLoading } = useCardProvider()
@@ -34,8 +56,8 @@ const CardApp: React.FC = () => {
   const topUp = useCardTopUp()
 
   // Keep a ref to the latest reloadAccounts so KYC poll closures never capture
-  // a stale version (adapter was null when handleApply ran but becomes non-null
-  // after the first re-render triggered by setKycUrl).
+  // a stale version (adapter was null when handleViewDetails ran but becomes
+  // non-null after the first re-render triggered by setKycUrl).
   const reloadAccountsRef = useRef(reloadAccounts)
   reloadAccountsRef.current = reloadAccounts
 
@@ -50,62 +72,102 @@ const CardApp: React.FC = () => {
 
   useEffect(() => () => clearKycPollTimeouts(), [clearKycPollTimeouts])
 
-  /** Navigate into a provider's card detail (fullscreen dashboard). */
-  const handleViewDetails = useCallback((providerId: string) => {
-    setDetailProviderId(providerId)
-    setCurrentView('detail')
-  }, [])
-
   /** Back from card detail to provider list. */
   const handleDetailBack = useCallback(() => {
     setDetailProviderId(null)
+    setPendingDetailCard(null)
     setCurrentView('main')
   }, [])
 
-  // ─── KYC Flow ──────────────────────────────────────
+  // ─── Apply / Detail Flow ───────────────────────────
 
-  const handleApply = useCallback(
+  /**
+   * Single entry-point for the per-row "My Card" button.
+   *
+   * Flow:
+   *  1. Open the apply page in `checking` state so the user gets immediate
+   *     feedback (TempContent loading).
+   *  2. Ask the provider adapter whether this user already has a card with
+   *     this provider. If yes → navigate straight to the dashboard with the
+   *     existing card (no new application).
+   *  3. Otherwise start the KYC session and poll for approval. On approval
+   *     the card is created and the user is navigated directly to the
+   *     dashboard (not back to the onboarding list).
+   *  4. Any failure (query, KYC start, KYC reject, card create) is surfaced
+   *     as `applyError` so the apply page can offer Retry / Back without
+   *     dumping the user back to the onboarding list.
+   */
+  const handleViewDetails = useCallback(
     async (providerId: string) => {
       clearKycPollTimeouts()
-      const impl = cardProviderRegistry.get(providerId)
-      if (!impl) return
+      setApplyError(null)
+      setKycUrl(null)
+      setActiveProviderId(providerId)
+      setApplyStage('checking')
+      setCurrentView('apply')
 
-      if (!impl.isLinked()) {
-        await impl.initialize({
-          apiKey: '',
-          environment: 'sandbox',
-          walletAddress,
-        })
+      const impl = cardProviderRegistry.get(providerId)
+      if (!impl) {
+        setApplyError(t('cardApplyFailed'))
+        return
       }
 
+      // ── Step 1: existing card lookup ───────────────
       try {
+        if (impl.isLinked()) {
+          const cards = await impl.getCards()
+          if (cards.length > 0) {
+            setPendingDetailCard(cards[0])
+            setDetailProviderId(providerId)
+            setApplyStage(null)
+            setKycUrl(null)
+            setCurrentView('detail')
+            reloadAccountsRef.current()
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Failed to query existing cards:', err)
+        setApplyError(t('cardLoadCardsFailed'))
+        return
+      }
+
+      // ── Step 2: no existing card → KYC session ─────
+      setApplyStage('starting')
+      try {
+        if (!impl.isLinked()) {
+          await impl.initialize({
+            apiKey: '',
+            environment: 'sandbox',
+            walletAddress,
+          })
+        }
+
         const session = await impl.startKYC()
         setKycUrl(session.url)
-        setActiveProviderId(providerId)
-        setCurrentView('kyc')
 
         const pollKYC = () => {
           void (async () => {
             try {
               const status = await impl.getKYCStatus()
               if (status === 'approved') {
-                await impl.createCard('virtual')
+                setApplyStage('creating')
                 setKycUrl(null)
-                setActiveProviderId(null)
+                const newCard = await impl.createCard('virtual')
+                setPendingDetailCard(newCard)
+                setDetailProviderId(providerId)
+                setApplyStage(null)
+                setCurrentView('detail')
                 reloadAccountsRef.current()
-                setCurrentView('main')
               } else if (status === 'rejected') {
-                setKycUrl(null)
-                setActiveProviderId(null)
-                setCurrentView('main')
+                setApplyError(t('cardApplyFailed'))
               } else {
                 const id = setTimeout(pollKYC, 2000)
                 kycPollTimeoutsRef.current.push(id)
               }
-            } catch {
-              setKycUrl(null)
-              setActiveProviderId(null)
-              setCurrentView('main')
+            } catch (err) {
+              console.error('KYC poll failed:', err)
+              setApplyError(t('cardApplyFailed'))
             }
           })()
         }
@@ -114,55 +176,33 @@ const CardApp: React.FC = () => {
         kycPollTimeoutsRef.current.push(firstPoll)
       } catch (err) {
         console.error('Failed to start KYC:', err)
-        setKycUrl(null)
-        setActiveProviderId(null)
-        setCurrentView('main')
+        setApplyError(t('cardApplyFailed'))
       }
     },
-    [clearKycPollTimeouts, walletAddress],
+    [clearKycPollTimeouts, walletAddress, t],
   )
 
-  const handleKYCComplete = useCallback(() => {
+  /** User explicitly closed the apply page — cancel pending polls. */
+  const handleApplyDismiss = useCallback(() => {
     clearKycPollTimeouts()
-    // Use the provider that initiated this KYC session, not getActiveProvider()
-    // which would return whichever adapter happens to be first in the registry.
-    const impl = activeProviderId ? cardProviderRegistry.get(activeProviderId) : null
     setKycUrl(null)
+    setApplyError(null)
+    setApplyStage(null)
     setActiveProviderId(null)
-    if (!impl) {
-      setCurrentView('main')
-      return
+    setCurrentView('main')
+  }, [clearKycPollTimeouts])
+
+  /** Iframe failed to load — surface as page error so user can retry. */
+  const handleApplyIframeError = useCallback((message: string) => {
+    setApplyError(message)
+  }, [])
+
+  /** Retry the apply flow for the currently active provider. */
+  const handleApplyRetry = useCallback(() => {
+    if (activeProviderId) {
+      void handleViewDetails(activeProviderId)
     }
-
-    impl
-      .getKYCStatus()
-      .then(async (status) => {
-        if (status === 'approved') {
-          await impl.createCard('virtual')
-          reloadAccountsRef.current()
-        }
-        setCurrentView('main')
-      })
-      .catch(() => {
-        setCurrentView('main')
-      })
-  }, [clearKycPollTimeouts, activeProviderId])
-
-  /** User explicitly closed the KYC view — cancel pending polls. */
-  const handleKYCDismiss = useCallback(() => {
-    clearKycPollTimeouts()
-    setKycUrl(null)
-    setActiveProviderId(null)
-    setCurrentView('main')
-  }, [clearKycPollTimeouts])
-
-  /** Iframe failed to load — cancel pending polls and return to main. */
-  const handleKYCError = useCallback((_error: string) => {
-    clearKycPollTimeouts()
-    setKycUrl(null)
-    setActiveProviderId(null)
-    setCurrentView('main')
-  }, [clearKycPollTimeouts])
+  }, [activeProviderId, handleViewDetails])
 
   // ─── Navigation ────────────────────────────────────
 
@@ -177,6 +217,7 @@ const CardApp: React.FC = () => {
 
   const handleBackToMain = useCallback(() => {
     setDetailProviderId(null)
+    setPendingDetailCard(null)
     setCurrentView('main')
     topUp.reset()
   }, [topUp])
@@ -209,20 +250,35 @@ const CardApp: React.FC = () => {
     )
   }
 
-  if (kycUrl) {
+  // Apply page (fullscreen — see documents/specs/pages/page-style.md).
+  // Rendered ahead of other checks so it stays visible regardless of
+  // background state changes (e.g. an account load error elsewhere should
+  // not blank the apply page while the user is mid-application).
+  if (currentView === 'apply') {
+    const provider = CARD_PROVIDERS.find((p) => p.id === activeProviderId)
+    const providerName = provider?.name ?? ''
+    const loadingMessage =
+      applyStage === 'checking'
+        ? t('cardApplyChecking')
+        : applyStage === 'creating'
+          ? t('cardApplyCreating')
+          : t('cardApplyStarting')
     return (
       <div className="card-app">
-        <KYCWebView
-          url={kycUrl}
-          onComplete={handleKYCComplete}
-          onDismiss={handleKYCDismiss}
-          onError={handleKYCError}
+        <CardApplyPage
+          providerName={providerName}
+          kycUrl={kycUrl}
+          loadingMessage={loadingMessage}
+          error={applyError}
+          onBack={handleApplyDismiss}
+          onIframeError={handleApplyIframeError}
+          onRetry={handleApplyRetry}
         />
       </div>
     )
   }
 
-  if (accountsError && accounts.length === 0 && currentView !== 'kyc') {
+  if (accountsError && accounts.length === 0) {
     return (
       <div className="card-app">
         <div className="card-app__error">
@@ -239,11 +295,16 @@ const CardApp: React.FC = () => {
     )
   }
 
-  // Card Detail (fullscreen dashboard)
+  // Card Detail (fullscreen dashboard).
+  // Prefer the freshly-resolved `pendingDetailCard` so the dashboard is
+  // populated synchronously — avoids a flash of onboarding while the
+  // useCardAccounts reload completes.
   if (currentView === 'detail') {
-    const detailCard = detailProviderId
-      ? accounts.find((a) => a.provider === detailProviderId) ?? activeCard
-      : activeCard
+    const detailCard =
+      pendingDetailCard ??
+      (detailProviderId
+        ? accounts.find((a) => a.provider === detailProviderId) ?? activeCard
+        : activeCard)
     if (detailCard) {
       return (
         <div className="card-app">
@@ -354,9 +415,10 @@ const CardApp: React.FC = () => {
   return (
     <div className="card-app">
       <CardOnboardingView
-        onApply={handleApply}
         accounts={accounts}
-        onViewDetails={handleViewDetails}
+        onViewDetails={(id) => {
+          void handleViewDetails(id)
+        }}
       />
     </div>
   )

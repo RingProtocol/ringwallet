@@ -3,44 +3,49 @@ import { TESTID } from '../../../src/components/testids'
 
 /**
  * Extended Card-tab E2E coverage (issue #32):
- * KYC dismiss, tab-switch during KYC, second Apply after dismiss.
+ * Apply-page dismiss, tab-switch during apply, second apply after dismiss.
  *
  * Run: yarn test:e2e -- test/playwright/tests/card-tab-extended.spec.ts
+ *
+ * Note: the apply flow is triggered via the per-row "My Card" button when no
+ * card exists for the provider yet. The button now branches between the
+ * apply page and the card detail dashboard based on account presence.
  */
 test.describe('Card tab — extended flows', () => {
   /**
-   * User opens KYC view then closes it with the × button.
+   * User opens the apply page then closes it with the TitleBar back button.
    * Onboarding list must reappear (not the dashboard or a blank screen).
    */
-  test('KYC dismiss (×) returns to onboarding', async ({ wallet: { page } }) => {
+  test('apply page back (←) returns to onboarding', async ({ wallet: { page } }) => {
     await page.getByTestId(TESTID.TAB_CARD).click()
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 10000 })
 
-    await page.locator('.card-provider-row__apply').first().click()
-    await expect(page.locator('.kyc-webview')).toBeVisible({ timeout: 15000 })
+    await page.locator('.card-provider-row__details').first().click()
+    await expect(page.locator('.card-apply-page')).toBeVisible({ timeout: 15000 })
 
-    // Close the KYC view
-    await page.locator('.kyc-webview__close').click()
+    // Close the apply page via the standard TitleBar back button
+    await page.locator('.card-apply-page .title-bar__back').click()
 
     // Onboarding must be visible again — no card was created
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 5000 })
-    await expect(page.locator('.kyc-webview')).not.toBeVisible()
+    await expect(page.locator('.card-apply-page')).not.toBeVisible()
     await expect(page.locator('.card-dashboard-page')).not.toBeVisible()
   })
 
   /**
-   * User switches to the Wallet tab while KYC is open, then returns to the Card tab.
-   * The onboarding list should be shown (KYC state cleared) — the Card tab must not
-   * remain stuck in the KYC view after a tab switch.
+   * User switches to the Wallet tab while the apply page is open, then
+   * returns to the Card tab. The onboarding list should be shown (apply
+   * state cleared) — the Card tab must not remain stuck in the apply view
+   * after a tab switch.
    */
-  test('switching tabs during KYC and returning shows onboarding', async ({
+  test('switching tabs during apply and returning shows onboarding', async ({
     wallet: { page },
   }) => {
     await page.getByTestId(TESTID.TAB_CARD).click()
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 10000 })
 
-    await page.locator('.card-provider-row__apply').first().click()
-    await expect(page.locator('.kyc-webview')).toBeVisible({ timeout: 15000 })
+    await page.locator('.card-provider-row__details').first().click()
+    await expect(page.locator('.card-apply-page')).toBeVisible({ timeout: 15000 })
 
     // Switch to Wallet tab
     await page.getByTestId(TESTID.TAB_WALLET).click()
@@ -49,64 +54,65 @@ test.describe('Card tab — extended flows', () => {
     // Switch back to Card tab
     await page.getByTestId(TESTID.TAB_CARD).click()
 
-    // KYC view should no longer overlay; card was not created so onboarding shows
+    // Apply page should no longer overlay; card was not created so onboarding shows
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 10000 })
   })
 
   /**
-   * After dismissing KYC the user clicks Apply Now a second time.
-   * A fresh KYC session must start and the KYC view must appear again.
+   * After dismissing the apply page the user clicks "My Card" a second time.
+   * A fresh apply session must start and the apply page must appear again.
    */
-  test('second Apply after KYC dismiss starts a fresh session', async ({
+  test('second apply after dismiss starts a fresh session', async ({
     wallet: { page },
   }) => {
     await page.getByTestId(TESTID.TAB_CARD).click()
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 10000 })
 
-    // First Apply
-    await page.locator('.card-provider-row__apply').first().click()
-    await expect(page.locator('.kyc-webview')).toBeVisible({ timeout: 15000 })
+    // First apply
+    await page.locator('.card-provider-row__details').first().click()
+    await expect(page.locator('.card-apply-page')).toBeVisible({ timeout: 15000 })
 
-    // Dismiss
-    await page.locator('.kyc-webview__close').click()
+    // Dismiss via TitleBar back
+    await page.locator('.card-apply-page .title-bar__back').click()
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 5000 })
 
-    // Second Apply — should open KYC again
-    await page.locator('.card-provider-row__apply').first().click()
-    await expect(page.locator('.kyc-webview')).toBeVisible({ timeout: 15000 })
-    await expect(page.locator('.kyc-webview__placeholder')).toBeVisible({ timeout: 5000 })
+    // Second apply — should open the apply page again
+    await page.locator('.card-provider-row__details').first().click()
+    await expect(page.locator('.card-apply-page')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('.card-apply-page__placeholder')).toBeVisible({ timeout: 5000 })
   })
 
   /**
-   * KYC auto-approves → dashboard fullscreen → Back → inline.
-   * Switching to Wallet tab and back to Card: the dashboard must reappear
-   * (card still exists in the memory adapter), not the onboarding screen.
-   * Note: the fullscreen dashboard intercepts tab-bar clicks, so Back must be
-   * clicked first to collapse to inline before switching tabs.
+   * Apply auto-approves → CardApp navigates DIRECTLY to the dashboard
+   * (no detour back to onboarding). After going back, clicking "My Card"
+   * again must route straight to the dashboard via the "existing card"
+   * fast-path (no new KYC).
    */
-  test('tab switch after Back returns to dashboard (not onboarding)', async ({
+  test('first-time apply lands directly on dashboard; subsequent My Card stays on dashboard', async ({
     wallet: { page },
   }) => {
     await page.getByTestId(TESTID.TAB_CARD).click()
     await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 10000 })
 
-    await page.locator('.card-provider-row__apply').first().click()
-    await expect(page.locator('.kyc-webview')).toBeVisible({ timeout: 15000 })
+    await page.locator('.card-provider-row__details').first().click()
+    await expect(page.locator('.card-apply-page')).toBeVisible({ timeout: 15000 })
 
-    // Wait for KYC auto-approval and fullscreen dashboard
-    await expect(page.locator('.card-dashboard-page')).toBeVisible({ timeout: 15000 })
+    // Memory adapter auto-approves after ~3 s; first poll fires at ~3.5 s.
+    // The apply page should be replaced directly by the dashboard portal —
+    // no flash of onboarding in between.
+    await expect(page.locator('.card-dashboard-page')).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(page.locator('.card-apply-page')).not.toBeVisible()
 
-    // Collapse to inline so the tab bar is accessible
-    await page.locator('.title-bar__back').click()
-    await expect(page.locator('.card-dashboard-page--inline')).toBeVisible({ timeout: 5000 })
+    // Back to onboarding
+    await page.locator('.card-dashboard-page .title-bar__back').click()
+    await expect(page.locator('.card-onboarding')).toBeVisible({ timeout: 5000 })
 
-    // Switch to Wallet tab and back
-    await page.getByTestId(TESTID.TAB_WALLET).click()
-    await expect(page.getByTestId(TESTID.BALANCE_AMOUNT)).toBeVisible({ timeout: 10000 })
-    await page.getByTestId(TESTID.TAB_CARD).click()
-
-    // Dashboard must appear (card still exists) — not the onboarding screen
+    // Clicking "My Card" again must use the "existing card" fast-path —
+    // i.e. land back on the dashboard without showing the apply page.
+    await page.locator('.card-provider-row__details').first().click()
     await expect(page.locator('.card-dashboard-page')).toBeVisible({ timeout: 10000 })
-    await expect(page.locator('.card-onboarding')).not.toBeVisible()
+    await expect(page.locator('.card-apply-page')).not.toBeVisible()
   })
 })

@@ -11,11 +11,12 @@ import { TESTID } from '../../../src/components/testids'
  */
 test.describe('Card tab', () => {
   /**
-   * When the memory adapter returns about:blank as the KYC URL, the component
+   * When the memory adapter returns about:blank as the KYC URL, the apply page
    * should show a placeholder (not a blank iframe) and must NOT attempt to load
-   * any third-party KYC host.
+   * any third-party KYC host. Triggered via the "My Card" button for a
+   * provider the user has not yet applied to.
    */
-  test('Apply Now on Immersve shows KYC placeholder (no real KYC host loaded)', async ({
+  test('My Card on Immersve (no account) opens apply page placeholder (no real KYC host loaded)', async ({
     wallet: { page, evmAddresses: [sender] },
   }) => {
     let mockKycRequested = false
@@ -30,20 +31,20 @@ test.describe('Card tab', () => {
       timeout: 10000,
     })
 
-    const applyBtn = page
+    const myCardBtn = page
       .locator('.card-provider-row')
       .filter({ hasText: 'Immersve' })
-      .getByRole('button', { name: /Apply Now|立即申请/i })
-    await applyBtn.click()
+      .locator('.card-provider-row__details')
+    await myCardBtn.click()
 
-    await expect(page.locator('.kyc-webview')).toBeVisible({
+    await expect(page.locator('.card-apply-page')).toBeVisible({
       timeout: 15000,
     })
 
     // about:blank → placeholder shown instead of iframe
-    await expect(page.locator('.kyc-webview__placeholder')).toBeVisible({
-      timeout: 10000,
-    })
+    await expect(
+      page.locator('.card-apply-page__placeholder'),
+    ).toBeVisible({ timeout: 10000 })
     // No real KYC host should have been requested
     expect(mockKycRequested).toBe(false)
     void sender // fixture requires destructuring even if unused
@@ -51,11 +52,12 @@ test.describe('Card tab', () => {
 
   /**
    * Regression test for issue #27:
-   * After KYC auto-approves → dashboard appears fullscreen →
-   * user clicks Back → dashboard must switch to inline (position:static),
-   * NOT remain as a fixed full-screen overlay that blocks the tab bar.
+   * After dashboard fullscreen → user clicks Back → the dashboard portal
+   * must be fully unmounted and the tab bar must remain reachable. Before
+   * the fix the dashboard's `position:fixed` overlay (z-index 500) was left
+   * mounted, intercepting all pointer events.
    */
-  test('dashboard back button collapses to inline, does not overlay tab bar (regression #27)', async ({
+  test('dashboard back button unmounts the portal and tab bar stays clickable (regression #27)', async ({
     wallet: { page },
   }) => {
     await page.getByTestId(TESTID.TAB_CARD).click()
@@ -65,41 +67,31 @@ test.describe('Card tab', () => {
       timeout: 10000,
     })
 
-    // Click Apply Now on first available provider
-    const applyBtn = page
-      .locator('.card-provider-row__apply')
+    // Click "My Card" on first available provider — falls back to apply flow
+    // because no card exists yet.
+    const myCardBtn = page
+      .locator('.card-provider-row__details')
       .first()
-    await applyBtn.click()
+    await myCardBtn.click()
 
-    // KYC view appears
-    await expect(page.locator('.kyc-webview')).toBeVisible({
+    // Apply page (fullscreen) appears
+    await expect(page.locator('.card-apply-page')).toBeVisible({
       timeout: 15000,
     })
 
     // Memory adapter auto-approves after ~3 s; poll fires at ~3.5 s.
-    // Wait for the dashboard to appear (KYC view dismissed automatically).
+    // CardApp navigates directly from apply page to the dashboard portal —
+    // no intermediate onboarding flash.
     await expect(page.locator('.card-dashboard-page')).toBeVisible({
       timeout: 15000,
     })
+    await expect(page.locator('.card-apply-page')).not.toBeVisible()
 
-    // At this point the dashboard is in fullscreen (portal) mode —
-    // it should NOT have the --inline modifier yet.
-    await expect(page.locator('.card-dashboard-page--inline')).not.toBeVisible()
-
-    // Click Back to collapse to inline mode
-    await page.locator('.title-bar__back').click()
-
-    // Dashboard inline element must now be present
-    await expect(page.locator('.card-dashboard-page--inline')).toBeVisible({
+    // Back unmounts the dashboard portal entirely
+    await page.locator('.card-dashboard-page .title-bar__back').click()
+    await expect(page.locator('.card-dashboard-page')).not.toBeVisible({
       timeout: 5000,
     })
-
-    // Bug check: computed position must be 'static', not 'fixed'.
-    // Before the fix, --inline inherited position:fixed from .card-dashboard-page.
-    const position = await page
-      .locator('.card-dashboard-page--inline')
-      .evaluate((el) => window.getComputedStyle(el).position)
-    expect(position).toBe('static')
 
     // Interaction check: tab bar must be clickable — a fixed overlay at z-index:500
     // would intercept all pointer events and make the tabs unreachable.

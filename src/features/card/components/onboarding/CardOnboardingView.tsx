@@ -7,12 +7,16 @@ import CardProviderCard from '../CardProviderCard'
 import '../Card.css'
 
 interface Props {
-  onApply: (providerId: string) => void
+  /**
+   * Click handler for the per-row "My Card" button. The parent decides whether
+   * clicking leads to the card-detail dashboard (account already exists for
+   * this provider) or to the apply page (no account yet).
+   */
+  onViewDetails: (providerId: string) => void
   accounts?: CardAccount[]
-  onViewDetails?: (providerId: string) => void
 }
 
-const CardOnboardingView: React.FC<Props> = ({ onApply, accounts = [], onViewDetails }) => {
+const CardOnboardingView: React.FC<Props> = ({ onViewDetails, accounts = [] }) => {
   const { t } = useI18n()
   const linkedProviders = new Set(accounts.map((a) => a.provider))
 
@@ -24,22 +28,20 @@ const CardOnboardingView: React.FC<Props> = ({ onApply, accounts = [], onViewDet
       </div>
 
       <div className="card-onboarding__list">
-        {CARD_PROVIDERS.map((provider) => (
-          <CardProviderCard
-            key={provider.id}
-            provider={provider}
-            onApply={
-              cardProviderRegistry.has(provider.id)
-                ? () => onApply(provider.id)
-                : undefined
-            }
-            onViewDetails={
-              linkedProviders.has(provider.id) && onViewDetails
-                ? () => onViewDetails(provider.id)
-                : undefined
-            }
-          />
-        ))}
+        {CARD_PROVIDERS.map((provider) => {
+          const adapterAvailable = cardProviderRegistry.has(provider.id)
+          const hasAccount = linkedProviders.has(provider.id)
+          return (
+            <CardProviderCard
+              key={provider.id}
+              provider={provider}
+              onViewDetails={
+                adapterAvailable ? () => onViewDetails(provider.id) : undefined
+              }
+              viewDetailsVariant={hasAccount ? 'primary' : 'muted'}
+            />
+          )
+        })}
       </div>
 
       <p className="card-onboarding__footer">{t('cardOnboardFooter')}</p>
