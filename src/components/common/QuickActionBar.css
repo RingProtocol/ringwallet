@@ -217,10 +217,8 @@
 .modal-content--fullscreen {
   width: 100vw;
   max-width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100vh;
-  max-height: 100dvh;
+  height: var(--ring-fullscreen-height, 100dvh);
+  max-height: var(--ring-fullscreen-height, 100dvh);
   margin: 0;
   border-radius: 0;
   border: none;

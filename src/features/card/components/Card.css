@@ -426,6 +426,9 @@
 .card-apply-page {
   position: fixed;
   inset: 0;
+  height: var(--ring-fullscreen-height, 100dvh);
+  min-height: var(--ring-fullscreen-height, 100dvh);
+  max-height: var(--ring-fullscreen-height, 100dvh);
   z-index: 500;
   display: flex;
   flex-direction: column;
@@ -487,6 +490,9 @@
 .card-dashboard-page {
   position: fixed;
   inset: 0;
+  height: var(--ring-fullscreen-height, 100dvh);
+  min-height: var(--ring-fullscreen-height, 100dvh);
+  max-height: var(--ring-fullscreen-height, 100dvh);
   z-index: 500;
   display: flex;
   flex-direction: column;
@@ -509,7 +515,6 @@
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
-
 
 /* ─── Dashboard: CardDashboardView ─────────────────── */
 

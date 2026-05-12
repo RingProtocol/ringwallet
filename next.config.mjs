@@ -15,7 +15,9 @@ try {
       process.env[key] = val
     }
   }
-} catch {}
+} catch {
+  // Ignore when .env does not exist in this environment.
+}
 
 /**
  * RPC and other VITE_* vars are inlined at build time via webpack DefinePlugin below.
@@ -27,7 +29,7 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['cbor-x'],
-  allowedDevOrigins: ['bridget-tritheistical-talia.ngrok-free.dev'],
+  allowedDevOrigins: ['*.ngrok-free.dev'],
   turbopack: {},
   webpack: (config, { webpack }) => {
     // Build a single import.meta.env object so that accessing any VITE_*

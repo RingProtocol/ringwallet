@@ -1,7 +1,10 @@
 /* Shell: Wallet tab = gradient hero (nav + balance/actions); Activity/More = slim top strip only + scroll + bottom dock. */
 .wallet-main-page {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  height: var(--ring-fullscreen-height, 100dvh);
+  min-height: var(--ring-fullscreen-height, 100dvh);
+  max-height: var(--ring-fullscreen-height, 100dvh);
   min-width: 0;
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 .app {
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--ring-fullscreen-height, 100dvh);
   min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
@@ -24,8 +24,8 @@
 
 .header-actions {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  right: max(20px, env(safe-area-inset-right, 0px));
   display: flex;
   gap: 15px;
   justify-content: flex-end;
@@ -33,7 +33,7 @@
 }
 
 .header-actions:has(.chain-switcher-container) {
-  left: 20px;
+  left: max(20px, env(safe-area-inset-left, 0px));
   justify-content: space-between;
 }
 
@@ -90,7 +90,7 @@ body.ring-dapp-open .app > .header-actions {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: calc(100dvh - 12px);
+  min-height: calc(var(--ring-fullscreen-height, 100dvh) - 12px);
 }
 
 .card--guest-content {
