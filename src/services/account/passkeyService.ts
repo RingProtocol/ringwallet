@@ -55,8 +55,43 @@ interface LoginResult {
 class PasskeyService {
   static #supportCache: boolean | null = null
 
+  /**
+   * How long a successful `verifyIdentity()` is trusted before another
+   * biometric prompt is required. Set via `setVerifyTTL()`.
+   * Default: 5 minutes. In-memory only — cleared on full page reload.
+   */
+  static #verifyTTLMs: number = 5 * 60 * 1000
+  static #lastVerifiedAt: Map<string, number> = new Map()
+
   static clearSupportCache(): void {
     this.#supportCache = null
+  }
+
+  /**
+   * Configure the "skip re-prompt" window for `verifyIdentity()`.
+   * @param minutes set to `0` to disable caching and always prompt.
+   */
+  static setVerifyTTL(minutes: number): void {
+    const safe = Number.isFinite(minutes) && minutes >= 0 ? minutes : 0
+    this.#verifyTTLMs = Math.floor(safe * 60 * 1000)
+    if (safe === 0) this.#lastVerifiedAt.clear()
+  }
+
+  static getVerifyTTLMinutes(): number {
+    return this.#verifyTTLMs / 60_000
+  }
+
+  /**
+   * Forget any cached verification for the given credentialId (or all if
+   * omitted). Call on logout or after a sensitive failure to force the next
+   * `verifyIdentity()` to re-prompt.
+   */
+  static clearVerifyCache(credentialId?: string): void {
+    if (credentialId) {
+      this.#lastVerifiedAt.delete(credentialId)
+    } else {
+      this.#lastVerifiedAt.clear()
+    }
   }
 
   static _parseAuthData(authData: Uint8Array): ParsedAuthData | null {
@@ -165,8 +200,24 @@ class PasskeyService {
    * Triggers a biometric (Face ID / fingerprint) verification via WebAuthn
    * without using the result for signing. Used as a security gate before
    * EOA transactions.
+   *
+   * If the same `credentialId` was successfully verified within the last
+   * `verifyTTL` minutes (configurable via `setVerifyTTL`, default 5),
+   * the prompt is skipped and `true` is returned immediately. Pass
+   * `{ force: true }` to bypass the cache (e.g., for high-value actions).
    */
-  static async verifyIdentity(credentialId: string): Promise<boolean> {
+  static async verifyIdentity(
+    credentialId: string,
+    options?: { force?: boolean }
+  ): Promise<boolean> {
+    const now = Date.now()
+    if (!options?.force && this.#verifyTTLMs > 0) {
+      const last = this.#lastVerifiedAt.get(credentialId)
+      if (last !== undefined && now - last < this.#verifyTTLMs) {
+        return true
+      }
+    }
+
     try {
       const challenge = new Uint8Array(32)
       crypto.getRandomValues(challenge)
@@ -190,9 +241,11 @@ class PasskeyService {
         },
       })
 
+      this.#lastVerifiedAt.set(credentialId, Date.now())
       return true
     } catch (error) {
       console.error('Biometric verification failed:', error)
+      this.#lastVerifiedAt.delete(credentialId)
       return false
     }
   }

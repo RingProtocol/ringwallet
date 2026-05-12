@@ -19,6 +19,7 @@ import { WalletType } from '../models/WalletType'
 import { ChainFamily, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
+import PasskeyService from '../services/account/passkeyService'
 
 export type { ChainFamily, Chain }
 
@@ -196,6 +197,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setAccountsByFamily({})
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
+    PasskeyService.clearVerifyCache()
   }
 
   const switchWallet = (index: number) => {
