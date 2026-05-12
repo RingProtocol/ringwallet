@@ -28,6 +28,9 @@
   flex-direction: column;
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.45);
   border-left: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
 }
 
 .account-drawer.open {

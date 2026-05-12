@@ -9,6 +9,10 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
 }
 
 .swap-dialog__backdrop {
@@ -26,6 +30,7 @@
   width: 100%;
   max-width: 440px;
   max-height: 92vh;
+  max-height: 92dvh;
   background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.96));
   border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.12));
   border-radius: 24px 24px 0 0;
