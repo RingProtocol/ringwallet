@@ -1,0 +1,96 @@
+.card {
+  width: min(980px, 100%);
+  background: rgba(247, 247, 250, 0.94);
+  color: #111318;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  box-shadow:
+    0 20px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid rgba(46, 52, 66, 0.2);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 800;
+}
+
+.appIcon {
+  border-radius: 12px;
+}
+
+.steps {
+  margin: 0;
+  padding: 16px 24px;
+  font-size: clamp(18px, 2.8vw, 26px);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.stepLine + .hintWrapper,
+.hintWrapper + .stepLine {
+  margin-top: 12px;
+}
+
+.hintWrapper {
+  list-style: none;
+  margin: 8px 0 2px;
+  padding: 0;
+}
+
+.hintImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.inlineTag {
+  display: inline-flex;
+  margin: 0 0.24em;
+  padding: 0.04em 0.4em;
+  border-radius: 0.34em;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(15, 18, 24, 0.15);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .card {
+    border-radius: 18px;
+  }
+
+  .cardHeader {
+    padding: 14px 14px 12px;
+    gap: 10px;
+  }
+
+  .cardTitle {
+    font-size: 19px;
+  }
+
+  .appIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .steps {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .stepLine + .hintWrapper,
+  .hintWrapper + .stepLine {
+    margin-top: 8px;
+  }
+}

@@ -35,6 +35,11 @@ const messages = {
       'Permission was not granted yet. Tap again if you want to retry.',
     feedback: 'Feedback',
     about: 'About',
+    downloadWallet: 'Download wallet',
+    installRingWallet: 'Install Ring Wallet',
+    installStep1: '1. Tap Share',
+    installStep2Prefix: '2. Then choose',
+    installAddToHome: 'Add to Home Screen',
     logout: 'Log out',
     wallet: 'Wallet',
     welcomeTo: 'Welcome to',
@@ -476,11 +481,14 @@ const messages = {
     cardKYCTitle: 'Identity Verification',
     cardKYCLoading: 'Loading verification...',
     cardKYCRetry: 'Retry',
-    cardKYCLoadError: 'Failed to load KYC page. Please check your connection and try again.',
+    cardKYCLoadError:
+      'Failed to load KYC page. Please check your connection and try again.',
     cardKYCPlaceholderTitle: 'Verification in Progress',
-    cardKYCPlaceholderDesc: 'Your identity verification session is active. Complete the steps in the window above.',
+    cardKYCPlaceholderDesc:
+      'Your identity verification session is active. Complete the steps in the window above.',
     cardOnboardTitle: 'Get a Crypto Card',
-    cardOnboardSubtitle: 'Spend your crypto anywhere Visa is accepted. Choose a provider and apply for a virtual card in minutes.',
+    cardOnboardSubtitle:
+      'Spend your crypto anywhere Visa is accepted. Choose a provider and apply for a virtual card in minutes.',
     cardOnboardFooter: 'More providers coming soon',
   },
   zh: {
@@ -500,6 +508,11 @@ const messages = {
       '尚未授予通知权限，如需重试可再次点击。',
     feedback: '反馈',
     about: '关于',
+    downloadWallet: '下载钱包',
+    installRingWallet: '安装 Ring Wallet',
+    installStep1: '点击分享按钮',
+    installStep2Prefix: '然后选择',
+    installAddToHome: '添加到主屏幕',
     logout: '退出登录',
     wallet: '钱包',
     welcomeTo: '欢迎使用',
@@ -916,9 +929,11 @@ const messages = {
     cardKYCRetry: '重试',
     cardKYCLoadError: '无法加载 KYC 页面，请检查网络连接后重试。',
     cardKYCPlaceholderTitle: '验证进行中',
-    cardKYCPlaceholderDesc: '您的身份验证会话已激活，请按照上方窗口中的步骤完成操作。',
+    cardKYCPlaceholderDesc:
+      '您的身份验证会话已激活，请按照上方窗口中的步骤完成操作。',
     cardOnboardTitle: '获取加密银行卡',
-    cardOnboardSubtitle: '在所有支持 Visa 的地方消费您的加密资产，选择服务商并在几分钟内申请虚拟卡。',
+    cardOnboardSubtitle:
+      '在所有支持 Visa 的地方消费您的加密资产，选择服务商并在几分钟内申请虚拟卡。',
     cardOnboardFooter: '更多服务商即将上线',
   },
 } as const
