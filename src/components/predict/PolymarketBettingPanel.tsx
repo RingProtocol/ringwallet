@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { usePolymarketBetting } from '../../hooks/usePolymarketBetting'
 import { useI18n } from '../../i18n'
 import { POLYMARKET_CHAIN_ID } from '../../services/polymarket/constants'
+import PasskeyService from '../../services/account/passkeyService'
 import './PolymarketBettingPanel.css'
 
 interface Props {
@@ -18,8 +19,9 @@ const PolymarketBettingPanel: React.FC<Props> = ({
   outcomePrices,
 }) => {
   const { t } = useI18n()
-  const { activeChain, activeWallet, switchChain } = useAuth()
+  const { activeChain, activeWallet, switchChain, user } = useAuth()
   const { state, error, placeBuyOrder, reset } = usePolymarketBetting()
+  const [authError, setAuthError] = useState<string | null>(null)
 
   const [selectedOutcome, setSelectedOutcome] = useState<number | null>(null)
   const [amount, setAmount] = useState('')
@@ -43,7 +45,19 @@ const PolymarketBettingPanel: React.FC<Props> = ({
   }
 
   const handleConfirm = async () => {
-    if (!activeWallet?.privateKey || !selectedOutcome) return
+    if (!activeWallet?.privateKey || selectedOutcome === null) return
+    setAuthError(null)
+
+    // Require biometric (Face ID / fingerprint) re-authentication before
+    // signing, matching the EOA transfer flow.
+    if (user?.id) {
+      const verified = await PasskeyService.verifyIdentity(user.id)
+      if (!verified) {
+        setAuthError(t('txCanceledBiometricFailed'))
+        return
+      }
+    }
+
     const rpcUrl = Array.isArray(activeChain?.rpcUrl)
       ? activeChain.rpcUrl[0]
       : activeChain?.rpcUrl
@@ -202,8 +216,10 @@ const PolymarketBettingPanel: React.FC<Props> = ({
                 {state === 'posting' ? t('confirming') : t('confirm')}
               </button>
             </div>
-            {error && (
-              <p className="polymarket-betting-panel__error">{error}</p>
+            {(authError || error) && (
+              <p className="polymarket-betting-panel__error">
+                {authError || error}
+              </p>
             )}
           </div>
         </div>

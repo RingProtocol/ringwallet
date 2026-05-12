@@ -5,6 +5,7 @@ import {
   CTF_ORDER_TYPES_V1,
   POLYMARKET_DECIMALS,
 } from './constants'
+import { SERVER_URL } from '../../server/urls'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -222,27 +223,28 @@ export interface MarketToken {
 }
 
 export async function fetchMarketTokens(slug: string): Promise<MarketToken[]> {
-  const res = await fetch(
-    `https://gamma-api.polymarket.com/markets?slug=${encodeURIComponent(slug)}`
-  )
+  // Route through `wallet-api` (`POST /v1/prediction_markets/tokens`) to
+  // avoid the Gamma API's CORS restriction in the browser and keep all
+  // Polymarket reads behind a single backend boundary. The server returns
+  // a pre-normalized `MarketToken[]` payload.
+  const res = await fetch(`${SERVER_URL}/v1/prediction_markets/tokens`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+    },
+    body: JSON.stringify({ source: 'polymarket', slug }),
+  })
   if (!res.ok) {
-    throw new Error(`Gamma API error: HTTP ${res.status}`)
+    if (res.status === 404) {
+      throw new Error('Market not found')
+    }
+    throw new Error(`Prediction market tokens API error: HTTP ${res.status}`)
   }
-  const data = (await res.json()) as Array<{
-    tokens: Array<{
-      token_id: string
-      outcome: string
-      price: number
-      winner: boolean
-    }>
-  }>
-  if (!data || data.length === 0) {
-    throw new Error('Market not found in Gamma API')
+  const json = (await res.json()) as { data?: MarketToken[] }
+  const tokens = json.data ?? []
+  if (tokens.length === 0) {
+    throw new Error('Market has no outcome tokens')
   }
-  return data[0].tokens.map((t, idx) => ({
-    tokenId: t.token_id,
-    outcome: t.outcome,
-    outcomeIndex: idx,
-    price: t.price.toString(),
-  }))
+  return tokens
 }
