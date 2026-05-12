@@ -43,7 +43,7 @@ const ENV: Record<string, ChainEnvConfig> = {
     factoryAddress: env('VITE_FACTORY_ARBITRUM'),
   },
   '137': {
-    rpc: `https://polygon-rpc.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: `https://polygon-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_POLYGON'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_POLYGON'),
