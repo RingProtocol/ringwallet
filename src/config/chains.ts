@@ -37,7 +37,7 @@ const ENV: Record<string, ChainEnvConfig> = {
     factoryAddress: env('VITE_FACTORY_OPTIMISM'),
   },
   '42161': {
-    rpc: `https://arb1.arbitrum.io/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
+    rpc: `https://arb-mainnet.g.alchemy.com/v2/${env('VITE_ALCHEMY_RPC_KEY')}`,
     bundlerUrl: env('VITE_BUNDLER_ARBITRUM'),
     entryPoint: env('VITE_ENTRYPOINT_4337'),
     factoryAddress: env('VITE_FACTORY_ARBITRUM'),
