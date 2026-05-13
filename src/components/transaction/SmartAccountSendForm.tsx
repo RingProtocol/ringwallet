@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   chainToAccountAssetsNetwork,
   NATIVE_COIN_ICON,
@@ -92,6 +92,7 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
 }) => {
   const { t } = useI18n()
   const [showPreview, setShowPreview] = useState(false)
+  const [balanceIconLoadFailed, setBalanceIconLoadFailed] = useState(false)
   const {
     activeWallet,
     activeChainId,
@@ -125,6 +126,8 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
     selectedToken.type === 'native'
       ? selectedToken.symbol
       : selectedToken.token.symbol
+  const selectedTokenLogo =
+    selectedToken.type === 'erc20' ? selectedToken.token.logo?.trim() : ''
   const availableAmount = useMemo(() => {
     if (!activeChain) return '0'
     const network = chainToAccountAssetsNetwork(activeChain)
@@ -148,6 +151,10 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
         : [],
     [signedTx, nativeSymbol, t]
   )
+
+  useEffect(() => {
+    setBalanceIconLoadFailed(false)
+  }, [selectedToken])
 
   if (!activeWallet) return null
 
@@ -253,24 +260,32 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
       <div className="send-balance-bar">
         <div className="send-balance-bar__left">
           <span className="send-balance-bar__icon">
-            {selectedToken.type === 'erc20' && selectedToken.token.logo ? (
+            {selectedToken.type === 'erc20' &&
+            selectedTokenLogo &&
+            !balanceIconLoadFailed ? (
               <img
-                src={selectedToken.token.logo}
+                src={selectedTokenLogo}
                 alt={selectedSymbol}
                 className="send-balance-bar__icon-img"
+                onError={() => setBalanceIconLoadFailed(true)}
               />
-            ) : NATIVE_COIN_ICON[selectedSymbol] ? (
+            ) : selectedToken.type === 'native' &&
+              NATIVE_COIN_ICON[selectedSymbol] ? (
               <img
                 src={NATIVE_COIN_ICON[selectedSymbol]}
                 alt={selectedSymbol}
                 className="send-balance-bar__icon-img"
               />
-            ) : (
+            ) : selectedToken.type === 'native' ? (
               <ChainIcon
                 icon={activeChain?.icon}
                 symbol={selectedSymbol}
                 size={36}
               />
+            ) : (
+              <span className="send-balance-bar__icon-fallback">
+                {selectedSymbol.charAt(0).toUpperCase()}
+              </span>
             )}
           </span>
           <div>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { NATIVE_COIN_ICON } from '../../config/chains'
 import { useAuth } from '../../contexts/AuthContext'
 import ChainIcon from '../ChainIcon'
@@ -23,6 +23,7 @@ const SendFormLayout: React.FC<SendFormLayoutProps> = ({
   children,
 }) => {
   const { activeChain } = useAuth()
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false)
   const symbol =
     selectedToken?.type === 'native'
       ? selectedToken.symbol
@@ -30,6 +31,10 @@ const SendFormLayout: React.FC<SendFormLayoutProps> = ({
   const logoUrl =
     selectedToken?.type === 'erc20' ? selectedToken.token.logo?.trim() : ''
   const symbolIcon = symbol ? NATIVE_COIN_ICON[symbol] : undefined
+
+  useEffect(() => {
+    setLogoLoadFailed(false)
+  }, [selectedToken])
 
   return (
     <TransactionSheet variant="fullscreen">
@@ -52,13 +57,14 @@ const SendFormLayout: React.FC<SendFormLayoutProps> = ({
       {selectedToken && (
         <div className="send-form__token-hero">
           <div className="send-form__token-icon">
-            {logoUrl ? (
+            {selectedToken.type === 'erc20' && logoUrl && !logoLoadFailed ? (
               <img
                 src={logoUrl}
                 alt={symbol}
                 className="send-form__token-logo"
+                onError={() => setLogoLoadFailed(true)}
               />
-            ) : symbolIcon ? (
+            ) : selectedToken.type === 'native' && symbolIcon ? (
               <img
                 src={symbolIcon}
                 alt={symbol}
