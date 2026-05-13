@@ -48,6 +48,7 @@ interface AuthContextValue {
   activeWallet: Wallet | null
   activeWalletIndex: number
   switchWallet: (index: number) => void
+  addWallet: (options?: { activateNew?: boolean }) => boolean
   login: (userData: UserData) => Promise<void>
   logout: () => void
   CHAINS: Chain[]
@@ -112,6 +113,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   >({})
   const [activeWalletIndex, setActiveWalletIndex] = useState(0)
 
+  const DEFAULT_DERIVED_WALLET_COUNT = 5
+  const MAX_DERIVED_WALLET_COUNT = 50
+  const WALLET_COUNT_KEY = 'derived_wallet_count'
   const CUSTOM_CHAINS_KEY = 'custom_chains'
 
   const [customChains, setCustomChains] = useState<Chain[]>(() => {
@@ -175,12 +179,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     if (userData.masterSeed) {
       try {
-        const seed = userData.masterSeed as Uint8Array
-        deriveAllFromSeed(seed, 5)
+        const seed =
+          userData.masterSeed instanceof Uint8Array
+            ? userData.masterSeed
+            : new Uint8Array(userData.masterSeed)
+        const savedCount = safeGetItem(WALLET_COUNT_KEY)
+        const parsedCount = savedCount !== null ? parseInt(savedCount, 10) : NaN
+        const walletCount =
+          Number.isInteger(parsedCount) &&
+          parsedCount >= DEFAULT_DERIVED_WALLET_COUNT &&
+          parsedCount <= MAX_DERIVED_WALLET_COUNT
+            ? parsedCount
+            : DEFAULT_DERIVED_WALLET_COUNT
+
+        deriveAllFromSeed(seed, walletCount)
         const savedIndex = safeGetItem('active_wallet_index')
         const parsedIndex = savedIndex !== null ? parseInt(savedIndex, 10) : NaN
         const nextWalletIndex =
-          Number.isInteger(parsedIndex) && parsedIndex >= 0 && parsedIndex < 5
+          Number.isInteger(parsedIndex) &&
+          parsedIndex >= 0 &&
+          parsedIndex < walletCount
             ? parsedIndex
             : 0
         setActiveWalletIndex(nextWalletIndex)
@@ -207,6 +225,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       safeSetItem('active_wallet_index', index.toString())
     }
   }
+
+  const addWallet = useCallback(
+    (options?: { activateNew?: boolean }): boolean => {
+      const activateNew = options?.activateNew ?? true
+      if (!user?.masterSeed) return false
+
+      const currentCount = (accountsByFamily[ChainFamily.EVM] ?? []).length
+      if (currentCount >= MAX_DERIVED_WALLET_COUNT) {
+        return false
+      }
+
+      try {
+        const seed =
+          user.masterSeed instanceof Uint8Array
+            ? user.masterSeed
+            : new Uint8Array(user.masterSeed)
+        const nextCount = Math.max(
+          currentCount + 1,
+          DEFAULT_DERIVED_WALLET_COUNT
+        )
+
+        deriveAllFromSeed(seed, nextCount)
+        if (activateNew) {
+          const nextIndex = nextCount - 1
+          setActiveWalletIndex(nextIndex)
+          safeSetItem('active_wallet_index', nextIndex.toString())
+        }
+        safeSetItem(WALLET_COUNT_KEY, nextCount.toString())
+        return true
+      } catch (e) {
+        console.error('Failed to add wallet:', e)
+        return false
+      }
+    },
+    [
+      user,
+      accountsByFamily,
+      DEFAULT_DERIVED_WALLET_COUNT,
+      MAX_DERIVED_WALLET_COUNT,
+      WALLET_COUNT_KEY,
+    ]
+  )
 
   const switchChain = (chainId: number | string) => {
     const chain = CHAINS.find((c) => c.id === chainId)
@@ -298,6 +358,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     activeWallet,
     activeWalletIndex,
     switchWallet,
+    addWallet,
     login,
     logout,
     CHAINS,
