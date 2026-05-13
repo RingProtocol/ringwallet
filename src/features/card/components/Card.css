@@ -1510,44 +1510,30 @@
   transform: scale(0.98);
 }
 
-/* ─── Management: CardSettingsView ─────────────────── */
+/* ─── Management: CardSettingsView (full-screen page) ─── */
 
-.card-settings {
+.card-settings-page {
+  position: fixed;
+  inset: 0;
+  height: var(--ring-fullscreen-height, 100dvh);
+  min-height: var(--ring-fullscreen-height, 100dvh);
+  max-height: var(--ring-fullscreen-height, 100dvh);
+  z-index: 500;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  background: var(--ring-bg-page, #0d0f14);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
-.card-settings__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 0;
-  margin-bottom: 8px;
-}
-
-.card-settings__back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--ring-text-muted, #6b7280);
-  cursor: pointer;
-}
-
-.card-settings__back:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.card-settings__title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--ring-text-primary, #f3f4f6);
+.card-settings-page__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
 }
 
 .card-settings__sections {

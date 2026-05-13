@@ -439,6 +439,7 @@ const messages = {
     cardUnfreezeCard: 'Unfreeze Card',
     cardSpendingLimits: 'Spending Limits',
     cardRevealDetails: 'Reveal Card Details',
+    cardRevealDetailsTitle: 'Card Details',
     cardTransactions: 'Transactions',
     cardRecentTransactions: 'Recent transactions',
     cardTransactionsLoading: 'Loading transactions…',
@@ -490,6 +491,8 @@ const messages = {
     cardOnboardSubtitle:
       'Spend your crypto anywhere Visa is accepted. Choose a provider and apply for a virtual card in minutes.',
     cardOnboardFooter: 'More providers coming soon',
+    cardCloseConfirm:
+      'Are you sure you want to close this card? This cannot be undone.',
   },
   zh: {
     account: '账户',
@@ -886,6 +889,7 @@ const messages = {
     cardUnfreezeCard: '解冻卡片',
     cardSpendingLimits: '消费限额',
     cardRevealDetails: '查看卡片详情',
+    cardRevealDetailsTitle: '卡片详情',
     cardTransactions: '交易记录',
     cardRecentTransactions: '最近交易',
     cardTransactionsLoading: '正在加载交易…',
@@ -935,6 +939,7 @@ const messages = {
     cardOnboardSubtitle:
       '在所有支持 Visa 的地方消费您的加密资产，选择服务商并在几分钟内申请虚拟卡。',
     cardOnboardFooter: '更多服务商即将上线',
+    cardCloseConfirm: '确定要关闭此卡片吗？此操作无法撤销。',
   },
 } as const
 
