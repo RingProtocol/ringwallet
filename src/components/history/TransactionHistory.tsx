@@ -109,13 +109,16 @@ interface TransactionHistoryProps {
   assetFilter?: TransactionHistoryAssetFilter
   /** When set, overrides the global activeChain (e.g. chain filter on Activity tab). */
   chainOverride?: Chain
+  /** Increment to trigger a manual refresh (e.g. pull-to-refresh). */
+  refreshSignal?: number
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   assetFilter,
   chainOverride,
+  refreshSignal,
 }) => {
-  const { activeAccount, activeChain } = useAuth()
+  const { activeAccount, activeChain, getAccountForChain } = useAuth()
   const { lang, t } = useI18n()
   const [transactions, setTransactions] = useState<TxRecord[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -123,7 +126,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const chain = chainOverride ?? activeChain
   const chainId = chain ? String(chain.id) : ''
-  const address = activeAccount?.address ?? ''
+  // When a chainOverride is active, resolve the address for that chain's family
+  // (e.g. ETH address when filtering by ETH while the global chain is Solana).
+  const account = chainOverride ? getAccountForChain(chain) : activeAccount
+  const address = account?.address ?? ''
 
   useEffect(() => {
     pendingHashesRef.current = transactions
@@ -273,6 +279,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
     return () => window.clearInterval(timer)
   }, [chain, address, fetchHistoryFromAPI])
+
+  // Manual refresh triggered from outside (e.g. pull-to-refresh).
+  const prevRefreshSignalRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (refreshSignal === undefined) return
+    if (refreshSignal === prevRefreshSignalRef.current) return
+    prevRefreshSignalRef.current = refreshSignal
+    void fetchHistoryFromAPI(true)
+  }, [refreshSignal, fetchHistoryFromAPI])
 
   useEffect(() => {
     if (!chain || !address) return
