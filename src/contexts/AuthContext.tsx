@@ -79,6 +79,8 @@ interface AuthContextValue {
   accountsByFamily: Record<string, DerivedAccount[]>
   /** Active account for the currently selected chain family. */
   activeAccount: DerivedAccount | null
+  /** Returns the derived account (at the active wallet index) for any given chain, regardless of the currently active chain. */
+  getAccountForChain: (chain: Chain) => DerivedAccount | null
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -351,6 +353,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return accounts[activeWalletIndex] ?? null
   }, [accountsByFamily, activeChain, activeWalletIndex])
 
+  const getAccountForChain = useCallback(
+    (targetChain: Chain): DerivedAccount | null => {
+      const family = targetChain?.family
+      if (!family) return null
+      if (family === ChainFamily.Bitcoin && targetChain.network === 'testnet') {
+        return (
+          (accountsByFamily[BITCOIN_TESTNET_ACCOUNTS_KEY] ?? [])[
+            activeWalletIndex
+          ] ?? null
+        )
+      }
+      if (
+        family === ChainFamily.Dogecoin &&
+        targetChain.network === 'testnet'
+      ) {
+        return (
+          (accountsByFamily[DOGECOIN_TESTNET_ACCOUNTS_KEY] ?? [])[
+            activeWalletIndex
+          ] ?? null
+        )
+      }
+      if (family === ChainFamily.Cosmos && targetChain.addressPrefix) {
+        const variant = COSMOS_CHAIN_VARIANTS.find(
+          (v) => v.addressPrefix === targetChain.addressPrefix
+        )
+        if (variant) {
+          return (
+            (accountsByFamily[cosmosAccountsKey(variant.key)] ?? [])[
+              activeWalletIndex
+            ] ?? null
+          )
+        }
+      }
+      const accounts = accountsByFamily[family] ?? []
+      return accounts[activeWalletIndex] ?? null
+    },
+    [accountsByFamily, activeWalletIndex]
+  )
+
   const value: AuthContextValue = {
     isLoggedIn,
     user,
@@ -378,6 +419,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     isDogecoinChain,
     accountsByFamily,
     activeAccount,
+    getAccountForChain,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

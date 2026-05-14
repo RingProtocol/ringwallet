@@ -274,6 +274,44 @@
   flex-direction: column;
 }
 
+/* ─── Pull-to-refresh indicator ─── */
+.activity-ptr__track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Subtle tinted background distinguishes the pull zone from page bg */
+  background: linear-gradient(
+    to bottom,
+    rgba(139, 92, 246, 0.08),
+    rgba(139, 92, 246, 0.03)
+  );
+  border-radius: 0 0 12px 12px;
+  /* Snap back smoothly when finger lifts */
+  transition: height 0.25s ease;
+}
+
+/* While finger is actively pulling, kill the transition so it follows the touch 1:1 */
+.activity-ptr__track--pulling {
+  transition: none;
+}
+
+.activity-ptr__icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  /* Smooth snap-back for all animated properties when finger lifts */
+  transition:
+    color 0.15s,
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+/* While pulling, follow state updates instantly (no transition lag on icon) */
+.activity-ptr__track--pulling .activity-ptr__icon {
+  transition: color 0.15s;
+}
+
 /* Fills the scroll row so the More panel can clip + scroll internally */
 .wallet-main-page__more-outer {
   flex: 1 1 auto;

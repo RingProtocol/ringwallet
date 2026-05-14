@@ -63,6 +63,7 @@ const mockAuth = {
   isDogecoinChain: false,
   accountsByFamily: {},
   activeAccount: null,
+  getAccountForChain: () => null,
   addCustomChain: () => {},
   removeCustomChain: () => {},
 }
