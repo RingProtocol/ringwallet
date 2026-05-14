@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import './TransactionHistory.css'
 import { useI18n } from '../../i18n'
 import { TESTID } from '../testids'
-import { ChainFamily } from '../../models/ChainType'
+import { ChainFamily, type Chain } from '../../models/ChainType'
 import {
   HISTORY_EVENT_NAME,
   HISTORY_LIMIT,
@@ -107,10 +107,13 @@ function transactionMatchesAssetFilter(
 interface TransactionHistoryProps {
   /** When set, only rows for this asset (e.g. token detail activity). */
   assetFilter?: TransactionHistoryAssetFilter
+  /** When set, overrides the global activeChain (e.g. chain filter on Activity tab). */
+  chainOverride?: Chain
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   assetFilter,
+  chainOverride,
 }) => {
   const { activeAccount, activeChain } = useAuth()
   const { lang, t } = useI18n()
@@ -118,7 +121,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const pendingHashesRef = useRef<string[]>([])
 
-  const chainId = activeChain ? String(activeChain.id) : ''
+  const chain = chainOverride ?? activeChain
+  const chainId = chain ? String(chain.id) : ''
   const address = activeAccount?.address ?? ''
 
   useEffect(() => {
@@ -149,7 +153,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const fetchHistoryFromAPI = useCallback(
     async (showLoading: boolean) => {
-      if (!activeChain || !address) return
+      if (!chain || !address) return
 
       if (showLoading) {
         setIsLoading(true)
@@ -189,7 +193,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           payload.transactions,
           chainId,
           address,
-          activeChain
+          chain
         )
       } catch (error) {
         logError('[TransactionHistory] Failed to fetch history:', error)
@@ -199,16 +203,16 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         }
       }
     },
-    [activeChain, address, chainId, updateTransactions]
+    [chain, address, chainId, updateTransactions]
   )
 
   const fetchHistoryFromChain = useCallback(async () => {
-    if (!activeChain || !address) return
-    if (activeChain.family !== ChainFamily.EVM) return
+    if (!chain || !address) return
+    if (chain.family !== ChainFamily.EVM) return
     if (pendingHashesRef.current.length === 0) return
 
     try {
-      const evmRpcService = RpcService.fromChain(activeChain).getEvmService()
+      const evmRpcService = RpcService.fromChain(chain).getEvmService()
       const payload = await evmRpcService.fetchHistoryFromChain(
         pendingHashesRef.current
       )
@@ -219,10 +223,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         error
       )
     }
-  }, [activeChain, address, updateTransactions])
+  }, [chain, address, updateTransactions])
 
   useEffect(() => {
-    if (!activeChain || !address) {
+    if (!chain || !address) {
       setTransactions([])
       setIsLoading(false)
       return
@@ -245,16 +249,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     if (cached.transactions.some((tx) => tx.status === 'pending')) {
       void fetchHistoryFromChain()
     }
-  }, [
-    activeChain,
-    address,
-    chainId,
-    fetchHistoryFromAPI,
-    fetchHistoryFromChain,
-  ])
+  }, [chain, address, chainId, fetchHistoryFromAPI, fetchHistoryFromChain])
 
   useEffect(() => {
-    if (!activeChain || !address) return
+    if (!chain || !address) return
     if (!transactions.some((tx) => tx.status === 'pending')) return
 
     const timer = window.setInterval(() => {
@@ -262,10 +260,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     }, PENDING_POLL_INTERVAL_MS)
 
     return () => window.clearInterval(timer)
-  }, [activeChain, address, fetchHistoryFromChain, transactions])
+  }, [chain, address, fetchHistoryFromChain, transactions])
 
   useEffect(() => {
-    if (!activeChain || !address) return
+    if (!chain || !address) return
 
     void fetchHistoryFromAPI(false)
 
@@ -274,10 +272,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     }, HISTORY_POLL_INTERVAL_MS)
 
     return () => window.clearInterval(timer)
-  }, [activeChain, address, fetchHistoryFromAPI])
+  }, [chain, address, fetchHistoryFromAPI])
 
   useEffect(() => {
-    if (!activeChain || !address) return
+    if (!chain || !address) return
 
     const handlePendingTransaction = (event: Event) => {
       const detail = (event as CustomEvent<PendingTransactionEventDetail>)
@@ -293,14 +291,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     window.addEventListener(HISTORY_EVENT_NAME, handlePendingTransaction)
     return () =>
       window.removeEventListener(HISTORY_EVENT_NAME, handlePendingTransaction)
-  }, [activeChain, address, chainId, fetchHistoryFromChain, updateTransactions])
+  }, [chain, address, chainId, fetchHistoryFromChain, updateTransactions])
 
   const formatAddress = (addr: string) =>
     addr ? `${addr.substring(0, 6)}…${addr.substring(addr.length - 4)}` : ''
 
   const formatAssetLabel = (tx: TxRecord) => {
     if (tx.assetType !== 'token') {
-      return activeChain?.symbol || 'ETH'
+      return chain?.symbol || 'ETH'
     }
 
     const symbol = tx.assetSymbol?.trim()
@@ -320,7 +318,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   }
 
   const explorerUrl = (hash: string) =>
-    `${activeChain?.explorer || 'https://etherscan.io'}/tx/${hash}`
+    `${chain?.explorer || 'https://etherscan.io'}/tx/${hash}`
 
   if (!activeAccount) return null
 

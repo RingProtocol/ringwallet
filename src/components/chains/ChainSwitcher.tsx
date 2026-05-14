@@ -35,7 +35,21 @@ function loadUserAddedIds(): (number | string)[] {
 
 const ALL_FEATURED = new Set([...FEATURED_CHAIN_IDS, ...FEATURED_TESTNET_IDS])
 
-const ChainSwitcher: React.FC = () => {
+interface ChainSwitcherProps {
+  /**
+   * Controlled mode: show this chain as selected instead of activeChain.
+   * When provided alongside `onSelect`, the switcher acts as a picker
+   * without changing the global active chain.
+   */
+  selectedChainId?: number | string
+  /** Called instead of switchChain when a chain is picked. */
+  onSelect?: (chainId: number | string) => void
+}
+
+const ChainSwitcher: React.FC<ChainSwitcherProps> = ({
+  selectedChainId,
+  onSelect,
+}) => {
   const { activeChain, switchChain, CHAINS, removeCustomChain } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -44,6 +58,15 @@ const ChainSwitcher: React.FC = () => {
     useState<(number | string)[]>(loadUserAddedIds)
   const [dropdownPosition, setDropdownPosition] =
     useState<DropdownPosition | null>(null)
+
+  // In controlled mode, show the explicitly selected chain; otherwise show activeChain.
+  const displayChain: Chain =
+    selectedChainId !== undefined
+      ? (CHAINS.find((c) => c.id === selectedChainId) ?? activeChain)
+      : activeChain
+  // The chain id used for ✓ highlighting in the list.
+  const currentChainId =
+    selectedChainId !== undefined ? selectedChainId : activeChain.id
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -94,7 +117,7 @@ const ChainSwitcher: React.FC = () => {
 
       setIsOpen(true)
       setSearchTerm('')
-      setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
+      setActiveTab(isTestnet(displayChain) ? 'testnet' : 'mainnet')
 
       if (anchorRect && typeof window !== 'undefined') {
         const menuWidth = 280
@@ -123,7 +146,7 @@ const ChainSwitcher: React.FC = () => {
       return
     }
     setSearchTerm('')
-    setActiveTab(isTestnet(activeChain) ? 'testnet' : 'mainnet')
+    setActiveTab(isTestnet(displayChain) ? 'testnet' : 'mainnet')
     setIsOpen(true)
 
     if (containerRef.current && typeof window !== 'undefined') {
@@ -139,7 +162,11 @@ const ChainSwitcher: React.FC = () => {
   }
 
   const handleSelect = (chainId: number | string) => {
-    switchChain(chainId)
+    if (onSelect) {
+      onSelect(chainId)
+    } else {
+      switchChain(chainId)
+    }
     setIsOpen(false)
     setDropdownPosition(null)
   }
@@ -235,13 +262,13 @@ const ChainSwitcher: React.FC = () => {
       >
         <div className="chain-switcher-icon">
           <ChainIcon
-            icon={activeChain.icon}
-            symbol={activeChain.symbol}
+            icon={displayChain.icon}
+            symbol={displayChain.symbol}
             size={18}
           />
         </div>
         <div className="chain-info">
-          <span className="chain-name">{activeChain.name}</span>
+          <span className="chain-name">{displayChain.name}</span>
         </div>
         <div className={`arrow ${isOpen ? 'up' : 'down'}`}>▼</div>
       </div>
@@ -316,7 +343,7 @@ const ChainSwitcher: React.FC = () => {
                 filteredChains.map((chain) => (
                   <div
                     key={chain.id}
-                    className={`chain-option ${chain.id === activeChain.id ? 'active' : ''}`}
+                    className={`chain-option ${chain.id === currentChainId ? 'active' : ''}`}
                     onClick={() => handleSelect(chain.id)}
                     data-testid={TESTID.CHAIN_OPTION}
                     data-chain-id={chain.id}
@@ -331,7 +358,7 @@ const ChainSwitcher: React.FC = () => {
                       </span>
                       <span className="option-name">{chain.name}</span>
                       <span className="option-actions">
-                        {chain.id === activeChain.id && (
+                        {chain.id === currentChainId && (
                           <span className="check-mark">✓</span>
                         )}
                         {!ALL_FEATURED.has(chain.id) && (
