@@ -791,6 +791,66 @@
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
 
+.lifi-bridge-panel__route {
+  min-width: 0;
+  color: var(--ring-text-secondary, #d1d5db);
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lifi-bridge-panel__chains {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.lifi-chain-select {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lifi-chain-select span {
+  color: var(--ring-text-secondary, #d1d5db);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lifi-chain-select select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  background: var(--ring-field-bg, rgba(255, 255, 255, 0.04));
+  color: var(--ring-text-primary, #f8fafc);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 10px;
+}
+
+.lifi-bridge-panel__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  color: var(--ring-text-secondary, #d1d5db);
+  font-weight: 800;
+}
+
+@media (max-width: 420px) {
+  .lifi-bridge-panel__chains {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─── Token picker modal ─── */
 
 .token-picker {

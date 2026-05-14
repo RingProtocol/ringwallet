@@ -91,6 +91,7 @@
     "dappsdk:minify": "node scripts/minify-dappsdk.mjs"
   },
   "dependencies": {
+    "@lifi/sdk": "^3.16.3",
     "@morpho-org/morpho-ts": "^2.5.1",
     "@neondatabase/serverless": "^1.0.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
