@@ -813,36 +813,183 @@
   min-width: 0;
 }
 
-.lifi-chain-select span {
+.lifi-chain-select > span {
   color: var(--ring-text-secondary, #d1d5db);
   font-size: 11px;
   font-weight: 700;
 }
 
-.lifi-chain-select select {
+.lifi-chain-select__trigger {
+  display: flex;
+  align-items: center;
   width: 100%;
   min-width: 0;
-  height: 40px;
+  height: 40px !important;
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
   border-radius: 8px;
   background: var(--ring-field-bg, rgba(255, 255, 255, 0.04));
   color: var(--ring-text-primary, #f8fafc);
   font-size: 13px;
   font-weight: 600;
-  padding: 0 10px;
+  padding: 0 10px 0 12px;
 }
 
-.lifi-bridge-panel__arrow {
+.lifi-chain-select__trigger:hover,
+.lifi-chain-select__trigger[data-state='open'] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lifi-chain-select__trigger:focus-visible {
+  border-color: rgba(188, 116, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(188, 116, 237, 0.18);
+}
+
+.lifi-chain-select__content {
+  z-index: 10002;
+  max-height: min(320px, calc(100vh - 160px));
+  overflow-y: auto;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  background: #191b22;
+  color: var(--ring-text-primary, #f8fafc);
+}
+
+.lifi-chain-select__item {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding-top: 0;
+  padding-bottom: 0;
+  color: var(--ring-text-primary, #f8fafc);
+}
+
+.lifi-chain-select__item:focus {
+  background: rgba(188, 116, 237, 0.16);
+  color: var(--ring-text-primary, #f8fafc);
+}
+
+.lifi-chain-select__option {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  gap: 8px;
+  min-width: 0;
+  height: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ring-text-primary, #f8fafc);
+}
+
+.lifi-chain-select__option img {
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.lifi-review {
+  position: fixed;
+  inset: 0;
+  z-index: 10003;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.lifi-review__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.lifi-review__panel {
+  position: relative;
+  width: min(430px, calc(100vw - 28px));
+  max-height: min(620px, calc(100vh - 56px));
+  overflow-y: auto;
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
-  color: var(--ring-text-secondary, #d1d5db);
+  border-radius: 18px;
+  background: #171920;
+  color: var(--ring-text-primary, #f8fafc);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  padding: 16px;
+}
+
+@media (min-width: 520px) {
+  .lifi-review {
+    align-items: center;
+  }
+}
+
+.lifi-review__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lifi-review__header h3 {
+  margin: 0;
+  font-size: 17px;
   font-weight: 800;
+}
+
+.lifi-review__header button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ring-text-primary, #f8fafc);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.lifi-review__rows {
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lifi-review__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.lifi-review__row:last-child {
+  border-bottom: 0;
+}
+
+.lifi-review__row span {
+  color: var(--ring-text-secondary, #d1d5db);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lifi-review__row strong {
+  min-width: 0;
+  color: var(--ring-text-primary, #f8fafc);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.lifi-review__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.lifi-review__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 14px;
 }
 
 @media (max-width: 420px) {
