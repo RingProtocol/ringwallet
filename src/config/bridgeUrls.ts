@@ -17,11 +17,14 @@ export const CHAIN_BRIDGE_URLS: Record<number, string> = {
   4326: 'https://rabbithole.megaeth.com/bridge',
 }
 
+export const LIFI_BRIDGE_URL = 'ringwallet://bridge/lifi'
+
 /**
  * General bridging dapp URLs.
  * Sourced from BRIDGING_DAPP_URLS in the Ring interface monorepo.
  */
 export const GENERAL_BRIDGE_URLS = [
+  LIFI_BRIDGE_URL,
   'https://app.across.to',
   'https://www.bungee.exchange',
   'https://jumper.exchange',
@@ -71,6 +74,7 @@ function titleCase(name: string): string {
  */
 export function getBridgeNameFromUrl(url: string): string {
   const host = extractHostName(url)
+  if (url === LIFI_BRIDGE_URL) return 'LI.FI'
   const knownNames: Record<string, string> = {
     'app.across.to': 'Across',
     'www.bungee.exchange': 'Bungee',

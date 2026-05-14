@@ -3,6 +3,7 @@ import { useSwapSigner } from '../swap/useSwapSigner'
 import SwapDialog from '../swap/SwapDialog'
 import { isRingV2Supported } from '../swap/ringV2Constants'
 import { isKyberAggregatorSupported } from '../swap/kyberConstants'
+import LifiBridgePage from '../bridge/LifiBridgePage'
 import { useAuth } from '../../contexts/AuthContext'
 import { WalletType } from '../../models/WalletType'
 import type { SendTokenOption } from '../transaction/types'
@@ -29,6 +30,7 @@ import {
   getBridgeUrlsForChain,
   getBridgeNameFromUrl,
   CHAIN_BRIDGE_URLS,
+  LIFI_BRIDGE_URL,
 } from '../../config/bridgeUrls'
 import PolymarketListPage from '../predict/PolymarketListPage'
 import '../../features/dapps/components/DApps.css'
@@ -147,6 +149,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [dappListOpen, setDappListOpen] = useState(false)
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
   const [bridgeDApp, setBridgeDApp] = useState<DAppInfo | null>(null)
+  const [lifiBridgeOpen, setLifiBridgeOpen] = useState(false)
   const [predictListOpen, setPredictListOpen] = useState(false)
 
   const showToast = (message: string) => {
@@ -259,6 +262,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   }
 
   const handleSelectBridge = (url: string) => {
+    if (url === LIFI_BRIDGE_URL) {
+      setLifiBridgeOpen(true)
+      setBridgeListOpen(false)
+      return
+    }
     const bridgeInfo: DAppInfo = {
       id: -Math.abs(
         url.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)
@@ -596,7 +604,9 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
                     )}
                   </span>
                   <span className="dapp-card__desc">
-                    {new URL(url).hostname}
+                    {url === LIFI_BRIDGE_URL
+                      ? t('lifiBridgeDescription')
+                      : new URL(url).hostname}
                   </span>
                 </div>
               </button>
@@ -610,6 +620,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           dapp={bridgeDApp}
           onBack={() => setBridgeDApp(null)}
         />
+      )}
+
+      {lifiBridgeOpen && (
+        <LifiBridgePage onClose={() => setLifiBridgeOpen(false)} />
       )}
 
       {predictListOpen && (
