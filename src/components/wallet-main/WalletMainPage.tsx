@@ -10,7 +10,10 @@ import BottomTabBar from './BottomTabBar'
 import { WalletTabHeader, WalletTabBody } from './WalletTab'
 import { ActivityTabHeader, ActivityTabBody } from './ActivityTab'
 import { MoreTabHeader, MoreTabBody } from './MoreTab'
-import { CardTabHeader, CardTabBody } from '../../features/card/components/CardTab'
+import {
+  CardTabHeader,
+  CardTabBody,
+} from '../../features/card/components/CardTab'
 import type { BottomTab } from './BottomTabBar'
 import './WalletMainPage.css'
 
@@ -46,6 +49,9 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
 }) => {
   const { activeChain } = useAuth()
   const [bottomTab, setBottomTab] = useState<BottomTab>(getInitialBottomTab)
+  const [activityChainId, setActivityChainId] = useState<
+    number | string | null
+  >(null)
   const [moreExpandWalletListOnOpen, setMoreExpandWalletListOnOpen] =
     useState(false)
   const [moreWalletListPulse, setMoreWalletListPulse] = useState(0)
@@ -140,7 +146,12 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
           onAddressClick={openMoreFromAddress}
         />
       )}
-      {bottomTab === 'activity' && <ActivityTabHeader />}
+      {bottomTab === 'activity' && (
+        <ActivityTabHeader
+          selectedChainId={activityChainId}
+          onChainSelect={setActivityChainId}
+        />
+      )}
       {bottomTab === 'card' && <CardTabHeader />}
       {bottomTab === 'more' && <MoreTabHeader />}
 
@@ -153,7 +164,9 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
             onTokenSelect={openTokenDetail}
           />
         )}
-        {bottomTab === 'activity' && <ActivityTabBody />}
+        {bottomTab === 'activity' && (
+          <ActivityTabBody selectedChainId={activityChainId} />
+        )}
         {bottomTab === 'card' && <CardTabBody />}
         {bottomTab === 'more' && (
           <MoreTabBody
