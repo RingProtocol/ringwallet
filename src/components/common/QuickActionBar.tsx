@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { ExternalLink } from 'lucide-react'
 import { useSwapSigner } from '../swap/useSwapSigner'
 import SwapDialog from '../swap/SwapDialog'
 import { isRingV2Supported } from '../swap/ringV2Constants'
@@ -25,11 +26,17 @@ import { useDAppList } from '../../features/dapps/hooks/useDAppList'
 import DAppContainerPage from '../../features/dapps/components/DAppContainerPage'
 import DAppCard from '../../features/dapps/components/DAppCard'
 import PopupListLayout from './PopupListLayout'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 import type { DAppInfo } from '../../features/dapps/types/dapp'
 import {
   getBridgeUrlsForChain,
   getBridgeNameFromUrl,
-  CHAIN_BRIDGE_URLS,
   LIFI_BRIDGE_URL,
 } from '../../config/bridgeUrls'
 import PolymarketListPage from '../predict/PolymarketListPage'
@@ -75,8 +82,10 @@ export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
 /* ── Constants ── */
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
+const LIFI_BRIDGE_ICON = '/icons/bridges/lifi.svg'
 
-function getBridgeIconSvg(name: string): string {
+function getBridgeIconSvg(name: string, url?: string): string {
+  if (url === LIFI_BRIDGE_URL) return LIFI_BRIDGE_ICON
   const initial = name.charAt(0).toUpperCase()
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -148,7 +157,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [activeDApp, setActiveDApp] = useState<DAppInfo | null>(null)
   const [dappListOpen, setDappListOpen] = useState(false)
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
-  const [bridgeDApp, setBridgeDApp] = useState<DAppInfo | null>(null)
   const [lifiBridgeOpen, setLifiBridgeOpen] = useState(false)
   const [predictListOpen, setPredictListOpen] = useState(false)
 
@@ -267,27 +275,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
       setBridgeListOpen(false)
       return
     }
-    const bridgeInfo: DAppInfo = {
-      id: -Math.abs(
-        url.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)
-      ),
-      name: getBridgeNameFromUrl(url),
-      description: new URL(url).hostname,
-      url,
-      icon: '',
-      chains: [],
-      category: 'bridge',
-      top: 0,
-    }
-    setBridgeDApp(bridgeInfo)
+    window.open(url, '_blank', 'noopener,noreferrer')
     setBridgeListOpen(false)
   }
 
   const bridgeUrls = getBridgeUrlsForChain(activeChain?.id ?? 0)
-  const recommendedBridgeUrl =
-    typeof activeChain?.id === 'number'
-      ? CHAIN_BRIDGE_URLS[activeChain.id]
-      : undefined
 
   const handleMoonPayClick = () => {
     if (!moonPayApiKey || !moonPayCurrencyCode) {
@@ -561,66 +553,63 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         )}
       </PopupListLayout>
 
-      <PopupListLayout
-        open={bridgeListOpen}
-        title={t('bridgeDapps')}
-        onClose={() => setBridgeListOpen(false)}
-      >
-        <div className="dapp-list__grid">
-          {bridgeUrls.map((url, index) => {
-            const isRecommended = index === 0 && url === recommendedBridgeUrl
-            const bridgeName = getBridgeNameFromUrl(url)
-            return (
-              <button
-                key={url}
-                className="dapp-card"
-                onClick={() => handleSelectBridge(url)}
-                style={{ position: 'relative' }}
-              >
-                <img
-                  className="dapp-card__icon"
-                  src={getBridgeIconSvg(bridgeName)}
-                  alt={bridgeName}
-                />
-                <div className="dapp-card__info">
-                  <span className="dapp-card__name">
-                    {bridgeName}
-                    {isRecommended && (
-                      <span
-                        style={{
-                          marginLeft: 8,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          background:
-                            'linear-gradient(135deg, #667eea, #764ba2)',
-                          color: '#fff',
-                          verticalAlign: 'middle',
-                        }}
-                      >
-                        {t('recommended')}
+      <Drawer open={bridgeListOpen} onOpenChange={setBridgeListOpen}>
+        <DrawerContent className="bridge-drawer">
+          <DrawerHeader className="bridge-drawer__header">
+            <DrawerTitle className="bridge-drawer__title">
+              {t('bridgeDapps')}
+            </DrawerTitle>
+            <DrawerDescription className="bridge-drawer__description">
+              {t('lifiBridgeDescription')}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="bridge-drawer__content">
+            <div className="bridge-drawer__grid">
+              {bridgeUrls.map((url) => {
+                const isRecommended = url === LIFI_BRIDGE_URL
+                const bridgeName = getBridgeNameFromUrl(url)
+                const isExternal = url !== LIFI_BRIDGE_URL
+                return (
+                  <button
+                    key={url}
+                    className="bridge-drawer__card"
+                    onClick={() => handleSelectBridge(url)}
+                    type="button"
+                  >
+                    <img
+                      className="bridge-drawer__icon"
+                      src={getBridgeIconSvg(bridgeName, url)}
+                      alt={bridgeName}
+                    />
+                    <div className="bridge-drawer__info">
+                      <span className="bridge-drawer__name">
+                        {bridgeName}
+                        {isRecommended && (
+                          <span className="bridge-drawer__badge">
+                            {t('recommended')}
+                          </span>
+                        )}
                       </span>
+                      <span className="bridge-drawer__desc">
+                        {url === LIFI_BRIDGE_URL
+                          ? t('lifiBridgeDescription')
+                          : new URL(url).hostname}
+                      </span>
+                    </div>
+                    {isExternal && (
+                      <ExternalLink
+                        className="bridge-drawer__external"
+                        aria-hidden
+                        size={16}
+                      />
                     )}
-                  </span>
-                  <span className="dapp-card__desc">
-                    {url === LIFI_BRIDGE_URL
-                      ? t('lifiBridgeDescription')
-                      : new URL(url).hostname}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </PopupListLayout>
-
-      {bridgeDApp && (
-        <DAppContainerPage
-          dapp={bridgeDApp}
-          onBack={() => setBridgeDApp(null)}
-        />
-      )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {lifiBridgeOpen && (
         <LifiBridgePage onClose={() => setLifiBridgeOpen(false)} />

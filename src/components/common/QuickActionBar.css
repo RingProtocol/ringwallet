@@ -1435,3 +1435,122 @@
 .modal-content--sheet .dapp-list__loading {
   color: var(--ring-text-secondary, #888);
 }
+
+/* ── Bridge drawer ── */
+
+.bridge-drawer {
+  display: flex;
+  flex-direction: column;
+  max-height: min(78vh, 720px);
+  background: #15171d;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.bridge-drawer__header {
+  padding: 14px 4px 12px;
+  text-align: left;
+}
+
+.bridge-drawer__title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.bridge-drawer__description {
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.bridge-drawer__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 6px;
+}
+
+.bridge-drawer__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bridge-drawer__card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.bridge-drawer__card:active {
+  transform: scale(0.98);
+}
+
+.bridge-drawer__card:hover,
+.bridge-drawer__card:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.bridge-drawer__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.bridge-drawer__info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bridge-drawer__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ring-text-primary, #f3f4f6);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bridge-drawer__badge {
+  border-radius: 4px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 6px;
+  white-space: nowrap;
+}
+
+.bridge-drawer__desc {
+  min-width: 0;
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bridge-drawer__external {
+  flex-shrink: 0;
+  color: var(--ring-text-secondary, #9ca3af);
+}

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { createConfig, getQuote, getTokens } from '@lifi/sdk'
+import { createConfig, getChains, getQuote, getTokens } from '@lifi/sdk'
+import { ChainType as LifiChainType } from '@lifi/types'
 import type { LiFiStep, Token } from '@lifi/types'
 import { ethers } from 'ethers'
 import { useAuth } from '../../contexts/AuthContext'
@@ -14,11 +15,22 @@ import type { SwapTokenOption } from '../swap/useRingV2Tokens'
 import TokenPickerModal from '../swap/TokenPickerModal'
 import SwapField, { keyOfToken } from '../swap/SwapField'
 import InfoRow from '../swap/InfoRow'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import '../swap/SwapDialog.css'
 
+const ETHEREUM_MAINNET_CHAIN_ID = 1
+const BASE_MAINNET_CHAIN_ID = 8453
 const LIFI_NATIVE_ADDRESS = ethers.ZeroAddress
+const LIFI_ALT_NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 const DEFAULT_SLIPPAGE = '0.5'
 const LIFI_INTEGRATOR = 'ringwallet'
+const ALCHEMY_RPC_RE = /\.g\.alchemy\.com\/v2\//i
 
 let lifiConfigured = false
 
@@ -40,7 +52,10 @@ interface LifiTokenOption extends SwapTokenOption {
 
 const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   const { t } = useI18n()
-  const { activeWallet, activeChainId, CHAINS } = useAuth()
+  const { activeWallet, CHAINS } = useAuth()
+  const [lifiSupportedChainIds, setLifiSupportedChainIds] = useState<
+    Set<number>
+  >(() => new Set([ETHEREUM_MAINNET_CHAIN_ID, BASE_MAINNET_CHAIN_ID]))
 
   const evmChains = useMemo(
     () =>
@@ -50,22 +65,16 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
           (chain.family == null ||
             chain.family === ChainFamily.EVM ||
             chain.family === ChainFamily.Prisma) &&
-          getPrimaryRpcUrl(chain).length > 0
+          getPrimaryRpcUrl(chain).length > 0 &&
+          lifiSupportedChainIds.has(chain.id)
       ),
-    [CHAINS]
+    [CHAINS, lifiSupportedChainIds]
   )
 
-  const initialFromChainId =
-    typeof activeChainId === 'number' ? activeChainId : Number(activeChainId)
   const [fromChainId, setFromChainId] = useState<number>(
-    evmChains.some((c) => c.id === initialFromChainId)
-      ? initialFromChainId
-      : (evmChains[0]?.id ?? 1)
+    ETHEREUM_MAINNET_CHAIN_ID
   )
-  const [toChainId, setToChainId] = useState<number>(() => {
-    const firstDifferent = evmChains.find((c) => c.id !== fromChainId)
-    return firstDifferent?.id ?? fromChainId
-  })
+  const [toChainId, setToChainId] = useState<number>(BASE_MAINNET_CHAIN_ID)
   const [fromTokens, setFromTokens] = useState<LifiTokenOption[]>([])
   const [toTokens, setToTokens] = useState<LifiTokenOption[]>([])
   const [tokensLoading, setTokensLoading] = useState(false)
@@ -80,13 +89,34 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const fromChain = evmChains.find((c) => c.id === fromChainId)
   const toChain = evmChains.find((c) => c.id === toChainId)
-  const rpcUrl = fromChain ? getPrimaryRpcUrl(fromChain) : ''
+  const rpcUrls = useMemo(() => getClientSafeRpcUrls(fromChain), [fromChain])
 
   useEffect(() => {
     ensureLifiConfig()
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const chains = await getChains({ chainTypes: [LifiChainType.EVM] })
+        if (cancelled) return
+        setLifiSupportedChainIds(
+          new Set(
+            chains.filter((chain) => chain.mainnet).map((chain) => chain.id)
+          )
+        )
+      } catch (e) {
+        if (!cancelled) setTokenError((e as Error).message)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -103,9 +133,23 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   }, [onClose])
 
   useEffect(() => {
-    if (fromChainId !== toChainId) return
-    const fallback = evmChains.find((c) => c.id !== fromChainId)
-    if (fallback) setToChainId(fallback.id)
+    if (evmChains.length === 0) return
+    if (!evmChains.some((c) => c.id === fromChainId)) {
+      setFromChainId(evmChains[0].id)
+      return
+    }
+    if (
+      fromChainId === toChainId ||
+      !evmChains.some((c) => c.id === toChainId)
+    ) {
+      const preferredBase = evmChains.find(
+        (c) => c.id === BASE_MAINNET_CHAIN_ID && c.id !== fromChainId
+      )
+      const fallback = evmChains.find((c) => c.id !== fromChainId)
+      if (preferredBase ?? fallback) {
+        setToChainId((preferredBase ?? fallback)?.id ?? fromChainId)
+      }
+    }
   }, [evmChains, fromChainId, toChainId])
 
   useEffect(() => {
@@ -129,9 +173,15 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
         ])
         if (cancelled) return
         setFromTokens(
-          projectTokens(fromResp.tokens[fromChainId] ?? [], fromChainId)
+          projectTokens(
+            fromResp.tokens[fromChainId] ?? [],
+            fromChainId,
+            fromChain
+          )
         )
-        setToTokens(projectTokens(toResp.tokens[toChainId] ?? [], toChainId))
+        setToTokens(
+          projectTokens(toResp.tokens[toChainId] ?? [], toChainId, toChain)
+        )
       } catch (e) {
         if (!cancelled) setTokenError((e as Error).message)
       } finally {
@@ -141,7 +191,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
     return () => {
       cancelled = true
     }
-  }, [fromChainId, toChainId])
+  }, [fromChain, fromChainId, toChain, toChainId])
 
   const fromToken = useMemo(
     () => fromTokens.find((token) => keyOfToken(token) === fromKey) ?? null,
@@ -230,15 +280,18 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   ])
 
   const refreshBalance = useCallback(async () => {
-    if (!activeWallet?.address || !fromTokenAddress || !rpcUrl) return
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const balance = fromTokenIsNative
-      ? await provider.getBalance(activeWallet.address)
-      : ((await new ethers.Contract(
-          fromTokenAddress,
-          ERC20_ABI,
-          provider
-        ).balanceOf(activeWallet.address)) as bigint)
+    if (!activeWallet?.address || !fromTokenAddress || rpcUrls.length === 0) {
+      return
+    }
+    const balance = await withJsonRpcProvider(rpcUrls, async (provider) =>
+      fromTokenIsNative
+        ? provider.getBalance(activeWallet.address)
+        : ((await new ethers.Contract(
+            fromTokenAddress,
+            ERC20_ABI,
+            provider
+          ).balanceOf(activeWallet.address)) as bigint)
+    )
     setFromTokens((prev) => {
       let changed = false
       const next = prev.map((token) => {
@@ -254,7 +307,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
     fromKey,
     fromTokenAddress,
     fromTokenIsNative,
-    rpcUrl,
+    rpcUrls,
   ])
 
   useEffect(() => {
@@ -276,7 +329,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
       !activeWallet?.privateKey ||
       !activeWallet.address ||
       !quote ||
-      !rpcUrl
+      rpcUrls.length === 0
     ) {
       return
     }
@@ -285,32 +338,47 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
       setStatus(t('lifiMissingTransaction'))
       return
     }
+    const privateKey = activeWallet.privateKey
+    const senderAddress = activeWallet.address
+    setReviewOpen(false)
     setBusy(true)
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl)
-      const wallet = new ethers.Wallet(activeWallet.privateKey, provider)
-      if (fromToken && !fromToken.isNative && quote.estimate.approvalAddress) {
-        const tokenContract = new ethers.Contract(
-          fromToken.address,
-          ERC20_ABI,
-          wallet
-        )
-        const allowance = (await tokenContract.allowance(
-          activeWallet.address,
+      const sentHash = await withJsonRpcProvider(rpcUrls, async (provider) => {
+        const wallet = new ethers.Wallet(privateKey, provider)
+        await assertSufficientNativeBalance({
+          provider,
+          tx,
+          senderAddress,
+          nativeSymbol: fromChain?.symbol ?? 'ETH',
+        })
+        if (
+          fromToken &&
+          !fromToken.isNative &&
           quote.estimate.approvalAddress
-        )) as bigint
-        if (allowance < requiredAmount) {
-          setStatus(t('lifiApproving', { symbol: fromToken.symbol }))
-          const approval = await tokenContract.approve(
-            quote.estimate.approvalAddress,
-            ethers.MaxUint256
+        ) {
+          const tokenContract = new ethers.Contract(
+            fromToken.address,
+            ERC20_ABI,
+            wallet
           )
-          await approval.wait()
+          const allowance = (await tokenContract.allowance(
+            senderAddress,
+            quote.estimate.approvalAddress
+          )) as bigint
+          if (allowance < requiredAmount) {
+            setStatus(t('lifiApproving', { symbol: fromToken.symbol }))
+            const approval = await tokenContract.approve(
+              quote.estimate.approvalAddress,
+              ethers.MaxUint256
+            )
+            await approval.wait()
+          }
         }
-      }
-      setStatus(t('lifiSubmitting'))
-      const sent = await wallet.sendTransaction(toEthersTx(tx))
-      setStatus(t('lifiSubmitted', { hash: shortHash(sent.hash) }))
+        setStatus(t('lifiSubmitting'))
+        const sent = await wallet.sendTransaction(toEthersTx(tx))
+        return sent.hash
+      })
+      setStatus(t('lifiSubmitted', { hash: shortHash(sentHash) }))
       setAmountIn('')
       await refreshBalance()
     } catch (e) {
@@ -321,11 +389,12 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   }, [
     activeWallet?.address,
     activeWallet?.privateKey,
+    fromChain?.symbol,
     fromToken,
     quote,
     refreshBalance,
     requiredAmount,
-    rpcUrl,
+    rpcUrls,
     t,
   ])
 
@@ -450,10 +519,6 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                 onPickToken={() => setPickerSide('from')}
               />
 
-              <div className="ring-v2-panel__divider">
-                <span className="lifi-bridge-panel__arrow">↓</span>
-              </div>
-
               <SwapField
                 side={t('swapToEstimated')}
                 token={toToken}
@@ -510,7 +575,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                 <button
                   type="button"
                   className="ring-v2-panel__btn ring-v2-panel__btn--primary"
-                  onClick={handleSubmit}
+                  onClick={() => setReviewOpen(true)}
                   disabled={disabled}
                 >
                   {ctaLabel}
@@ -539,9 +604,150 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
         }}
         loading={tokensLoading}
       />
+
+      {reviewOpen && quote && fromToken && toToken && (
+        <BridgeReviewDialog
+          title={t('lifiReviewTitle')}
+          fromChain={fromChain?.name ?? String(fromChainId)}
+          toChain={toChain?.name ?? String(toChainId)}
+          fromAmount={`${amountIn} ${fromToken.symbol}`}
+          toAmount={`${formattedQuote || '—'} ${toToken.symbol}`}
+          signerAddress={activeWallet?.address ?? '—'}
+          route={quote.toolDetails.name}
+          networkFee={gasUsd ?? '—'}
+          minReceived={minReceived ?? '—'}
+          to={quote.transactionRequest?.to ?? '—'}
+          busy={busy}
+          confirmLabel={t('lifiSignAndSubmit')}
+          cancelLabel={t('cancel')}
+          labels={{
+            route: t('lifiReviewRoute'),
+            send: t('lifiReviewSend'),
+            receive: t('lifiReviewReceive'),
+            signer: t('lifiReviewSigner'),
+            provider: t('lifiReviewProvider'),
+            networkFee: t('swapNetworkFee'),
+            minReceived: t('swapMinReceived'),
+            contract: t('lifiReviewContract'),
+          }}
+          onConfirm={handleSubmit}
+          onCancel={() => setReviewOpen(false)}
+        />
+      )}
     </div>
   )
 }
+
+interface BridgeReviewDialogProps {
+  title: string
+  fromChain: string
+  toChain: string
+  fromAmount: string
+  toAmount: string
+  signerAddress: string
+  route: string
+  networkFee: string
+  minReceived: string
+  to: string
+  busy: boolean
+  confirmLabel: string
+  cancelLabel: string
+  labels: {
+    route: string
+    send: string
+    receive: string
+    signer: string
+    provider: string
+    networkFee: string
+    minReceived: string
+    contract: string
+  }
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+const BridgeReviewDialog: React.FC<BridgeReviewDialogProps> = ({
+  title,
+  fromChain,
+  toChain,
+  fromAmount,
+  toAmount,
+  signerAddress,
+  route,
+  networkFee,
+  minReceived,
+  to,
+  busy,
+  confirmLabel,
+  cancelLabel,
+  labels,
+  onConfirm,
+  onCancel,
+}) => (
+  <div
+    className="lifi-review"
+    role="dialog"
+    aria-modal="true"
+    aria-label={title}
+  >
+    <div
+      className="lifi-review__backdrop"
+      onClick={onCancel}
+      role="presentation"
+    />
+    <div className="lifi-review__panel">
+      <header className="lifi-review__header">
+        <h3>{title}</h3>
+        <button type="button" onClick={onCancel} aria-label={cancelLabel}>
+          ×
+        </button>
+      </header>
+      <div className="lifi-review__rows">
+        <ReviewRow label={labels.route} value={`${fromChain} → ${toChain}`} />
+        <ReviewRow label={labels.send} value={fromAmount} mono />
+        <ReviewRow label={labels.receive} value={toAmount} mono />
+        <ReviewRow
+          label={labels.signer}
+          value={shortAddr(signerAddress)}
+          mono
+        />
+        <ReviewRow label={labels.provider} value={route} />
+        <ReviewRow label={labels.networkFee} value={networkFee} mono />
+        <ReviewRow label={labels.minReceived} value={minReceived} mono />
+        <ReviewRow label={labels.contract} value={shortAddr(to)} mono />
+      </div>
+      <div className="lifi-review__actions">
+        <button
+          type="button"
+          className="ring-v2-panel__btn ring-v2-panel__btn--secondary"
+          onClick={onCancel}
+          disabled={busy}
+        >
+          {cancelLabel}
+        </button>
+        <button
+          type="button"
+          className="ring-v2-panel__btn ring-v2-panel__btn--primary"
+          onClick={onConfirm}
+          disabled={busy}
+        >
+          {confirmLabel}
+        </button>
+      </div>
+    </div>
+  </div>
+)
+
+const ReviewRow: React.FC<{
+  label: string
+  value: string
+  mono?: boolean
+}> = ({ label, value, mono }) => (
+  <div className="lifi-review__row">
+    <span>{label}</span>
+    <strong className={mono ? 'lifi-review__mono' : undefined}>{value}</strong>
+  </div>
+)
 
 interface ChainSelectProps {
   label: string
@@ -555,24 +761,62 @@ const ChainSelect: React.FC<ChainSelectProps> = ({
   value,
   chains,
   onChange,
+}) => {
+  const selected = chains.find((chain) => chain.id === value)
+  return (
+    <div className="lifi-chain-select">
+      <span>{label}</span>
+      <Select
+        value={String(value)}
+        onValueChange={(next) => onChange(Number(next))}
+      >
+        <SelectTrigger className="lifi-chain-select__trigger">
+          <SelectValue
+            placeholder={selected ? selected.name : label}
+            aria-label={selected ? selected.name : label}
+          />
+        </SelectTrigger>
+        <SelectContent
+          position="popper"
+          align="start"
+          className="lifi-chain-select__content"
+        >
+          {chains.map((chain) => (
+            <SelectItem
+              key={chain.id}
+              value={String(chain.id)}
+              className="lifi-chain-select__item"
+            >
+              <ChainOption chain={chain} />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+const ChainOption: React.FC<{ chain: Chain & { id: number } }> = ({
+  chain,
 }) => (
-  <label className="lifi-chain-select">
-    <span>{label}</span>
-    <select value={value} onChange={(e) => onChange(Number(e.target.value))}>
-      {chains.map((chain) => (
-        <option key={chain.id} value={chain.id}>
-          {chain.name}
-        </option>
-      ))}
-    </select>
-  </label>
+  <span className="lifi-chain-select__option">
+    {chain.icon && <img src={chain.icon} alt="" loading="lazy" />}
+    <span>{chain.name}</span>
+  </span>
 )
 
-function projectTokens(tokens: Token[], chainId: number): LifiTokenOption[] {
+function projectTokens(
+  tokens: Token[],
+  chainId: number,
+  chain?: Pick<Chain, 'icon'> | null
+): LifiTokenOption[] {
   const out: LifiTokenOption[] = []
   const seen = new Set<string>()
   for (const token of tokens) {
-    const isNative = token.address.toLowerCase() === LIFI_NATIVE_ADDRESS
+    const tokenAddress = token.address.toLowerCase()
+    const isNative =
+      tokenAddress === LIFI_NATIVE_ADDRESS ||
+      tokenAddress === LIFI_ALT_NATIVE_ADDRESS
     const address = isNative ? NATIVE_PSEUDO_ADDRESS : token.address
     const key = isNative ? NATIVE_PSEUDO_ADDRESS : token.address.toLowerCase()
     if (seen.has(key)) continue
@@ -583,7 +827,7 @@ function projectTokens(tokens: Token[], chainId: number): LifiTokenOption[] {
       decimals: token.decimals,
       balance: 0n,
       isNative,
-      logo: token.logoURI,
+      logo: normalizeLogoUri(token.logoURI) ?? (isNative ? chain?.icon : null),
       chainId,
       name: token.name,
       priceUSD: token.priceUSD,
@@ -594,6 +838,78 @@ function projectTokens(tokens: Token[], chainId: number): LifiTokenOption[] {
 
 function toLifiAddress(token: SwapTokenOption): string {
   return token.isNative ? LIFI_NATIVE_ADDRESS : token.address
+}
+
+function normalizeLogoUri(uri?: string | null): string | null {
+  if (!uri) return null
+  if (uri.startsWith('ipfs://')) {
+    return `https://ipfs.io/ipfs/${uri.slice('ipfs://'.length)}`
+  }
+  if (uri.startsWith('//')) return `https:${uri}`
+  return uri
+}
+
+function getClientSafeRpcUrls(chain?: Pick<Chain, 'rpcUrl'> | null): string[] {
+  const rpcUrls = chain?.rpcUrl?.filter(Boolean) ?? []
+  return [...rpcUrls].sort((a, b) => {
+    const aAlchemy = ALCHEMY_RPC_RE.test(a)
+    const bAlchemy = ALCHEMY_RPC_RE.test(b)
+    if (aAlchemy === bAlchemy) return 0
+    return aAlchemy ? 1 : -1
+  })
+}
+
+async function withJsonRpcProvider<TResult>(
+  rpcUrls: string[],
+  runner: (provider: ethers.JsonRpcProvider) => Promise<TResult>
+): Promise<TResult> {
+  let lastError: unknown = null
+  for (const rpcUrl of rpcUrls) {
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      return await runner(provider)
+    } catch (error) {
+      lastError = error
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('All RPC endpoints failed')
+}
+
+async function assertSufficientNativeBalance(args: {
+  provider: ethers.JsonRpcProvider
+  tx: NonNullable<LiFiStep['transactionRequest']>
+  senderAddress: string
+  nativeSymbol: string
+}): Promise<void> {
+  const { provider, tx, senderAddress, nativeSymbol } = args
+  const [balance, feeData] = await Promise.all([
+    provider.getBalance(senderAddress),
+    provider.getFeeData(),
+  ])
+  const value = tx.value ? BigInt(tx.value) : 0n
+  const gasLimit =
+    tx.gasLimit != null
+      ? BigInt(tx.gasLimit)
+      : await provider.estimateGas({
+          ...toEthersTx(tx),
+          from: senderAddress,
+        })
+  const gasPrice =
+    tx.maxFeePerGas != null
+      ? BigInt(tx.maxFeePerGas)
+      : tx.gasPrice != null
+        ? BigInt(tx.gasPrice)
+        : (feeData.maxFeePerGas ?? feeData.gasPrice ?? 0n)
+  const required = value + gasLimit * gasPrice
+  if (balance < required) {
+    throw new Error(
+      `Insufficient ${nativeSymbol} on source chain: have ${formatTokenAmount(
+        balance
+      )}, need about ${formatTokenAmount(required)}`
+    )
+  }
 }
 
 function toEthersTx(tx: NonNullable<LiFiStep['transactionRequest']>) {
@@ -627,6 +943,14 @@ function trimDecimals(s: string): string {
 
 function shortHash(hash: string): string {
   return hash.length > 14 ? `${hash.slice(0, 8)}…${hash.slice(-6)}` : hash
+}
+
+function shortAddr(addr: string): string {
+  return addr.length > 14 ? `${addr.slice(0, 8)}…${addr.slice(-6)}` : addr
+}
+
+function formatTokenAmount(value: bigint): string {
+  return trimDecimals(ethers.formatEther(value))
 }
 
 function formatUsd(raw: number | null | undefined): string | null {
