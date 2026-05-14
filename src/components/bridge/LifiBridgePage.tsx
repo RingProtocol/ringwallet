@@ -4,6 +4,7 @@ import { ChainType as LifiChainType } from '@lifi/types'
 import type { LiFiStep, Token } from '@lifi/types'
 import { ethers } from 'ethers'
 import { useAuth } from '../../contexts/AuthContext'
+import { FEATURED_CHAIN_IDS } from '../../config/chains'
 import {
   ChainFamily,
   getPrimaryRpcUrl,
@@ -31,6 +32,9 @@ const LIFI_ALT_NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
 const DEFAULT_SLIPPAGE = '0.5'
 const LIFI_INTEGRATOR = 'ringwallet'
 const ALCHEMY_RPC_RE = /\.g\.alchemy\.com\/v2\//i
+const WALLET_SUPPORTED_LIFI_CHAIN_IDS = new Set(
+  FEATURED_CHAIN_IDS.filter((id): id is number => typeof id === 'number')
+)
 
 let lifiConfigured = false
 
@@ -62,6 +66,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
       CHAINS.filter(
         (chain): chain is Chain & { id: number } =>
           typeof chain.id === 'number' &&
+          WALLET_SUPPORTED_LIFI_CHAIN_IDS.has(chain.id) &&
           (chain.family == null ||
             chain.family === ChainFamily.EVM ||
             chain.family === ChainFamily.Prisma) &&
@@ -89,6 +94,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+  const [statusTone, setStatusTone] = useState<'neutral' | 'error'>('neutral')
   const [reviewOpen, setReviewOpen] = useState(false)
 
   const fromChain = evmChains.find((c) => c.id === fromChainId)
@@ -366,6 +372,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
             quote.estimate.approvalAddress
           )) as bigint
           if (allowance < requiredAmount) {
+            setStatusTone('neutral')
             setStatus(t('lifiApproving', { symbol: fromToken.symbol }))
             const approval = await tokenContract.approve(
               quote.estimate.approvalAddress,
@@ -374,14 +381,17 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
             await approval.wait()
           }
         }
+        setStatusTone('neutral')
         setStatus(t('lifiSubmitting'))
         const sent = await wallet.sendTransaction(toEthersTx(tx))
         return sent.hash
       })
+      setStatusTone('neutral')
       setStatus(t('lifiSubmitted', { hash: shortHash(sentHash) }))
       setAmountIn('')
       await refreshBalance()
     } catch (e) {
+      setStatusTone('error')
       setStatus(t('lifiFailed', { error: (e as Error).message }))
     } finally {
       setBusy(false)
@@ -571,6 +581,16 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                 </div>
               )}
 
+              {status && (
+                <div
+                  className={`ring-v2-panel__status ${
+                    statusTone === 'error' ? 'ring-v2-panel__status--error' : ''
+                  }`}
+                >
+                  {status}
+                </div>
+              )}
+
               <div className="ring-v2-panel__actions">
                 <button
                   type="button"
@@ -587,7 +607,6 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                   {t('tokenPickerLoading')}
                 </div>
               )}
-              {status && <div className="ring-v2-panel__status">{status}</div>}
             </div>
           </div>
         </div>

@@ -29,7 +29,6 @@ import PopupListLayout from './PopupListLayout'
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
@@ -83,9 +82,38 @@ export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
 
 const DEFAULT_MOONPAY_BASE_URL = 'https://buy.moonpay.com'
 const LIFI_BRIDGE_ICON = '/icons/bridges/lifi.svg'
+const ACROSS_BRIDGE_ICON = '/icons/bridges/across.svg'
+const ALLBRIDGE_BRIDGE_ICON = '/icons/bridges/allbridge.svg'
+const ARBITRUM_BRIDGE_ICON = '/icons/bridges/arbitrum.svg'
+const BRIDGG_BRIDGE_ICON = '/icons/bridges/bridgg.svg'
+const BUNGEE_BRIDGE_ICON = '/icons/bridges/bungee.svg'
+const CELER_CBRIDGE_ICON = '/icons/bridges/cbridge.svg'
+const DEBRIDGE_BRIDGE_ICON = '/icons/bridges/debridge.svg'
+const HYPERCALL_BRIDGE_ICON = '/icons/bridges/hypercall.svg'
+const JUMPER_BRIDGE_ICON = '/icons/bridges/jumper.svg'
+const ORBITER_BRIDGE_ICON = '/icons/bridges/orbiter.svg'
+const OWLTO_BRIDGE_ICON = '/icons/bridges/owlto.svg'
+const RANGO_BRIDGE_ICON = '/icons/bridges/rango.svg'
+const ROUTER_NITRO_BRIDGE_ICON = '/icons/bridges/routernitro.svg'
+const STARGATE_BRIDGE_ICON = '/icons/bridges/stargate.svg'
 
 function getBridgeIconSvg(name: string, url?: string): string {
   if (url === LIFI_BRIDGE_URL) return LIFI_BRIDGE_ICON
+  if (url === 'https://app.across.to') return ACROSS_BRIDGE_ICON
+  if (url === 'https://bridge.arbitrum.io') return ARBITRUM_BRIDGE_ICON
+  if (url === 'https://bridge.arbitrum.io/') return ARBITRUM_BRIDGE_ICON
+  if (url === 'https://core.allbridge.io') return ALLBRIDGE_BRIDGE_ICON
+  if (url === 'https://www.brid.gg') return BRIDGG_BRIDGE_ICON
+  if (url === 'https://www.bungee.exchange') return BUNGEE_BRIDGE_ICON
+  if (url === 'https://cbridge.celer.network') return CELER_CBRIDGE_ICON
+  if (url === 'https://app.debridge.finance') return DEBRIDGE_BRIDGE_ICON
+  if (url === 'https://www.hyperbridge.xyz/') return HYPERCALL_BRIDGE_ICON
+  if (url === 'https://jumper.exchange') return JUMPER_BRIDGE_ICON
+  if (url === 'https://www.orbiter.finance') return ORBITER_BRIDGE_ICON
+  if (url === 'https://owlto.finance') return OWLTO_BRIDGE_ICON
+  if (url === 'https://app.rango.exchange') return RANGO_BRIDGE_ICON
+  if (url === 'https://app.routernitro.com') return ROUTER_NITRO_BRIDGE_ICON
+  if (url === 'https://stargate.finance') return STARGATE_BRIDGE_ICON
   const initial = name.charAt(0).toUpperCase()
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -559,9 +587,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             <DrawerTitle className="bridge-drawer__title">
               {t('bridgeDapps')}
             </DrawerTitle>
-            <DrawerDescription className="bridge-drawer__description">
-              {t('lifiBridgeDescription')}
-            </DrawerDescription>
           </DrawerHeader>
           <div className="bridge-drawer__content">
             <div className="bridge-drawer__grid">
