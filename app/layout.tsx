@@ -4,6 +4,7 @@ import './globals.css'
 import { I18nProvider } from '../src/i18n'
 import { Inter } from 'next/font/google'
 import { cn } from '@/lib/utils'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -50,6 +51,7 @@ export default function RootLayout({
         <div id="root">
           <I18nProvider>{children}</I18nProvider>
         </div>
+        <Analytics />
       </body>
     </html>
   )
