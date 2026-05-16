@@ -5,6 +5,8 @@
 .qwen
 .trae
 .workflow
+.agents
+AGENTS.md
 node_modules
 dist
 .next
