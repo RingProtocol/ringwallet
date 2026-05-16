@@ -7,7 +7,6 @@
 :root {
   --ring-fullscreen-height: 100vh;
   --ring-fullscreen-height: 100dvh;
-  --ring-fullscreen-height: 100lvh;
   --ring-bg-page: #0d0f14;
   --ring-bg-elevated: rgba(20, 22, 28, 0.94);
   --ring-surface: rgba(255, 255, 255, 0.04);
@@ -66,6 +65,21 @@ body {
   min-height: var(--ring-fullscreen-height);
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* PWA standalone mode: use 100vh which equals full screen on iOS with viewport-fit=cover.
+   100dvh/100svh on iOS excludes the home indicator safe area (~34px), causing a blank gap.
+   100vh = initial containing block = full screen height. */
+@media (display-mode: standalone) {
+  :root {
+    --ring-fullscreen-height: 100vh;
+  }
+  html,
+  body,
+  #root {
+    height: 100vh;
+    min-height: 100vh;
+  }
 }
 
 body {

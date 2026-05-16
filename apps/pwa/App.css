@@ -103,7 +103,7 @@ body.ring-dapp-open .app > .header-actions {
 
 .card--guest .login-container {
   margin-top: 0;
-  padding: 0 24px 20px;
+  padding: 0 24px max(20px, env(safe-area-inset-bottom));
 }
 
 .title {
