@@ -868,9 +868,12 @@
   color: var(--ring-text-primary, #f8fafc);
 }
 
-.lifi-chain-select__item:focus {
+.lifi-chain-select__item:hover,
+.lifi-chain-select__item:focus,
+.lifi-chain-select__item[data-highlighted] {
   background: rgba(188, 116, 237, 0.16);
   color: var(--ring-text-primary, #f8fafc);
+  outline: none;
 }
 
 .lifi-chain-select__option {

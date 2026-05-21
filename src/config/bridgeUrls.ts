@@ -18,6 +18,7 @@ export const CHAIN_BRIDGE_URLS: Record<number, string> = {
 }
 
 export const LIFI_BRIDGE_URL = 'ringwallet://bridge/lifi'
+export const ACROSS_BRIDGE_URL = 'ringwallet://bridge/across'
 
 /**
  * General bridging dapp URLs.
@@ -25,7 +26,7 @@ export const LIFI_BRIDGE_URL = 'ringwallet://bridge/lifi'
  */
 export const GENERAL_BRIDGE_URLS = [
   LIFI_BRIDGE_URL,
-  'https://app.across.to',
+  ACROSS_BRIDGE_URL,
   'https://www.bungee.exchange',
   'https://jumper.exchange',
   'https://app.rango.exchange',
@@ -75,6 +76,7 @@ function titleCase(name: string): string {
 export function getBridgeNameFromUrl(url: string): string {
   const host = extractHostName(url)
   if (url === LIFI_BRIDGE_URL) return 'LI.FI'
+  if (url === ACROSS_BRIDGE_URL) return 'Across'
   const knownNames: Record<string, string> = {
     'app.across.to': 'Across',
     'www.bungee.exchange': 'Bungee',

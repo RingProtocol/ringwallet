@@ -5,6 +5,7 @@ import SwapDialog from '../swap/SwapDialog'
 import { isRingV2Supported } from '../swap/ringV2Constants'
 import { isKyberAggregatorSupported } from '../swap/kyberConstants'
 import LifiBridgePage from '../bridge/LifiBridgePage'
+import AcrossBridgePage from '../bridge/AcrossBridgePage'
 import { useAuth } from '../../contexts/AuthContext'
 import { WalletType } from '../../models/WalletType'
 import type { SendTokenOption } from '../transaction/types'
@@ -37,6 +38,7 @@ import {
   getBridgeUrlsForChain,
   getBridgeNameFromUrl,
   LIFI_BRIDGE_URL,
+  ACROSS_BRIDGE_URL,
 } from '../../config/bridgeUrls'
 import PolymarketListPage from '../predict/PolymarketListPage'
 import '../../features/dapps/components/DApps.css'
@@ -99,6 +101,7 @@ const STARGATE_BRIDGE_ICON = '/icons/bridges/stargate.svg'
 
 function getBridgeIconSvg(name: string, url?: string): string {
   if (url === LIFI_BRIDGE_URL) return LIFI_BRIDGE_ICON
+  if (url === ACROSS_BRIDGE_URL) return ACROSS_BRIDGE_ICON
   if (url === 'https://app.across.to') return ACROSS_BRIDGE_ICON
   if (url === 'https://bridge.arbitrum.io') return ARBITRUM_BRIDGE_ICON
   if (url === 'https://bridge.arbitrum.io/') return ARBITRUM_BRIDGE_ICON
@@ -186,6 +189,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [dappListOpen, setDappListOpen] = useState(false)
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
   const [lifiBridgeOpen, setLifiBridgeOpen] = useState(false)
+  const [acrossBridgeOpen, setAcrossBridgeOpen] = useState(false)
   const [predictListOpen, setPredictListOpen] = useState(false)
 
   const showToast = (message: string) => {
@@ -300,6 +304,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const handleSelectBridge = (url: string) => {
     if (url === LIFI_BRIDGE_URL) {
       setLifiBridgeOpen(true)
+      setBridgeListOpen(false)
+      return
+    }
+    if (url === ACROSS_BRIDGE_URL) {
+      setAcrossBridgeOpen(true)
       setBridgeListOpen(false)
       return
     }
@@ -591,9 +600,11 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           <div className="bridge-drawer__content">
             <div className="bridge-drawer__grid">
               {bridgeUrls.map((url) => {
-                const isRecommended = url === LIFI_BRIDGE_URL
+                const isRecommended =
+                  url === LIFI_BRIDGE_URL || url === ACROSS_BRIDGE_URL
                 const bridgeName = getBridgeNameFromUrl(url)
-                const isExternal = url !== LIFI_BRIDGE_URL
+                const isExternal =
+                  url !== LIFI_BRIDGE_URL && url !== ACROSS_BRIDGE_URL
                 return (
                   <button
                     key={url}
@@ -618,7 +629,9 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
                       <span className="bridge-drawer__desc">
                         {url === LIFI_BRIDGE_URL
                           ? t('lifiBridgeDescription')
-                          : new URL(url).hostname}
+                          : url === ACROSS_BRIDGE_URL
+                            ? t('acrossBridgeDescription')
+                            : new URL(url).hostname}
                       </span>
                     </div>
                     {isExternal && (
@@ -638,6 +651,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
       {lifiBridgeOpen && (
         <LifiBridgePage onClose={() => setLifiBridgeOpen(false)} />
+      )}
+
+      {acrossBridgeOpen && (
+        <AcrossBridgePage onClose={() => setAcrossBridgeOpen(false)} />
       )}
 
       {predictListOpen && (
