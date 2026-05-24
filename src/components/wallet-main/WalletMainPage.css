@@ -126,6 +126,105 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Get App button in top-bar */
+.wallet-main-page__getapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ring-border);
+  color: var(--ring-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.wallet-main-page__getapp-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Get App overlay */
+.wallet-main-page__getapp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: getappFadeIn 0.2s ease;
+}
+
+.wallet-main-page__getapp-modal {
+  background: var(--ring-bg-elevated, #1c1e26);
+  width: min(95vw, 760px);
+  max-height: 86vh;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  animation: getappModalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.wallet-main-page__getapp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 0;
+}
+
+.wallet-main-page__getapp-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ring-text-primary, #fff);
+}
+
+.wallet-main-page__getapp-close {
+  background: none;
+  border: none;
+  color: var(--ring-text-secondary, #9ca3af);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-main-page__getapp-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes getappFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes getappModalPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Compact chain trigger inside top-bar */
 .wallet-main-page__top-bar .chain-switcher-container {
   width: auto;

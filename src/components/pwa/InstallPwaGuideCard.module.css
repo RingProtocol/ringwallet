@@ -1,68 +1,69 @@
 .card {
   width: min(980px, 100%);
-  background: rgba(247, 247, 250, 0.94);
-  color: #111318;
+  background: rgba(28, 30, 38, 0.96);
+  color: #e8eaef;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 20px 80px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 20px 80px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
-.cardHeader {
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px 24px 16px;
-  border-bottom: 1px solid rgba(46, 52, 66, 0.2);
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8eaef;
+  flex-shrink: 0;
 }
 
-.cardTitle {
-  margin: 0;
-  font-size: clamp(22px, 3.4vw, 30px);
-  font-weight: 800;
+.stepContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 3px;
 }
 
-.appIcon {
-  border-radius: 12px;
-}
-
-.steps {
-  margin: 0;
-  padding: 16px 24px;
-  font-size: clamp(18px, 2.8vw, 26px);
-  line-height: 1.5;
+.stepText {
+  font-size: clamp(18px, 2.6vw, 24px);
   font-weight: 500;
+  line-height: 1.4;
 }
 
-.stepLine + .hintWrapper,
-.hintWrapper + .stepLine {
-  margin-top: 12px;
-}
-
-.hintWrapper {
-  list-style: none;
-  margin: 8px 0 2px;
-  padding: 0;
-}
-
-.hintImage {
+.stepImage {
   width: 100%;
+  max-width: 320px;
   height: auto;
   display: block;
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.inlineTag {
-  display: inline-flex;
-  margin: 0 0.24em;
-  padding: 0.04em 0.4em;
-  border-radius: 0.34em;
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(15, 18, 24, 0.15);
-  font-weight: 700;
+.quoteMark {
+  color: #888c99;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
@@ -70,27 +71,27 @@
     border-radius: 18px;
   }
 
-  .cardHeader {
-    padding: 14px 14px 12px;
+  .steps {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .step {
     gap: 10px;
   }
 
-  .cardTitle {
-    font-size: 19px;
+  .stepNumber {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
   }
 
-  .appIcon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .steps {
-    padding: 12px 14px;
+  .stepText {
     font-size: 16px;
   }
 
-  .stepLine + .hintWrapper,
-  .hintWrapper + .stepLine {
-    margin-top: 8px;
+  .stepImage {
+    max-width: 100%;
+    border-radius: 12px;
   }
 }

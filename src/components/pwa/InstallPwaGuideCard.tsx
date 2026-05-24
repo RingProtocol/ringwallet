@@ -9,29 +9,29 @@ const InstallPwaGuideCard: React.FC = () => {
 
   return (
     <section className={styles.card}>
-      <div className={styles.cardHeader}>
-        <img
-          src="/icons/logo.png"
-          alt="Ring Wallet"
-          width={46}
-          height={46}
-          className={styles.appIcon}
-        />
-        <div className={styles.cardTitle}>{t('installRingWallet')}</div>
-      </div>
-
       <div className={styles.steps}>
-        <div className={styles.stepLine}>{t('installStep1')}</div>
-        <div className={styles.hintWrapper}>
-          <img
-            src="/assets/pwa/instructions-pwa-install.png"
-            alt={t('installStep1')}
-            className={styles.hintImage}
-          />
+        <div className={styles.step}>
+          <div className={styles.stepNumber}>1</div>
+          <div className={styles.stepContent}>
+            <div className={styles.stepText}>{t('installStep1')}</div>
+            <img
+              src="/assets/getapp/how-to-share.png"
+              alt={t('installStep1')}
+              className={styles.stepImage}
+            />
+          </div>
         </div>
-        <div className={styles.stepLine}>
-          {t('installStep2Prefix')}
-          <span className={styles.inlineTag}>{t('installAddToHome')}</span>
+        <div className={styles.step}>
+          <div className={styles.stepNumber}>2</div>
+          <div className={styles.stepContent}>
+            <div className={styles.stepText}>{t('installStep2')}</div>
+          </div>
+        </div>
+        <div className={styles.step}>
+          <div className={styles.stepNumber}>3</div>
+          <div className={styles.stepContent}>
+            <div className={styles.stepText}>{t('installStep3')}</div>
+          </div>
         </div>
       </div>
     </section>

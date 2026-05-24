@@ -55,7 +55,7 @@ const MOCK_MARKETS: PolymarketMarket[] = [
 
 describe('polymarketService', () => {
   beforeEach(() => {
-    import.meta.env.VITE_SERVER_API_KEY = 'test-server-api-key'
+    vi.stubEnv('VITE_SERVER_API_KEY', 'test-server-api-key')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -72,7 +72,7 @@ describe('polymarketService', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
-    delete import.meta.env.VITE_SERVER_API_KEY
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
 
