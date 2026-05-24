@@ -21,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import Introduce from './Introduce'
-import InstallPwaGuideCard from './pwa/InstallPwaGuideCard'
 import './AccountDrawer.css'
 import { useI18n } from '../i18n'
 
@@ -72,7 +71,6 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
   const [featureError, setFeatureError] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
-  const [showInstallGuide, setShowInstallGuide] = useState(false)
 
   const devTapCountRef = useRef(0)
   const devTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -443,27 +441,6 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
       action: () => window.open('/privacy-policy', '_blank'),
     },
     {
-      key: 'download-wallet',
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-      ),
-      label: t('downloadWallet'),
-      action: () => setShowInstallGuide(true),
-    },
-    {
       key: 'logout',
       icon: (
         <svg
@@ -489,41 +466,6 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
   return (
     <>
-      {showInstallGuide && (
-        <div
-          className="about-overlay visible"
-          onClick={() => setShowInstallGuide(false)}
-        >
-          <div
-            className="install-pwa-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="about-header">
-              <h3>{t('downloadWallet')}</h3>
-              <button
-                className="about-close-btn"
-                onClick={() => setShowInstallGuide(false)}
-                aria-label={t('close')}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <InstallPwaGuideCard />
-          </div>
-        </div>
-      )}
-
       {showFeedback && (
         <div
           className="about-overlay visible"

@@ -104,7 +104,7 @@ export const WalletTabHeader: React.FC<
             onClick={(e) => e.stopPropagation()}
           >
             <div className="wallet-main-page__getapp-header">
-              <h3>{t('downloadWallet')}</h3>
+              <h3>{t('walletActionGetApp')}</h3>
               <button
                 type="button"
                 className="wallet-main-page__getapp-close"
