@@ -289,6 +289,9 @@ const messages = {
     acrossBridgeTitle: 'Across Bridge',
     acrossBridgeDescription: 'Cross-chain swaps via Across',
     acrossExpectedFillTime: 'Expected fill time',
+    acrossReceiveAsset: 'Receive asset',
+    acrossReceiveAssetNotice:
+      'Across will deliver {symbol} on {chain}. Add or view this token if it is not visible in assets.',
     acrossReviewTransactions: 'Transactions',
     lifiBridgeTitle: 'LI.FI Bridge',
     lifiBridgeDescription: 'Aggregated cross-chain routes',
@@ -770,6 +773,9 @@ const messages = {
     acrossBridgeTitle: 'Across 跨链',
     acrossBridgeDescription: '通过 Across 进行跨链兑换',
     acrossExpectedFillTime: '预计到账时间',
+    acrossReceiveAsset: '到账资产',
+    acrossReceiveAssetNotice:
+      'Across 会在 {chain} 到账 {symbol}。如果资产列表未显示，请添加或查看该代币。',
     acrossReviewTransactions: '交易数量',
     lifiBridgeTitle: 'LI.FI 跨链',
     lifiBridgeDescription: '聚合跨链路径',
