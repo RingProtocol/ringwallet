@@ -93,16 +93,22 @@ interface AcrossQuote {
     bridge?: {
       outputAmount?: string
       minOutputAmount?: string
-      tokenOut?: {
-        symbol?: string
-        decimals?: number
-      }
       fees?: {
         total?: string
         totalRelay?: string
       }
+      tokenIn?: QuoteTokenDetails
+      tokenOut?: QuoteTokenDetails
     }
   }
+}
+
+interface QuoteTokenDetails {
+  address?: string
+  symbol?: string
+  decimals?: number
+  name?: string
+  chainId?: number
 }
 
 const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
@@ -428,10 +434,19 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
             quote.expectedOutputAmount ??
               quote.steps?.bridge?.outputAmount ??
               '0',
-            toToken.decimals
+            getQuoteOutputToken(quote, toToken).decimals
           )
         )
       : ''
+  const quoteOutputToken =
+    quote && toToken ? getQuoteOutputToken(quote, toToken) : null
+  const displayToToken =
+    quoteOutputToken && toToken
+      ? withQuoteTokenDetails(toToken, quoteOutputToken)
+      : toToken
+  const receiveAssetChanged =
+    Boolean(quoteOutputToken && toToken) &&
+    quoteOutputToken?.symbol !== toToken?.symbol
   const minReceived =
     quote && toToken
       ? `${trimDecimals(
@@ -440,17 +455,21 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
               quote.steps?.bridge?.minOutputAmount ??
               quote.steps?.bridge?.outputAmount ??
               '0',
-            toToken.decimals
+            getQuoteOutputToken(quote, toToken).decimals
           )
-        )} ${toToken.symbol}`
+        )} ${getQuoteOutputToken(quote, toToken).symbol}`
       : null
   const fillTime = quote?.expectedFillTime
     ? formatDuration(quote.expectedFillTime)
     : null
   const totalFee = formatTokenFee(
     quote?.fees?.total ?? quote?.steps?.bridge?.fees?.totalRelay,
-    fromToken
+    quote && fromToken ? getQuoteInputToken(quote, fromToken) : fromToken
   )
+  const reviewedOutputToken =
+    reviewQuote && toToken ? getQuoteOutputToken(reviewQuote, toToken) : null
+  const reviewedInputToken =
+    reviewQuote && fromToken ? getQuoteInputToken(reviewQuote, fromToken) : null
   const reviewedOutput =
     reviewQuote && toToken
       ? trimDecimals(
@@ -458,7 +477,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
             reviewQuote.expectedOutputAmount ??
               reviewQuote.steps?.bridge?.outputAmount ??
               '0',
-            toToken.decimals
+            getQuoteOutputToken(reviewQuote, toToken).decimals
           )
         )
       : formattedQuote
@@ -470,16 +489,16 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
               reviewQuote.steps?.bridge?.minOutputAmount ??
               reviewQuote.steps?.bridge?.outputAmount ??
               '0',
-            toToken.decimals
+            getQuoteOutputToken(reviewQuote, toToken).decimals
           )
-        )} ${toToken.symbol}`
+        )} ${getQuoteOutputToken(reviewQuote, toToken).symbol}`
       : minReceived
   const reviewedFillTime = reviewQuote?.expectedFillTime
     ? formatDuration(reviewQuote.expectedFillTime)
     : fillTime
   const reviewedTotalFee = formatTokenFee(
     reviewQuote?.fees?.total ?? reviewQuote?.steps?.bridge?.fees?.totalRelay,
-    fromToken
+    reviewedInputToken ?? fromToken
   )
   const reviewedTransactionCount = reviewQuote
     ? (reviewQuote.approvalTxns?.length ?? 0) + (reviewQuote.swapTx ? 1 : 0)
@@ -594,7 +613,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
 
               <SwapField
                 side={t('swapToEstimated')}
-                token={toToken}
+                token={displayToToken}
                 amount={formattedQuote}
                 skeleton={quoteLoading && !quote}
                 readOnly
@@ -630,6 +649,14 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
                       value={fillTime}
                     />
                   )}
+                  {quoteOutputToken && (
+                    <InfoRow
+                      label={t('acrossReceiveAsset')}
+                      value={`${quoteOutputToken.symbol} on ${
+                        toChain?.name ?? toChainId
+                      }`}
+                    />
+                  )}
                   {totalFee && (
                     <InfoRow
                       label={t('swapNetworkFee')}
@@ -645,6 +672,15 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
                       last
                     />
                   )}
+                </div>
+              )}
+
+              {receiveAssetChanged && quoteOutputToken && (
+                <div className="ring-v2-panel__status">
+                  {t('acrossReceiveAssetNotice', {
+                    symbol: quoteOutputToken.symbol,
+                    chain: toChain?.name ?? toChainId,
+                  })}
                 </div>
               )}
 
@@ -703,7 +739,9 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           fromChain={fromChain?.name ?? String(fromChainId)}
           toChain={toChain?.name ?? String(toChainId)}
           fromAmount={`${amountIn} ${fromToken.symbol}`}
-          toAmount={`${reviewedOutput || '-'} ${toToken.symbol}`}
+          toAmount={`${reviewedOutput || '-'} ${
+            reviewedOutputToken?.symbol ?? toToken.symbol
+          }`}
           signerAddress={activeWallet?.address ?? '-'}
           route={reviewQuote.crossSwapType ?? 'Across'}
           transactionCount={String(reviewedTransactionCount)}
@@ -939,7 +977,43 @@ function projectTokens(
       priceUsd: token.priceUsd,
     })
   }
-  return out
+  return out.sort((a, b) => Number(b.isNative) - Number(a.isNative))
+}
+
+function getQuoteInputToken(
+  quote: AcrossQuote,
+  fallback: AcrossTokenOption
+): AcrossTokenOption {
+  return withQuoteTokenDetails(fallback, quote.steps?.bridge?.tokenIn)
+}
+
+function getQuoteOutputToken(
+  quote: AcrossQuote,
+  fallback: AcrossTokenOption
+): AcrossTokenOption {
+  return withQuoteTokenDetails(fallback, quote.steps?.bridge?.tokenOut)
+}
+
+function withQuoteTokenDetails(
+  fallback: AcrossTokenOption,
+  details?: QuoteTokenDetails | null
+): AcrossTokenOption {
+  if (!details) return fallback
+  const symbol = details.symbol ?? fallback.symbol
+  const decimals = details.decimals ?? fallback.decimals
+  const address = details.address ?? fallback.apiAddress
+  const normalized = address.toLowerCase()
+  const isNative =
+    normalized === ethers.ZeroAddress || normalized === ACROSS_NATIVE_ADDRESS
+  return {
+    ...fallback,
+    address: isNative ? NATIVE_PSEUDO_ADDRESS : address,
+    apiAddress: address,
+    symbol,
+    decimals,
+    isNative,
+    name: details.name ?? fallback.name,
+  }
 }
 
 function getBalanceKey(
