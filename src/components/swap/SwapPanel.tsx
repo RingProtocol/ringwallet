@@ -285,14 +285,25 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
         data,
         value: '0x0',
       })
-      setStatus(`Approve sent: ${shortHash(hash)}`)
-      setAllowance(ethers.MaxUint256)
+      setStatus(`Approve sent: ${shortHash(hash)} — confirming…`)
+
+      // Wait for the approval to be mined before trusting it.
+      const receipt = await provider.waitForTransaction(hash)
+      if (!receipt || receipt.status !== 1) {
+        throw new Error('Approve transaction failed on-chain')
+      }
+
+      // Re-read allowance from chain so the UI is grounded in truth.
+      const c = new ethers.Contract(fromToken.address, ERC20_ABI, provider)
+      const a = (await c.allowance(signer.address, router)) as bigint
+      setAllowance(a)
+      setStatus(`Approve confirmed: ${shortHash(hash)}`)
     } catch (e) {
       setStatus(`Approve failed: ${(e as Error).message}`)
     } finally {
       setBusy(false)
     }
-  }, [fromToken, router, signer])
+  }, [fromToken, provider, router, signer])
 
   const handleSwap = useCallback(async () => {
     if (!router || !fromToken || !toToken || !quote) return
