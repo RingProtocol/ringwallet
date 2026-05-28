@@ -26,7 +26,7 @@ const ACROSS_API_BASE = 'https://app.across.to/api'
 const ETHEREUM_MAINNET_CHAIN_ID = 1
 const BASE_MAINNET_CHAIN_ID = 8453
 const ACROSS_NATIVE_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-const DEFAULT_SLIPPAGE = '0.5'
+const DEFAULT_SLIPPAGE = '1'
 const ALCHEMY_RPC_RE = /\.g\.alchemy\.com\/v2\//i
 const WALLET_SUPPORTED_ACROSS_CHAIN_IDS = new Set(
   FEATURED_CHAIN_IDS.filter((id): id is number => typeof id === 'number')
@@ -308,7 +308,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           depositor: activeWallet.address,
           recipient: activeWallet.address,
           integratorId: acrossIntegratorId,
-          slippage: String(Number(slippage || DEFAULT_SLIPPAGE) / 100),
+          slippage: String(Number(slippage || DEFAULT_SLIPPAGE)),
         })
         const next = await acrossFetch<AcrossQuote>(
           `/swap/approval?${search.toString()}`,
