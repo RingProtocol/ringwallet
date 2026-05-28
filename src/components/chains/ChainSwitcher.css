@@ -19,6 +19,7 @@
   cursor: pointer;
   transition: background 0.15s ease;
   min-width: 0;
+  max-width: 160px;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
 }
