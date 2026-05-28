@@ -16,6 +16,7 @@ import SwapField, { keyOfToken } from './SwapField'
 import TokenPickerModal from './TokenPickerModal'
 import InfoRow from './InfoRow'
 import type { SwapEngine } from './engines/types'
+import ExplorerDialog from './ExplorerDialog'
 
 const DEFAULT_SLIPPAGE_PCT = 0.5
 const DEFAULT_DEADLINE_MIN = 20
@@ -74,6 +75,7 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
 
   const [customExtras, setCustomExtras] = useState<SwapTokenOption[]>([])
   const [pickerSide, setPickerSide] = useState<'from' | 'to' | null>(null)
+  const [explorerUrl, setExplorerUrl] = useState<string | null>(null)
 
   const allOptions = useMemo<SwapTokenOption[]>(() => {
     const out: SwapTokenOption[] = []
@@ -345,6 +347,9 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
       })
       setStatus(`Swap submitted: ${shortHash(hash)}`)
       setAmountIn('')
+      const base =
+        activeChain?.explorer?.replace(/\/$/, '') ?? 'https://etherscan.io'
+      setExplorerUrl(`${base}/tx/${hash}`)
     } catch (e) {
       setStatus(`Swap failed: ${(e as Error).message}`)
     } finally {
@@ -721,7 +726,28 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
         </button>
       </div>
 
-      {status && <div className="ring-v2-panel__status">{status}</div>}
+      {status && (
+        <div className="ring-v2-panel__status">
+          {explorerUrl ? (
+            <button
+              type="button"
+              className="ring-v2-panel__status-link"
+              onClick={() => setExplorerUrl(explorerUrl)}
+            >
+              {status}
+            </button>
+          ) : (
+            status
+          )}
+        </div>
+      )}
+
+      {explorerUrl && (
+        <ExplorerDialog
+          url={explorerUrl}
+          onClose={() => setExplorerUrl(null)}
+        />
+      )}
     </div>
   )
 }

@@ -270,6 +270,134 @@
   }
 }
 
+/* ─── Explorer iframe dialog (swap tx hash click-through) ─── */
+
+.swap-explorer-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .swap-explorer-dialog {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.swap-explorer-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.swap-explorer-dialog__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  max-height: 88dvh;
+  background: var(--ring-bg-elevated, rgba(20, 22, 28, 0.96));
+  border: 1px solid var(--ring-border-strong, rgba(255, 255, 255, 0.12));
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: swap-dialog-slide-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .swap-explorer-dialog__panel {
+    border-radius: 18px;
+    max-height: min(88vh, 720px);
+    animation: swap-dialog-scale 0.2s ease;
+  }
+}
+
+.swap-explorer-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.swap-explorer-dialog__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.swap-explorer-dialog__close {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  color: var(--ring-text-secondary, #d1d5db);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.swap-explorer-dialog__close:hover,
+.swap-explorer-dialog__close:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-primary, #f3f4f6);
+  outline: none;
+}
+
+.swap-explorer-dialog__body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.swap-explorer-dialog__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--ring-bg, #0f1117);
+  color: var(--ring-text-secondary, #888);
+  font-size: 14px;
+  z-index: 1;
+}
+
+.swap-explorer-dialog__iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
 /* ─── Ring V2 swap panel — prototype-aligned ─── */
 
 .ring-v2-panel {
@@ -789,6 +917,25 @@
   padding: 8px 10px;
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.ring-v2-panel__status-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+.ring-v2-panel__status-link:hover {
+  color: var(--ring-accent-2, #c084fc);
 }
 
 .ring-v2-panel__status--error {
