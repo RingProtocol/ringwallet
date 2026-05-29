@@ -81,7 +81,6 @@ describe('CosmosPlugin: Cosmos Hub offline derivation', () => {
       addressPrefix: 'cosmos',
     })
     expect(a1[0].address).toBe(a2[0].address)
-    expect(a1[0].privateKey).toBe(a2[0].privateKey)
   })
 
   it('derived account carries coinType and addressPrefix in meta', () => {

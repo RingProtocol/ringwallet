@@ -1,19 +1,27 @@
 import { ethers } from 'ethers'
-import { READ_ONLY_METHODS, APPROVAL_METHODS, RPC_ERRORS } from '../constants/rpcMethods'
+import {
+  READ_ONLY_METHODS,
+  APPROVAL_METHODS,
+  RPC_ERRORS,
+} from '../constants/rpcMethods'
 import type { WalletRequestMessage } from '../types/messages'
 import type { ApprovalRequest, ApprovalType } from '../types/approval'
 import { tGlobal } from '../../../i18n'
+
+import { signerBridge } from '../../../services/account/signerBridge'
 
 interface BridgeConfig {
   getActiveAddress: () => string | null
   getActiveChainId: () => number
   getActiveChainRpcUrl: () => string
-  getActivePrivateKey: () => string | null
+  getActiveIndex: () => number
   getChains: () => Array<{ id: number; name: string; rpcUrl: string[] }>
   switchChain: (chainId: number) => void
 }
 
-type ApprovalHandler = (request: Omit<ApprovalRequest, 'resolve'>) => Promise<boolean>
+type ApprovalHandler = (
+  request: Omit<ApprovalRequest, 'resolve'>
+) => Promise<boolean>
 
 export class WalletBridge {
   private iframe: HTMLIFrameElement | null = null
@@ -26,7 +34,12 @@ export class WalletBridge {
 
   constructor(private config: BridgeConfig) {}
 
-  attach(iframe: HTMLIFrameElement, dappName: string, dappIcon: string, dappUrl: string): void {
+  attach(
+    iframe: HTMLIFrameElement,
+    dappName: string,
+    dappIcon: string,
+    dappUrl: string
+  ): void {
     this.iframe = iframe
     this.dappName = dappName
     this.dappIcon = dappIcon
@@ -109,7 +122,10 @@ export class WalletBridge {
     }
   }
 
-  private async forwardToRpc(method: string, params: unknown[]): Promise<unknown> {
+  private async forwardToRpc(
+    method: string,
+    params: unknown[]
+  ): Promise<unknown> {
     const rpcUrl = this.config.getActiveChainRpcUrl()
     if (!rpcUrl) throw { code: 4900, message: 'No RPC URL for active chain' }
 
@@ -119,11 +135,15 @@ export class WalletBridge {
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
     })
     const json = await res.json()
-    if (json.error) throw { code: json.error.code || -32603, message: json.error.message }
+    if (json.error)
+      throw { code: json.error.code || -32603, message: json.error.message }
     return json.result
   }
 
-  private async handleApprovalMethod(method: string, params: unknown[]): Promise<unknown> {
+  private async handleApprovalMethod(
+    method: string,
+    params: unknown[]
+  ): Promise<unknown> {
     switch (method) {
       case 'eth_requestAccounts':
         return this.handleRequestAccounts()
@@ -144,8 +164,14 @@ export class WalletBridge {
     }
   }
 
-  private async requestApproval(type: ApprovalType, title: string, description: string, data?: unknown): Promise<boolean> {
-    if (!this.approvalHandler) throw { code: 4100, message: 'No approval handler' }
+  private async requestApproval(
+    type: ApprovalType,
+    title: string,
+    description: string,
+    data?: unknown
+  ): Promise<boolean> {
+    if (!this.approvalHandler)
+      throw { code: 4100, message: 'No approval handler' }
     return this.approvalHandler({
       id: crypto.randomUUID(),
       type,
@@ -164,7 +190,7 @@ export class WalletBridge {
     const approved = await this.requestApproval(
       'connect',
       tGlobal('connectRequestTitle'),
-      tGlobal('connectRequestDesc'),
+      tGlobal('connectRequestDesc')
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
@@ -172,7 +198,9 @@ export class WalletBridge {
     if (!address) throw RPC_ERRORS.UNAUTHORIZED
     this.connectedAccounts = [address]
 
-    this.sendEvent('connect', { chainId: '0x' + this.config.getActiveChainId().toString(16) })
+    this.sendEvent('connect', {
+      chainId: '0x' + this.config.getActiveChainId().toString(16),
+    })
     this.sendEvent('accountsChanged', this.connectedAccounts)
     return this.connectedAccounts
   }
@@ -183,29 +211,25 @@ export class WalletBridge {
       'transaction',
       tGlobal('txConfirmTitle'),
       tGlobal('txConfirmDesc'),
-      tx,
+      tx
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
-    const privateKey = this.config.getActivePrivateKey()
-    if (!privateKey) throw RPC_ERRORS.UNAUTHORIZED
-
+    const index = this.config.getActiveIndex()
     const rpcUrl = this.config.getActiveChainRpcUrl()
+
+    const rawTx = await signerBridge.signEvm({
+      index,
+      to: tx.to ?? '',
+      amount: tx.value ? ethers.formatEther(BigInt(tx.value)) : '0',
+      chainId: this.config.getActiveChainId(),
+      rpcUrl,
+      data: tx.data || undefined,
+      gasLimit: tx.gas ? BigInt(tx.gas).toString() : undefined,
+    })
     const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const wallet = new ethers.Wallet(privateKey, provider)
-
-    const txReq: ethers.TransactionRequest = {
-      to: tx.to,
-      data: tx.data || '0x',
-      value: tx.value ? BigInt(tx.value) : 0n,
-    }
-    if (tx.gas) txReq.gasLimit = BigInt(tx.gas)
-    if (tx.gasPrice) txReq.gasPrice = BigInt(tx.gasPrice)
-    if (tx.maxFeePerGas) txReq.maxFeePerGas = BigInt(tx.maxFeePerGas)
-    if (tx.maxPriorityFeePerGas) txReq.maxPriorityFeePerGas = BigInt(tx.maxPriorityFeePerGas)
-
-    const response = await wallet.sendTransaction(txReq)
-    return response.hash
+    const resp = await provider.broadcastTransaction(rawTx)
+    return resp.hash
   }
 
   private async handlePersonalSign(params: unknown[]): Promise<string> {
@@ -214,43 +238,32 @@ export class WalletBridge {
       'sign',
       tGlobal('signRequestTitle'),
       tGlobal('signRequestDesc'),
-      { message, address },
+      { message, address }
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
-    const privateKey = this.config.getActivePrivateKey()
-    if (!privateKey) throw RPC_ERRORS.UNAUTHORIZED
-
-    const wallet = new ethers.Wallet(privateKey)
-    const msgBytes = ethers.isHexString(message) ? ethers.getBytes(message) : message
-    return wallet.signMessage(typeof msgBytes === 'string' ? msgBytes : msgBytes)
+    // personal_sign not yet supported with Worker signer
+    throw { code: -32601, message: 'personal_sign not supported' }
   }
 
   private async handleSignTypedData(params: unknown[]): Promise<string> {
-    const [address, typedDataRaw] = params as [string, string | Record<string, unknown>]
-    const typedData = typeof typedDataRaw === 'string' ? JSON.parse(typedDataRaw) : typedDataRaw
+    const [address, typedDataRaw] = params as [
+      string,
+      string | Record<string, unknown>,
+    ]
+    const typedData =
+      typeof typedDataRaw === 'string' ? JSON.parse(typedDataRaw) : typedDataRaw
 
     const approved = await this.requestApproval(
       'sign_typed',
       tGlobal('typedDataSignTitle'),
       tGlobal('typedDataSignDesc'),
-      { address, typedData },
+      { address, typedData }
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
-    const privateKey = this.config.getActivePrivateKey()
-    if (!privateKey) throw RPC_ERRORS.UNAUTHORIZED
-
-    const wallet = new ethers.Wallet(privateKey)
-    const { domain, types, message } = typedData as {
-      domain: Record<string, unknown>
-      types: Record<string, Array<{ name: string; type: string }>>
-      message: Record<string, unknown>
-      primaryType: string
-    }
-    const filteredTypes = { ...types }
-    delete filteredTypes['EIP712Domain']
-    return wallet.signTypedData(domain, filteredTypes, message)
+    // eth_signTypedData not yet supported with Worker signer
+    throw { code: -32601, message: 'eth_signTypedData not supported' }
   }
 
   private async handleSwitchChain(params: unknown[]): Promise<null> {
@@ -258,14 +271,14 @@ export class WalletBridge {
     const numericChainId = parseInt(chainId, 16)
 
     const chains = this.config.getChains()
-    const found = chains.find(c => c.id === numericChainId)
+    const found = chains.find((c) => c.id === numericChainId)
     if (!found) throw RPC_ERRORS.CHAIN_NOT_ADDED
 
     const approved = await this.requestApproval(
       'switch_chain',
       tGlobal('switchNetworkTitle'),
       tGlobal('switchNetworkDesc', { chainName: found.name }),
-      { chainId, chainName: found.name },
+      { chainId, chainName: found.name }
     )
     if (!approved) throw RPC_ERRORS.USER_REJECTED
 
@@ -278,7 +291,11 @@ export class WalletBridge {
     this.iframe?.contentWindow?.postMessage(data, '*')
   }
 
-  private sendResponse(id: number, result?: unknown, error?: { code: number; message: string }): void {
+  private sendResponse(
+    id: number,
+    result?: unknown,
+    error?: { code: number; message: string }
+  ): void {
     this.sendToIframe({
       type: 'ring_wallet_response',
       id,

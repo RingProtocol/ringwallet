@@ -1,10 +1,16 @@
 import { ethers } from 'ethers'
 import { ChainFamily } from '../../../models/ChainType'
-import type { ChainPlugin, DerivedAccount, SignRequest, SignResult } from '../types'
+import type {
+  ChainPlugin,
+  DerivedAccount,
+  SignRequest,
+  SignResult,
+} from '../types'
 import { chainRegistry } from '../registry'
 
 const TRON_ADDRESS_PREFIX = 0x41
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+const BASE58_ALPHABET =
+  '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 function encodeBase58(data: Uint8Array): string {
   const digits = [0]
@@ -85,7 +91,10 @@ function isValidBase58Check(address: string): boolean {
 }
 
 function publicKeyToTronAddress(compressedPubKey: string): string {
-  const uncompressed = ethers.SigningKey.computePublicKey(compressedPubKey, false)
+  const uncompressed = ethers.SigningKey.computePublicKey(
+    compressedPubKey,
+    false
+  )
   const pubBytes = ethers.getBytes(uncompressed)
   const hash = ethers.keccak256(pubBytes.slice(1))
   const addressBytes = ethers.getBytes(hash).slice(12)
@@ -103,7 +112,10 @@ export function tronAddressToHex(tronAddress: string): string {
   const decoded = decodeBase58(tronAddress)
   // 21 bytes payload (0x41 + 20-byte address) + 4 bytes checksum = 25 bytes
   const addressBytes = decoded.slice(1, 21)
-  return '0x' + Array.from(addressBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+  return (
+    '0x' +
+    Array.from(addressBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+  )
 }
 
 class TronChainPlugin implements ChainPlugin {
@@ -127,7 +139,6 @@ class TronChainPlugin implements ChainPlugin {
       accounts.push({
         index: i,
         address,
-        privateKey: child.privateKey,
         path,
       })
     }
@@ -140,13 +151,23 @@ class TronChainPlugin implements ChainPlugin {
     return isValidBase58Check(address)
   }
 
-  async signTransaction(_privateKey: string, _req: SignRequest): Promise<SignResult> {
+  async signTransaction(
+    _privateKey: string,
+    _req: SignRequest
+  ): Promise<SignResult> {
+    void _privateKey
+    void _req
     // Tron transaction signing requires TronWeb or manual protobuf encoding.
     // Deferred to future implementation — the plugin framework is in place.
     throw new Error('[TronPlugin] signTransaction not yet implemented')
   }
 
-  async broadcastTransaction(_signed: SignResult, _rpcUrl: string): Promise<string> {
+  async broadcastTransaction(
+    _signed: SignResult,
+    _rpcUrl: string
+  ): Promise<string> {
+    void _signed
+    void _rpcUrl
     throw new Error('[TronPlugin] broadcastTransaction not yet implemented')
   }
 }

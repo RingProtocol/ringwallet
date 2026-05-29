@@ -20,13 +20,14 @@ import { ChainFamily, type Chain } from '../models/ChainType'
 import { DEFAULT_CHAINS } from '../config/chains'
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/safeStorage'
 import PasskeyService from '../services/account/passkeyService'
+import { signerBridge } from '../services/account/signerBridge'
+import { secureZero } from '../utils/memoryCrypto'
 
 export type { ChainFamily, Chain }
 
 export interface Wallet {
   index: number
   address: string
-  privateKey: string | null
   type: WalletType
   credentialId?: string
   path?: string
@@ -48,7 +49,7 @@ interface AuthContextValue {
   activeWallet: Wallet | null
   activeWalletIndex: number
   switchWallet: (index: number) => void
-  addWallet: (options?: { activateNew?: boolean }) => boolean
+  addWallet: (options?: { activateNew?: boolean }) => Promise<boolean>
   login: (userData: UserData) => Promise<void>
   logout: () => void
   CHAINS: Chain[]
@@ -99,7 +100,6 @@ function derivedAccountToWallet(account: DerivedAccount): Wallet {
   return {
     index: account.index,
     address: account.address,
-    privateKey: account.privateKey,
     type: WalletType.EOA,
     path: account.path,
   }
@@ -181,10 +181,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     if (userData.masterSeed) {
       try {
-        const seed =
-          userData.masterSeed instanceof Uint8Array
-            ? userData.masterSeed
-            : new Uint8Array(userData.masterSeed)
+        const seed = new Uint8Array(userData.masterSeed)
         const savedCount = safeGetItem(WALLET_COUNT_KEY)
         const parsedCount = savedCount !== null ? parseInt(savedCount, 10) : NaN
         const walletCount =
@@ -195,6 +192,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             : DEFAULT_DERIVED_WALLET_COUNT
 
         deriveAllFromSeed(seed, walletCount)
+        await signerBridge.init(seed)
+        secureZero(seed)
         const savedIndex = safeGetItem('active_wallet_index')
         const parsedIndex = savedIndex !== null ? parseInt(savedIndex, 10) : NaN
         const nextWalletIndex =
@@ -218,6 +217,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setActiveWalletIndex(0)
     safeRemoveItem('wallet_login_state')
     PasskeyService.clearVerifyCache()
+    signerBridge.clear().catch(() => {})
   }
 
   const switchWallet = (index: number) => {
@@ -229,7 +229,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   const addWallet = useCallback(
-    (options?: { activateNew?: boolean }): boolean => {
+    async (options?: { activateNew?: boolean }): Promise<boolean> => {
       const activateNew = options?.activateNew ?? true
       if (!user?.masterSeed) return false
 
@@ -239,16 +239,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       try {
-        const seed =
-          user.masterSeed instanceof Uint8Array
-            ? user.masterSeed
-            : new Uint8Array(user.masterSeed)
+        const seed = new Uint8Array(user.masterSeed)
         const nextCount = Math.max(
           currentCount + 1,
           DEFAULT_DERIVED_WALLET_COUNT
         )
 
         deriveAllFromSeed(seed, nextCount)
+        await signerBridge.init(seed)
+        secureZero(seed)
         if (activateNew) {
           const nextIndex = nextCount - 1
           setActiveWalletIndex(nextIndex)

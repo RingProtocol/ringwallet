@@ -32,7 +32,7 @@ const DAppContainerPage: React.FC<Props> = ({ dapp, onBack }) => {
         getActiveAddress: () => activeWallet?.address || null,
         getActiveChainId: () => Number(activeChainId),
         getActiveChainRpcUrl: () => getPrimaryRpcUrl(activeChain),
-        getActivePrivateKey: () => activeWallet?.privateKey || null,
+        getActiveIndex: () => activeWallet?.index ?? 0,
         getChains: () =>
           CHAINS.filter((c) => typeof c.id === 'number').map((c) => ({
             id: c.id as number,

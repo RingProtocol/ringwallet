@@ -99,8 +99,6 @@ function isValidAddress(
 export interface DerivedBitcoinWallet {
   index: number
   address: string
-  /** Hex-encoded 32-byte secp256k1 private key. In-memory only — never persisted. */
-  privateKey: string
   publicKey: string
   type: WalletType
   path: string
@@ -154,15 +152,10 @@ export class BitcoinKeyService {
     isTestnet = false
   ): DerivedBitcoinWallet[] {
     return Array.from({ length: count }, (_, i) => {
-      const { privateKey, publicKey, address } = deriveAccountNode(
-        masterSeed,
-        isTestnet,
-        i
-      )
+      const { publicKey, address } = deriveAccountNode(masterSeed, isTestnet, i)
       return {
         index: i,
         address,
-        privateKey: ethers.hexlify(privateKey),
         publicKey: ethers.hexlify(publicKey),
         type: WalletType.EOA,
         path: derivationPath(i, isTestnet),
@@ -192,15 +185,10 @@ class BitcoinChainPlugin implements ChainPlugin {
     const isTestnet = options?.isTestnet === true
 
     return Array.from({ length: count }, (_, i) => {
-      const { privateKey, publicKey, address } = deriveAccountNode(
-        masterSeed,
-        isTestnet,
-        i
-      )
+      const { publicKey, address } = deriveAccountNode(masterSeed, isTestnet, i)
       return {
         index: i,
         address,
-        privateKey: ethers.hexlify(privateKey),
         path: derivationPath(i, isTestnet),
         meta: {
           publicKey: ethers.hexlify(publicKey),

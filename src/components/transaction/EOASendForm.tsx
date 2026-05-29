@@ -6,6 +6,7 @@ import {
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import { getTokensForNetwork } from '../../models/ChainTokens'
 import EvmWalletService from '../../services/chainplugins/evm/evmPlugin'
+import { signerBridge } from '../../services/account/signerBridge'
 import PasskeyService from '../../services/account/passkeyService'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
@@ -147,14 +148,14 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
         }
       }
 
-      const tx = await EvmWalletService.signTransaction(
-        activeWallet.privateKey!,
-        toAddress,
+      const tx = await signerBridge.signEvm({
+        index: activeWallet.index,
+        to: toAddress,
         amount,
-        Number(activeChainId),
-        getPrimaryRpcUrl(activeChain),
-        tokenOpts
-      )
+        chainId: Number(activeChainId),
+        rpcUrl: getPrimaryRpcUrl(activeChain),
+        tokenOpts,
+      })
       setSignedTx(tx)
     } catch (e) {
       console.error(e)

@@ -54,8 +54,6 @@ function isValidAddress(address: string): boolean {
 export interface DerivedSolanaWallet {
   index: number
   address: string
-  /** Hex-encoded 32-byte Ed25519 seed. In-memory only — never persisted. */
-  privateKey: string
   type: WalletType
   path: string
 }
@@ -82,8 +80,6 @@ export class SolanaKeyService {
       return {
         index: i,
         address: keypair.publicKey.toBase58(),
-        // Keypair.secretKey is 64 bytes (seed || publicKey); only the first 32 are the seed.
-        privateKey: ethers.hexlify(keypair.secretKey.slice(0, 32)),
         type: WalletType.EOA,
         path: solanaDerivationPath(i),
       }
@@ -106,7 +102,6 @@ class SolanaChainPlugin implements ChainPlugin {
       return {
         index: i,
         address: keypair.publicKey.toBase58(),
-        privateKey: ethers.hexlify(keypair.secretKey.slice(0, 32)),
         path: solanaDerivationPath(i),
       }
     })
@@ -152,11 +147,11 @@ class SolanaChainPlugin implements ChainPlugin {
     return { rawTx: signature, txHash: signature }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async broadcastTransaction(
     _signed: SignResult,
     _rpcUrl: string
   ): Promise<string> {
+    void _rpcUrl
     return _signed.txHash ?? _signed.rawTx
   }
 }

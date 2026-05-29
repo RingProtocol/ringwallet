@@ -2,7 +2,12 @@ import { BIP32Factory } from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { ethers } from 'ethers'
 import { ChainFamily } from '../../../models/ChainType'
-import type { ChainPlugin, DerivedAccount, SignRequest, SignResult } from '../types'
+import type {
+  ChainPlugin,
+  DerivedAccount,
+  SignRequest,
+  SignResult,
+} from '../types'
 import { chainRegistry } from '../registry'
 
 const bip32 = BIP32Factory(ecc)
@@ -40,7 +45,12 @@ function bech32CreateChecksum(hrp: string, data: number[]): number[] {
   return checksum
 }
 
-function convertBits(data: Uint8Array, fromBits: number, toBits: number, pad: boolean): number[] {
+function convertBits(
+  data: Uint8Array,
+  fromBits: number,
+  toBits: number,
+  pad: boolean
+): number[] {
   let acc = 0
   let bits = 0
   const result: number[] = []
@@ -110,10 +120,12 @@ class CosmosChainPlugin implements ChainPlugin {
   deriveAccounts(
     masterSeed: Uint8Array,
     count: number,
-    options?: Record<string, unknown>,
+    options?: Record<string, unknown>
   ): DerivedAccount[] {
     if (!masterSeed || masterSeed.length < 16) {
-      throw new Error('[CosmosPlugin] Invalid masterSeed: must be at least 16 bytes')
+      throw new Error(
+        '[CosmosPlugin] Invalid masterSeed: must be at least 16 bytes'
+      )
     }
 
     const coinType = (options?.coinType as number) ?? DEFAULT_COIN_TYPE
@@ -124,7 +136,6 @@ class CosmosChainPlugin implements ChainPlugin {
     for (let i = 0; i < count; i++) {
       const path = derivationPath(i, coinType)
       const child = root.derivePath(path)
-      if (!child.privateKey) throw new Error('Missing private key')
 
       const compressedPubKey = child.publicKey
       const sha = ethers.getBytes(ethers.sha256(compressedPubKey))
@@ -134,7 +145,6 @@ class CosmosChainPlugin implements ChainPlugin {
       accounts.push({
         index: i,
         address,
-        privateKey: ethers.hexlify(Buffer.from(child.privateKey)),
         path,
         meta: {
           publicKey: ethers.hexlify(Buffer.from(compressedPubKey)),
@@ -157,11 +167,21 @@ class CosmosChainPlugin implements ChainPlugin {
     }
   }
 
-  async signTransaction(_privateKey: string, _req: SignRequest): Promise<SignResult> {
+  async signTransaction(
+    _privateKey: string,
+    _req: SignRequest
+  ): Promise<SignResult> {
+    void _privateKey
+    void _req
     throw new Error('[CosmosPlugin] signTransaction not yet implemented')
   }
 
-  async broadcastTransaction(_signed: SignResult, _rpcUrl: string): Promise<string> {
+  async broadcastTransaction(
+    _signed: SignResult,
+    _rpcUrl: string
+  ): Promise<string> {
+    void _signed
+    void _rpcUrl
     throw new Error('[CosmosPlugin] broadcastTransaction not yet implemented')
   }
 }

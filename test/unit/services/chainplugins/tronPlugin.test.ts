@@ -36,7 +36,6 @@ describe('TronPlugin — deriveAccounts', () => {
     const second = plugin.deriveAccounts(KNOWN_SEED, 3)
     for (let i = 0; i < 3; i++) {
       expect(first[i].address).toBe(second[i].address)
-      expect(first[i].privateKey).toBe(second[i].privateKey)
     }
   })
 
@@ -54,9 +53,9 @@ describe('TronPlugin — deriveAccounts', () => {
     })
   })
 
-  it('privateKey is a 0x-prefixed 32-byte hex string', () => {
+  it('address is a valid Tron base58 string', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 1)
-    expect(accounts[0].privateKey).toMatch(/^0x[0-9a-f]{64}$/)
+    expect(accounts[0].address).toMatch(/^T[0-9a-zA-Z]{33}$/)
   })
 
   it('Tron address is NOT the same as EVM address for same seed', () => {

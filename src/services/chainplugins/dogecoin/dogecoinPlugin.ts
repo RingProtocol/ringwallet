@@ -90,7 +90,6 @@ class DogecoinChainPlugin implements ChainPlugin {
 
     return Array.from({ length: count }, (_, i) => {
       const child = deriveNode(masterSeed, isTestnet, i)
-      if (!child.privateKey) throw new Error('Missing private key')
 
       const { address } = bitcoin.payments.p2pkh({
         pubkey: child.publicKey,
@@ -101,7 +100,6 @@ class DogecoinChainPlugin implements ChainPlugin {
       return {
         index: i,
         address,
-        privateKey: ethers.hexlify(Buffer.from(child.privateKey)),
         path: derivationPath(i, isTestnet),
         meta: {
           publicKey: ethers.hexlify(Buffer.from(child.publicKey)),

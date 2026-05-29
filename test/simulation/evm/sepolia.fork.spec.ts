@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { ethers } from 'ethers'
+import { deriveEvmPrivateKey } from './lib/keys'
 import { chainRegistry } from '@/services/chainplugins/registry'
 import type { SignRequest } from '@/services/chainplugins/types'
 import '@/services/chainplugins/evm/evmPlugin'
@@ -275,7 +276,10 @@ describe(`testchain: ${profile.id} (${profile.displayName})`, () => {
         rpcUrl,
         chainConfig,
       }
-      const signed = await plugin!.signTransaction(derived.privateKey, req)
+      const signed = await plugin!.signTransaction(
+        deriveEvmPrivateKey(FORK_MASTER_SEED, derived.path),
+        req
+      )
       expect(signed.rawTx.startsWith('0x')).toBe(true)
       const txHash = await plugin!.broadcastTransaction(signed, rpcUrl)
       const receipt = await expectTxMined(
@@ -301,7 +305,7 @@ describe(`testchain: ${profile.id} (${profile.displayName})`, () => {
       expect(fundReceipt?.status).toBe(1)
 
       const signed = await EvmWalletService.signTransaction(
-        derived.privateKey,
+        deriveEvmPrivateKey(FORK_MASTER_SEED, derived.path),
         derived.address,
         '0.00005',
         profile.chainId,

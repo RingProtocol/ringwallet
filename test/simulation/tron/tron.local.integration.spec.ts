@@ -84,8 +84,12 @@ describe.skipIf(process.env.SKIP_TRON_LOCAL === '1')(
       const accounts = plugin!.deriveAccounts(KNOWN_MASTER_SEED, 1)
       const hex = tronAddressToHex(accounts[0].address)
       expect(hex).toMatch(/^0x[a-fA-F0-9]{40}$/)
-      // Verify hex matches the EVM address derived from the same private key
-      const evmAddr = ethers.computeAddress(accounts[0].privateKey)
+      // Verify hex matches the EVM address derived from the same path
+      const evmRoot = ethers.HDNodeWallet.fromSeed(
+        ethers.hexlify(KNOWN_MASTER_SEED)
+      )
+      const evmChild = evmRoot.derivePath(accounts[0].path)
+      const evmAddr = evmChild.address
       expect(hex.toLowerCase()).toBe(evmAddr.toLowerCase())
     })
 
@@ -111,7 +115,11 @@ describe.skipIf(process.env.SKIP_TRON_LOCAL === '1')(
 
       // Transfer 2 TRX from sender to receiver using derived private key
       const sendAmount = ethers.parseEther('2')
-      const senderWallet = new ethers.Wallet(senderTron.privateKey, provider)
+      const evmRoot = ethers.HDNodeWallet.fromSeed(
+        ethers.hexlify(KNOWN_MASTER_SEED)
+      )
+      const senderPrivKey = evmRoot.derivePath(senderTron.path).privateKey
+      const senderWallet = new ethers.Wallet(senderPrivKey, provider)
       const tx = await senderWallet.sendTransaction({
         to: receiverHex,
         value: sendAmount,

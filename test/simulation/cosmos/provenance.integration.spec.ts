@@ -89,7 +89,6 @@ describe('CosmosPlugin: Provenance mainnet offline derivation', () => {
     })
     // Different coinType → different key → different address payload
     expect(prov[0].address).not.toBe(cosmos[0].address)
-    expect(prov[0].privateKey).not.toBe(cosmos[0].privateKey)
   })
 
   it('derived account carries coinType 505 and addressPrefix pb in meta', () => {

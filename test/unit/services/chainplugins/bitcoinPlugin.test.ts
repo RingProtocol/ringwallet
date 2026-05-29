@@ -35,7 +35,6 @@ describe('BitcoinPlugin — deriveAccounts', () => {
     const second = plugin.deriveAccounts(KNOWN_SEED, 3)
     for (let i = 0; i < 3; i++) {
       expect(first[i].address).toBe(second[i].address)
-      expect(first[i].privateKey).toBe(second[i].privateKey)
     }
   })
 
@@ -53,9 +52,9 @@ describe('BitcoinPlugin — deriveAccounts', () => {
     })
   })
 
-  it('privateKey is a 0x-prefixed 32-byte hex string', () => {
+  it('address is a valid bc1q Bitcoin address', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 1)
-    expect(accounts[0].privateKey).toMatch(/^0x[0-9a-f]{64}$/)
+    expect(accounts[0].address).toMatch(/^bc1q/)
   })
 
   it('meta contains publicKey and isTestnet flag', () => {

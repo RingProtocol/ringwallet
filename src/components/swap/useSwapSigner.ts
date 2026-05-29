@@ -3,10 +3,12 @@ import { ethers } from 'ethers'
 import type { SwapSigner } from '@ring-protocol/ring-swap-sdk'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
+import { signerBridge } from '../../services/account/signerBridge'
 
 /**
  * Constructs a SwapSigner from the current wallet context.
- * Keys stay in memory -- the signer signs locally via ethers.Wallet.
+ * Signing is delegated to the isolated Worker — privateKey never
+ * enters the main thread.
  */
 export function useSwapSigner(): {
   signer: SwapSigner | null
@@ -19,28 +21,32 @@ export function useSwapSigner(): {
   const chainId = Number(activeChainId)
 
   const signer = useMemo<SwapSigner | null>(() => {
-    if (!activeWallet?.address || !activeWallet.privateKey) return null
+    if (!activeWallet?.address) return null
 
     const address = activeWallet.address
-    const privateKey = activeWallet.privateKey
+    const index = activeWallet.index
     const currentRpcUrl = rpcUrl
 
     return {
       address,
       chainId,
       async sendTransaction(tx) {
-        const provider = new ethers.JsonRpcProvider(currentRpcUrl)
-        const wallet = new ethers.Wallet(privateKey, provider)
-        const resp = await wallet.sendTransaction({
+        const rawTx = await signerBridge.signEvm({
+          index,
           to: tx.to,
+          amount: '0',
+          chainId,
+          rpcUrl: currentRpcUrl,
           data: tx.data,
-          value: tx.value,
           gasLimit: tx.gasLimit,
         })
+        // Broadcast the signed tx
+        const provider = new ethers.JsonRpcProvider(currentRpcUrl)
+        const resp = await provider.broadcastTransaction(rawTx)
         return resp.hash
       },
     }
-  }, [activeWallet?.address, activeWallet?.privateKey, rpcUrl, chainId])
+  }, [activeWallet?.address, activeWallet?.index, rpcUrl, chainId])
 
   return { signer, chainId, rpcUrl }
 }

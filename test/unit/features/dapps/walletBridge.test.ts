@@ -22,9 +22,7 @@ function makeMockConfig() {
     getActiveAddress: vi.fn(() => '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'),
     getActiveChainId: vi.fn(() => 1),
     getActiveChainRpcUrl: vi.fn(() => 'https://rpc.example.test'),
-    getActivePrivateKey: vi.fn(
-      () => '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-    ),
+    getActiveIndex: vi.fn(() => 0),
     getChains: vi.fn(() => [
       { id: 1, name: 'Ethereum', rpcUrl: ['https://rpc.example.test'] },
       { id: 11155111, name: 'Sepolia', rpcUrl: ['https://sepolia.rpc'] },

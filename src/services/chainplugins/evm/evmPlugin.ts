@@ -419,7 +419,6 @@ class EvmChainPlugin implements ChainPlugin {
       accounts.push({
         index: i,
         address: child.address,
-        privateKey: child.privateKey,
         path,
       })
     }
