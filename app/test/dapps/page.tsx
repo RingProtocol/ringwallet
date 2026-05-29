@@ -27,7 +27,6 @@ const MOCK_CHAINS: Chain[] = [
 const MOCK_WALLET: Wallet = {
   index: 0,
   address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-  privateKey: null,
   type: WalletType.EOA,
 }
 
@@ -45,7 +44,7 @@ const mockAuth = {
   activeWallet: MOCK_WALLET,
   activeWalletIndex: 0,
   switchWallet: () => {},
-  addWallet: () => true,
+  addWallet: async () => true,
   login: async () => {},
   logout: () => {},
   CHAINS: MOCK_CHAINS,

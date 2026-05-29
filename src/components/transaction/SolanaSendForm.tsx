@@ -3,9 +3,11 @@ import { chainToAccountAssetsNetwork } from '../../config/chains'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
 import { getTokensForNetwork } from '../../models/ChainTokens'
+import { PublicKey } from '@solana/web3.js'
 import PasskeyService from '../../services/account/passkeyService'
-import { SolanaService } from '../../services/rpc/solanaService'
+import { signerBridge } from '../../services/account/signerBridge'
 import { SolanaKeyService } from '../../services/chainplugins/solana/solanaPlugin'
+import { SolanaService } from '../../services/rpc/solanaService'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult, { type TxDisplayRow } from './SignedTxResult'
 import SendConfirmPreview from './SendConfirmPreview'
@@ -126,15 +128,9 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose, onBack }) => {
     if (isNaN(amountNum) || amountNum <= 0) return
 
     try {
-      const keypair = SolanaKeyService.keypairFromStoredKey(
-        activeSolanaWallet.privateKey!
-      )
+      const fromPubkey = new PublicKey(activeSolanaWallet.address)
       const service = new SolanaService(getPrimaryRpcUrl(activeChain))
-      const fee = await service.estimateFee(
-        keypair.publicKey,
-        toAddress,
-        amountNum
-      )
+      const fee = await service.estimateFee(fromPubkey, toAddress, amountNum)
       setEstimatedFee(fee.toFixed(6))
     } catch {
       setEstimatedFee(null)
@@ -164,16 +160,17 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose, onBack }) => {
         }
       }
 
-      const keypair = SolanaKeyService.keypairFromStoredKey(
-        activeSolanaWallet.privateKey!
-      )
-      const service = new SolanaService(getPrimaryRpcUrl(activeChain))
-      const result = await service.buildAndSignSOL(
-        keypair,
-        toAddress,
-        amountNum
-      )
-      setSignedTx(result)
+      const result = await signerBridge.signSolana({
+        index: activeSolanaWallet.index,
+        to: toAddress,
+        amount: amountNum,
+        rpcUrl: getPrimaryRpcUrl(activeChain),
+      })
+      setSignedTx({
+        serializedTx: Buffer.from(result.serializedTx),
+        blockhash: result.blockhash,
+        lastValidBlockHeight: result.lastValidBlockHeight,
+      })
     } catch (e) {
       console.error(e)
       setError((e as Error).message)

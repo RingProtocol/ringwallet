@@ -12,6 +12,7 @@ import {
 } from '../../models/ChainType'
 import { useI18n } from '../../i18n'
 import { ERC20_ABI, NATIVE_PSEUDO_ADDRESS } from '../swap/ringV2Constants'
+import { signAndBroadcastEvm } from '../../utils/evmSignAndBroadcast'
 import type { SwapTokenOption } from '../swap/useRingV2Tokens'
 import TokenPickerModal from '../swap/TokenPickerModal'
 import SwapField, { keyOfToken } from '../swap/SwapField'
@@ -331,12 +332,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   }, [fromToken])
 
   const handleSubmit = useCallback(async () => {
-    if (
-      !activeWallet?.privateKey ||
-      !activeWallet.address ||
-      !quote ||
-      rpcUrls.length === 0
-    ) {
+    if (!activeWallet?.address || !quote || rpcUrls.length === 0) {
       return
     }
     const tx = quote.transactionRequest
@@ -344,13 +340,12 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
       setStatus(t('lifiMissingTransaction'))
       return
     }
-    const privateKey = activeWallet.privateKey
     const senderAddress = activeWallet.address
+    const walletIndex = activeWallet.index
     setReviewOpen(false)
     setBusy(true)
     try {
       const sentHash = await withJsonRpcProvider(rpcUrls, async (provider) => {
-        const wallet = new ethers.Wallet(privateKey, provider)
         await assertSufficientNativeBalance({
           provider,
           tx,
@@ -365,7 +360,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
           const tokenContract = new ethers.Contract(
             fromToken.address,
             ERC20_ABI,
-            wallet
+            provider
           )
           const allowance = (await tokenContract.allowance(
             senderAddress,
@@ -374,17 +369,31 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
           if (allowance < requiredAmount) {
             setStatusTone('neutral')
             setStatus(t('lifiApproving', { symbol: fromToken.symbol }))
-            const approval = await tokenContract.approve(
-              quote.estimate.approvalAddress,
-              ethers.MaxUint256
+            const iface = new ethers.Interface(ERC20_ABI)
+            const approvalHash = await signAndBroadcastEvm(
+              walletIndex,
+              Number(fromChain?.id ?? 1),
+              rpcUrls[0],
+              {
+                to: fromToken.address,
+                data: iface.encodeFunctionData('approve', [
+                  quote.estimate.approvalAddress,
+                  ethers.MaxUint256,
+                ]),
+              }
             )
-            await approval.wait()
+            await provider.waitForTransaction(approvalHash)
           }
         }
         setStatusTone('neutral')
         setStatus(t('lifiSubmitting'))
-        const sent = await wallet.sendTransaction(toEthersTx(tx))
-        return sent.hash
+        const txHash = await signAndBroadcastEvm(
+          walletIndex,
+          Number(fromChain?.id ?? 1),
+          rpcUrls[0],
+          toEthersTx(tx)
+        )
+        return txHash
       })
       setStatusTone('neutral')
       setStatus(t('lifiSubmitted', { hash: shortHash(sentHash) }))
@@ -398,7 +407,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
     }
   }, [
     activeWallet?.address,
-    activeWallet?.privateKey,
+    activeWallet?.index,
     fromChain?.symbol,
     fromToken,
     quote,
@@ -433,7 +442,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
             ? (quoteError ?? t('swapNoRoute'))
             : t('lifiReviewBridge')
   const disabled =
-    busy || !quote || requiredAmount <= 0n || !activeWallet?.privateKey
+    busy || !quote || requiredAmount <= 0n || !activeWallet?.address
 
   return (
     <div

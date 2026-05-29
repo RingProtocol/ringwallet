@@ -10,6 +10,7 @@ import {
 import { useI18n } from '../../i18n'
 import { ERC20_ABI, NATIVE_PSEUDO_ADDRESS } from '../swap/ringV2Constants'
 import type { SwapTokenOption } from '../swap/useRingV2Tokens'
+import { signAndBroadcastEvm } from '../../utils/evmSignAndBroadcast'
 import TokenPickerModal from '../swap/TokenPickerModal'
 import SwapField, { keyOfToken } from '../swap/SwapField'
 import InfoRow from '../swap/InfoRow'
@@ -369,29 +370,29 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
 
   const handleSubmit = useCallback(async () => {
     if (submittingRef.current || !reviewOpen || !reviewQuote) return
-    if (
-      !activeWallet?.privateKey ||
-      !activeWallet.address ||
-      !reviewQuote.swapTx ||
-      rpcUrls.length === 0
-    ) {
+    if (!activeWallet?.address || !reviewQuote.swapTx || rpcUrls.length === 0) {
       return
     }
     submittingRef.current = true
     const swapTx = reviewQuote.swapTx
-    const privateKey = activeWallet.privateKey
     const senderAddress = activeWallet.address
+    const walletIndex = activeWallet.index
     setReviewOpen(false)
     setReviewQuote(null)
     setBusy(true)
     try {
       const sentHash = await withJsonRpcProvider(rpcUrls, async (provider) => {
-        const wallet = new ethers.Wallet(privateKey, provider)
         for (const approval of reviewQuote.approvalTxns ?? []) {
           setStatusTone('neutral')
           setStatus(t('lifiApproving', { symbol: fromToken?.symbol ?? '' }))
-          const tx = await wallet.sendTransaction(toEthersTx(approval))
-          await tx.wait()
+          const ethersTx = toEthersTx(approval)
+          const txHash = await signAndBroadcastEvm(
+            walletIndex,
+            Number(fromChain?.id ?? 1),
+            rpcUrls[0],
+            ethersTx
+          )
+          await provider.waitForTransaction(txHash)
         }
         await assertSufficientNativeBalance({
           provider,
@@ -401,8 +402,14 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
         })
         setStatusTone('neutral')
         setStatus(t('lifiSubmitting'))
-        const sent = await wallet.sendTransaction(toEthersTx(swapTx))
-        return sent.hash
+        const ethersTx = toEthersTx(swapTx)
+        const txHash = await signAndBroadcastEvm(
+          walletIndex,
+          Number(fromChain?.id ?? 1),
+          rpcUrls[0],
+          ethersTx
+        )
+        return txHash
       })
       setStatusTone('neutral')
       setStatus(t('lifiSubmitted', { hash: shortHash(sentHash) }))
@@ -417,7 +424,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
     }
   }, [
     activeWallet?.address,
-    activeWallet?.privateKey,
+    activeWallet?.index,
     fromChain?.symbol,
     fromToken?.symbol,
     refreshBalance,
@@ -515,7 +522,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
             ? (quoteError ?? t('swapNoRoute'))
             : t('lifiReviewBridge')
   const disabled =
-    busy || !quote || requiredAmount <= 0n || !activeWallet?.privateKey
+    busy || !quote || requiredAmount <= 0n || !activeWallet?.address
 
   return (
     <div

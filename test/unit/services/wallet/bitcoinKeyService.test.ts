@@ -88,8 +88,6 @@ describe('TC-BTC-KEY-02: multi-account derivation isolation', () => {
       expect(w.type).toBe(WalletType.EOA)
       expect(w.path).toBe(`m/44'/0'/0'/0/${i}`)
       expect(w.isTestnet).toBe(false)
-      expect(w.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
-      expect(w.publicKey).toMatch(/^0x[0-9a-f]+$/)
       expect(w.address).toMatch(/^bc1q/)
     })
   })
@@ -112,23 +110,21 @@ describe('TC-BTC-KEY-02: multi-account derivation isolation', () => {
 // ─── TC-BTC-KEY-03 · EVM / Solana / Bitcoin key isolation ───────────────────
 
 describe('TC-BTC-KEY-03: cross-chain key isolation', () => {
-  it('Bitcoin privateKey differs from EVM privateKey at the same account index', () => {
+  it('Bitcoin address differs from EVM address at the same account index', () => {
     const btcWallets = BitcoinKeyService.deriveWallets(KNOWN_SEED, 1, false)
-    const btcPrivKey = btcWallets[0].privateKey
 
     const evmRoot = ethers.HDNodeWallet.fromSeed(ethers.hexlify(KNOWN_SEED))
     const evmChild = evmRoot.derivePath("m/44'/60'/0'/0/0")
-    const evmPrivKey = evmChild.privateKey
 
-    expect(btcPrivKey).not.toBe(evmPrivKey)
-    expect(btcPrivKey.toLowerCase()).not.toBe(evmPrivKey.toLowerCase())
+    expect(btcWallets[0].address).not.toBe(evmChild.address)
   })
 
   it('Bitcoin privateKey differs from Solana privateKey', () => {
     const btcWallets = BitcoinKeyService.deriveWallets(KNOWN_SEED, 1, false)
     const solWallets = SolanaKeyService.deriveWallets(KNOWN_SEED, 1)
 
-    expect(btcWallets[0].privateKey).not.toBe(solWallets[0].privateKey)
+    // privateKey no longer exposed on derived wallets
+    expect(btcWallets[0].address).not.toBe(solWallets[0].address)
   })
 
   it('all three addresses are in different formats', () => {

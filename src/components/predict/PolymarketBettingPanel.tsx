@@ -5,6 +5,7 @@ import { usePolymarketBetting } from '../../hooks/usePolymarketBetting'
 import { useI18n } from '../../i18n'
 import { POLYMARKET_CHAIN_ID } from '../../services/polymarket/constants'
 import PasskeyService from '../../services/account/passkeyService'
+import { WorkerEvmSigner } from '../../utils/workerEvmSigner'
 import './PolymarketBettingPanel.css'
 
 interface Props {
@@ -45,7 +46,7 @@ const PolymarketBettingPanel: React.FC<Props> = ({
   }
 
   const handleConfirm = async () => {
-    if (!activeWallet?.privateKey || selectedOutcome === null) return
+    if (!activeWallet?.address || selectedOutcome === null) return
     setAuthError(null)
 
     // Require biometric (Face ID / fingerprint) re-authentication before
@@ -62,7 +63,13 @@ const PolymarketBettingPanel: React.FC<Props> = ({
       ? activeChain.rpcUrl[0]
       : activeChain?.rpcUrl
     const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const signer = new ethers.Wallet(activeWallet.privateKey, provider)
+    const signer = new WorkerEvmSigner(
+      activeWallet.address,
+      activeWallet.index,
+      Number(activeChain?.id ?? 1),
+      rpcUrl ?? '',
+      provider
+    )
     await placeBuyOrder({
       slug,
       outcomeIndex: selectedOutcome,

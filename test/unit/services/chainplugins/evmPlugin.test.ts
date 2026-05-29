@@ -35,7 +35,6 @@ describe('EvmPlugin — deriveAccounts', () => {
     const second = plugin.deriveAccounts(KNOWN_SEED, 3)
     for (let i = 0; i < 3; i++) {
       expect(first[i].address).toBe(second[i].address)
-      expect(first[i].privateKey).toBe(second[i].privateKey)
     }
   })
 
@@ -53,9 +52,9 @@ describe('EvmPlugin — deriveAccounts', () => {
     })
   })
 
-  it('privateKey is a 0x-prefixed 32-byte hex string', () => {
+  it('address is a valid EVM address', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 1)
-    expect(accounts[0].privateKey).toMatch(/^0x[0-9a-f]{64}$/)
+    expect(accounts[0].address).toMatch(/^0x[0-9a-fA-F]{40}$/)
   })
 
   it('returns empty array for invalid seed', () => {

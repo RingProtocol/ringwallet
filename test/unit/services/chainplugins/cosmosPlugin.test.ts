@@ -35,7 +35,6 @@ describe('CosmosPlugin — deriveAccounts (default coin type 118)', () => {
     const second = plugin.deriveAccounts(KNOWN_SEED, 3)
     for (let i = 0; i < 3; i++) {
       expect(first[i].address).toBe(second[i].address)
-      expect(first[i].privateKey).toBe(second[i].privateKey)
     }
   })
 
@@ -53,9 +52,9 @@ describe('CosmosPlugin — deriveAccounts (default coin type 118)', () => {
     })
   })
 
-  it('privateKey is a 0x-prefixed 32-byte hex string', () => {
+  it('address is a valid bech32 cosmos address', () => {
     const accounts = plugin.deriveAccounts(KNOWN_SEED, 1)
-    expect(accounts[0].privateKey).toMatch(/^0x[0-9a-f]{64}$/)
+    expect(accounts[0].address).toMatch(/^[a-z0-9]{3,}1[a-z0-9]{38,}$/)
   })
 
   it('meta contains publicKey, coinType, and addressPrefix', () => {

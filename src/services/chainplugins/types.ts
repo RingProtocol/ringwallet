@@ -5,12 +5,11 @@ export { ChainFamily }
 /**
  * Unified account derived from masterSeed.
  * All chain plugins return this same shape.
+ * privateKey is intentionally absent — signing happens inside the isolated Worker.
  */
 export interface DerivedAccount {
   index: number
   address: string
-  /** Hex-encoded key material (typically 32 bytes). In-memory only — never persisted to server. */
-  privateKey: string
   /** BIP derivation path, e.g. "m/44'/60'/0'/0/0" */
   path: string
   /** Chain-specific extras (e.g. Bitcoin publicKey, testnet flag). */
@@ -43,7 +42,11 @@ export interface ChainPlugin {
   readonly family: ChainFamily
 
   /** Derive N accounts from a 32-byte masterSeed. Options are chain-family-specific. */
-  deriveAccounts(masterSeed: Uint8Array, count: number, options?: Record<string, unknown>): DerivedAccount[]
+  deriveAccounts(
+    masterSeed: Uint8Array,
+    count: number,
+    options?: Record<string, unknown>
+  ): DerivedAccount[]
 
   /** Check whether an address string is valid for this chain. */
   isValidAddress(address: string): boolean

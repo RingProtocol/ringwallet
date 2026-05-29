@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
+import { ethers } from 'ethers'
 import { chainRegistry } from '@/services/chainplugins/registry'
 import { ChainFamily, type Chain } from '@/models/ChainType'
 import type { SignRequest } from '@/services/chainplugins/types'
@@ -100,7 +101,11 @@ describe.skipIf(skipMultichainIntegration)(
         rpcUrl: trongridBase,
         chainConfig: tronChainForRpcBase(trongridBase),
       }
-      await expect(plugin.signTransaction(a0.privateKey, req)).rejects.toThrow(
+      const evmRoot = ethers.HDNodeWallet.fromSeed(
+        ethers.hexlify(KNOWN_MASTER_SEED)
+      )
+      const a0PrivKey = evmRoot.derivePath(a0.path).privateKey
+      await expect(plugin.signTransaction(a0PrivKey, req)).rejects.toThrow(
         /not yet implemented/i
       )
     })

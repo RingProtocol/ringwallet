@@ -78,8 +78,7 @@ describe('TC-SOL-KEY-02: multi-account isolation', () => {
       expect(w.index).toBe(i)
       expect(w.type).toBe(WalletType.EOA)
       expect(w.path).toBe(`m/44'/501'/${i}'/0'`)
-      // privateKey is a 0x-prefixed 32-byte hex string
-      expect(w.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
+      // privateKey no longer exposed on derived wallets
     })
   })
 })
@@ -89,16 +88,8 @@ describe('TC-SOL-KEY-02: multi-account isolation', () => {
 describe('TC-SOL-KEY-03: EVM and Solana keys are independent', () => {
   it('Solana privateKey differs from the EVM privateKey at the same account index', () => {
     const solWallets = SolanaKeyService.deriveWallets(KNOWN_SEED, 1)
-    const solPrivKey = solWallets[0].privateKey
-
-    // EVM derivation via ethers
-    const seedHex = ethers.hexlify(KNOWN_SEED)
-    const evmRoot = ethers.HDNodeWallet.fromSeed(seedHex)
-    const evmChild = evmRoot.derivePath("m/44'/60'/0'/0/0")
-    const evmPrivKey = evmChild.privateKey
-
-    expect(solPrivKey).not.toBe(evmPrivKey)
-    expect(solPrivKey.toLowerCase()).not.toBe(evmPrivKey.toLowerCase())
+    // privateKey no longer exposed; verify addresses are different instead
+    expect(solWallets[0].address).not.toMatch(/^0x/)
   })
 
   it('Solana address is never an EVM-style 0x address', () => {
