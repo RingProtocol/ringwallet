@@ -65,7 +65,9 @@ export function useSendForm(initialToken?: SendTokenOption) {
     if (selectedToken.type === 'erc20') {
       const found = tokenOptions.some(
         (o) =>
-          o.type === 'erc20' && o.token.address === selectedToken.token.address
+          o.type === 'erc20' &&
+          o.token.address.toLowerCase() ===
+            selectedToken.token.address.toLowerCase()
       )
       if (!found)
         setSelectedToken({
