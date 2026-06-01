@@ -6,6 +6,7 @@ import { getTokensForNetwork } from '../../models/ChainTokens'
 import { PublicKey } from '@solana/web3.js'
 import PasskeyService from '../../services/account/passkeyService'
 import { signerBridge } from '../../services/account/signerBridge'
+import { secureZero } from '../../utils/memoryCrypto'
 import { SolanaKeyService } from '../../services/chainplugins/solana/solanaPlugin'
 import { SolanaService } from '../../services/rpc/solanaService'
 import SendFormLayout from './SendFormLayout'
@@ -160,12 +161,37 @@ const SolanaSendForm: React.FC<SolanaSendFormProps> = ({ onClose, onBack }) => {
         }
       }
 
-      const result = await signerBridge.signSolana({
-        index: activeSolanaWallet.index,
-        to: toAddress,
-        amount: amountNum,
-        rpcUrl: getPrimaryRpcUrl(activeChain),
-      })
+      let result: {
+        serializedTx: number[]
+        blockhash: string
+        lastValidBlockHeight: number
+      }
+      try {
+        result = await signerBridge.signSolana({
+          index: activeSolanaWallet.index,
+          to: toAddress,
+          amount: amountNum,
+          rpcUrl: getPrimaryRpcUrl(activeChain),
+        })
+      } catch (err) {
+        const msg = (err as Error).message
+        if (
+          msg.toLowerCase().includes('seed not initialized') &&
+          user?.masterSeed
+        ) {
+          const seed = new Uint8Array(user.masterSeed)
+          await signerBridge.init(seed)
+          secureZero(seed)
+          result = await signerBridge.signSolana({
+            index: activeSolanaWallet.index,
+            to: toAddress,
+            amount: amountNum,
+            rpcUrl: getPrimaryRpcUrl(activeChain),
+          })
+        } else {
+          throw err
+        }
+      }
       setSignedTx({
         serializedTx: Buffer.from(result.serializedTx),
         blockhash: result.blockhash,

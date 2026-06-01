@@ -51,6 +51,7 @@ class SignerBridge {
     }
     this.worker.onerror = (err) => {
       console.error('SignerWorker error:', err)
+      this.worker = null
     }
     return this.worker
   }
