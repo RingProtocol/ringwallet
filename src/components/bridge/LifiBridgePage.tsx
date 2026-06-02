@@ -57,7 +57,7 @@ interface LifiTokenOption extends SwapTokenOption {
 
 const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
   const { t } = useI18n()
-  const { activeWallet, CHAINS } = useAuth()
+  const { activeWallet, CHAINS, user } = useAuth()
   const [lifiSupportedChainIds, setLifiSupportedChainIds] = useState<
     Set<number>
   >(() => new Set([ETHEREUM_MAINNET_CHAIN_ID, BASE_MAINNET_CHAIN_ID]))
@@ -380,7 +380,8 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                   quote.estimate.approvalAddress,
                   ethers.MaxUint256,
                 ]),
-              }
+              },
+              user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
             )
             await provider.waitForTransaction(approvalHash)
           }
@@ -391,7 +392,8 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
           walletIndex,
           Number(fromChain?.id ?? 1),
           rpcUrls[0],
-          toEthersTx(tx)
+          toEthersTx(tx),
+          user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
         )
         return txHash
       })

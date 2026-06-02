@@ -114,7 +114,7 @@ interface QuoteTokenDetails {
 
 const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
   const { t } = useI18n()
-  const { activeWallet, CHAINS } = useAuth()
+  const { activeWallet, CHAINS, user } = useAuth()
   const acrossApiKey = import.meta.env.VITE_ACROSS_API_KEY?.trim()
   const acrossIntegratorId =
     import.meta.env.VITE_ACROSS_INTEGRATOR_ID?.trim() || '0xdead'
@@ -390,7 +390,8 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
             walletIndex,
             Number(fromChain?.id ?? 1),
             rpcUrls[0],
-            ethersTx
+            ethersTx,
+            user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
           )
           await provider.waitForTransaction(txHash)
         }
@@ -407,7 +408,8 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           walletIndex,
           Number(fromChain?.id ?? 1),
           rpcUrls[0],
-          ethersTx
+          ethersTx,
+          user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
         )
         return txHash
       })
