@@ -24,11 +24,12 @@ export interface EvmTxParams {
 export async function signAndBroadcastEvm(
   index: number,
   chainId: number,
-  rpcUrl: string,
+  provider: ethers.JsonRpcProvider,
   tx: EvmTxParams,
   seed?: Uint8Array
 ): Promise<string> {
   if (!tx.to) throw new Error('Transaction "to" address is required')
+  const rpcUrl = provider._getConnection().url
   let rawTx: string
   try {
     rawTx = await signerBridge.signEvm({
@@ -59,7 +60,6 @@ export async function signAndBroadcastEvm(
       throw err
     }
   }
-  const provider = new ethers.JsonRpcProvider(rpcUrl)
   const resp = await provider.broadcastTransaction(rawTx)
   return resp.hash
 }

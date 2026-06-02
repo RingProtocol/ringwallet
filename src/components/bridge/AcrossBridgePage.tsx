@@ -398,7 +398,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           const txHash = await signAndBroadcastEvm(
             walletIndex,
             Number(fromChain?.id ?? 1),
-            rpcUrls[0],
+            provider,
             ethersTx,
             user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
           )
@@ -416,7 +416,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
         const txHash = await signAndBroadcastEvm(
           walletIndex,
           Number(fromChain?.id ?? 1),
-          rpcUrls[0],
+          provider,
           ethersTx,
           user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
         )
@@ -1081,7 +1081,7 @@ function getClientSafeRpcUrls(chain?: Pick<Chain, 'rpcUrl'> | null): string[] {
     const aAlchemy = ALCHEMY_RPC_RE.test(a)
     const bAlchemy = ALCHEMY_RPC_RE.test(b)
     if (aAlchemy === bAlchemy) return 0
-    return aAlchemy ? 1 : -1
+    return aAlchemy ? -1 : 1
   })
 }
 
