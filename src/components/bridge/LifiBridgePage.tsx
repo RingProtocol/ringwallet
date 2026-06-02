@@ -13,6 +13,7 @@ import {
 import { useI18n } from '../../i18n'
 import { ERC20_ABI, NATIVE_PSEUDO_ADDRESS } from '../swap/ringV2Constants'
 import { signAndBroadcastEvm } from '../../utils/evmSignAndBroadcast'
+import PasskeyService from '../../services/account/passkeyService'
 import type { SwapTokenOption } from '../swap/useRingV2Tokens'
 import TokenPickerModal from '../swap/TokenPickerModal'
 import SwapField, { keyOfToken } from '../swap/SwapField'
@@ -339,6 +340,14 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
     if (!tx?.to) {
       setStatus(t('lifiMissingTransaction'))
       return
+    }
+    if (user?.id) {
+      const verified = await PasskeyService.verifyIdentity(user.id)
+      if (!verified) {
+        setStatusTone('error')
+        setStatus(t('txCanceledBiometricFailed'))
+        return
+      }
     }
     const senderAddress = activeWallet.address
     const walletIndex = activeWallet.index

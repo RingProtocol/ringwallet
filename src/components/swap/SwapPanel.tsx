@@ -12,6 +12,7 @@ import { useRingV2TokenList } from './useRingV2TokenList'
 import { useRingV2Tokens, type SwapTokenOption } from './useRingV2Tokens'
 import { useAuth } from '../../contexts/AuthContext'
 import { useI18n } from '../../i18n'
+import PasskeyService from '../../services/account/passkeyService'
 import SwapField, { keyOfToken } from './SwapField'
 import TokenPickerModal from './TokenPickerModal'
 import InfoRow from './InfoRow'
@@ -36,7 +37,7 @@ interface Props {
  */
 const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
   const { t } = useI18n()
-  const { activeChain } = useAuth()
+  const { activeChain, user } = useAuth()
   const router = engine.getRouter(chainId)
 
   const provider = useMemo(() => new ethers.JsonRpcProvider(rpcUrl), [rpcUrl])
@@ -273,6 +274,13 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
 
   const handleApprove = useCallback(async () => {
     if (!router || !fromToken || fromToken.isNative) return
+    if (user?.id) {
+      const verified = await PasskeyService.verifyIdentity(user.id)
+      if (!verified) {
+        setStatus(t('txCanceledBiometricFailed'))
+        return
+      }
+    }
     setBusy(true)
     setStatus('Sending approve…')
     try {
@@ -305,10 +313,17 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
     } finally {
       setBusy(false)
     }
-  }, [fromToken, provider, router, signer])
+  }, [fromToken, provider, router, signer, t, user])
 
   const handleSwap = useCallback(async () => {
     if (!router || !fromToken || !toToken || !quote) return
+    if (user?.id) {
+      const verified = await PasskeyService.verifyIdentity(user.id)
+      if (!verified) {
+        setStatus(t('txCanceledBiometricFailed'))
+        return
+      }
+    }
     setBusy(true)
     setStatus('Building tx…')
     try {
@@ -368,6 +383,8 @@ const SwapPanel: React.FC<Props> = ({ engine, signer, chainId, rpcUrl }) => {
     signer,
     slippageBps,
     toToken,
+    t,
+    user,
   ])
 
   const importAddress = useCallback(

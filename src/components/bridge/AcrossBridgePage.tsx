@@ -11,6 +11,7 @@ import { useI18n } from '../../i18n'
 import { ERC20_ABI, NATIVE_PSEUDO_ADDRESS } from '../swap/ringV2Constants'
 import type { SwapTokenOption } from '../swap/useRingV2Tokens'
 import { signAndBroadcastEvm } from '../../utils/evmSignAndBroadcast'
+import PasskeyService from '../../services/account/passkeyService'
 import TokenPickerModal from '../swap/TokenPickerModal'
 import SwapField, { keyOfToken } from '../swap/SwapField'
 import InfoRow from '../swap/InfoRow'
@@ -372,6 +373,14 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
     if (submittingRef.current || !reviewOpen || !reviewQuote) return
     if (!activeWallet?.address || !reviewQuote.swapTx || rpcUrls.length === 0) {
       return
+    }
+    if (user?.id) {
+      const verified = await PasskeyService.verifyIdentity(user.id)
+      if (!verified) {
+        setStatusTone('error')
+        setStatus(t('txCanceledBiometricFailed'))
+        return
+      }
     }
     submittingRef.current = true
     const swapTx = reviewQuote.swapTx
