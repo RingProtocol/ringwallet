@@ -309,7 +309,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           depositor: activeWallet.address,
           recipient: activeWallet.address,
           integratorId: acrossIntegratorId,
-          slippage: String(Number(slippage || DEFAULT_SLIPPAGE)),
+          slippage: 'auto',
         })
         const next = await acrossFetch<AcrossQuote>(
           `/swap/approval?${search.toString()}`,

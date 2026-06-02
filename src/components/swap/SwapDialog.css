@@ -911,7 +911,7 @@
 .ring-v2-panel__status {
   font-size: 12px;
   color: var(--ring-text-secondary, #d1d5db);
-  word-break: break-all;
+  overflow-wrap: break-word;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
   padding: 8px 10px;
@@ -931,7 +931,7 @@
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
-  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .ring-v2-panel__status-link:hover {

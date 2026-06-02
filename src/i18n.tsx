@@ -291,7 +291,7 @@ const messages = {
     acrossExpectedFillTime: 'Expected fill time',
     acrossReceiveAsset: 'Receive asset',
     acrossReceiveAssetNotice:
-      'Across will deliver {symbol} on {chain}. Add or view this token if it is not visible in assets.',
+      'Across will deliver {symbol} on {chain}. Add or view the token if it is not visible in assets.',
     acrossReviewTransactions: 'Transactions',
     lifiBridgeTitle: 'LI.FI Bridge',
     lifiBridgeDescription: 'Aggregated cross-chain routes',
