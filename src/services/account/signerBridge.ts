@@ -31,7 +31,10 @@ interface WorkerResponse {
 
 class SignerBridge {
   private worker: Worker | null = null
-  private pending = new Map<string, (res: WorkerResponse) => void>()
+  private pending = new Map<
+    string,
+    { resolve: (res: WorkerResponse) => void; reject: (err: Error) => void }
+  >()
   private idCounter = 0
 
   /** Lazily instantiate the Worker on first use. */
@@ -43,14 +46,19 @@ class SignerBridge {
     )
     this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const res = event.data
-      const resolve = this.pending.get(res.id)
-      if (resolve) {
+      const handler = this.pending.get(res.id)
+      if (handler) {
         this.pending.delete(res.id)
-        resolve(res)
+        handler.resolve(res)
       }
     }
     this.worker.onerror = (err) => {
       console.error('SignerWorker error:', err)
+      // Reject all pending promises immediately so callers don't hang
+      for (const [, handler] of this.pending) {
+        handler.reject(new Error('SignerWorker crashed'))
+      }
+      this.pending.clear()
       this.worker = null
     }
     return this.worker
@@ -62,15 +70,21 @@ class SignerBridge {
       const timeout = setTimeout(() => {
         this.pending.delete(id)
         reject(new Error(`SignerWorker timeout: ${type}`))
-      }, 120000)
+      }, 10000)
 
-      this.pending.set(id, (res) => {
-        clearTimeout(timeout)
-        if (res.type === 'error') {
-          reject(new Error(res.error || 'Worker error'))
-        } else {
-          resolve(res.result as T)
-        }
+      this.pending.set(id, {
+        resolve: (res) => {
+          clearTimeout(timeout)
+          if (res.type === 'error') {
+            reject(new Error(res.error || 'Worker error'))
+          } else {
+            resolve(res.result as T)
+          }
+        },
+        reject: (err: Error) => {
+          clearTimeout(timeout)
+          reject(err)
+        },
       })
 
       this.getWorker().postMessage({ id, type, payload } as WorkerRequest)

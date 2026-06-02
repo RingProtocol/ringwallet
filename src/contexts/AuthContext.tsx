@@ -176,6 +176,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (userData: UserData) => {
     userData.accountType = WalletType.EOA
 
+    setIsLoggedIn(true)
+    setUser(userData)
+    safeRemoveItem('wallet_login_state')
+
     if (userData.masterSeed) {
       try {
         const seed = new Uint8Array(userData.masterSeed)
@@ -202,14 +206,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setActiveWalletIndex(nextWalletIndex)
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
-        safeRemoveItem('wallet_login_state')
-        return
       }
     }
-
-    setIsLoggedIn(true)
-    setUser(userData)
-    safeRemoveItem('wallet_login_state')
   }
 
   const logout = () => {
