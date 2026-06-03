@@ -1009,7 +1009,20 @@ function getQuoteOutputToken(
   quote: AcrossQuote,
   fallback: AcrossTokenOption
 ): AcrossTokenOption {
-  return withQuoteTokenDetails(fallback, quote.steps?.bridge?.tokenOut)
+  // For cross-chain swaps (e.g. BRIDGEABLE_TO_ANY), the bridge step's
+  // tokenOut is only the intermediate hop token (e.g. WETH), not the final
+  // output the user receives. Only override the token for pure bridge routes
+  // (BRIDGEABLE_TO_BRIDGE / no crossSwapType) where the received asset may
+  // genuinely differ from what the user selected.
+  const type = quote.crossSwapType?.toLowerCase()
+  if (
+    !type ||
+    type === 'bridgeable_to_bridge' ||
+    type === 'bridgeabletobridge'
+  ) {
+    return withQuoteTokenDetails(fallback, quote.steps?.bridge?.tokenOut)
+  }
+  return fallback
 }
 
 function withQuoteTokenDetails(
