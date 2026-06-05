@@ -315,6 +315,9 @@
 
 .send-form__body {
   padding-bottom: 170px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .send-picker__header {

@@ -68,6 +68,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   } = useSwapSigner()
   const [swapOpen, setSwapOpen] = useState(false)
   const [sendOpen, setSendOpen] = useState(false)
+  const [sendFormKey, setSendFormKey] = useState(0)
   const [showReceive, setShowReceive] = useState(false)
   const [hideDialogOpen, setHideDialogOpen] = useState(false)
   const [displayToken, setDisplayToken] = useState(token)
@@ -193,6 +194,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
         },
       })
     }
+    setSendFormKey((k) => k + 1)
     setSendOpen(true)
   }, [displayToken, isNative, symbol])
 
@@ -213,19 +215,32 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
   const renderSendForm = () => {
     if (isBitcoinChain)
       return (
-        <BitcoinSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+        <BitcoinSendForm
+          key={sendFormKey}
+          onClose={handleCloseSend}
+          onBack={handleCloseSend}
+        />
       )
     if (isDogecoinChain)
       return (
-        <DogecoinSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+        <DogecoinSendForm
+          key={sendFormKey}
+          onClose={handleCloseSend}
+          onBack={handleCloseSend}
+        />
       )
     if (isSolanaChain)
       return (
-        <SolanaSendForm onClose={handleCloseSend} onBack={handleCloseSend} />
+        <SolanaSendForm
+          key={sendFormKey}
+          onClose={handleCloseSend}
+          onBack={handleCloseSend}
+        />
       )
     if (isSmartAccount)
       return (
         <SmartAccountSendForm
+          key={sendFormKey}
           onClose={handleCloseSend}
           onBack={handleCloseSend}
           initialToken={sendTokenOption}
@@ -233,6 +248,7 @@ const TokenDetailPage: React.FC<TokenDetailPageProps> = ({
       )
     return (
       <EOASendForm
+        key={sendFormKey}
         onClose={handleCloseSend}
         onBack={handleCloseSend}
         initialToken={sendTokenOption}

@@ -177,6 +177,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   } = useSwapSigner()
   const [showSend, setShowSend] = useState(false)
   const [sendStage, setSendStage] = useState<'select' | 'form'>('select')
+  const [sendFormKey, setSendFormKey] = useState(0)
   const [showReceive, setShowReceive] = useState(false)
   const [swapDappOpen, setSwapDappOpen] = useState(false)
   const [showEarn, setShowEarn] = useState(false)
@@ -210,6 +211,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (initialToken) {
       setSendToken(initialToken)
       setSendStage('form')
+      setSendFormKey((k) => k + 1)
       setShowSend(true)
     }
   }, [initialToken])
@@ -258,6 +260,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (isBitcoinChain)
       return (
         <BitcoinSendForm
+          key={sendFormKey}
           onClose={handleCloseSend}
           onBack={() => setSendStage('select')}
         />
@@ -265,6 +268,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (isDogecoinChain)
       return (
         <DogecoinSendForm
+          key={sendFormKey}
           onClose={handleCloseSend}
           onBack={() => setSendStage('select')}
         />
@@ -272,6 +276,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (isSolanaChain)
       return (
         <SolanaSendForm
+          key={sendFormKey}
           onClose={handleCloseSend}
           onBack={() => setSendStage('select')}
         />
@@ -279,6 +284,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     if (isSmartAccount)
       return (
         <SmartAccountSendForm
+          key={sendFormKey}
           onClose={handleCloseSend}
           onBack={() => setSendStage('select')}
           initialToken={sendToken}
@@ -286,6 +292,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
       )
     return (
       <EOASendForm
+        key={sendFormKey}
         onClose={handleCloseSend}
         onBack={() => setSendStage('select')}
         initialToken={sendToken}
@@ -366,6 +373,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           label={t('send')}
           onClick={() => {
             setSendStage('select')
+            setSendFormKey((k) => k + 1)
             setShowSend(true)
           }}
           testId={TESTID.SEND_BUTTON}
