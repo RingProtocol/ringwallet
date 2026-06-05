@@ -8,7 +8,6 @@ import React, {
   type ReactNode,
 } from 'react'
 import {
-  chainRegistry,
   BITCOIN_TESTNET_ACCOUNTS_KEY,
   DOGECOIN_TESTNET_ACCOUNTS_KEY,
   cosmosAccountsKey,
@@ -37,7 +36,10 @@ export interface UserData {
   id: string
   name: string
   loginTime: string
-  masterSeed?: Uint8Array | number[]
+  /** Raw seed — only present transiently during login. After Worker init, set to undefined. */
+  ringsecurity_masterSeed?: Uint8Array | null
+  /** True when the Worker has been initialized with the seed. */
+  ringsecurity_seedReady?: boolean
   publicKey?: Map<number, Uint8Array> | Record<string | number, unknown> | null
   accountType: WalletType
 }
@@ -120,6 +122,62 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const WALLET_COUNT_KEY = 'derived_wallet_count'
   const CUSTOM_CHAINS_KEY = 'custom_chains'
 
+  /**
+   * Derive all chain-family accounts via the Worker.
+   * The Worker must already be initialized with the seed.
+   */
+  async function deriveAllViaWorker(
+    count: number
+  ): Promise<Record<string, DerivedAccount[]>> {
+    const result: Record<string, DerivedAccount[]> = {}
+
+    // Derive all families in parallel
+    const [
+      evmAccounts,
+      prismaAccounts,
+      solanaAccounts,
+      bitcoinAccounts,
+      bitcoinTestnetAccounts,
+      dogecoinAccounts,
+      dogecoinTestnetAccounts,
+      tronAccounts,
+      ...cosmosResults
+    ] = await Promise.all([
+      signerBridge.deriveAddresses(ChainFamily.EVM, count),
+      signerBridge.deriveAddresses(ChainFamily.Prisma, count),
+      signerBridge.deriveAddresses(ChainFamily.Solana, count),
+      signerBridge.deriveAddresses(ChainFamily.Bitcoin, count),
+      signerBridge.deriveAddresses(ChainFamily.Bitcoin, count, {
+        isTestnet: true,
+      }),
+      signerBridge.deriveAddresses(ChainFamily.Dogecoin, count),
+      signerBridge.deriveAddresses(ChainFamily.Dogecoin, count, {
+        isTestnet: true,
+      }),
+      signerBridge.deriveAddresses(ChainFamily.Tron, count),
+      ...COSMOS_CHAIN_VARIANTS.map((variant) =>
+        signerBridge.deriveAddresses(ChainFamily.Cosmos, count, {
+          coinType: variant.coinType,
+          addressPrefix: variant.addressPrefix,
+        })
+      ),
+    ])
+
+    result[ChainFamily.EVM] = evmAccounts
+    result[ChainFamily.Prisma] = prismaAccounts
+    result[ChainFamily.Solana] = solanaAccounts
+    result[ChainFamily.Bitcoin] = bitcoinAccounts
+    result[BITCOIN_TESTNET_ACCOUNTS_KEY] = bitcoinTestnetAccounts
+    result[ChainFamily.Dogecoin] = dogecoinAccounts
+    result[DOGECOIN_TESTNET_ACCOUNTS_KEY] = dogecoinTestnetAccounts
+    result[ChainFamily.Tron] = tronAccounts
+    COSMOS_CHAIN_VARIANTS.forEach((variant, i) => {
+      result[cosmosAccountsKey(variant.key)] = cosmosResults[i]
+    })
+
+    return result
+  }
+
   const [customChains, setCustomChains] = useState<Chain[]>(() => {
     try {
       const raw = safeGetItem(CUSTOM_CHAINS_KEY)
@@ -136,11 +194,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   )
 
   const [activeChainId, setActiveChainId] = useState<number | string>(1)
-
-  function deriveAllFromSeed(seed: Uint8Array, count: number) {
-    const all = chainRegistry.deriveAllAccounts(seed, count)
-    setAccountsByFamily(all)
-  }
 
   useEffect(() => {
     const savedChainId = safeGetItem('active_chain_id')
@@ -177,12 +230,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     userData.accountType = WalletType.EOA
 
     setIsLoggedIn(true)
-    setUser(userData)
     safeRemoveItem('wallet_login_state')
 
-    if (userData.masterSeed) {
+    if (userData.ringsecurity_masterSeed) {
       try {
-        const seed = new Uint8Array(userData.masterSeed)
+        const seed =
+          userData.ringsecurity_masterSeed instanceof Uint8Array
+            ? userData.ringsecurity_masterSeed
+            : new Uint8Array(userData.ringsecurity_masterSeed as number[])
+
         const savedCount = safeGetItem(WALLET_COUNT_KEY)
         const parsedCount = savedCount !== null ? parseInt(savedCount, 10) : NaN
         const walletCount =
@@ -192,9 +248,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             ? parsedCount
             : DEFAULT_DERIVED_WALLET_COUNT
 
-        deriveAllFromSeed(seed, walletCount)
+        // Send seed to Worker and immediately zero on main thread
         await signerBridge.init(seed)
         secureZero(seed)
+
+        // Seed is now ONLY in Worker — remove from UserData
+        userData.ringsecurity_masterSeed = undefined
+        userData.ringsecurity_seedReady = true
+        setUser(userData)
+
+        const all = await deriveAllViaWorker(walletCount)
+        setAccountsByFamily(all)
         const savedIndex = safeGetItem('active_wallet_index')
         const parsedIndex = savedIndex !== null ? parseInt(savedIndex, 10) : NaN
         const nextWalletIndex =
@@ -206,7 +270,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setActiveWalletIndex(nextWalletIndex)
       } catch (e) {
         console.error('Failed to derive wallets during login:', e)
+        setUser(userData)
       }
+    } else {
+      setUser(userData)
     }
   }
 
@@ -231,7 +298,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const addWallet = useCallback(
     async (options?: { activateNew?: boolean }): Promise<boolean> => {
       const activateNew = options?.activateNew ?? true
-      if (!user?.masterSeed) return false
+      if (!user?.ringsecurity_seedReady) return false
 
       const currentCount = (accountsByFamily[ChainFamily.EVM] ?? []).length
       if (currentCount >= MAX_DERIVED_WALLET_COUNT) {
@@ -239,15 +306,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       try {
-        const seed = new Uint8Array(user.masterSeed)
         const nextCount = Math.max(
           currentCount + 1,
           DEFAULT_DERIVED_WALLET_COUNT
         )
 
-        deriveAllFromSeed(seed, nextCount)
-        await signerBridge.init(seed)
-        secureZero(seed)
+        // Derive via Worker (Worker already has the seed)
+        const all = await deriveAllViaWorker(nextCount)
+        setAccountsByFamily(all)
         if (activateNew) {
           const nextIndex = nextCount - 1
           setActiveWalletIndex(nextIndex)

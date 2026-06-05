@@ -34,7 +34,7 @@ interface RegisterResult {
     rawId: number[]
     type: string
     publicKey: Map<number, unknown> | null
-    masterSeed: Uint8Array
+    ringsecurity_masterSeed: Uint8Array
   }
   error?: string
 }
@@ -46,7 +46,7 @@ interface LoginResult {
     rawId: number[]
     type: string
     userHandle: string | null
-    masterSeed: Uint8Array | null
+    ringsecurity_masterSeed: Uint8Array | null
     publicKey: Map<number, Uint8Array> | null
   }
   error?: string
@@ -435,16 +435,16 @@ class PasskeyService {
       crypto.getRandomValues(challenge)
 
       DbgLog.log('existingSeed:', existingSeed)
-      let masterSeed: Uint8Array
+      let ringsecurity_masterSeed: Uint8Array
       if (existingSeed) {
         if (existingSeed.length !== 32) {
           throw new Error('Invalid existing seed length, expected 32 bytes')
         }
-        masterSeed = existingSeed
+        ringsecurity_masterSeed = existingSeed
       } else {
-        masterSeed = new Uint8Array(32)
-        crypto.getRandomValues(masterSeed)
-        DbgLog.log('masterSeed:', masterSeed)
+        ringsecurity_masterSeed = new Uint8Array(32)
+        crypto.getRandomValues(ringsecurity_masterSeed)
+        DbgLog.log('ringsecurity_masterSeed:', ringsecurity_masterSeed)
       }
 
       const encoder = new TextEncoder()
@@ -462,7 +462,7 @@ class PasskeyService {
       }
 
       const userId = new Uint8Array(32 + usernameBytes.length)
-      userId.set(masterSeed, 0)
+      userId.set(ringsecurity_masterSeed, 0)
       userId.set(usernameBytes, 32)
 
       // Configure options for creating a new Passkey credential
@@ -578,7 +578,6 @@ class PasskeyService {
 
       DbgLog.log('publicKey:', publicKey)
       DbgLog.log('credential.id:', credential.id)
-      DbgLog.log('masterSeed:', masterSeed)
       return {
         success: true,
         credential: {
@@ -586,7 +585,7 @@ class PasskeyService {
           rawId: Array.from(new Uint8Array(credential.rawId)),
           type: credential.type,
           publicKey: publicKey,
-          masterSeed: masterSeed,
+          ringsecurity_masterSeed: ringsecurity_masterSeed,
         },
       }
     } catch (error) {
@@ -618,7 +617,7 @@ class PasskeyService {
       })) as PublicKeyCredential
 
       let username: string | null = null
-      let masterSeed: Uint8Array | null = null
+      let ringsecurity_masterSeed: Uint8Array | null = null
       let publicKey: Map<number, Uint8Array> | null = null
 
       try {
@@ -631,7 +630,6 @@ class PasskeyService {
 
         if (storageKey) {
           DbgLog.log('🔍 Attempting to read Public Key from localStorage')
-          DbgLog.log('   - storage key:', storageKey)
 
           let storedKey = safeGetItem(storageKey)
 
@@ -650,8 +648,6 @@ class PasskeyService {
             } else {
               console.warn('⚠️ Failed to restore Public Key from storage data')
             }
-          } else {
-            console.warn('⚠️ No public key found in storage for credential')
           }
         } else {
           console.warn('⚠️ Unable to use credential.rawId')
@@ -667,7 +663,10 @@ class PasskeyService {
           const userHandle = new Uint8Array(response.userHandle)
 
           if (userHandle.length >= 32) {
-            masterSeed = userHandle.slice(0, 32)
+            ringsecurity_masterSeed = userHandle.slice(0, 32)
+            // Immediately overwrite userHandle bytes to reduce plaintext window
+            // (other JS could read credential.response.userHandle)
+            userHandle.fill(0, 0, 32)
 
             if (userHandle.length > 32) {
               const usernameBytes = userHandle.slice(32)
@@ -707,6 +706,7 @@ class PasskeyService {
         }
       }
 
+      // Return raw seed — caller must secureZero() after sending to Worker
       return {
         success: true,
         credential: {
@@ -714,7 +714,7 @@ class PasskeyService {
           rawId: Array.from(new Uint8Array(credential.rawId)),
           type: credential.type,
           userHandle: username,
-          masterSeed: masterSeed,
+          ringsecurity_masterSeed: ringsecurity_masterSeed,
           publicKey: publicKey,
         },
       }

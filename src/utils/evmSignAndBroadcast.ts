@@ -8,7 +8,6 @@
 
 import { ethers } from 'ethers'
 import { signerBridge } from '../services/account/signerBridge'
-import { secureZero } from './memoryCrypto'
 
 export interface EvmTxParams {
   to?: string
@@ -20,46 +19,27 @@ export interface EvmTxParams {
 /**
  * Sign and broadcast an EVM transaction via the Worker.
  * Returns the transaction hash.
+ *
+ * If the Worker's seed is not initialized (e.g. Worker crashed), the error
+ * propagates — the user must re-login to re-initialize the seed.
  */
 export async function signAndBroadcastEvm(
   index: number,
   chainId: number,
   provider: ethers.JsonRpcProvider,
-  tx: EvmTxParams,
-  seed?: Uint8Array
+  tx: EvmTxParams
 ): Promise<string> {
   if (!tx.to) throw new Error('Transaction "to" address is required')
   const rpcUrl = provider._getConnection().url
-  let rawTx: string
-  try {
-    rawTx = await signerBridge.signEvm({
-      index,
-      to: tx.to,
-      amount: tx.value ? ethers.formatEther(tx.value) : '0',
-      chainId,
-      rpcUrl,
-      data: tx.data,
-      gasLimit: tx.gasLimit?.toString(),
-    })
-  } catch (err) {
-    const msg = (err as Error).message
-    if (msg.toLowerCase().includes('seed not initialized') && seed) {
-      const seedCopy = new Uint8Array(seed)
-      await signerBridge.init(seedCopy)
-      secureZero(seedCopy)
-      rawTx = await signerBridge.signEvm({
-        index,
-        to: tx.to,
-        amount: tx.value ? ethers.formatEther(tx.value) : '0',
-        chainId,
-        rpcUrl,
-        data: tx.data,
-        gasLimit: tx.gasLimit?.toString(),
-      })
-    } else {
-      throw err
-    }
-  }
+  const rawTx = await signerBridge.signEvm({
+    index,
+    to: tx.to,
+    amount: tx.value ? ethers.formatEther(tx.value) : '0',
+    chainId,
+    rpcUrl,
+    data: tx.data,
+    gasLimit: tx.gasLimit?.toString(),
+  })
   const resp = await provider.broadcastTransaction(rawTx)
   return resp.hash
 }

@@ -10,6 +10,7 @@ import {
   bitcoinForkForChain,
 } from '../../services/rpc/bitcoinService'
 import { BitcoinKeyService } from '../../services/chainplugins/bitcoin/bitcoinPlugin'
+import { signerBridge } from '../../services/account/signerBridge'
 import SendFormLayout from './SendFormLayout'
 import SignedTxResult from './SignedTxResult'
 import SendConfirmPreview from './SendConfirmPreview'
@@ -167,29 +168,12 @@ const BitcoinSendForm: React.FC<BitcoinSendFormProps> = ({
         }
       }
 
-      const seed = user?.masterSeed
-      if (!seed) throw new Error('No master seed available')
-      const masterSeed =
-        seed instanceof Uint8Array
-          ? seed
-          : new Uint8Array(
-              Object.values(seed as unknown as Record<string, number>)
-            )
-
-      const service = new BitcoinService(
-        getPrimaryRpcUrl(activeChain),
+      const result = await signerBridge.signBitcoin({
+        index: activeBitcoinWallet.index,
         isTestnet,
-        bitcoinForkForChain(activeChain)
-      )
-      const amountSats = BitcoinService.btcToSats(amountBtc)
-
-      const result = await service.buildAndSignTransaction({
-        fromAddress: activeBitcoinWallet.address,
+        rpcUrl: getPrimaryRpcUrl(activeChain),
         toAddress,
-        amountSats,
-        masterSeed,
-        addressIndex: activeBitcoinWallet.index,
-        feeRate: undefined,
+        amountSats: BitcoinService.btcToSats(amountBtc),
       })
 
       setSignedTx(result)

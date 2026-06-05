@@ -204,6 +204,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     reload,
   } = useDAppList()
 
+  const canUseEarn = useIsEarnSupported()
+
   useEffect(() => {
     if (initialToken) {
       setSendToken(initialToken)
@@ -241,7 +243,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     ? t('swapOpenTitle')
     : t('swapDisabledNonEvm')
 
-  const canUseEarn = useIsEarnSupported()
   const earnButtonTitle = canUseEarn
     ? t('earnTitle')
     : t('earnDisabledNonEthereum')

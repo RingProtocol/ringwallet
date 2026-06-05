@@ -6,6 +6,7 @@ import { getTokensForNetwork } from '../../models/ChainTokens'
 import PasskeyService from '../../services/account/passkeyService'
 import { DogecoinService } from '../../services/rpc/dogecoinService'
 import { isValidDogecoinAddress } from '../../services/chainplugins/dogecoin/dogecoinPlugin'
+import { signerBridge } from '../../services/account/signerBridge'
 import SendFormLayout from './SendFormLayout'
 import SendConfirmPreview from './SendConfirmPreview'
 import TransactionSheet from './TransactionSheet'
@@ -105,29 +106,20 @@ const DogecoinSendForm: React.FC<DogecoinSendFormProps> = ({
         }
       }
 
-      const seed = user?.masterSeed
-      if (!seed) throw new Error('No master seed available')
-      const masterSeed =
-        seed instanceof Uint8Array
-          ? seed
-          : new Uint8Array(
-              Object.values(seed as unknown as Record<string, number>)
-            )
+      const { txHex } = await signerBridge.signDogecoin({
+        index: activeDogecoinWallet.index,
+        isTestnet,
+        rpcUrl: getPrimaryRpcUrl(activeChain),
+        toAddress,
+        amountSats: DogecoinService.dogeToSats(amountDoge),
+      })
+
+      setIsBroadcasting(true)
 
       const service = new DogecoinService(
         getPrimaryRpcUrl(activeChain),
         isTestnet
       )
-      const amountSats = DogecoinService.dogeToSats(amountDoge)
-
-      setIsBroadcasting(true)
-      const { txHex } = await service.buildAndSignTransaction({
-        fromAddress: activeDogecoinWallet.address,
-        toAddress,
-        amountSats,
-        masterSeed,
-        addressIndex: activeDogecoinWallet.index,
-      })
 
       const txid = await service.broadcast(txHex)
       setTxId(txid)

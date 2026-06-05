@@ -9,11 +9,26 @@
  */
 
 import type { ChainFamily } from '../../models/ChainType'
+import {
+  importPublicKeyJwk,
+  encryptSeed,
+  generateEcdhKeyPair,
+  exportPublicKeyJwk,
+  decryptSeed,
+  type EncryptedSeed,
+} from '../../utils/seedTransport'
 
 export interface WorkerAccount {
   index: number
   address: string
   path: string
+  meta?: Record<string, unknown>
+}
+
+export interface DeriveOptions {
+  isTestnet?: boolean
+  coinType?: number
+  addressPrefix?: string
 }
 
 interface WorkerRequest {
@@ -36,6 +51,8 @@ class SignerBridge {
     { resolve: (res: WorkerResponse) => void; reject: (err: Error) => void }
   >()
   private idCounter = 0
+  /** Cached Worker ECDH public key (JWK). Avoids extra round-trip on re-init. */
+  private workerPublicJwk: JsonWebKey | null = null
 
   /** Lazily instantiate the Worker on first use. */
   private getWorker(): Worker {
@@ -61,6 +78,38 @@ class SignerBridge {
       this.pending.clear()
       this.worker = null
     }
+
+    // Health-check: if the Worker hasn't responded to any message within
+    // 5 seconds, it likely failed to load (e.g., WASM hang in Next.js dev).
+    // Proactively reject pending promises with a helpful error.
+    const healthTimer = setTimeout(() => {
+      if (this.pending.size > 0 && this.worker) {
+        console.error(
+          'SignerWorker health check failed — Worker may not have loaded.\n' +
+            "This usually happens in Next.js dev server when the Worker's WASM\n" +
+            'dependencies (tiny-secp256k1) fail to load in the Worker context.'
+        )
+        for (const [, handler] of this.pending) {
+          handler.reject(
+            new Error(
+              'SignerWorker failed to load (WASM init hang). ' +
+                'Try restarting the dev server or building for production.'
+            )
+          )
+        }
+        this.pending.clear()
+      }
+    }, 5000)
+    // Clear the health timer once the first response arrives
+    const origOnMessage = this.worker.onmessage
+    const workerRef = this.worker
+    this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      clearTimeout(healthTimer)
+      // Restore the original handler after first message
+      workerRef.onmessage = origOnMessage
+      origOnMessage?.call(workerRef, event)
+    }
+
     return this.worker
   }
 
@@ -91,10 +140,30 @@ class SignerBridge {
     })
   }
 
-  /** Send the masterSeed into the Worker and zero it locally. */
+  /** Send the ringsecurity_masterSeed into the Worker using ECDH-encrypted transport. */
   async init(seed: Uint8Array): Promise<void> {
-    const seedArr = Array.from(seed)
-    await this.post('init', { seed: seedArr })
+    // 1. Get Worker's ECDH public key (cached after first retrieval)
+    const jwk = await this.getWorkerPublicKey()
+    // 2. Import public key as CryptoKey
+    const workerPubKey = await importPublicKeyJwk(jwk)
+    // 3. ECDH encrypt the seed
+    const encrypted = await encryptSeed(seed, workerPubKey)
+    // 4. Send encrypted payload to Worker
+    await this.post('init_encrypted', {
+      encrypted: {
+        ciphertext: Array.from(new Uint8Array(encrypted.ciphertext)),
+        iv: Array.from(encrypted.iv),
+        ephemeralPublicJwk: encrypted.ephemeralPublicJwk,
+      },
+    })
+  }
+
+  /** Retrieve the Worker's ECDH public key (JWK). Caches after first call. */
+  private async getWorkerPublicKey(): Promise<JsonWebKey> {
+    if (this.workerPublicJwk) return this.workerPublicJwk
+    const jwk = await this.post<JsonWebKey>('get_public_key')
+    this.workerPublicJwk = jwk
+    return jwk
   }
 
   /** EVM transaction signing. */
@@ -132,12 +201,76 @@ class SignerBridge {
   /** Derive addresses (no private keys returned). */
   async deriveAddresses(
     family: ChainFamily,
-    count: number
+    count: number,
+    options?: DeriveOptions
   ): Promise<WorkerAccount[]> {
     return this.post<WorkerAccount[]>('derive_addresses', {
       family,
       count,
+      options,
     })
+  }
+
+  /** Build and sign a Bitcoin P2WPKH transaction inside the Worker. */
+  async signBitcoin(params: {
+    index: number
+    isTestnet: boolean
+    rpcUrl: string
+    toAddress: string
+    amountSats: number
+    feeRate?: number
+  }): Promise<{ txHex: string; fee: number }> {
+    return this.post<{ txHex: string; fee: number }>(
+      'sign_bitcoin',
+      params as Record<string, unknown>
+    )
+  }
+
+  /** Build and sign a Dogecoin P2PKH transaction inside the Worker. */
+  async signDogecoin(params: {
+    index: number
+    isTestnet: boolean
+    rpcUrl: string
+    toAddress: string
+    amountSats: number
+    feeRate?: number
+  }): Promise<{ txHex: string; fee: number }> {
+    return this.post<{ txHex: string; fee: number }>(
+      'sign_dogecoin',
+      params as Record<string, unknown>
+    )
+  }
+
+  /**
+   * Export the seed from the Worker encrypted with a one-time ECDH key.
+   * Used ONLY for Passkey registration (user-authorized, biometric-gated).
+   * Returns plaintext seed that the caller must secureZero() after use.
+   */
+  async exportSeedForRegistration(): Promise<Uint8Array> {
+    // Generate an ephemeral ECDH key pair on the main thread
+    const ephemeralKeyPair = await generateEcdhKeyPair()
+    const pubJwk = await exportPublicKeyJwk(ephemeralKeyPair.publicKey)
+
+    // Ask Worker to encrypt seed with our public key
+    const result = await this.post<{
+      ciphertext: number[]
+      iv: number[]
+      ephemeralPublicJwk: JsonWebKey
+    }>('export_seed_encrypted', { publicKey: pubJwk })
+
+    // Decrypt on main thread
+    const encrypted: EncryptedSeed = {
+      ciphertext: new Uint8Array(result.ciphertext).buffer,
+      iv: new Uint8Array(result.iv),
+      ephemeralPublicJwk: result.ephemeralPublicJwk,
+    }
+    const seed = await decryptSeed(encrypted, ephemeralKeyPair.privateKey)
+    return seed
+  }
+
+  /** Check if the Worker has been initialized with a seed. */
+  get isInitialized(): boolean {
+    return this.worker !== null
   }
 
   /** Clear all sensitive state inside the Worker. */
@@ -151,6 +284,7 @@ class SignerBridge {
       this.worker.terminate()
       this.worker = null
       this.pending.clear()
+      this.workerPublicJwk = null
     }
   }
 }

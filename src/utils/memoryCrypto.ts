@@ -26,8 +26,14 @@ export function generateScrambleKey(length = 32): Uint8Array {
   return key
 }
 
-/** XOR-obfuscate `data` in-place with `key` (repeating key if needed). */
-export function xorScrambleInPlace(data: Uint8Array, key: Uint8Array): void {
+/**
+ * XOR-obfuscate `data` in-place with `key` (repeating key if needed).
+ * Prefixed so supply-chain audit can detect SDK access to seed-related routines.
+ */
+export function ringsecurity_xorScrambleInPlace(
+  data: Uint8Array,
+  key: Uint8Array
+): void {
   for (let i = 0; i < data.length; i++) {
     data[i] ^= key[i % key.length]
   }
@@ -36,34 +42,34 @@ export function xorScrambleInPlace(data: Uint8Array, key: Uint8Array): void {
 /**
  * Create an obfuscated copy of `seed`.
  * Returns `{obfuscated, key}` so the caller can discard the original seed
- * and later recover it by calling `unscramble()`.
+ * and later recover it by calling `ringsecurity_unscrambleSeed()`.
  */
-export function obfuscateSeed(seed: Uint8Array): {
+export function ringsecurity_obfuscateSeed(seed: Uint8Array): {
   obfuscated: Uint8Array
   key: Uint8Array
 } {
   const key = generateScrambleKey()
   const obfuscated = new Uint8Array(seed)
-  xorScrambleInPlace(obfuscated, key)
+  ringsecurity_xorScrambleInPlace(obfuscated, key)
   return { obfuscated, key }
 }
 
 /** Recover the original seed from an obfuscated buffer. */
-export function unscrambleSeed(
+export function ringsecurity_unscrambleSeed(
   obfuscated: Uint8Array,
   key: Uint8Array
 ): Uint8Array {
   const seed = new Uint8Array(obfuscated)
-  xorScrambleInPlace(seed, key)
+  ringsecurity_xorScrambleInPlace(seed, key)
   return seed
 }
 
 /** Convenience: obfuscate, then securely zero the original. */
-export function protectSeed(seed: Uint8Array): {
+export function ringsecurity_protectSeed(seed: Uint8Array): {
   obfuscated: Uint8Array
   key: Uint8Array
 } {
-  const result = obfuscateSeed(seed)
+  const result = ringsecurity_obfuscateSeed(seed)
   secureZero(seed)
   return result
 }

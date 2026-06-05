@@ -389,8 +389,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
                   quote.estimate.approvalAddress,
                   ethers.MaxUint256,
                 ]),
-              },
-              user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
+              }
             )
             await provider.waitForTransaction(approvalHash)
           }
@@ -401,8 +400,7 @@ const LifiBridgePage: React.FC<Props> = ({ onClose }) => {
           walletIndex,
           Number(fromChain?.id ?? 1),
           provider,
-          toEthersTx(tx),
-          user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
+          toEthersTx(tx)
         )
         return txHash
       })

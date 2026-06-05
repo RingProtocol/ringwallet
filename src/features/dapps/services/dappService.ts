@@ -81,6 +81,13 @@ export async function fetchDAppList(): Promise<DAppListResponse> {
   const apikey = env('VITE_TEST_API_KEY')
   const isLocalhost = apikey === 'localhost'
 
+  // On localhost, skip the API call entirely — return the static fallback
+  // (the /api/v1/dapps route is not available in local dev).
+  if (isLocalhost) {
+    const fallback = getFallbackDAppList(true)
+    if (fallback) return fallback
+  }
+
   try {
     const url = resolveClientApiUrl('/api/v1/dapps')
     if (apikey && !isLocalhost) {

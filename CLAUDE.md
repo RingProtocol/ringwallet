@@ -97,36 +97,72 @@ All product specs, technical architecture, and test cases are in `documents/`. S
 
 ---
 
-## Workflows (OpenSpec)
+## Security Architecture
 
-Structured change management via `openspec/` and `.windsurf/workflows/`:
+### Worker-Only Seed Isolation (Non-Negotiable)
 
-| Command         | What it does                      |
-| --------------- | --------------------------------- |
-| `/opsx-new`     | Start a new change                |
-| `/opsx-propose` | Propose change with all artifacts |
-| `/opsx-apply`   | Implement tasks from a change     |
-| `/opsx-verify`  | Verify implementation             |
-| `/opsx-sync`    | Sync delta specs to main specs    |
-| `/opsx-archive` | Archive completed change          |
-| `/opsx-explore` | Think through ideas first         |
+The main thread **never** holds the plaintext master seed after the initial login handshake.
 
-## Skill Routing
+| Stage         | Main Thread                                                  | Worker                                 |
+| ------------- | ------------------------------------------------------------ | -------------------------------------- |
+| Passkey login | Extracts raw seed from `userHandle`                          | —                                      |
+| Transport     | ECDH-encrypts seed, calls `signerBridge.init()`              | Decrypts, stores XOR-obfuscated        |
+| After init    | `secureZero(seed)` → `ringsecurity_masterSeed = undefined`   | Sole owner of seed                     |
+| Signing       | Calls `signerBridge.sign*()` → gets tx hex only              | Derives key, signs, returns result     |
+| Derivation    | Calls `signerBridge.deriveAddresses()` → gets addresses only | Derives HD accounts, returns addresses |
 
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+**Rules:**
 
-| Request pattern                    | Skill                          |
-| ---------------------------------- | ------------------------------ |
-| Product ideas, brainstorming       | office-hours                   |
-| Bugs, errors, "why is this broken" | investigate                    |
-| Ship, deploy, push, create PR      | ship                           |
-| QA, test the site, find bugs       | qa                             |
-| Code review, check my diff         | review                         |
-| Update docs after shipping         | document-release               |
-| Weekly retro                       | retro                          |
-| Design system, brand               | design-consultation            |
-| Visual audit, design polish        | design-review                  |
-| Architecture review                | plan-eng-review                |
-| Save progress / resume             | context-save / context-restore |
-| Code quality, health check         | health                         |
+- All signing, address derivation, and seed export happen **only** inside `src/workers/signer.worker.ts`
+- `signerBridge` (`src/services/account/signerBridge.ts`) is the **only** main-thread interface to the Worker
+- `UserData.ringsecurity_masterSeed` is transient during login; set to `undefined` immediately after Worker init
+- `UserData.ringsecurity_seedReady` is a boolean flag only — not seed material
+
+### `ringsecurity_` Naming Convention (Mandatory)
+
+All variables, functions, and properties that directly hold or manipulate seed material **must** use the `ringsecurity_` prefix. This enables the supply-chain audit test to detect SDK access.
+
+| Entity                 | Prefixed name                     |
+| ---------------------- | --------------------------------- |
+| Master seed property   | `ringsecurity_masterSeed`         |
+| Seed-ready flag        | `ringsecurity_seedReady`          |
+| Worker obfuscated seed | `ringsecurity_obfuscatedSeed`     |
+| Worker scramble key    | `ringsecurity_scrambleKey`        |
+| XOR scramble function  | `ringsecurity_xorScrambleInPlace` |
+| Obfuscate function     | `ringsecurity_obfuscateSeed`      |
+| Unscramble function    | `ringsecurity_unscrambleSeed`     |
+| Protect function       | `ringsecurity_protectSeed`        |
+
+**When adding a new seed-related variable or function:**
+
+1. Prefix it with `ringsecurity_`
+2. Add a matching `severity: 'critical'` pattern to `test/unit/security/supplyChainAudit.test.ts`
+3. Generic utilities (`secureZero`, `generateScrambleKey`) are exempt — they handle non-seed buffers too
+
+### Supply-Chain Audit Test
+
+`test/unit/security/supplyChainAudit.test.ts` scans all production `node_modules` for:
+
+- `ringsecurity_` identifier access → **CRITICAL failure** (likely targeted attack)
+- `navigator.credentials` hooking → **CRITICAL** (WebAuthn interception)
+- `Worker.prototype.postMessage` monkey-patching → **CRITICAL** (seed transport interception)
+- `crypto.subtle` override → **CRITICAL** (key material theft)
+- Data exfiltration patterns targeting seed keywords → **CRITICAL**
+- `eval()` / `new Function()` with variable args → warning (review manually)
+
+If the test fails on a new dependency: do NOT add an allowlist entry without manual security review.
+
+### Biometric Verification on Transfers
+
+`PasskeyService.verifyIdentity()` is called before signing a transfer. It performs a biometric challenge (Face ID / Touch ID) **without** reading or returning the seed or `userHandle`. This confirms the operator is the device owner — it is not a seed-access mechanism.
+
+### Adding New Production Dependencies
+
+Before adding a new `dependencies` entry to `package.json`:
+
+1. Review the package for supply-chain threats
+2. Add it to `AUDITED_DEPS` in `test/unit/security/supplyChainAudit.test.ts`
+3. Add allowlist entries only after confirming the pattern is benign
+4. Run `yarn vitest run test/unit/security/supplyChainAudit.test.ts` to verify
+
+---

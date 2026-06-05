@@ -1,6 +1,8 @@
 import type { UserData } from '../contexts/AuthContext'
 import { WalletType } from '../models/WalletType'
 import PasskeyService from '../services/account/passkeyService'
+import { signerBridge } from '../services/account/signerBridge'
+import { secureZero } from '../utils/memoryCrypto'
 import { safeGetItem } from '../utils/safeStorage'
 
 interface SyncParams {
@@ -13,28 +15,31 @@ interface SyncResult {
   error?: string
 }
 
-export async function syncToDevice({ user, login }: SyncParams): Promise<SyncResult> {
-  if (!user.masterSeed || !user.name) {
+export async function syncToDevice({
+  user,
+  login,
+}: SyncParams): Promise<SyncResult> {
+  if (!user.ringsecurity_seedReady || !user.name) {
     return { success: false, error: 'Sync failed: missing required user info' }
   }
 
-  let masterSeed: Uint8Array
-  if (Array.isArray(user.masterSeed)) {
-    masterSeed = new Uint8Array(user.masterSeed)
-  } else if (!(user.masterSeed instanceof Uint8Array)) {
-    masterSeed = new Uint8Array(Object.values(user.masterSeed as Record<string, number>))
-  } else {
-    masterSeed = user.masterSeed
+  // Export seed from Worker via encrypted one-time transfer
+  const seed = await signerBridge.exportSeedForRegistration()
+  let result: Awaited<ReturnType<typeof PasskeyService.register>>
+  try {
+    result = await PasskeyService.register(user.name, seed)
+  } finally {
+    secureZero(seed)
   }
-
-  const result = await PasskeyService.register(user.name, masterSeed)
 
   if (!result.success || !result.credential) {
     return { success: false, error: 'Sync failed: ' + result.error }
   }
 
   try {
-    const credentialIdBase64 = btoa(String.fromCharCode(...new Uint8Array(result.credential.rawId)))
+    const credentialIdBase64 = btoa(
+      String.fromCharCode(...new Uint8Array(result.credential.rawId))
+    )
     const storedKey = safeGetItem(`new_wallet_pk_${credentialIdBase64}`)
     if (storedKey) {
       const keyData = JSON.parse(storedKey)
@@ -48,9 +53,10 @@ export async function syncToDevice({ user, login }: SyncParams): Promise<SyncRes
         id: result.credential.id,
         name: user.name,
         loginTime: new Date().toLocaleString(),
-        masterSeed: user.masterSeed,
+        ringsecurity_masterSeed: undefined,
+        ringsecurity_seedReady: true,
         publicKey: newPublicKey,
-        accountType: WalletType.EOA
+        accountType: WalletType.EOA,
       }
       await login(updatedUser)
     }

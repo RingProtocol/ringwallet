@@ -8,7 +8,6 @@ import { getTokensForNetwork } from '../../models/ChainTokens'
 import EvmWalletService from '../../services/chainplugins/evm/evmPlugin'
 import { signerBridge } from '../../services/account/signerBridge'
 import PasskeyService from '../../services/account/passkeyService'
-import { secureZero } from '../../utils/memoryCrypto'
 import { useSendForm } from './useSendForm'
 import SendFormFields from './SendFormFields'
 import SendFormLayout from './SendFormLayout'
@@ -149,37 +148,14 @@ const EOASendForm: React.FC<EOASendFormProps> = ({
         }
       }
 
-      let tx: string
-      try {
-        tx = await signerBridge.signEvm({
-          index: activeWallet.index,
-          to: toAddress,
-          amount,
-          chainId: Number(activeChainId),
-          rpcUrl: getPrimaryRpcUrl(activeChain),
-          tokenOpts,
-        })
-      } catch (err) {
-        const msg = (err as Error).message
-        if (
-          msg.toLowerCase().includes('seed not initialized') &&
-          user?.masterSeed
-        ) {
-          const seed = new Uint8Array(user.masterSeed)
-          await signerBridge.init(seed)
-          secureZero(seed)
-          tx = await signerBridge.signEvm({
-            index: activeWallet.index,
-            to: toAddress,
-            amount,
-            chainId: Number(activeChainId),
-            rpcUrl: getPrimaryRpcUrl(activeChain),
-            tokenOpts,
-          })
-        } else {
-          throw err
-        }
-      }
+      const tx: string = await signerBridge.signEvm({
+        index: activeWallet.index,
+        to: toAddress,
+        amount,
+        chainId: Number(activeChainId),
+        rpcUrl: getPrimaryRpcUrl(activeChain),
+        tokenOpts,
+      })
       setSignedTx(tx)
     } catch (e) {
       console.error(e)

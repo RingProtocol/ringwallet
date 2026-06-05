@@ -59,10 +59,10 @@ const LoginButton: React.FC = () => {
     rawId: number[]
     type: string
     userHandle: string | null
-    masterSeed: Uint8Array | null
+    ringsecurity_masterSeed: Uint8Array | null
     publicKey: Map<number, Uint8Array> | null
   }) => {
-    if (!credential.masterSeed) {
+    if (!credential.ringsecurity_masterSeed) {
       setError(t('cannotRestoreSeed'))
       return
     }
@@ -71,7 +71,7 @@ const LoginButton: React.FC = () => {
       id: credential.id,
       name: credential.userHandle || 'RingWallet',
       loginTime: new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US'),
-      masterSeed: credential.masterSeed,
+      ringsecurity_masterSeed: credential.ringsecurity_masterSeed,
       publicKey: credential.publicKey,
       accountType: WalletType.EOA,
     }
@@ -137,7 +137,8 @@ const LoginButton: React.FC = () => {
           rawId: registerResult.credential.rawId,
           type: registerResult.credential.type,
           userHandle: username,
-          masterSeed: registerResult.credential.masterSeed,
+          ringsecurity_masterSeed:
+            registerResult.credential.ringsecurity_masterSeed,
           publicKey: registerResult.credential.publicKey as Map<
             number,
             Uint8Array

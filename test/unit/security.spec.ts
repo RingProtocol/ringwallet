@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { secureZero, obfuscateSeed, unscrambleSeed } from '@/utils/memoryCrypto'
+import {
+  secureZero,
+  ringsecurity_obfuscateSeed,
+  ringsecurity_unscrambleSeed,
+} from '@/utils/memoryCrypto'
 import { signerBridge } from '@/services/account/signerBridge'
 import { ChainFamily } from '@/models/ChainType'
 import { WalletType } from '@/models/WalletType'
@@ -80,11 +84,11 @@ describe('Security: memory scrambling', () => {
     }
   })
 
-  it('obfuscateSeed + unscrambleSeed round-trip', () => {
+  it('ringsecurity_obfuscateSeed + ringsecurity_unscrambleSeed round-trip', () => {
     const seed = new Uint8Array([1, 2, 3, 4, 5])
-    const { obfuscated, key } = obfuscateSeed(seed)
+    const { obfuscated, key } = ringsecurity_obfuscateSeed(seed)
     expect(obfuscated).not.toEqual(seed)
-    const recovered = unscrambleSeed(obfuscated, key)
+    const recovered = ringsecurity_unscrambleSeed(obfuscated, key)
     expect(recovered).toEqual(seed)
   })
 })

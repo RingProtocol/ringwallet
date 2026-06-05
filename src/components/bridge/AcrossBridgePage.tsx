@@ -399,8 +399,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
             walletIndex,
             Number(fromChain?.id ?? 1),
             provider,
-            ethersTx,
-            user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
+            ethersTx
           )
           await provider.waitForTransaction(txHash)
         }
@@ -417,8 +416,7 @@ const AcrossBridgePage: React.FC<Props> = ({ onClose }) => {
           walletIndex,
           Number(fromChain?.id ?? 1),
           provider,
-          ethersTx,
-          user?.masterSeed ? new Uint8Array(user.masterSeed) : undefined
+          ethersTx
         )
         return txHash
       })

@@ -6,6 +6,7 @@
 .trae
 .workflow
 .agents
+.qoder
 AGENTS.md
 node_modules
 dist
