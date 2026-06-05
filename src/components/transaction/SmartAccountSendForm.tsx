@@ -244,76 +244,80 @@ const SmartAccountSendForm: React.FC<SmartAccountSendFormProps> = ({
       onBack={onBack}
       selectedToken={selectedToken}
     >
-      <SendFormFields
-        toAddress={toAddress}
-        onToAddressChange={setToAddress}
-        selectedToken={selectedToken}
-        onTokenChange={setSelectedToken}
-        tokenOptions={tokenOptions}
-        hideTokenSelect
-        amount={amount}
-        onAmountChange={setAmount}
-        amountLabel={amountLabel}
-        nativeSymbol={activeChain?.symbol || 'ETH'}
-      />
+      {!signedTx && (
+        <>
+          <SendFormFields
+            toAddress={toAddress}
+            onToAddressChange={setToAddress}
+            selectedToken={selectedToken}
+            onTokenChange={setSelectedToken}
+            tokenOptions={tokenOptions}
+            hideTokenSelect
+            amount={amount}
+            onAmountChange={setAmount}
+            amountLabel={amountLabel}
+            nativeSymbol={activeChain?.symbol || 'ETH'}
+          />
 
-      <div className="send-balance-bar">
-        <div className="send-balance-bar__left">
-          <span className="send-balance-bar__icon">
-            {selectedToken.type === 'erc20' &&
-            selectedTokenLogo &&
-            !balanceIconLoadFailed ? (
-              <img
-                src={selectedTokenLogo}
-                alt={selectedSymbol}
-                className="send-balance-bar__icon-img"
-                onError={() => setBalanceIconLoadFailed(true)}
-              />
-            ) : selectedToken.type === 'native' &&
-              NATIVE_COIN_ICON[selectedSymbol] ? (
-              <img
-                src={NATIVE_COIN_ICON[selectedSymbol]}
-                alt={selectedSymbol}
-                className="send-balance-bar__icon-img"
-              />
-            ) : selectedToken.type === 'native' ? (
-              <ChainIcon
-                icon={activeChain?.icon}
-                symbol={selectedSymbol}
-                size={36}
-              />
-            ) : (
-              <span className="send-balance-bar__icon-fallback">
-                {selectedSymbol.charAt(0).toUpperCase()}
+          <div className="send-balance-bar">
+            <div className="send-balance-bar__left">
+              <span className="send-balance-bar__icon">
+                {selectedToken.type === 'erc20' &&
+                selectedTokenLogo &&
+                !balanceIconLoadFailed ? (
+                  <img
+                    src={selectedTokenLogo}
+                    alt={selectedSymbol}
+                    className="send-balance-bar__icon-img"
+                    onError={() => setBalanceIconLoadFailed(true)}
+                  />
+                ) : selectedToken.type === 'native' &&
+                  NATIVE_COIN_ICON[selectedSymbol] ? (
+                  <img
+                    src={NATIVE_COIN_ICON[selectedSymbol]}
+                    alt={selectedSymbol}
+                    className="send-balance-bar__icon-img"
+                  />
+                ) : selectedToken.type === 'native' ? (
+                  <ChainIcon
+                    icon={activeChain?.icon}
+                    symbol={selectedSymbol}
+                    size={36}
+                  />
+                ) : (
+                  <span className="send-balance-bar__icon-fallback">
+                    {selectedSymbol.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </span>
-            )}
-          </span>
-          <div>
-            <div className="send-balance-bar__label">Balance</div>
-            <div className="send-balance-bar__value">
-              {availableAmount} {selectedSymbol}
+              <div>
+                <div className="send-balance-bar__label">Balance</div>
+                <div className="send-balance-bar__value">
+                  {availableAmount} {selectedSymbol}
+                </div>
+              </div>
             </div>
+            <button
+              type="button"
+              className="send-balance-bar__max"
+              onClick={() => setAmount(availableAmount)}
+            >
+              Max
+            </button>
           </div>
-        </div>
-        <button
-          type="button"
-          className="send-balance-bar__max"
-          onClick={() => setAmount(availableAmount)}
-        >
-          Max
-        </button>
-      </div>
-      <div className="modal-actions modal-actions--single-bottom">
-        <button
-          onClick={() => setShowPreview(true)}
-          disabled={!toAddress}
-          className="primary-btn"
-        >
-          Continue
-        </button>
-      </div>
+          <div className="modal-actions modal-actions--single-bottom">
+            <button
+              onClick={() => setShowPreview(true)}
+              disabled={!toAddress}
+              className="primary-btn"
+            >
+              Continue
+            </button>
+          </div>
+        </>
+      )}
 
-      {showPreview && (
+      {showPreview && !signedTx && (
         <TransactionSheet variant="sheet">
           <SendConfirmPreview
             selectedToken={selectedToken}

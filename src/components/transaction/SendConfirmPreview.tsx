@@ -1,5 +1,6 @@
 import React from 'react'
 import type { SendTokenOption } from './types'
+import { TESTID } from '../testids'
 
 interface SendConfirmPreviewProps {
   selectedToken: SendTokenOption
@@ -66,6 +67,7 @@ const SendConfirmPreview: React.FC<SendConfirmPreviewProps> = ({
           className="primary-btn"
           onClick={onConfirm}
           disabled={isConfirming}
+          data-testid={TESTID.SEND_CONFIRM_BUTTON}
         >
           {isConfirming ? 'Signing...' : 'Confirm'}
         </button>

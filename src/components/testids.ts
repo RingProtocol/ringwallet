@@ -32,10 +32,12 @@ export const TESTID = {
 
   // Send form actions
   SEND_SIGN_BUTTON: 'send-sign-button',
+  SEND_CONFIRM_BUTTON: 'send-confirm-button',
   SEND_BROADCAST_BUTTON: 'send-broadcast-button',
   SEND_CLOSE_BUTTON: 'send-close-button',
   BROADCAST_HASH: 'broadcast-hash',
   BROADCAST_SUCCESS: 'broadcast-success',
+  SIGNED_TX_RESULT: 'signed-tx-result',
 
   // Bottom nav (main wallet shell)
   TAB_WALLET: 'tab-wallet',

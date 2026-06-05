@@ -39,13 +39,27 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
     const amountInput = page.getByTestId(TESTID.SEND_AMOUNT_INPUT)
     await amountInput.fill(chain.sendAmount)
 
-    // ---- 3. Sign transaction ----
+    // ---- 3. Click Continue → Confirm Send dialog ----
     await page.getByTestId(TESTID.SEND_SIGN_BUTTON).click()
 
-    const broadcastBtn = page.getByTestId(TESTID.SEND_BROADCAST_BUTTON)
-    await expect(broadcastBtn).toBeVisible({ timeout: 30000 })
+    // Confirm dialog should be visible
+    const confirmBtn = page.getByTestId(TESTID.SEND_CONFIRM_BUTTON)
+    await expect(confirmBtn).toBeVisible({ timeout: 10000 })
 
-    // ---- 4. Broadcast transaction ----
+    // ---- 4. Click Confirm → passkey signing → signed result ----
+    await confirmBtn.click()
+
+    // After signing, SignedTxResult should appear and the form should be hidden
+    const signedResult = page.getByTestId(TESTID.SIGNED_TX_RESULT)
+    await expect(signedResult).toBeVisible({ timeout: 30000 })
+
+    // Regression: Continue button must NOT be visible after signing
+    const continueBtn = page.getByTestId(TESTID.SEND_SIGN_BUTTON)
+    await expect(continueBtn).not.toBeVisible()
+
+    // ---- 5. Broadcast transaction ----
+    const broadcastBtn = page.getByTestId(TESTID.SEND_BROADCAST_BUTTON)
+    await expect(broadcastBtn).toBeVisible()
     await broadcastBtn.click()
 
     const broadcastSuccess = page.getByTestId(TESTID.BROADCAST_SUCCESS)
@@ -57,7 +71,7 @@ function evmTransferTests(chain: EvmTestnetChainConfig) {
     expect(hashText).toBeTruthy()
     expect(hashText!.length).toBeGreaterThan(10)
 
-    // ---- 5. Close send form; assert outcome via UI balance (not RPC) ----
+    // ---- 6. Close send form; assert outcome via UI balance (not RPC) ----
     // Home balance is polled on an interval (see BALANCE_POLL_INTERVAL_MS), so allow
     // time after broadcast for the next fetch to reflect a confirmed transfer + gas spend.
     await page.getByTestId(TESTID.SEND_CLOSE_BUTTON).click()

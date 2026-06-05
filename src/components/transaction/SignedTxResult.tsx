@@ -57,7 +57,7 @@ const SignedTxResult: React.FC<SignedTxResultProps> = ({
         : 'Copy Hex')
 
   return (
-    <div className="signed-result">
+    <div className="signed-result" data-testid={TESTID.SIGNED_TX_RESULT}>
       <h4>✅ {t('signedSuccessfully')}</h4>
 
       {rows.length > 0 ? (
