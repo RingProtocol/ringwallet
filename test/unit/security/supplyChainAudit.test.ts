@@ -59,6 +59,7 @@ const AUDITED_DEPS = [
   'radix-ui',
   'react',
   'react-dom',
+  'react-router-dom',
   'serve',
   'shadcn',
   'tailwind-merge',

@@ -27,6 +27,8 @@ export interface WalletMainPageProps {
   /** Narrow panel over DApp: same tabs, compact layout. */
   peekOverDapp?: boolean
   className?: string
+  /** Optional platform-level navigation hook for token detail. */
+  onTokenSelect?: (token: ChainToken) => void
 }
 
 const TAB_QUERY_KEYS: BottomTab[] = ['wallet', 'activity', 'card', 'more']
@@ -46,6 +48,7 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
   onClose,
   peekOverDapp = true,
   className,
+  onTokenSelect,
 }) => {
   const { activeChain } = useAuth()
   const [bottomTab, setBottomTab] = useState<BottomTab>(getInitialBottomTab)
@@ -96,9 +99,16 @@ const WalletMainPage: React.FC<WalletMainPageProps> = ({
     window.history.replaceState(null, '', url.toString())
   }, [])
 
-  const openTokenDetail = useCallback((token: ChainToken) => {
-    setTokenDetail(token)
-  }, [])
+  const openTokenDetail = useCallback(
+    (token: ChainToken) => {
+      if (onTokenSelect) {
+        onTokenSelect(token)
+        return
+      }
+      setTokenDetail(token)
+    },
+    [onTokenSelect]
+  )
 
   const closeTokenDetail = useCallback(() => {
     setTokenDetail(null)
