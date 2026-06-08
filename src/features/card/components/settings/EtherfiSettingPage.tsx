@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import type { CardAccount, SpendingLimits } from '../../types'
 import { useCardManagement } from '../../hooks'
@@ -24,11 +24,17 @@ const EtherfiSettingPage: React.FC<Props> = ({ card, onBack }) => {
     unfreezeCard,
     updateSpendingLimits,
     revealCardDetails,
+    getCardDetails,
   } = useCardManagement()
 
   const [frozen, setFrozen] = useState(card.status === 'frozen')
   const [subView, setSubView] = useState<SubView>('settings')
   const [freezeLoading, setFreezeLoading] = useState(false)
+
+  // Load card details on mount so spending limits are always fresh
+  useEffect(() => {
+    getCardDetails(card.id)
+  }, [card.id, getCardDetails])
 
   const handleFreezeToggle = useCallback(async () => {
     if (freezeLoading) return
@@ -70,13 +76,13 @@ const EtherfiSettingPage: React.FC<Props> = ({ card, onBack }) => {
         console.error('Failed to update spending limits:', err)
       }
     },
-    [card.id, updateSpendingLimits],
+    [card.id, updateSpendingLimits]
   )
 
   const handleCloseCard = useCallback(() => {
     const confirmed = window.confirm(
       t('cardCloseConfirm') ??
-        'Are you sure you want to close this card? This cannot be undone.',
+        'Are you sure you want to close this card? This cannot be undone.'
     )
     if (!confirmed) return
     // TODO: call adapter closeCard API when available
@@ -154,10 +160,7 @@ const EtherfiSettingPage: React.FC<Props> = ({ card, onBack }) => {
                   Temporarily disable all transactions
                 </span>
               </div>
-              <CardFreezeToggle
-                frozen={frozen}
-                onToggle={handleFreezeToggle}
-              />
+              <CardFreezeToggle frozen={frozen} onToggle={handleFreezeToggle} />
             </div>
           </div>
 
@@ -169,7 +172,9 @@ const EtherfiSettingPage: React.FC<Props> = ({ card, onBack }) => {
               onClick={handleSpendingLimit}
             >
               <div className="card-settings__item-info">
-                <span className="card-settings__item-label">Spending Limits</span>
+                <span className="card-settings__item-label">
+                  Spending Limits
+                </span>
                 <span className="card-settings__item-desc">
                   Set daily, monthly, and per-transaction limits
                 </span>
@@ -188,7 +193,9 @@ const EtherfiSettingPage: React.FC<Props> = ({ card, onBack }) => {
               onClick={handleRevealDetails}
             >
               <div className="card-settings__item-info">
-                <span className="card-settings__item-label">View Card Details</span>
+                <span className="card-settings__item-label">
+                  View Card Details
+                </span>
                 <span className="card-settings__item-desc">
                   Card number, CVC, and expiry date
                 </span>

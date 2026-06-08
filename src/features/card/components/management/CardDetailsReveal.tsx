@@ -70,31 +70,6 @@ const CardDetailsReveal: React.FC<Props> = ({
 
   return (
     <div className="card-details-reveal">
-      <div className="card-details-reveal__header">
-        <button
-          type="button"
-          className="card-details-reveal__back"
-          onClick={() => {
-            // TODO: navigate back
-          }}
-          aria-label="Back"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <h3 className="card-details-reveal__title">Card Details</h3>
-      </div>
-
       <div className="card-details-reveal__card">
         <div className="card-details-reveal__field">
           <span className="card-details-reveal__field-label">Card Number</span>
@@ -107,7 +82,9 @@ const CardDetailsReveal: React.FC<Props> = ({
           <div className="card-details-reveal__field">
             <span className="card-details-reveal__field-label">Expiry</span>
             <span className="card-details-reveal__field-value card-details-reveal__field-value--mono">
-              {revealed ? formatExpiry(expiryMonth, expiryYear) : '\u2022\u2022/\u2022\u2022'}
+              {revealed
+                ? formatExpiry(expiryMonth, expiryYear)
+                : '\u2022\u2022/\u2022\u2022'}
             </span>
           </div>
           <div className="card-details-reveal__field">

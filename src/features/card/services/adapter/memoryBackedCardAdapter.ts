@@ -41,6 +41,36 @@ function randomHex(bytes: number): string {
     .join('')
 }
 
+// ─── localStorage Helpers ─────────────────────────────
+
+const STORAGE_PREFIX = 'ucard_mock'
+
+function storageKey(
+  adapterId: string,
+  walletAddress: string,
+  suffix: string
+): string {
+  return `${STORAGE_PREFIX}_${adapterId}_${walletAddress.toLowerCase()}_${suffix}`
+}
+
+function getJSON<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === null) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+function setJSON(key: string, value: unknown): void {
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function removeKey(key: string): void {
+  localStorage.removeItem(key)
+}
+
 // ─── Sample top-up assets (in-memory until issuer API) ─────────────────
 
 const MOCK_TOP_UP_ASSETS: TopUpAsset[] = [
@@ -88,9 +118,21 @@ export type MemoryBackedCardAdapterSpec = {
   cardTypes: CardType[]
 }
 
+/** Persisted adapter state shape. */
+type PersistedState = {
+  linked: boolean
+  kycStatus: KYCStatus
+  cards: CardAccount[]
+  transactions: Record<string, CardTransaction[]>
+  spendingLimits: Record<string, SpendingLimits>
+}
+
 /**
  * In-memory implementation of {@link CardProviderAdapter}.
  * Used for automated tests and sandbox-style flows until a provider ships real APIs.
+ *
+ * On localhost, card data is persisted to localStorage and keyed by wallet address
+ * so refreshing the page does not lose the user's cards or balance.
  */
 export class MemoryBackedCardAdapter implements CardProviderAdapter {
   readonly id: string
@@ -122,12 +164,82 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
     this.cardTypes = spec.cardTypes
   }
 
+  // ─── Persistence ───────────────────────────────────
+
+  private get walletAddress(): string | null {
+    return this.config?.walletAddress ?? null
+  }
+
+  private get isLocalhost(): boolean {
+    if (typeof window === 'undefined') return false
+    return (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    )
+  }
+
+  private storageKey(suffix: string): string | null {
+    const addr = this.walletAddress
+    if (!addr) return null
+    return storageKey(this.id, addr, suffix)
+  }
+
+  private loadFromStorage(): void {
+    if (!this.isLocalhost) return
+    const key = this.storageKey('state')
+    if (!key) return
+
+    const state = getJSON<PersistedState | null>(key, null)
+    if (!state) return
+
+    this.linked = state.linked
+    this.kycStatus = state.kycStatus
+
+    this.cards.clear()
+    for (const card of state.cards) {
+      this.cards.set(card.id, card)
+    }
+
+    this.transactions.clear()
+    for (const [cardId, txs] of Object.entries(state.transactions)) {
+      this.transactions.set(cardId, txs)
+    }
+
+    this.spendingLimits.clear()
+    for (const [cardId, limits] of Object.entries(state.spendingLimits)) {
+      this.spendingLimits.set(cardId, limits)
+    }
+  }
+
+  private saveToStorage(): void {
+    if (!this.isLocalhost) return
+    const key = this.storageKey('state')
+    if (!key) return
+
+    const state: PersistedState = {
+      linked: this.linked,
+      kycStatus: this.kycStatus,
+      cards: [...this.cards.values()],
+      transactions: Object.fromEntries(this.transactions),
+      spendingLimits: Object.fromEntries(this.spendingLimits),
+    }
+
+    setJSON(key, state)
+  }
+
+  private clearStorage(): void {
+    if (!this.isLocalhost) return
+    const key = this.storageKey('state')
+    if (key) removeKey(key)
+  }
+
   // ─── Lifecycle ─────────────────────────────────────
 
   async initialize(config: ProviderConfig): Promise<void> {
     await delay()
     this.config = config
     this.linked = true
+    this.loadFromStorage()
   }
 
   isLinked(): boolean {
@@ -145,6 +257,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
       clearTimeout(this.kycTimer)
       this.kycTimer = null
     }
+    this.clearStorage()
   }
 
   async healthCheck(): Promise<boolean> {
@@ -162,7 +275,10 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
     if (this.kycTimer) clearTimeout(this.kycTimer)
     this.kycTimer = setTimeout(() => {
       this.kycStatus = 'approved'
+      this.saveToStorage()
     }, 3000)
+
+    this.saveToStorage()
 
     return {
       sessionId: `kyc_${randomHex(8)}`,
@@ -202,6 +318,8 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
       perTransaction: '200.00',
     })
 
+    this.saveToStorage()
+
     return card
   }
 
@@ -227,6 +345,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
       throw new Error(`Cannot freeze card in status: ${card.status}`)
     }
     card.status = 'frozen'
+    this.saveToStorage()
   }
 
   async unfreezeCard(cardId: string): Promise<void> {
@@ -237,6 +356,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
       throw new Error(`Cannot unfreeze card in status: ${card.status}`)
     }
     card.status = 'active'
+    this.saveToStorage()
   }
 
   async getCardDetails(cardId: string): Promise<CardDetail> {
@@ -261,13 +381,14 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
 
   async updateSpendingLimit(
     cardId: string,
-    limits: SpendingLimits,
+    limits: SpendingLimits
   ): Promise<void> {
     await delay(200, 400)
     if (!this.cards.has(cardId)) {
       throw new Error(`Card not found: ${cardId}`)
     }
     this.spendingLimits.set(cardId, limits)
+    this.saveToStorage()
   }
 
   // ─── Top-up ────────────────────────────────────────
@@ -297,17 +418,17 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
 
   async executeTopUp(
     order: TopUpOrder,
-    _signature: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _signature: string
   ): Promise<TopUpResult> {
     await delay(300, 500)
 
     // Simulate balance update
-    const card = this.cards.get(
-      this.findCardIdByTopUpOrder(order),
-    )
+    const card = this.cards.get(this.findCardIdByTopUpOrder())
     if (card) {
       const prev = parseFloat(card.balance)
       card.balance = (prev + parseFloat(order.amount)).toFixed(2)
+      this.saveToStorage()
     }
 
     return {
@@ -332,7 +453,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
 
   async getTransactions(
     cardId: string,
-    params?: PaginationParams,
+    params?: PaginationParams
   ): Promise<PaginatedResult<CardTransaction>> {
     await delay(150, 350)
     const all = this.transactions.get(cardId) ?? []
@@ -345,15 +466,14 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
       items,
       total: all.length,
       hasMore: start + pageSize < all.length,
-      nextCursor: start + pageSize < all.length ? String(start + pageSize) : undefined,
+      nextCursor:
+        start + pageSize < all.length ? String(start + pageSize) : undefined,
     }
   }
 
   // ─── Reserved Extensions ───────────────────────────
 
-  async setupContactless(
-    cardId: string,
-  ): Promise<ContactlessConfig> {
+  async setupContactless(cardId: string): Promise<ContactlessConfig> {
     await delay(300, 500)
     if (!this.cards.has(cardId)) {
       throw new Error(`Card not found: ${cardId}`)
@@ -364,9 +484,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
     }
   }
 
-  async getMultiCurrencyAccounts(
-    cardId: string,
-  ): Promise<CurrencyAccount[]> {
+  async getMultiCurrencyAccounts(cardId: string): Promise<CurrencyAccount[]> {
     await delay(200, 400)
     if (!this.cards.has(cardId)) {
       throw new Error(`Card not found: ${cardId}`)
@@ -380,7 +498,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
 
   async requestPhysicalCard(
     cardId: string,
-    address: Record<string, string>,
+    address: Record<string, string>
   ): Promise<PhysicalCardOrder> {
     await delay(300, 500)
     if (!this.cards.has(cardId)) {
@@ -426,7 +544,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
           '<text x="24" y="130" fill="white" font-family="monospace" font-size="20" letter-spacing="3">•••• •••• •••• ' +
           (this.cards.get(cardId)?.last4 ?? '0000') +
           '</text>' +
-          '</svg>',
+          '</svg>'
       )
     )
   }
@@ -434,7 +552,7 @@ export class MemoryBackedCardAdapter implements CardProviderAdapter {
   // ─── Private Helpers ───────────────────────────────
 
   /** Best-effort lookup of a cardId associated with a top-up order. */
-  private findCardIdByTopUpOrder(_order: TopUpOrder): string {
+  private findCardIdByTopUpOrder(): string {
     // In a real adapter this would be tracked; in-memory impl returns the first card.
     const first = this.cards.keys().next()
     return first.done ? '' : first.value
