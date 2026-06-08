@@ -1,9 +1,11 @@
 'use client'
 
-import React from 'react'
-import App from '../apps/pwa/App'
+import dynamic from 'next/dynamic'
+
+const App = dynamic(() => import('../apps/pwa/App'), {
+  ssr: false,
+})
 
 export default function Page() {
   return <App />
 }
-

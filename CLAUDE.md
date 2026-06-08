@@ -166,3 +166,20 @@ Before adding a new `dependencies` entry to `package.json`:
 4. Run `yarn vitest run test/unit/security/supplyChainAudit.test.ts` to verify
 
 ---
+
+## Frontend Shells And Routing
+
+- This repo is a multi-shell workspace, not a single frontend runtime.
+- `Next.js` currently serves the main web shell and Next-hosted pages / API routes via `dev`, `build`, and `start`.
+- `Vite` currently serves the PWA shell via `vite:dev` / `vite:build`, and the browser extension shell via `ext:dev` / `ext:build`.
+- Shared business logic, hooks, contexts, chain services, and reusable UI stay in `src/`; platform bootstrapping, router wiring, and build config stay in `apps/<platform>/`.
+- For the PWA shell, route containers should live under `apps/pwa/routes/`.
+- Shared components in `src/` should prefer callback props for navigation instead of importing router APIs directly when that would couple other shells.
+- Promote flows to routes when they need URL state, browser back behavior, refresh resilience, or deep links; keep simple overlays and one-off toggles as local component state.
+- The current PWA router uses `react-router-dom` with `HashRouter`, so routes should use `#/...` instead of relying on server-side SPA fallback.
+
+# Test Architecture
+
+- Unit tests: `test/unit/`
+- Simulation tests: `test/simulation/`
+- E2E tests: `test/playwright/`
