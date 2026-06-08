@@ -89,7 +89,7 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
         {CATEGORY_TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`polymarket-tabs__item${
+            className={`polymarket-tabs__item polymarket-tabs__item--${tab.key}${
               activeCategory === tab.key ? ' polymarket-tabs__item--active' : ''
             }`}
             onClick={() => handleCategoryClick(tab.key)}

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import {
   fetchPolymarketMarkets,
   filterMarketsByCategory,
+  getServerCategoryForTab,
   type PolymarketMarket,
   type MarketCategory,
 } from '../services/polymarketService'
@@ -24,7 +25,7 @@ export interface UsePolymarketMarketsReturn {
 export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
   const { t } = useI18n()
   const [allMarkets, setAllMarkets] = useState<PolymarketMarket[]>([])
-  const [activeCategory, setActiveCategory] = useState<MarketCategory>('all')
+  const [activeCategory, setActiveCategory] = useState<MarketCategory>('hot')
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +40,7 @@ export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
   )
 
   const loadMarkets = useCallback(
-    async (isInitial: boolean) => {
+    async (isInitial: boolean, categoryOverride?: MarketCategory) => {
       if (isInitial) {
         setLoading(true)
         offsetRef.current = 0
@@ -51,7 +52,12 @@ export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
       setError(null)
 
       try {
-        const data = await fetchPolymarketMarkets(PAGE_SIZE, offsetRef.current)
+        const requestCategory = categoryOverride ?? activeCategory
+        const data = await fetchPolymarketMarkets(
+          PAGE_SIZE,
+          offsetRef.current,
+          getServerCategoryForTab(requestCategory)
+        )
         if (isInitial) {
           setAllMarkets(data)
         } else {
@@ -73,7 +79,7 @@ export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
         loadingMoreRef.current = false
       }
     },
-    [t]
+    [activeCategory, t]
   )
 
   useEffect(() => {
@@ -92,7 +98,7 @@ export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
       hasMoreRef.current = true
       offsetRef.current = 0
       setLoading(true)
-      loadMarkets(true)
+      loadMarkets(true, category)
     },
     [loadMarkets]
   )

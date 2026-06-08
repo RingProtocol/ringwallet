@@ -14,7 +14,8 @@ export interface PolymarketMarket {
 }
 
 export type MarketCategory =
-  | 'all'
+  | 'hot'
+  | 'worldCup'
   | 'sports'
   | 'politics'
   | 'crypto'
@@ -26,13 +27,34 @@ export interface CategoryTab {
   key: MarketCategory
   labelKey: string
   keywords: string[]
+  serverCategory?: string
 }
 
 export const CATEGORY_TABS: CategoryTab[] = [
-  { key: 'all', labelKey: 'predictTabAll', keywords: [] },
+  { key: 'hot', labelKey: 'predictTabHot', keywords: [] },
+  {
+    key: 'worldCup',
+    labelKey: 'predictTabWorldCup',
+    keywords: [
+      'world cup',
+      'fifa world cup',
+      'fifa',
+      '世界杯',
+      'wcq',
+      'qualifier',
+      'qualifiers',
+      'uefa',
+      'concacaf',
+      'conmebol',
+      'afc',
+      'caf',
+      'worldcup',
+    ],
+  },
   {
     key: 'sports',
     labelKey: 'predictTabSports',
+    serverCategory: 'sports',
     keywords: [
       'sports',
       'nba',
@@ -67,8 +89,37 @@ export const CATEGORY_TABS: CategoryTab[] = [
     ],
   },
   {
+    key: 'crypto',
+    labelKey: 'predictTabCrypto',
+    serverCategory: 'crypto',
+    keywords: [
+      'crypto',
+      'bitcoin',
+      'ethereum',
+      'btc',
+      'eth',
+      'blockchain',
+      'token',
+      'nft',
+      'defi',
+      'solana',
+      'cardano',
+      'xrp',
+      'cryptocurrency',
+      'altcoin',
+      'mining',
+      'halving',
+      'dex',
+      'cex',
+      'binance',
+      'coinbase',
+      'etf',
+    ],
+  },
+  {
     key: 'politics',
     labelKey: 'predictTabPolitics',
+    serverCategory: 'politics',
     keywords: [
       'politic',
       'election',
@@ -97,35 +148,9 @@ export const CATEGORY_TABS: CategoryTab[] = [
     ],
   },
   {
-    key: 'crypto',
-    labelKey: 'predictTabCrypto',
-    keywords: [
-      'crypto',
-      'bitcoin',
-      'ethereum',
-      'btc',
-      'eth',
-      'blockchain',
-      'token',
-      'nft',
-      'defi',
-      'solana',
-      'cardano',
-      'xrp',
-      'cryptocurrency',
-      'altcoin',
-      'mining',
-      'halving',
-      'dex',
-      'cex',
-      'binance',
-      'coinbase',
-      'etf',
-    ],
-  },
-  {
     key: 'world',
     labelKey: 'predictTabWorld',
+    serverCategory: 'world',
     keywords: [
       'war',
       'military',
@@ -157,6 +182,7 @@ export const CATEGORY_TABS: CategoryTab[] = [
   {
     key: 'entertainment',
     labelKey: 'predictTabEntertainment',
+    serverCategory: 'entertainment',
     keywords: [
       'movie',
       'film',
@@ -186,6 +212,7 @@ export const CATEGORY_TABS: CategoryTab[] = [
   {
     key: 'science',
     labelKey: 'predictTabScience',
+    serverCategory: 'science',
     keywords: [
       'science',
       'space',
@@ -218,7 +245,7 @@ export function marketMatchesCategory(
   market: PolymarketMarket,
   category: MarketCategory
 ): boolean {
-  if (category === 'all') return true
+  if (category === 'hot') return true
   const text = `${market.question} ${market.slug}`.toLowerCase()
   const tab = CATEGORY_TABS.find((t) => t.key === category)
   if (!tab) return false
@@ -229,8 +256,14 @@ export function filterMarketsByCategory(
   markets: PolymarketMarket[],
   category: MarketCategory
 ): PolymarketMarket[] {
-  if (category === 'all') return markets
+  if (category === 'hot') return markets
   return markets.filter((m) => marketMatchesCategory(m, category))
+}
+
+export function getServerCategoryForTab(
+  category: MarketCategory
+): string | undefined {
+  return CATEGORY_TABS.find((tab) => tab.key === category)?.serverCategory
 }
 
 export async function fetchPolymarketMarkets(

@@ -238,9 +238,9 @@ describe('polymarketService', () => {
   })
 
   describe('marketMatchesCategory', () => {
-    it('matches all category for any market', () => {
-      expect(marketMatchesCategory(MOCK_MARKETS[0], 'all')).toBe(true)
-      expect(marketMatchesCategory(MOCK_MARKETS[1], 'all')).toBe(true)
+    it('matches hot category for any market', () => {
+      expect(marketMatchesCategory(MOCK_MARKETS[0], 'hot')).toBe(true)
+      expect(marketMatchesCategory(MOCK_MARKETS[1], 'hot')).toBe(true)
     })
 
     it('matches crypto keywords', () => {
@@ -277,8 +277,8 @@ describe('polymarketService', () => {
   })
 
   describe('filterMarketsByCategory', () => {
-    it('returns all markets for all category', () => {
-      expect(filterMarketsByCategory(MOCK_MARKETS, 'all')).toHaveLength(4)
+    it('returns all markets for hot category', () => {
+      expect(filterMarketsByCategory(MOCK_MARKETS, 'hot')).toHaveLength(4)
     })
 
     it('filters to sports markets only', () => {
@@ -299,8 +299,8 @@ describe('polymarketService', () => {
   })
 
   describe('CATEGORY_TABS', () => {
-    it('has all as the first tab', () => {
-      expect(CATEGORY_TABS[0].key).toBe('all')
+    it('has hot as the first tab', () => {
+      expect(CATEGORY_TABS[0].key).toBe('hot')
     })
 
     it('has unique keys', () => {
