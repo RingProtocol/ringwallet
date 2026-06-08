@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useI18n } from '../../../i18n'
-import { useCardProvider, useCardAccounts, useCardTopUp } from '../hooks'
+import { useCardProvider, useCardAccounts } from '../hooks'
 import '../services/adapter'
 import { cardProviderRegistry } from '../services/registry'
 import { CARD_PROVIDERS } from '../../../config/cardProviders'
@@ -9,12 +9,10 @@ import type { CardAccount } from '../types'
 import CardOnboardingView from './onboarding/CardOnboardingView'
 import CardApplyPage from './onboarding/CardApplyPage'
 import CardDashboardView from './dashboard/CardDashboardView'
-import CardSettingsView from './management/CardSettingsView'
-import TopUpEntry from './topup/TopUpEntry'
-import TopUpAssetSelect from './topup/TopUpAssetSelect'
-import TopUpAmountInput from './topup/TopUpAmountInput'
-import TopUpConfirm from './topup/TopUpConfirm'
-import TopUpResult from './topup/TopUpResult'
+import ImmerseSettingPage from './settings/ImmerseSettingPage'
+import EtherfiSettingPage from './settings/EtherfiSettingPage'
+import ImmerseTopupPage from './topup/ImmerseTopupPage'
+import EtherfiTopupPage from './topup/EtherfiTopupPage'
 import './Card.css'
 
 type CardView = 'main' | 'detail' | 'topup' | 'settings' | 'apply'
@@ -48,12 +46,18 @@ const CardApp: React.FC = () => {
    * the dashboard renders immediately without waiting for the
    * `useCardAccounts` reload round-trip. Cleared on detail-back.
    */
-  const [pendingDetailCard, setPendingDetailCard] = useState<CardAccount | null>(null)
+  const [pendingDetailCard, setPendingDetailCard] =
+    useState<CardAccount | null>(null)
   const kycPollTimeoutsRef = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const { activeWallet } = useAuth()
   const { loading: adapterLoading } = useCardProvider()
-  const { accounts, activeCard, loading: accountsLoading, error: accountsError, reload: reloadAccounts } = useCardAccounts()
-  const topUp = useCardTopUp()
+  const {
+    accounts,
+    activeCard,
+    loading: accountsLoading,
+    error: accountsError,
+    reload: reloadAccounts,
+  } = useCardAccounts()
 
   // Keep a ref to the latest reloadAccounts so KYC poll closures never capture
   // a stale version (adapter was null when handleViewDetails ran but becomes
@@ -179,7 +183,7 @@ const CardApp: React.FC = () => {
         setApplyError(t('cardApplyFailed'))
       }
     },
-    [clearKycPollTimeouts, walletAddress, t],
+    [clearKycPollTimeouts, walletAddress, t]
   )
 
   /** User explicitly closed the apply page — cancel pending polls. */
@@ -208,36 +212,15 @@ const CardApp: React.FC = () => {
 
   const handleNavigateToTopUp = useCallback(() => {
     setCurrentView('topup')
-    topUp.startTopUp()
-  }, [topUp])
+  }, [])
 
   const handleNavigateToSettings = useCallback(() => {
     setCurrentView('settings')
   }, [])
 
-  const handleBackToMain = useCallback(() => {
-    setDetailProviderId(null)
-    setPendingDetailCard(null)
-    setCurrentView('main')
-    topUp.reset()
-  }, [topUp])
-
-  // ─── TopUp Flow ────────────────────────────────────
-
-  const handleTopUpBack = useCallback(() => {
-    if (topUp.stage === 'selecting_asset') {
-      setCurrentView('main')
-      topUp.reset()
-    } else if (topUp.stage === 'entering_amount') {
-      topUp.selectAsset(topUp.selectedAsset!) // go back to asset select
-      // Reset stage to selecting_asset
-      topUp.reset()
-      topUp.startTopUp()
-    } else {
-      topUp.reset()
-      setCurrentView('main')
-    }
-  }, [topUp])
+  const handleBackToDetail = useCallback(() => {
+    setCurrentView('detail')
+  }, [])
 
   // ─── Render ────────────────────────────────────────
 
@@ -303,7 +286,7 @@ const CardApp: React.FC = () => {
     const detailCard =
       pendingDetailCard ??
       (detailProviderId
-        ? accounts.find((a) => a.provider === detailProviderId) ?? activeCard
+        ? (accounts.find((a) => a.provider === detailProviderId) ?? activeCard)
         : activeCard)
     if (detailCard) {
       return (
@@ -321,94 +304,26 @@ const CardApp: React.FC = () => {
 
   // Settings
   if (currentView === 'settings' && activeCard) {
+    const SettingsComponent =
+      activeCard.provider === 'etherfi'
+        ? EtherfiSettingPage
+        : ImmerseSettingPage
     return (
       <div className="card-app">
-        <CardSettingsView card={activeCard} onBack={handleBackToMain} />
+        <SettingsComponent card={activeCard} onBack={handleBackToDetail} />
       </div>
     )
   }
 
   // TopUp Flow
-  if (currentView === 'topup') {
-    switch (topUp.stage) {
-      case 'selecting_asset':
-        return (
-          <div className="card-app">
-            <TopUpAssetSelect
-              assets={topUp.supportedAssets}
-              onSelect={topUp.selectAsset}
-              onBack={handleTopUpBack}
-            />
-          </div>
-        )
-      case 'entering_amount':
-        return (
-          <div className="card-app">
-            {topUp.selectedAsset && (
-              <TopUpAmountInput
-                asset={topUp.selectedAsset}
-                amount={topUp.amount}
-                onAmountChange={topUp.setAmount}
-                onContinue={topUp.confirm}
-                onBack={handleTopUpBack}
-              />
-            )}
-          </div>
-        )
-      case 'confirming':
-      case 'signing':
-        return (
-          <div className="card-app">
-            {topUp.order && (
-              <TopUpConfirm
-                order={topUp.order}
-                onConfirm={() => topUp.sign()}
-                onBack={handleTopUpBack}
-              />
-            )}
-          </div>
-        )
-      case 'processing':
-        return (
-          <div className="card-app card-app--loading">
-            <div className="card-app__spinner" />
-            <p className="card-app__loading-text">{t('cardProcessing')}</p>
-          </div>
-        )
-      case 'success':
-        return (
-          <div className="card-app">
-            {topUp.result && (
-              <TopUpResult
-                result={topUp.result}
-                onDone={handleBackToMain}
-              />
-            )}
-          </div>
-        )
-      case 'error':
-        return (
-          <div className="card-app">
-            <div className="card-app__error">
-              <p className="card-app__error-text">{topUp.error}</p>
-              <button
-                type="button"
-                className="card-app__error-btn"
-                onClick={handleBackToMain}
-              >
-                {t('cardBack')}
-              </button>
-            </div>
-          </div>
-        )
-      default:
-        // idle — show topup entry point
-        return (
-          <div className="card-app">
-            <TopUpEntry onStart={topUp.startTopUp} />
-          </div>
-        )
-    }
+  if (currentView === 'topup' && activeCard) {
+    const TopUpComponent =
+      activeCard.provider === 'etherfi' ? EtherfiTopupPage : ImmerseTopupPage
+    return (
+      <div className="card-app">
+        <TopUpComponent card={activeCard} onBack={handleBackToDetail} />
+      </div>
+    )
   }
 
   // Main: always show provider list

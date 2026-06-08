@@ -26,11 +26,7 @@ const ImmerseDetailPage: React.FC<Props> = ({
 
   const body = (
     <div className="card-dashboard">
-      <CardOverview
-        card={card}
-        onTopUp={onTopUp}
-        onSettings={onSettings}
-      />
+      <CardOverview card={card} onTopUp={onTopUp} />
 
       <div className="card-dashboard__section">
         <h3 className="card-dashboard__section-title">

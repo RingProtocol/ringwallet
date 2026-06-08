@@ -10,10 +10,14 @@ interface Props {
 const SpendingLimit: React.FC<Props> = ({ limits, onSave }) => {
   const [daily, setDaily] = useState(limits.daily ?? '')
   const [monthly, setMonthly] = useState(limits.monthly ?? '')
-  const [perTransaction, setPerTransaction] = useState(limits.perTransaction ?? '')
+  const [perTransaction, setPerTransaction] = useState(
+    limits.perTransaction ?? ''
+  )
   const [noLimitDaily, setNoLimitDaily] = useState(limits.daily === null)
   const [noLimitMonthly, setNoLimitMonthly] = useState(limits.monthly === null)
-  const [noLimitPerTx, setNoLimitPerTx] = useState(limits.perTransaction === null)
+  const [noLimitPerTx, setNoLimitPerTx] = useState(
+    limits.perTransaction === null
+  )
 
   const handleSave = useCallback(() => {
     onSave({
@@ -21,14 +25,22 @@ const SpendingLimit: React.FC<Props> = ({ limits, onSave }) => {
       monthly: noLimitMonthly ? null : monthly || null,
       perTransaction: noLimitPerTx ? null : perTransaction || null,
     })
-  }, [daily, monthly, perTransaction, noLimitDaily, noLimitMonthly, noLimitPerTx, onSave])
+  }, [
+    daily,
+    monthly,
+    perTransaction,
+    noLimitDaily,
+    noLimitMonthly,
+    noLimitPerTx,
+    onSave,
+  ])
 
   const renderField = (
     label: string,
     value: string,
     onChange: (v: string) => void,
     noLimit: boolean,
-    onToggleNoLimit: (v: boolean) => void,
+    onToggleNoLimit: (v: boolean) => void
   ) => (
     <div className="spending-limit__field">
       <div className="spending-limit__field-header">
@@ -59,35 +71,28 @@ const SpendingLimit: React.FC<Props> = ({ limits, onSave }) => {
 
   return (
     <div className="spending-limit">
-      <div className="spending-limit__header">
-        <button
-          type="button"
-          className="spending-limit__back"
-          onClick={() => {
-            // TODO: navigate back
-          }}
-          aria-label="Back"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <h3 className="spending-limit__title">Spending Limits</h3>
-      </div>
-
       <div className="spending-limit__fields">
-        {renderField('Daily Limit', daily, setDaily, noLimitDaily, setNoLimitDaily)}
-        {renderField('Monthly Limit', monthly, setMonthly, noLimitMonthly, setNoLimitMonthly)}
-        {renderField('Per Transaction', perTransaction, setPerTransaction, noLimitPerTx, setNoLimitPerTx)}
+        {renderField(
+          'Daily Limit',
+          daily,
+          setDaily,
+          noLimitDaily,
+          setNoLimitDaily
+        )}
+        {renderField(
+          'Monthly Limit',
+          monthly,
+          setMonthly,
+          noLimitMonthly,
+          setNoLimitMonthly
+        )}
+        {renderField(
+          'Per Transaction',
+          perTransaction,
+          setPerTransaction,
+          noLimitPerTx,
+          setNoLimitPerTx
+        )}
       </div>
 
       <button
