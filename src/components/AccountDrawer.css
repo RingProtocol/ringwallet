@@ -178,6 +178,8 @@
   overflow-y: auto;
   padding: 6px 0 16px;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 }
 
 .drawer-menu-section {
@@ -376,6 +378,71 @@
   flex-shrink: 0;
 }
 
+.drawer-shortcuts {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 18px 16px 4px;
+  border-top: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+  width: min(100%, 288px);
+  align-self: center;
+}
+
+.drawer-shortcut {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ring-text-primary, #f3f4f6);
+  border-radius: 14px;
+  padding: 12px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+  font-family: inherit;
+  min-height: 88px;
+}
+
+.drawer-shortcut:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.drawer-shortcut:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.drawer-shortcut__icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.drawer-shortcut__label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ring-text-secondary, #d1d5db);
+  word-break: break-word;
+}
+
 @media (max-width: 400px) {
   .account-drawer {
     width: 100vw;
@@ -467,6 +534,26 @@
   border-top: none;
   padding-top: 0;
   overflow-y: auto;
+}
+
+.about-links {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--ring-border, rgba(255, 255, 255, 0.08));
+}
+
+.about-link {
+  color: var(--ring-accent, #bc74ed);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.about-link:hover {
+  text-decoration: underline;
 }
 
 /* Feedback Modal */

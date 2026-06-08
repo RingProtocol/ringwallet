@@ -33,5 +33,6 @@ test-ledger
 
 # oh-my-claudecode
 .omc/
+.omx
 design
 .gstack/

@@ -254,6 +254,22 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
     onLogout?.()
   }
 
+  const openTermsOfService = () =>
+    window.open('/terms-of-service', '_blank', 'noopener,noreferrer')
+
+  const openPrivacyPolicy = () =>
+    window.open('/privacy-policy', '_blank', 'noopener,noreferrer')
+
+  const openGithub = () =>
+    window.open(
+      'https://github.com/RingProtocol/ringwallet/',
+      '_blank',
+      'noopener,noreferrer'
+    )
+
+  const openX = () =>
+    window.open('https://x.com/Chocolly985', '_blank', 'noopener,noreferrer')
+
   useEffect(() => {
     setNotificationPermission(getDeviceNotificationPermission())
   }, [active])
@@ -418,7 +434,7 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
         </svg>
       ),
       label: t('termsOfService'),
-      action: () => window.open('/terms-of-service', '_blank'),
+      action: openTermsOfService,
     },
     {
       key: 'privacy',
@@ -438,7 +454,46 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
         </svg>
       ),
       label: t('privacyPolicy'),
-      action: () => window.open('/privacy-policy', '_blank'),
+      action: openPrivacyPolicy,
+    },
+    {
+      key: 'github',
+      icon: (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 19c-4.5 1.4-4.5-2.5-6-3m12 6v-3.5a3.04 3.04 0 00-.59-2.11c1.97-.22 4.04-.97 4.04-4.39A3.44 3.44 0 0017.5 9.6 3.19 3.19 0 0017.41 7S15.73 6.78 12 9.3C8.27 6.78 6.59 7 6.59 7A3.19 3.19 0 006.5 9.6 3.44 3.44 0 005.55 12c0 3.41 2.07 4.16 4.04 4.39A3.04 3.04 0 009 18.5V22" />
+        </svg>
+      ),
+      label: 'GitHub',
+      action: openGithub,
+    },
+    {
+      key: 'x',
+      icon: (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M4 4l16 16" />
+          <path d="M20 4L4 20" />
+        </svg>
+      ),
+      label: 'X',
+      action: openX,
     },
     {
       key: 'logout',
@@ -463,6 +518,21 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
       negative: true,
     },
   ]
+
+  const bottomShortcutKeys = new Set([
+    'feedback',
+    'about',
+    'terms',
+    'privacy',
+    'github',
+    'x',
+  ])
+  const primaryMenuItems = menuItems.filter(
+    (item) => !item.hidden && !bottomShortcutKeys.has(item.key)
+  )
+  const bottomShortcutItems = menuItems.filter(
+    (item) => !item.hidden && bottomShortcutKeys.has(item.key)
+  )
 
   return (
     <>
@@ -527,6 +597,24 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
               </button>
             </div>
             <Introduce />
+            <div className="about-links">
+              <a
+                href="https://github.com/RingProtocol/ringwallet/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="about-link"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://x.com/Chocolly985"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="about-link"
+              >
+                X
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -623,186 +711,153 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
 
       {featureError && <div className="drawer-error">{featureError}</div>}
       <div className="drawer-menu-list">
-        {menuItems
-          .filter((i) => !i.hidden)
-          .map((item, idx, arr) => (
-            <div className="drawer-menu-section" key={item.key}>
-              <div
-                className={`drawer-menu-item ${item.disabled ? 'disabled' : ''} ${item.negative ? 'negative' : ''}`}
-                onClick={item.disabled ? undefined : item.action}
+        {primaryMenuItems.map((item, idx, arr) => (
+          <div className="drawer-menu-section" key={item.key}>
+            <div
+              className={`drawer-menu-item ${item.disabled ? 'disabled' : ''} ${item.negative ? 'negative' : ''}`}
+              onClick={item.disabled ? undefined : item.action}
+            >
+              <span
+                className="drawer-menu-icon"
+                {...(item.key === 'about'
+                  ? {
+                      onClick: (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        handleDevTap()
+                      },
+                    }
+                  : {})}
               >
-                <span
-                  className="drawer-menu-icon"
-                  {...(item.key === 'about'
-                    ? {
-                        onClick: (e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          handleDevTap()
-                        },
-                      }
-                    : {})}
-                >
-                  {item.icon}
-                </span>
-                <span className="drawer-menu-label">
-                  {item.label}
-                  {item.sublabel && (
-                    <span className="drawer-menu-sublabel">
-                      {item.sublabel}
-                    </span>
-                  )}
-                </span>
-                {item.key === 'switch' && (
-                  <span
-                    className={`drawer-menu-arrow ${showWalletList ? 'expanded' : ''}`}
-                  >
-                    ›
-                  </span>
+                {item.icon}
+              </span>
+              <span className="drawer-menu-label">
+                {item.label}
+                {item.sublabel && (
+                  <span className="drawer-menu-sublabel">{item.sublabel}</span>
                 )}
-              </div>
+              </span>
+              {item.key === 'switch' && (
+                <span
+                  className={`drawer-menu-arrow ${showWalletList ? 'expanded' : ''}`}
+                >
+                  ›
+                </span>
+              )}
+            </div>
 
-              {item.key === 'switch' && showWalletList && (
-                <div className="drawer-wallet-list">
-                  {visibleWallets.map(({ wallet, index }) => (
-                    <div
-                      key={index}
-                      className="drawer-wallet-option"
-                      onClick={() => handleSelectWallet(index)}
-                    >
-                      <div className="drawer-wallet-row">
-                        <span className="drawer-wallet-name">
-                          {t('wallet')} #{index + 1}
+            {item.key === 'switch' && showWalletList && (
+              <div className="drawer-wallet-list">
+                {visibleWallets.map(({ wallet, index }) => (
+                  <div
+                    key={index}
+                    className="drawer-wallet-option"
+                    onClick={() => handleSelectWallet(index)}
+                  >
+                    <div className="drawer-wallet-row">
+                      <span className="drawer-wallet-name">
+                        {t('wallet')} #{index + 1}
+                      </span>
+                      {index === activeWalletIndex && (
+                        <span className="drawer-wallet-check">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         </span>
-                        {index === activeWalletIndex && (
-                          <span className="drawer-wallet-check">
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                      )}
+                    </div>
+                    <div className="drawer-wallet-addr-row">
+                      <span className="drawer-wallet-addr">
+                        {formatAddress(wallet.address)}
+                      </span>
+                      <div className="drawer-wallet-actions">
+                        <DropdownMenu
+                          open={openWalletMenuIndex === index}
+                          onOpenChange={(open) => {
+                            if (
+                              !open &&
+                              keepWalletMenuOpenRef.current === index
+                            ) {
+                              setOpenWalletMenuIndex(index)
+                              keepWalletMenuOpenRef.current = null
+                              return
+                            }
+
+                            setOpenWalletMenuIndex(open ? index : null)
+                            if (!open) {
+                              setCopiedWalletMenuIndex((prev) =>
+                                prev === index ? null : prev
+                              )
+                            }
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              className="drawer-wallet-menu-trigger"
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={t('more')}
+                              title={t('more')}
                             >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                      <div className="drawer-wallet-addr-row">
-                        <span className="drawer-wallet-addr">
-                          {formatAddress(wallet.address)}
-                        </span>
-                        <div className="drawer-wallet-actions">
-                          <DropdownMenu
-                            open={openWalletMenuIndex === index}
-                            onOpenChange={(open) => {
-                              if (
-                                !open &&
-                                keepWalletMenuOpenRef.current === index
-                              ) {
-                                setOpenWalletMenuIndex(index)
-                                keepWalletMenuOpenRef.current = null
-                                return
-                              }
-
-                              setOpenWalletMenuIndex(open ? index : null)
-                              if (!open) {
-                                setCopiedWalletMenuIndex((prev) =>
-                                  prev === index ? null : prev
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                <circle cx="12" cy="5" r="2" />
+                                <circle cx="12" cy="12" r="2" />
+                                <circle cx="12" cy="19" r="2" />
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="left"
+                            align="start"
+                            sideOffset={6}
+                            className="drawer-wallet-dropdown-content"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenuItem
+                              className="drawer-wallet-dropdown-item"
+                              onClick={(e) => e.stopPropagation()}
+                              onSelect={(event) =>
+                                handleCopyAddressMenu(
+                                  event,
+                                  index,
+                                  wallet.address
                                 )
                               }
-                            }}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="drawer-wallet-menu-trigger"
-                                onClick={(e) => e.stopPropagation()}
-                                aria-label={t('more')}
-                                title={t('more')}
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                >
-                                  <circle cx="12" cy="5" r="2" />
-                                  <circle cx="12" cy="12" r="2" />
-                                  <circle cx="12" cy="19" r="2" />
-                                </svg>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              side="left"
-                              align="start"
-                              sideOffset={6}
-                              className="drawer-wallet-dropdown-content"
-                              onClick={(e) => e.stopPropagation()}
-                              onPointerDown={(e) => e.stopPropagation()}
                             >
-                              <DropdownMenuItem
-                                className="drawer-wallet-dropdown-item"
-                                onClick={(e) => e.stopPropagation()}
-                                onSelect={(event) =>
-                                  handleCopyAddressMenu(
-                                    event,
-                                    index,
-                                    wallet.address
-                                  )
-                                }
-                              >
-                                <span>{t('addressCopy')}</span>
-                                {copiedWalletMenuIndex === index ? (
-                                  <svg
-                                    width="13"
-                                    height="13"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                ) : (
-                                  <svg
-                                    width="13"
-                                    height="13"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <rect
-                                      x="9"
-                                      y="9"
-                                      width="13"
-                                      height="13"
-                                      rx="2"
-                                      ry="2"
-                                    />
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                  </svg>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator className="drawer-wallet-dropdown-separator" />
-                              <DropdownMenuItem
-                                className="drawer-wallet-dropdown-item drawer-wallet-dropdown-danger"
-                                onClick={(e) => e.stopPropagation()}
-                                onSelect={() => handleHideAccount(index)}
-                              >
-                                <span>{t('hideAccount')}</span>
+                              <span>{t('addressCopy')}</span>
+                              {copiedWalletMenuIndex === index ? (
                                 <svg
-                                  width="14"
-                                  height="14"
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  width="13"
+                                  height="13"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -810,24 +865,79 @@ const AccountDrawerPanel: React.FC<AccountDrawerPanelProps> = ({
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                 >
-                                  <path d="M17.94 17.94A10.94 10.94 0 0112 20c-5 0-9.27-3.11-11-8 1.04-2.94 2.96-5.08 5.44-6.32" />
-                                  <path d="M10.58 10.58A2 2 0 0013.42 13.42" />
-                                  <path d="M1 1l22 22" />
-                                  <path d="M9.88 4.24A10.94 10.94 0 0112 4c5 0 9.27 3.11 11 8a11.83 11.83 0 01-3.06 4.94" />
+                                  <rect
+                                    x="9"
+                                    y="9"
+                                    width="13"
+                                    height="13"
+                                    rx="2"
+                                    ry="2"
+                                  />
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                                 </svg>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="drawer-wallet-dropdown-separator" />
+                            <DropdownMenuItem
+                              className="drawer-wallet-dropdown-item drawer-wallet-dropdown-danger"
+                              onClick={(e) => e.stopPropagation()}
+                              onSelect={() => handleHideAccount(index)}
+                            >
+                              <span>{t('hideAccount')}</span>
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M17.94 17.94A10.94 10.94 0 0112 20c-5 0-9.27-3.11-11-8 1.04-2.94 2.96-5.08 5.44-6.32" />
+                                <path d="M10.58 10.58A2 2 0 0013.42 13.42" />
+                                <path d="M1 1l22 22" />
+                                <path d="M9.88 4.24A10.94 10.94 0 0112 4c5 0 9.27 3.11 11 8a11.83 11.83 0 01-3.06 4.94" />
+                              </svg>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-              {idx < arr.length - 1 && <div className="drawer-menu-divider" />}
-            </div>
+            {idx < arr.length - 1 && <div className="drawer-menu-divider" />}
+          </div>
+        ))}
+        <div className="drawer-shortcuts">
+          {bottomShortcutItems.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="drawer-shortcut"
+              onClick={item.action}
+              disabled={item.disabled}
+            >
+              <span
+                className="drawer-shortcut__icon"
+                {...(item.key === 'about'
+                  ? {
+                      onClick: (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        handleDevTap()
+                      },
+                    }
+                  : {})}
+              >
+                {item.icon}
+              </span>
+              <span className="drawer-shortcut__label">{item.label}</span>
+            </button>
           ))}
+        </div>
       </div>
     </>
   )
