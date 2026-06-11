@@ -11,6 +11,12 @@ export interface PolymarketMarket {
   volume: string
   outcomes: string
   outcomePrices: string
+  // Event-level aggregated fields (from Events API)
+  eventVolume24hr?: number
+  eventVolume?: number
+  eventLiquidity?: number
+  category?: string
+  subcategory?: string
 }
 
 export type MarketCategory =

@@ -41,6 +41,7 @@ import {
   ACROSS_BRIDGE_URL,
 } from '../../config/bridgeUrls'
 import PolymarketListPage from '../predict/PolymarketListPage'
+import PolymarketTestPage from '../predict/PolymarketTestPage'
 import '../../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
@@ -54,6 +55,7 @@ export interface ActionCircleEntryProps {
   disabled?: boolean
   title?: string
   testId?: string
+  onContextMenu?: (e: React.MouseEvent) => void
 }
 
 export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
@@ -64,11 +66,13 @@ export const ActionCircleEntry: React.FC<ActionCircleEntryProps> = ({
   disabled,
   title,
   testId,
+  onContextMenu,
 }) => (
   <button
     type="button"
     className={`action-circle-entry ${variantClass}`}
     onClick={onClick}
+    onContextMenu={onContextMenu}
     disabled={disabled}
     title={title}
     data-testid={testId}
@@ -192,6 +196,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [lifiBridgeOpen, setLifiBridgeOpen] = useState(false)
   const [acrossBridgeOpen, setAcrossBridgeOpen] = useState(false)
   const [predictListOpen, setPredictListOpen] = useState(false)
+  const [predictTestOpen, setPredictTestOpen] = useState(false)
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -493,6 +498,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           }
           label={t('walletActionPredict')}
           onClick={() => setPredictListOpen(true)}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            setPredictTestOpen(true)
+          }}
           testId={TESTID.PREDICT_BUTTON}
         />
         <ActionCircleEntry
@@ -668,6 +677,10 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
       {predictListOpen && (
         <PolymarketListPage onClose={() => setPredictListOpen(false)} />
+      )}
+
+      {predictTestOpen && (
+        <PolymarketTestPage onClose={() => setPredictTestOpen(false)} />
       )}
 
       {activeDApp && (

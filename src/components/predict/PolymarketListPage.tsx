@@ -134,7 +134,11 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
                   </span>
                   <span className="polymarket-list__meta">
                     {t('predictVolume24h')}:{' '}
-                    {formatPolymarketVolume(market.volume24hr)}
+                    {formatPolymarketVolume(
+                      market.eventVolume24hr !== undefined
+                        ? String(market.eventVolume24hr)
+                        : market.volume24hr
+                    )}
                   </span>
                 </div>
               </button>
