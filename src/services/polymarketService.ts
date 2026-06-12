@@ -36,6 +36,13 @@ export interface CategoryTab {
   serverCategory?: string
 }
 
+const WORLD_CUP_SEARCH_TERMS = [
+  'world cup',
+  'fifa world cup',
+  'wcq',
+  'world cup qualifier',
+]
+
 export const CATEGORY_TABS: CategoryTab[] = [
   { key: 'hot', labelKey: 'predictTabHot', keywords: [] },
   {
@@ -272,6 +279,36 @@ export function getServerCategoryForTab(
   return CATEGORY_TABS.find((tab) => tab.key === category)?.serverCategory
 }
 
+function getMarketTotalVolume(market: PolymarketMarket): number {
+  const raw =
+    market.eventVolume !== undefined
+      ? String(market.eventVolume)
+      : market.volume
+  return Number.parseFloat(raw) || 0
+}
+
+function dedupeMarketsBySlug(markets: PolymarketMarket[]): PolymarketMarket[] {
+  const deduped = new Map<string, PolymarketMarket>()
+  for (const market of markets) {
+    const existing = deduped.get(market.slug)
+    if (
+      !existing ||
+      getMarketTotalVolume(market) > getMarketTotalVolume(existing)
+    ) {
+      deduped.set(market.slug, market)
+    }
+  }
+  return [...deduped.values()]
+}
+
+function sortMarketsByTotalVolume(
+  markets: PolymarketMarket[]
+): PolymarketMarket[] {
+  return [...markets].sort(
+    (left, right) => getMarketTotalVolume(right) - getMarketTotalVolume(left)
+  )
+}
+
 export async function fetchPolymarketMarkets(
   limit = 20,
   offset = 0,
@@ -283,7 +320,7 @@ export async function fetchPolymarketMarkets(
     closed: false,
     limit,
     offset,
-    order: 'volume_24hr',
+    order: 'volume_total',
     ascending: false,
   }
   if (category) {
@@ -302,6 +339,60 @@ export async function fetchPolymarketMarkets(
   }
   const json = await res.json()
   return json.data ?? []
+}
+
+export async function fetchPolymarketSearchMarkets(
+  query: string,
+  limit = 20,
+  offset = 0
+): Promise<PolymarketMarket[]> {
+  const res = await fetch(`${API_BASE}/v1/prediction_markets/search`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+    },
+    body: JSON.stringify({
+      source: 'polymarket',
+      query,
+      limit,
+      offset,
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`Prediction market search API error: HTTP ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data ?? []
+}
+
+export async function fetchPolymarketWorldCupMarkets(
+  limit = 20,
+  offset = 0
+): Promise<{ data: PolymarketMarket[]; hasMore: boolean }> {
+  const poolTarget = Math.min(Math.max((offset + limit) * 4, 60), 120)
+  const perQueryLimit = Math.max(
+    Math.ceil(poolTarget / WORLD_CUP_SEARCH_TERMS.length),
+    20
+  )
+
+  const results = await Promise.all(
+    WORLD_CUP_SEARCH_TERMS.map((query) =>
+      fetchPolymarketSearchMarkets(query, perQueryLimit, 0)
+    )
+  )
+
+  const merged = dedupeMarketsBySlug(results.flat())
+  const filtered = merged.filter((market) =>
+    marketMatchesCategory(market, 'worldCup')
+  )
+  const sorted = sortMarketsByTotalVolume(filtered)
+  const page = sorted.slice(offset, offset + limit)
+
+  return {
+    data: page,
+    hasMore: offset + limit < sorted.length,
+  }
 }
 
 export async function fetchPolymarketMarketDetail(

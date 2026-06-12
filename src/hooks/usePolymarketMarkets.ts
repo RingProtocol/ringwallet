@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import {
   fetchPolymarketMarkets,
+  fetchPolymarketWorldCupMarkets,
   filterMarketsByCategory,
   getServerCategoryForTab,
   type PolymarketMarket,
@@ -53,17 +54,30 @@ export function usePolymarketMarkets(): UsePolymarketMarketsReturn {
 
       try {
         const requestCategory = categoryOverride ?? activeCategory
-        const data = await fetchPolymarketMarkets(
-          PAGE_SIZE,
-          offsetRef.current,
-          getServerCategoryForTab(requestCategory)
-        )
+        let data: PolymarketMarket[] = []
+        let more = false
+
+        if (requestCategory === 'worldCup') {
+          const result = await fetchPolymarketWorldCupMarkets(
+            PAGE_SIZE,
+            offsetRef.current
+          )
+          data = result.data
+          more = result.hasMore
+        } else {
+          data = await fetchPolymarketMarkets(
+            PAGE_SIZE,
+            offsetRef.current,
+            getServerCategoryForTab(requestCategory)
+          )
+          more = data.length === PAGE_SIZE
+        }
+
         if (isInitial) {
           setAllMarkets(data)
         } else {
           setAllMarkets((prev) => [...prev, ...data])
         }
-        const more = data.length === PAGE_SIZE
         setHasMore(more)
         hasMoreRef.current = more
         offsetRef.current += data.length

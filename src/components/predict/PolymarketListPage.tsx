@@ -133,12 +133,22 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
                     {market.question}
                   </span>
                   <span className="polymarket-list__meta">
-                    {t('predictVolume24h')}:{' '}
-                    {formatPolymarketVolume(
-                      market.eventVolume24hr !== undefined
-                        ? String(market.eventVolume24hr)
-                        : market.volume24hr
-                    )}
+                    <span className="polymarket-list__meta-line">
+                      {t('predictVolume24h')}:{' '}
+                      {formatPolymarketVolume(
+                        market.eventVolume24hr !== undefined
+                          ? String(market.eventVolume24hr)
+                          : market.volume24hr
+                      )}
+                    </span>
+                    <span className="polymarket-list__meta-line">
+                      {t('predictTotalVolume')}:{' '}
+                      {formatPolymarketVolume(
+                        market.eventVolume !== undefined
+                          ? String(market.eventVolume)
+                          : market.volume
+                      )}
+                    </span>
                   </span>
                 </div>
               </button>

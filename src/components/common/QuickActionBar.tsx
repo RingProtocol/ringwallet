@@ -40,8 +40,6 @@ import {
   LIFI_BRIDGE_URL,
   ACROSS_BRIDGE_URL,
 } from '../../config/bridgeUrls'
-import PolymarketListPage from '../predict/PolymarketListPage'
-import PolymarketTestPage from '../predict/PolymarketTestPage'
 import '../../features/dapps/components/DApps.css'
 import './QuickActionBar.css'
 
@@ -195,8 +193,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [bridgeListOpen, setBridgeListOpen] = useState(false)
   const [lifiBridgeOpen, setLifiBridgeOpen] = useState(false)
   const [acrossBridgeOpen, setAcrossBridgeOpen] = useState(false)
-  const [predictListOpen, setPredictListOpen] = useState(false)
-  const [predictTestOpen, setPredictTestOpen] = useState(false)
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -479,32 +475,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           testId={TESTID.EARN_BUTTON}
         />
         <ActionCircleEntry
-          variantClass="action-circle-entry--predict"
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 20V10" />
-              <path d="M12 20V4" />
-              <path d="M6 20v-6" />
-            </svg>
-          }
-          label={t('walletActionPredict')}
-          onClick={() => setPredictListOpen(true)}
-          onContextMenu={(e) => {
-            e.preventDefault()
-            setPredictTestOpen(true)
-          }}
-          testId={TESTID.PREDICT_BUTTON}
-        />
-        <ActionCircleEntry
           variantClass="action-circle-entry--dapp"
           icon={
             <svg
@@ -673,14 +643,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
 
       {acrossBridgeOpen && (
         <AcrossBridgePage onClose={() => setAcrossBridgeOpen(false)} />
-      )}
-
-      {predictListOpen && (
-        <PolymarketListPage onClose={() => setPredictListOpen(false)} />
-      )}
-
-      {predictTestOpen && (
-        <PolymarketTestPage onClose={() => setPredictTestOpen(false)} />
       )}
 
       {activeDApp && (

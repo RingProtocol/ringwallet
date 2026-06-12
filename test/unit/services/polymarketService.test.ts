@@ -96,7 +96,7 @@ describe('polymarketService', () => {
         closed: false,
         limit: 10,
         offset: 0,
-        order: 'volume_24hr',
+        order: 'volume_total',
         ascending: false,
       })
     })
