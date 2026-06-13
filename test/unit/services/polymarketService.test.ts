@@ -209,23 +209,23 @@ describe('polymarketService', () => {
 
   describe('formatPolymarketVolume', () => {
     it('formats billions', () => {
-      expect(formatPolymarketVolume('2000000000000000')).toBe('$2.0B')
-      expect(formatPolymarketVolume('1250000000000000')).toBe('$1.3B')
+      expect(formatPolymarketVolume('2000000000')).toBe('$2.0B')
+      expect(formatPolymarketVolume('1250000000')).toBe('$1.3B')
     })
 
     it('formats millions', () => {
-      expect(formatPolymarketVolume('500000000000000')).toBe('$500.0M')
-      expect(formatPolymarketVolume('1250000000000')).toBe('$1.3M')
+      expect(formatPolymarketVolume('500000000')).toBe('$500.0M')
+      expect(formatPolymarketVolume('1250000')).toBe('$1.3M')
     })
 
     it('formats thousands', () => {
-      expect(formatPolymarketVolume('850000000000')).toBe('$850.0K')
-      expect(formatPolymarketVolume('1200000000')).toBe('$1.2K')
+      expect(formatPolymarketVolume('850000')).toBe('$850.0K')
+      expect(formatPolymarketVolume('1200')).toBe('$1.2K')
     })
 
     it('formats small values', () => {
-      expect(formatPolymarketVolume('500000000')).toBe('$500')
-      expect(formatPolymarketVolume('1000000')).toBe('$1')
+      expect(formatPolymarketVolume('500')).toBe('$500')
+      expect(formatPolymarketVolume('1')).toBe('$1')
     })
   })
 
