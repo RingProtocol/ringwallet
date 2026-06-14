@@ -253,6 +253,15 @@ describe('polymarketService', () => {
       expect(marketMatchesCategory(MOCK_MARKETS[1], 'sports')).toBe(false)
     })
 
+    it('matches world cup qualifier keywords', () => {
+      const market: PolymarketMarket = {
+        ...MOCK_MARKETS[0],
+        question: 'Will Italy qualify in UEFA qualifiers?',
+        slug: 'italy-uefa-qualifiers',
+      }
+      expect(marketMatchesCategory(market, 'worldCup')).toBe(true)
+    })
+
     it('matches politics keywords', () => {
       expect(marketMatchesCategory(MOCK_MARKETS[1], 'politics')).toBe(true)
       expect(marketMatchesCategory(MOCK_MARKETS[3], 'politics')).toBe(false)

@@ -41,6 +41,11 @@ const WORLD_CUP_SEARCH_TERMS = [
   'fifa world cup',
   'wcq',
   'world cup qualifier',
+  'world cup qualifiers',
+  'fifa qualifier',
+  'uefa qualifiers',
+  'soccer world cup',
+  'international football',
 ]
 
 export const CATEGORY_TABS: CategoryTab[] = [
@@ -56,6 +61,11 @@ export const CATEGORY_TABS: CategoryTab[] = [
       'wcq',
       'qualifier',
       'qualifiers',
+      'fifa qualifier',
+      'world cup qualifiers',
+      'uefa qualifiers',
+      'soccer world cup',
+      'international football',
       'uefa',
       'concacaf',
       'conmebol',
@@ -309,11 +319,31 @@ function sortMarketsByTotalVolume(
   )
 }
 
+export interface ListMarketsOptions {
+  limit?: number
+  offset?: number
+  category?: string
+  tagId?: number
+  relatedTags?: boolean
+}
+
 export async function fetchPolymarketMarkets(
   limit = 20,
   offset = 0,
   category?: string
 ): Promise<PolymarketMarket[]> {
+  return fetchPolymarketMarketsWithOptions({ limit, offset, category })
+}
+
+export async function fetchPolymarketMarketsWithOptions(
+  options: ListMarketsOptions = {}
+): Promise<PolymarketMarket[]> {
+  // AI CONTRACT: This is the canonical category-fetch entry point.
+  // For sport/event categories, callers MUST pass { tagId, relatedTags: true }
+  // instead of falling back to free-text search. See
+  // documents/tech/polymarket-betting.md and the "Polymarket Category
+  // Fetching Rules" section in CLAUDE.md / AGENTS.md.
+  const { limit = 20, offset = 0, category, tagId, relatedTags } = options
   const body: Record<string, unknown> = {
     source: 'polymarket',
     active: true,
@@ -325,6 +355,10 @@ export async function fetchPolymarketMarkets(
   }
   if (category) {
     body.category = category
+  }
+  if (tagId !== undefined) {
+    body.tag_id = tagId
+    body.related_tags = relatedTags ?? true
   }
   const res = await fetch(`${API_BASE}/v1/prediction_markets`, {
     method: 'POST',
@@ -339,6 +373,62 @@ export async function fetchPolymarketMarkets(
   }
   const json = await res.json()
   return json.data ?? []
+}
+
+export interface PolymarketSport {
+  id?: string
+  sport?: string
+  tags?: string
+  image?: string
+  resolution?: string
+  ordering?: string
+  series?: string
+}
+
+export async function fetchPolymarketSports(): Promise<PolymarketSport[]> {
+  const res = await fetch(`${API_BASE}/v1/prediction_markets/sports`, {
+    method: 'GET',
+    headers: {
+      'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+    },
+  })
+  if (!res.ok) {
+    throw new Error(`Prediction market sports API error: HTTP ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data ?? []
+}
+
+// Memoized world cup tag lookup so we don't refetch on every tab click.
+let worldCupTagIdPromise: Promise<number | null> | null = null
+
+function parsePolymarketSportId(raw: string | undefined): number | null {
+  if (!raw) return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  // /sports returns CSV-like tags/id fields; first id wins.
+  const first = trimmed.split(/[,\s]+/)[0]
+  if (!first) return null
+  const num = Number.parseInt(first, 10)
+  return Number.isFinite(num) ? num : null
+}
+
+export async function getWorldCupTagId(): Promise<number | null> {
+  if (!worldCupTagIdPromise) {
+    worldCupTagIdPromise = (async () => {
+      try {
+        const sports = await fetchPolymarketSports()
+        const match = sports.find((s) => {
+          const tags = (s.tags ?? s.sport ?? '').toLowerCase()
+          return tags.includes('world cup') || tags.includes('fifa')
+        })
+        return parsePolymarketSportId(match?.tags ?? match?.id)
+      } catch {
+        return null
+      }
+    })()
+  }
+  return worldCupTagIdPromise
 }
 
 export async function fetchPolymarketSearchMarkets(
@@ -367,6 +457,34 @@ export async function fetchPolymarketSearchMarkets(
 }
 
 export async function fetchPolymarketWorldCupMarkets(
+  limit = 20,
+  offset = 0
+): Promise<{ data: PolymarketMarket[]; hasMore: boolean }> {
+  // AI CONTRACT: World Cup is a tag-based category. Do not revert this to
+  // free-text search alone — see documents/tech/polymarket-betting.md.
+  const tagId = await getWorldCupTagId()
+  if (tagId === null) {
+    // No tag id available — fall back to the keyword search pool.
+    return fetchPolymarketWorldCupMarketsBySearch(limit, offset)
+  }
+  const data = await fetchPolymarketMarketsWithOptions({
+    limit,
+    offset,
+    tagId,
+    relatedTags: true,
+  })
+  // When the page is small on first page, fall back to keyword search to
+  // cover edge cases where the tag taxonomy missed a market.
+  if (offset === 0 && data.length === 0) {
+    return fetchPolymarketWorldCupMarketsBySearch(limit, offset)
+  }
+  return {
+    data,
+    hasMore: data.length === limit,
+  }
+}
+
+async function fetchPolymarketWorldCupMarketsBySearch(
   limit = 20,
   offset = 0
 ): Promise<{ data: PolymarketMarket[]; hasMore: boolean }> {
@@ -417,6 +535,10 @@ export async function fetchPolymarketMarketDetail(
 }
 
 export function formatPolymarketVolume(volumeStr: string): string {
+  // AI CONTRACT: Gamma's volume values are already scaled. Do NOT add a
+  // `parseFloat(volumeStr) / 1_000_000` step here. See
+  // documents/tech/polymarket-betting.md and the volume unit findings in
+  // wallet-api/README.md.
   const num = parseFloat(volumeStr)
   if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`

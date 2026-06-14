@@ -108,7 +108,7 @@ const PolymarketListPage: React.FC<Props> = ({ onClose }) => {
           </TempContent>
         )}
         {!loading && !error && markets.length === 0 && (
-          <div className="polymarket-list__empty">{t('noDapps')}</div>
+          <div className="polymarket-list__empty">{t('predictNoMarkets')}</div>
         )}
         {!loading && !error && markets.length > 0 && (
           <div className="polymarket-list">

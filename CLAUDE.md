@@ -178,6 +178,31 @@ Before adding a new `dependencies` entry to `package.json`:
 - Promote flows to routes when they need URL state, browser back behavior, refresh resilience, or deep links; keep simple overlays and one-off toggles as local component state.
 - The current PWA router uses `react-router-dom` with `HashRouter`, so routes should use `#/...` instead of relying on server-side SPA fallback.
 
+## Polymarket — Category Fetching Rules (Non-Negotiable)
+
+When the Predict tab is asked to show a category (e.g. `World Cup`, `Sports`, `Politics`), the rules below are mandatory. Full rationale lives in `documents/tech/polymarket-betting.md`.
+
+1. **Do not use `/v1/prediction_markets/search` for category browsing.**
+   - Gamma's `?search=` is a free-text relevance endpoint. It is not a category filter, and during live events it frequently returns 0 markets even when the event is huge.
+   - Free-text search is only acceptable as a last-resort fallback when no `tag_id` is available.
+2. **Categories that map to a real Polymarket sport/event must go through `tag_id` + `related_tags=true`.**
+   - Resolve the tag id from the new `GET /v1/prediction_markets/sports` endpoint (proxies Gamma `/sports`).
+   - Memoize the resolved id. Do not refetch on every tab switch.
+3. **The list endpoint must request `order: 'volume_total'` (`ascending: false`) for "Hot" and any sport-based tab.**
+   - The wallet-api service already enforces a server-side final sort by total volume, so do not assume the upstream page is already ordered.
+4. **Volume values are already scaled.**
+   - `eventVolume` / `eventVolume24hr` are normal numbers. Do not divide by `1_000_000` in UI formatters.
+5. **Empty states must never be misleading.**
+   - If a category tab returns 0 markets, the UI must show the `predictNoMarkets` empty state. It must not silently splice in a `Hot` (or any other category's) market list into a different tab — that misleads users into betting on unrelated events.
+   - A future iteration may add a feature flag to hide seasonal tabs entirely during off-season windows, but the in-tab fallback list approach is forbidden.
+6. **Implementation files in scope:**
+   - Service: `src/services/polymarketService.ts` (functions: `fetchPolymarketMarketsWithOptions`, `getWorldCupTagId`, `fetchPolymarketWorldCupMarkets`, `formatPolymarketVolume`)
+   - Hook: `src/hooks/usePolymarketMarkets.ts`
+   - UI: `src/components/predict/PolymarketListPage.tsx`
+   - Backend: `wallet-api/src/service/prediction-market-service.ts` and `wallet-api/src/api/prediction_market.ts` (proxies Gamma `/sports` and forwards `tag_id` / `related_tags`)
+
+If a future change wants to "simplify" the World Cup flow back to `search`, it must first re-validate against current Gamma docs and explain why `tag_id` is no longer applicable.
+
 # Test Architecture
 
 - Unit tests: `test/unit/`
