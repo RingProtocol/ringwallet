@@ -42,9 +42,8 @@ const messages = {
     logout: 'Log out',
     wallet: 'Wallet',
     welcomeTo: 'Welcome to',
-    ring: 'Ring',
-    welcomeSubtitle:
-      'A self-custody wallet with multi-chain support, swaps, and keyless recovery.',
+    ring: 'Ring Wallet',
+    welcomeSubtitle: 'Currently in closed beta. Feel free to try it out.',
     introSelfCustodyTitle: 'Self-custody and passkey',
     introSelfCustodySub:
       'Keys are encrypted on-device. Only you can sign transactions.',
@@ -552,8 +551,8 @@ const messages = {
     logout: '退出登录',
     wallet: '钱包',
     welcomeTo: '欢迎使用',
-    ring: 'Ring',
-    welcomeSubtitle: '一个支持多链、内置兑换、无私钥恢复的自托管钱包。',
+    ring: 'Ring Wallet',
+    welcomeSubtitle: '当前正在内测中，欢迎体验。',
     introSelfCustodyTitle: '自托管，您的密钥',
     introSelfCustodySub: '密钥在设备端加密。只有您可以签署交易。',
     introMultiChainTitle: '多链合一',

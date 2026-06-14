@@ -36,10 +36,16 @@ Two recurring failure modes prompted this document:
   https://docs.polymarket.com/api-reference/events/list-events
 - Polymarket Gamma — Sports metadata:
   https://docs.polymarket.com/api-reference/sports/get-sports-metadata-information
-  - Source for resolving `tag_id` from a sport name like `World Cup`.
+  - Note: as of writing this document, Gamma's `/sports` endpoint does NOT
+    expose `World Cup` as a sport node. Use `/tags/slug/world-cup`
+    (id 519) for the World Cup category. Treat `/sports` as a discovery
+    tool only, not as the source of truth for season-specific categories.
 - Polymarket Gamma — Tags:
   https://docs.polymarket.com/api-reference/tags/list-tags
   - General tag discovery; `?search=` is NOT a category filter.
+- Polymarket Gamma — Get tag by slug:
+  https://docs.polymarket.com/api-reference/tags/get-tag-by-slug
+  - Used to resolve `tag_id` for named categories like `world-cup` (519).
 
 The wallet-api README (`wallet-api/README.md`) records the same conclusions
 in its `Polymarket Notes` section, including the volume-unit findings.
@@ -58,8 +64,12 @@ usePolymarketMarkets()               (src/hooks/usePolymarketMarkets.ts)
    │   getWorldCupTagId()            (memoized)
    │      │   resolves via:
    │      ▼
-   │   GET /v1/prediction_markets/sports
-   │      │   proxies Gamma /sports
+   │   GET /v1/prediction_markets/tags/slug/world-cup   (primary, id=519)
+   │      │   fallbacks, in order:
+   │      │     - GET .../tags/slug/fifa                 (id=102183)
+   │      │     - GET .../sports                         (does not currently
+   │      │                                              contain WC; kept
+   │      │                                              for forward compat)
    │      ▼
    │   fetchPolymarketMarketsWithOptions({ tagId, relatedTags: true })
    │      │

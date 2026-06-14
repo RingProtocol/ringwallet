@@ -399,33 +399,83 @@ export async function fetchPolymarketSports(): Promise<PolymarketSport[]> {
   return json.data ?? []
 }
 
+export interface PolymarketTag {
+  id?: string
+  label?: string | null
+  slug?: string | null
+}
+
+export async function fetchPolymarketTagBySlug(
+  slug: string
+): Promise<PolymarketTag | null> {
+  // AI CONTRACT: This is the canonical World Cup / FIFA tag resolver.
+  // Do NOT replace this with a /sports lookup — Gamma's /sports endpoint
+  // does not list World Cup. See documents/tech/polymarket-betting.md.
+  const res = await fetch(
+    `${API_BASE}/v1/prediction_markets/tags/slug/${encodeURIComponent(slug)}`,
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': import.meta.env.VITE_SERVER_API_KEY,
+      },
+    }
+  )
+  if (res.status === 404) {
+    return null
+  }
+  if (!res.ok) {
+    throw new Error(`Prediction market tag API error: HTTP ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data ?? null
+}
+
 // Memoized world cup tag lookup so we don't refetch on every tab click.
+// Resolution order:
+//   1. /tags/slug/world-cup   (Gamma's authoritative World Cup tag, id=519)
+//   2. /tags/slug/fifa        (broader FIFA tag, id=102183)
+//   3. /sports  fallback      (does not currently contain World Cup, but kept
+//                              for forward compatibility if Gamma adds a
+//                              dedicated World Cup sport node)
+// Each successful lookup caches the resolved id. Failure of any single step
+// falls through to the next.
+const WORLD_CUP_TAG_SLUGS = ['world-cup', 'fifa'] as const
+
 let worldCupTagIdPromise: Promise<number | null> | null = null
 
-function parsePolymarketSportId(raw: string | undefined): number | null {
+function parseTagId(raw: string | undefined): number | null {
   if (!raw) return null
-  const trimmed = raw.trim()
-  if (!trimmed) return null
-  // /sports returns CSV-like tags/id fields; first id wins.
-  const first = trimmed.split(/[,\s]+/)[0]
-  if (!first) return null
-  const num = Number.parseInt(first, 10)
+  const num = Number.parseInt(raw.trim(), 10)
   return Number.isFinite(num) ? num : null
 }
 
 export async function getWorldCupTagId(): Promise<number | null> {
   if (!worldCupTagIdPromise) {
     worldCupTagIdPromise = (async () => {
+      for (const slug of WORLD_CUP_TAG_SLUGS) {
+        try {
+          const tag = await fetchPolymarketTagBySlug(slug)
+          const id = parseTagId(tag?.id)
+          if (id !== null) {
+            return id
+          }
+        } catch {
+          // network error, try next slug
+        }
+      }
+      // Last-resort: scan /sports for any entry whose `tags` CSV begins
+      // with a positive integer. As of writing, /sports has no World Cup
+      // node, so this returns null in practice.
       try {
         const sports = await fetchPolymarketSports()
-        const match = sports.find((s) => {
-          const tags = (s.tags ?? s.sport ?? '').toLowerCase()
-          return tags.includes('world cup') || tags.includes('fifa')
-        })
-        return parsePolymarketSportId(match?.tags ?? match?.id)
+        for (const sport of sports) {
+          const id = parseTagId(sport.id) ?? parseTagId(sport.tags)
+          if (id !== null) return id
+        }
       } catch {
-        return null
+        // ignore — caller will fall back to the keyword search pool
       }
+      return null
     })()
   }
   return worldCupTagIdPromise

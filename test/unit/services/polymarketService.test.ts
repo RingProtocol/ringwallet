@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   fetchPolymarketMarkets,
   fetchPolymarketMarketDetail,
+  fetchPolymarketTagBySlug,
+  getWorldCupTagId,
   formatPolymarketVolume,
   getPolymarketEventUrl,
   marketMatchesCategory,
@@ -234,6 +236,83 @@ describe('polymarketService', () => {
       expect(getPolymarketEventUrl('will-it-rain-tomorrow')).toBe(
         'https://polymarket.com/event/will-it-rain-tomorrow'
       )
+    })
+  })
+
+  describe('fetchPolymarketTagBySlug', () => {
+    beforeEach(() => {
+      vi.resetModules()
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      vi.restoreAllMocks()
+    })
+
+    it('returns the tag when API returns 200', async () => {
+      const fetchMock = vi.fn().mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ data: { id: '519', slug: 'world-cup' } }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      )
+      vi.stubGlobal('fetch', fetchMock)
+      const mod = await import('@/services/polymarketService')
+      const tag = await mod.fetchPolymarketTagBySlug('world-cup')
+      expect(tag).toEqual({ id: '519', slug: 'world-cup' })
+    })
+
+    it('returns null on 404 (e.g. unknown slug)', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      vi.stubGlobal('fetch', fetchMock)
+      const mod = await import('@/services/polymarketService')
+      const tag = await mod.fetchPolymarketTagBySlug('does-not-exist')
+      expect(tag).toBeNull()
+    })
+  })
+
+  describe('getWorldCupTagId', () => {
+    beforeEach(() => {
+      vi.resetModules()
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      vi.restoreAllMocks()
+    })
+
+    it('resolves the world-cup slug to its numeric id (519)', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ data: { id: '519', slug: 'world-cup' } }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        )
+      vi.stubGlobal('fetch', fetchMock)
+      const mod = await import('@/services/polymarketService')
+      const id = await mod.getWorldCupTagId()
+      expect(id).toBe(519)
+    })
+
+    it('falls back to /tags/slug/fifa when world-cup 404s', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ data: { id: '102183', slug: 'fifa' } }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        )
+      vi.stubGlobal('fetch', fetchMock)
+      const mod = await import('@/services/polymarketService')
+      const id = await mod.getWorldCupTagId()
+      expect(id).toBe(102183)
     })
   })
 

@@ -186,7 +186,9 @@ When the Predict tab is asked to show a category (e.g. `World Cup`, `Sports`, `P
    - Gamma's `?search=` is a free-text relevance endpoint. It is not a category filter, and during live events it frequently returns 0 markets even when the event is huge.
    - Free-text search is only acceptable as a last-resort fallback when no `tag_id` is available.
 2. **Categories that map to a real Polymarket sport/event must go through `tag_id` + `related_tags=true`.**
-   - Resolve the tag id from the new `GET /v1/prediction_markets/sports` endpoint (proxies Gamma `/sports`).
+   - Resolve the `tag_id` via the new `GET /v1/prediction_markets/tags/slug/:slug` endpoint (proxies Gamma `/tags/slug/:slug`).
+     - For `World Cup` the slug is `world-cup` (Gamma `id = 519`). If it 404s, try `fifa` (id 102183) and only then fall back to the keyword search pool.
+   - Do NOT resolve `World Cup` from Gamma's `/sports` endpoint. As of writing, `/sports` does not list World Cup as a sport node; using it for category lookup yields a stale `tag_id` and an empty tab during a live tournament.
    - Memoize the resolved id. Do not refetch on every tab switch.
 3. **The list endpoint must request `order: 'volume_total'` (`ascending: false`) for "Hot" and any sport-based tab.**
    - The wallet-api service already enforces a server-side final sort by total volume, so do not assume the upstream page is already ordered.
@@ -199,7 +201,7 @@ When the Predict tab is asked to show a category (e.g. `World Cup`, `Sports`, `P
    - Service: `src/services/polymarketService.ts` (functions: `fetchPolymarketMarketsWithOptions`, `getWorldCupTagId`, `fetchPolymarketWorldCupMarkets`, `formatPolymarketVolume`)
    - Hook: `src/hooks/usePolymarketMarkets.ts`
    - UI: `src/components/predict/PolymarketListPage.tsx`
-   - Backend: `wallet-api/src/service/prediction-market-service.ts` and `wallet-api/src/api/prediction_market.ts` (proxies Gamma `/sports` and forwards `tag_id` / `related_tags`)
+   - Backend: `wallet-api/src/service/prediction-market-service.ts` and `wallet-api/src/api/prediction_market.ts` (proxies Gamma `/tags/slug/:slug` and forwards `tag_id` / `related_tags`)
 
 If a future change wants to "simplify" the World Cup flow back to `search`, it must first re-validate against current Gamma docs and explain why `tag_id` is no longer applicable.
 
