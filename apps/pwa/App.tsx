@@ -9,7 +9,6 @@ import {
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LoginButton from '@/components/LoginButton'
 import Introduce from '@/components/Introduce'
-import RingWalletLogo from '@/components/RingWalletLogo'
 import WalletSwitcher from '@/components/accounts/WalletSwitcher'
 import AccountDrawer from '@/components/AccountDrawer'
 import WalletMainPage from '@/components/WalletMainPage'
@@ -67,7 +66,14 @@ function AppContent() {
           />
           <div className="card card--guest">
             <div className="card--guest-content">
-              <RingWalletLogo />
+              <div className="app-logo">
+                <img
+                  src="/icons/logo.png"
+                  alt="Ring Wallet"
+                  className="app-logo__img"
+                />
+                <span className="app-logo__beta">Beta</span>
+              </div>
               <Introduce />
             </div>
             <LoginButton />

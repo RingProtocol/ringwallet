@@ -106,6 +106,39 @@ body.ring-dapp-open .app > .header-actions {
   padding: 0 24px max(20px, env(safe-area-inset-bottom));
 }
 
+.app-logo {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 24px;
+  line-height: 0;
+}
+
+.app-logo__img {
+  display: block;
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(188, 116, 237, 0.35);
+}
+
+.app-logo__beta {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  padding: 2px 2px;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(135deg, #f15266 0%, #bc74ed 50%, #1abee9 100%);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  text-transform: uppercase;
+  user-select: none;
+  pointer-events: none;
+}
+
 .title {
   font-size: 3rem;
   font-weight: 700;
