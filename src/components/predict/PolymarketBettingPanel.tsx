@@ -33,6 +33,14 @@ const PolymarketBettingPanel: React.FC<Props> = ({ market }) => {
   const canBet =
     isPolygon && selectedOutcome !== null && amount && parseFloat(amount) > 0
 
+  // The bet flow has four in-progress states; surface all of them on
+  // the confirm button so users don't re-tap it while work is in flight.
+  const isProcessing =
+    state === 'checking_allowance' ||
+    state === 'approving' ||
+    state === 'signing' ||
+    state === 'posting'
+
   const estimatedShares = useMemo(() => {
     if (selectedOutcome === null || !amount) return '0'
     const price = parseFloat(outcomePrices[selectedOutcome] || '0')
@@ -200,10 +208,10 @@ const PolymarketBettingPanel: React.FC<Props> = ({ market }) => {
               <span>{estimatedShares}</span>
             </div>
             <div className="polymarket-betting-panel__modal-row">
-              <span>{t('predictPrice')}</span>
+              <span>{t('predictUnitPrice')}</span>
               <span>
                 {outcomePrices[selectedOutcome]
-                  ? `${(parseFloat(outcomePrices[selectedOutcome]) * 100).toFixed(1)}%`
+                  ? `${parseFloat(outcomePrices[selectedOutcome]).toFixed(6)} USDC`
                   : '-'}
               </span>
             </div>
@@ -218,10 +226,10 @@ const PolymarketBettingPanel: React.FC<Props> = ({ market }) => {
               <button
                 className="polymarket-betting-panel__btn polymarket-betting-panel__btn--primary"
                 onClick={handleConfirm}
-                disabled={state === 'posting'}
+                disabled={isProcessing}
                 type="button"
               >
-                {state === 'posting' ? t('confirming') : t('confirm')}
+                {isProcessing ? t('confirming') : t('confirm')}
               </button>
             </div>
             {(authError || error) && (
