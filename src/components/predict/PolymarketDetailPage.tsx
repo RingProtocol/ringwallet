@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import TitleBar from '../common/TitleBar'
 import TempContent from '../common/TempContent'
@@ -24,6 +24,21 @@ export interface PolymarketMarketDetail {
   outcomePrices?: string | string[]
   endDate?: string
   resolutionSource?: string
+  // All child markets under this event. For a "World Cup Winner" event
+  // this lists one market per team (e.g. "Will Spain win…?"). Empty for
+  // events with no markets. `marketCount` mirrors `markets.length`.
+  marketCount?: number
+  markets?: Array<{
+    id: string | number
+    slug: string
+    question: string
+    image?: string
+    volume: number
+    outcomes: string
+    outcomePrices: string
+    active: boolean
+    closed: boolean
+  }>
 }
 
 interface Props {
@@ -74,6 +89,51 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
 
   const outcomes = safeJsonParse<string[]>(detail?.outcomes) || []
   const outcomePrices = safeJsonParse<string[]>(detail?.outcomePrices) || []
+
+  // Multi-candidate events (e.g. "World Cup Winner") expose one child
+  // market per candidate via `detail.markets`. The candidate list lets
+  // the user pick a child market; the betting panel then binds to that
+  // market's outcomes & prices.
+  const rawMarkets = detail?.markets ?? []
+  const isMultiMarket = (detail?.marketCount ?? rawMarkets.length) > 1
+  const activeMarkets = useMemo(
+    () =>
+      isMultiMarket
+        ? rawMarkets
+            .filter((m) => m.active && !m.closed)
+            .sort((a, b) => b.volume - a.volume)
+        : [],
+    [isMultiMarket, rawMarkets]
+  )
+  const [selectedMarketSlug, setSelectedMarketSlug] = useState<string | null>(
+    null
+  )
+  // Reset selection whenever a new detail is loaded.
+  useEffect(() => {
+    setSelectedMarketSlug(activeMarkets[0]?.slug ?? null)
+  }, [activeMarkets])
+  const selectedMarket = useMemo(
+    () => activeMarkets.find((m) => m.slug === selectedMarketSlug) ?? null,
+    [activeMarkets, selectedMarketSlug]
+  )
+  // Markets the betting panel binds to: the user's selected candidate
+  // for multi-market events, or a synthetic single-market object built
+  // from the existing top-level fields for single-market events.
+  const bettingMarket = useMemo(() => {
+    if (selectedMarket) {
+      return {
+        slug: selectedMarket.slug,
+        outcomes: safeJsonParse<string[]>(selectedMarket.outcomes) || [],
+        outcomePrices:
+          safeJsonParse<string[]>(selectedMarket.outcomePrices) || [],
+      }
+    }
+    return {
+      slug,
+      outcomes,
+      outcomePrices,
+    }
+  }, [selectedMarket, slug, outcomes, outcomePrices])
 
   const handleOpenExternal = () => {
     const url = getPolymarketEventUrl(slug)
@@ -158,38 +218,88 @@ const PolymarketDetailPage: React.FC<Props> = ({ slug, onBack }) => {
               )}
             </div>
 
-            {outcomes.length > 0 && (
-              <div className="polymarket-detail__outcomes">
-                <h2 className="polymarket-detail__section-title">
-                  {t('predictOutcomes')}
-                </h2>
-                <div className="polymarket-detail__outcome-list">
-                  {outcomes.map((outcome, index) => {
-                    const price = outcomePrices[index]
-                      ? `${(parseFloat(outcomePrices[index]) * 100).toFixed(1)}%`
-                      : ''
-                    return (
-                      <div key={outcome} className="polymarket-detail__outcome">
-                        <span className="polymarket-detail__outcome-name">
-                          {outcome}
-                        </span>
-                        {price && (
-                          <span className="polymarket-detail__outcome-price">
-                            {price}
+            {isMultiMarket ? (
+              activeMarkets.length > 0 ? (
+                <div className="polymarket-detail__candidates">
+                  <h2 className="polymarket-detail__section-title">
+                    {t('predictCandidates')}
+                  </h2>
+                  <div className="polymarket-detail__candidate-list">
+                    {activeMarkets.map((market) => {
+                      const prices =
+                        safeJsonParse<string[]>(market.outcomePrices) || []
+                      const yesPrice = prices[0]
+                        ? `${(parseFloat(prices[0]) * 100).toFixed(1)}%`
+                        : ''
+                      const isSelected = market.slug === selectedMarketSlug
+                      return (
+                        <button
+                          key={market.slug}
+                          type="button"
+                          className={
+                            'polymarket-detail__candidate' +
+                            (isSelected
+                              ? ' polymarket-detail__candidate--selected'
+                              : '')
+                          }
+                          onClick={() => setSelectedMarketSlug(market.slug)}
+                        >
+                          <span className="polymarket-detail__candidate-question">
+                            {market.question}
                           </span>
-                        )}
-                      </div>
-                    )
-                  })}
+                          {yesPrice && (
+                            <span className="polymarket-detail__candidate-price">
+                              {yesPrice}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="polymarket-detail__empty">
+                  {t('predictNoMarkets')}
+                </div>
+              )
+            ) : (
+              outcomes.length > 0 && (
+                <div className="polymarket-detail__outcomes">
+                  <h2 className="polymarket-detail__section-title">
+                    {t('predictOutcomes')}
+                  </h2>
+                  <div className="polymarket-detail__outcome-list">
+                    {outcomes.map((outcome, index) => {
+                      const price = outcomePrices[index]
+                        ? `${(parseFloat(outcomePrices[index]) * 100).toFixed(1)}%`
+                        : ''
+                      return (
+                        <div
+                          key={outcome}
+                          className="polymarket-detail__outcome"
+                        >
+                          <span className="polymarket-detail__outcome-name">
+                            {outcome}
+                          </span>
+                          {price && (
+                            <span className="polymarket-detail__outcome-price">
+                              {price}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
             )}
 
-            <PolymarketBettingPanel
-              slug={slug}
-              outcomes={outcomes}
-              outcomePrices={outcomePrices}
-            />
+            {bettingMarket.outcomes.length > 0 && (
+              <PolymarketBettingPanel
+                key={bettingMarket.slug}
+                market={bettingMarket}
+              />
+            )}
 
             <button
               className="polymarket-detail__external-btn"

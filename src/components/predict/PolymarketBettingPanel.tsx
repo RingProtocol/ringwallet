@@ -8,17 +8,18 @@ import PasskeyService from '../../services/account/passkeyService'
 import { WorkerEvmSigner } from '../../utils/workerEvmSigner'
 import './PolymarketBettingPanel.css'
 
-interface Props {
+interface BettingMarket {
   slug: string
   outcomes: string[]
   outcomePrices: string[]
 }
 
-const PolymarketBettingPanel: React.FC<Props> = ({
-  slug,
-  outcomes,
-  outcomePrices,
-}) => {
+interface Props {
+  market: BettingMarket
+}
+
+const PolymarketBettingPanel: React.FC<Props> = ({ market }) => {
+  const { slug, outcomes, outcomePrices } = market
   const { t } = useI18n()
   const { activeChain, activeWallet, switchChain, user } = useAuth()
   const { state, error, placeBuyOrder, reset } = usePolymarketBetting()
