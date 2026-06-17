@@ -190,6 +190,20 @@
   color: var(--ring-text-primary, #f3f4f6);
 }
 
+.earn-position-link {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.85rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.earn-position-link:hover {
+  opacity: 1;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
 .earn-position-card__label,
 .earn-position-card__shares,
 .earn-position-card__empty,

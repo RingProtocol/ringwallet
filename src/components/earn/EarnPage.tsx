@@ -22,6 +22,11 @@ interface EarnPageProps {
   onClose: () => void
 }
 
+// Lido stETH on Ethereum mainnet. Used to build an Etherscan deep-link
+// so users can verify their on-chain position themselves.
+const STETH_TOKEN_MAINNET =
+  '0xae7ab96520de3a18e5e111b5eaab095312d7fe84' as const
+
 type EarnView = { kind: 'list' } | { kind: 'stake'; strategy: EarnStrategy }
 
 /* -------------------------------------------------------------------------- */
@@ -75,6 +80,16 @@ const EarnListPage: React.FC<EarnListPageProps> = ({
                 <span className="earn-position-protocol">{pos.protocol}</span>
                 <span className="earn-position-balance">
                   {formatEther(pos.balance)} {pos.asset}
+                  <a
+                    className="earn-position-link"
+                    href={`https://etherscan.io/token/${STETH_TOKEN_MAINNET}?a=${address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t('viewOnEtherscan')}
+                    aria-label={t('viewOnEtherscan')}
+                  >
+                    ↗
+                  </a>
                 </span>
               </div>
             ))}
