@@ -33,6 +33,16 @@
   letter-spacing: 0.05em;
 }
 
+/* The "Strategies" header sits at the page body's left padding, which
+   makes it flush with the strategy card's left edge. Add a small
+   inner offset so the header reads as a section label, not card
+   content. (Scoped to .earn-strategies only — the "Your Positions"
+   header is inside .earn-positions, which already has 14px of card
+   padding and would over-indent with this rule applied.) */
+.earn-strategies > h4 {
+  padding-left: 6px;
+}
+
 .earn-positions {
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
@@ -85,11 +95,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 10px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.earn-strategy-card:hover,
+.earn-strategy-card:focus-visible {
+  background: rgba(0, 0, 0, 0.32);
+  border-color: var(--ring-border-strong, rgba(255, 255, 255, 0.22));
+  outline: none;
 }
 
 .earn-strategy-info {
@@ -108,6 +133,97 @@
   font-size: 0.85rem;
   color: #2e7d32;
   font-weight: 600;
+}
+
+.earn-strategy-cta {
+  font-size: 0.85rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.earn-strategy-asset {
+  font-size: 0.75rem;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.earn-strategy-source {
+  font-size: 0.7rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.earn-strategy-soon {
+  font-size: 0.75rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  padding: 6px 10px;
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+}
+
+.earn-strategy-hint {
+  margin: 8px 0 16px;
+  font-size: 0.85rem;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.earn-position-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.earn-position-card__title {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: var(--ring-text-secondary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.earn-position-card__value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ring-text-primary, #f3f4f6);
+}
+
+.earn-position-card__label,
+.earn-position-card__shares,
+.earn-position-card__empty,
+.earn-notice {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--ring-text-secondary, #9ca3af);
+}
+
+.earn-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ring-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+}
+
+.earn-tab {
+  border: none;
+  background: transparent;
+  color: var(--ring-text-secondary, #9ca3af);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.earn-tab--active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ring-text-primary, #f3f4f6);
 }
 
 .earn-stake-btn {
@@ -154,4 +270,14 @@
   display: flex;
   gap: 10px;
   margin-top: 20px;
+}
+
+.title-bar__close {
+  background: transparent;
+  border: none;
+  color: var(--ring-text-secondary, #9ca3af);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 8px;
+  cursor: pointer;
 }

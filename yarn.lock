@@ -3196,10 +3196,10 @@
   dependencies:
     "@kyberswap/widgets" "^2.3.0"
 
-"@ring-protocol/ringearnsdk@0.0.10":
-  version "0.0.10"
-  resolved "https://registry.npmjs.org/@ring-protocol/ringearnsdk/-/ringearnsdk-0.0.10.tgz"
-  integrity sha512-F3laX+GMpLCOl2vnpJwzBuDB9HlNZwqXeVPbGwd3VvbDxLM5xvzne9WHISzgJRunbOyQx4Md1kpNLGsvnqu/Rw==
+"@ring-protocol/ringearnsdk@^0.1.15":
+  version "0.1.15"
+  resolved "https://registry.yarnpkg.com/@ring-protocol/ringearnsdk/-/ringearnsdk-0.1.15.tgz#81e6be992b1f7c60ba13285742c4943a6f6acfd7"
+  integrity sha512-cJ7BNFYcfa0UmtPC+ODPYYKsKs6bwPcLcIHdsBKEt5QbVp7wMkRiFexWgh4I6bkUX+0gaVfw6goZ3npKxoi/oQ==
   dependencies:
     "@lidofinance/lido-ethereum-sdk" "^4.0.0"
     "@morpho-org/blue-sdk" "^4.13.0"

@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
-import { createPublicClient, http, type Chain } from 'viem'
+import { createPublicClient, createWalletClient, http, type Chain } from 'viem'
 import { mainnet, sepolia, optimism, arbitrum, polygon } from 'viem/chains'
 import type { RingEarnConfig } from '@ring-protocol/ringearnsdk'
 import { useAuth } from '../../contexts/AuthContext'
 import { getPrimaryRpcUrl } from '../../models/ChainType'
+import { createViemSignerAccount } from '../../utils/viemSignerAccount'
 
 const VIEM_CHAINS: Record<number, Chain> = {
   1: mainnet,
@@ -14,19 +15,25 @@ const VIEM_CHAINS: Record<number, Chain> = {
 }
 
 /**
- * Earn SDK is temporarily disabled because it requires a viem walletClient
- * backed by a privateKey, and our Worker-isolated signer architecture
- * does not yet provide a viem-compatible custom account.
+ * Build a viem `WalletClient` backed by the isolated signing Worker.
  *
- * TODO: Implement a viem `Account` that delegates signing to signerBridge,
- * then restore full Earn functionality.
+ * The Worker (not the main thread) holds the seed; signing requests are
+ * routed through `signerBridge` and never expose key material here.
+ *
+ * Returns `null` when:
+ *  - the user is not logged in,
+ *  - the active chain is not supported by viem chains list, or
+ *  - the active chain is not Ethereum mainnet (Earn is mainnet-only —
+ *    Lido and Morpho vaults are not wired for other chains, and the
+ *    underlying SDKs only know mainnet deployment addresses).
  */
 export function useEarnSdk(): RingEarnConfig | null {
-  const { activeChain, activeChainId, isLoggedIn } = useAuth()
+  const { activeChain, activeChainId, isLoggedIn, activeAccount } = useAuth()
 
   const config = useMemo<RingEarnConfig | null>(() => {
-    if (!isLoggedIn) return null
+    if (!isLoggedIn || !activeAccount) return null
     const chainId = Number(activeChainId)
+    if (chainId !== 1) return null
     const chain = VIEM_CHAINS[chainId]
     if (!chain) return null
 
@@ -38,9 +45,18 @@ export function useEarnSdk(): RingEarnConfig | null {
       transport: http(rpcUrl),
     })
 
-    // Wallet signing disabled pending Worker-compatible viem account.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const walletClient = null as any
+    const account = createViemSignerAccount({
+      address: activeAccount.address as `0x${string}`,
+      index: activeAccount.index,
+      chainId,
+      rpcUrl,
+    })
+
+    const walletClient = createWalletClient({
+      account,
+      chain,
+      transport: http(rpcUrl),
+    })
 
     return {
       chain,
@@ -48,7 +64,7 @@ export function useEarnSdk(): RingEarnConfig | null {
       walletClient,
       rpcUrl,
     }
-  }, [isLoggedIn, activeChainId, activeChain])
+  }, [isLoggedIn, activeChainId, activeChain, activeAccount])
 
   return config
 }
@@ -56,7 +72,6 @@ export function useEarnSdk(): RingEarnConfig | null {
 export function useIsEarnSupported(): boolean {
   const { activeChainId, isLoggedIn } = useAuth()
   if (!isLoggedIn) return false
-  const chainId = Number(activeChainId)
-  // Earn (Lido/Morpho) currently supports Ethereum mainnet only
-  return chainId === 1
+  // Earn (Lido stETH) is only wired for Ethereum mainnet.
+  return Number(activeChainId) === 1
 }
