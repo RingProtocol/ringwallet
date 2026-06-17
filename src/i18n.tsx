@@ -543,6 +543,8 @@ const messages = {
     cardOnboardFooter: 'More providers coming soon',
     cardCloseConfirm:
       'Are you sure you want to close this card? This cannot be undone.',
+    cardSimulationBanner: 'Current: simulation mode. Card data is not real.',
+    cardSimulationDismiss: 'OK',
   },
   zh: {
     account: '账户',
@@ -1041,6 +1043,8 @@ const messages = {
       '在所有支持 Visa 的地方消费您的加密资产，选择服务商并在几分钟内申请虚拟卡。',
     cardOnboardFooter: '更多服务商即将上线',
     cardCloseConfirm: '确定要关闭此卡片吗？此操作无法撤销。',
+    cardSimulationBanner: '当前为模拟模式，卡片数据非真实。',
+    cardSimulationDismiss: '我知道了',
   },
 } as const
 

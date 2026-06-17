@@ -16,6 +16,7 @@ WalletMainPage (底部 tab 控制)
             │    ├── TitleBar (back)
             │    └── 内容区 (TempContent 加载/错误，或 KYC iframe)
             ├── CardDashboardView   (全屏 portal → document.body)
+            │    ├── CardSimulationBanner  (琥珀色「当前为模拟模式」提示 — 可关闭)
             │    ├── CardOverview
             │    └── TransactionList
             ├── CardSettingsView    (设置页)
@@ -28,13 +29,13 @@ WalletMainPage (底部 tab 控制)
 
 ## Views matrix
 
-| View | Trigger | Component | Exits to |
-|------|---------|-----------|----------|
-| Provider list | `currentView === 'main'` | `CardOnboardingView` | Apply Page (无卡) / Dashboard (有卡) |
-| Apply | `currentView === 'apply'` | `CardApplyPage` → fullscreen portal | Provider list (back / 完成) |
-| Dashboard | `currentView === 'detail'` | `CardDashboardView` → fullscreen portal | Provider list (Back) |
-| Top-up | `currentView === 'topup'` | `TopUp*` components | Provider list |
-| Settings | `currentView === 'settings'` | `CardSettingsView` | Provider list |
+| View          | Trigger                      | Component                               | Exits to                             |
+| ------------- | ---------------------------- | --------------------------------------- | ------------------------------------ |
+| Provider list | `currentView === 'main'`     | `CardOnboardingView`                    | Apply Page (无卡) / Dashboard (有卡) |
+| Apply         | `currentView === 'apply'`    | `CardApplyPage` → fullscreen portal     | Provider list (back / 完成)          |
+| Dashboard     | `currentView === 'detail'`   | `CardDashboardView` → fullscreen portal | Provider list (Back)                 |
+| Top-up        | `currentView === 'topup'`    | `TopUp*` components                     | Provider list                        |
+| Settings      | `currentView === 'settings'` | `CardSettingsView`                      | Provider list                        |
 
 ## Navigation flow
 
@@ -87,23 +88,23 @@ WalletMainPage (底部 tab 控制)
 
 领域数据由专用 hooks 持有：
 
-| Hook | Owns |
-|------|------|
-| `useCardProvider` | 当前 adapter 实例 |
-| `useCardAccounts` | `CardAccount[]`, cache-first 加载 |
-| `useCardTransactions` | 分页交易列表 |
-| `useCardTopUp` | 充值状态机 |
+| Hook                  | Owns                              |
+| --------------------- | --------------------------------- |
+| `useCardProvider`     | 当前 adapter 实例                 |
+| `useCardAccounts`     | `CardAccount[]`, cache-first 加载 |
+| `useCardTransactions` | 分页交易列表                      |
+| `useCardTopUp`        | 充值状态机                        |
 
 ## Apply Page exit paths
 
 四种退出路径，每条都必须 clear `kycPollTimeoutsRef`：
 
-| Exit | Handler | Action |
-|------|---------|--------|
-| 用户点 TitleBar Back (←) | `handleApplyDismiss` | clear timers → 清掉所有 apply 状态 → `main` |
-| iframe 加载失败 | `handleApplyIframeError` | 写入 `applyError`，TempContent 展示错误 + Retry |
-| KYC approved | poll 回调 | clear timers → createCard → `pendingDetailCard` → `detail`（**直跳 Dashboard**） |
-| 查询到已有卡 | `handleViewDetails` | clear timers → `pendingDetailCard` → `detail`（**直跳 Dashboard**） |
+| Exit                     | Handler                  | Action                                                                           |
+| ------------------------ | ------------------------ | -------------------------------------------------------------------------------- |
+| 用户点 TitleBar Back (←) | `handleApplyDismiss`     | clear timers → 清掉所有 apply 状态 → `main`                                      |
+| iframe 加载失败          | `handleApplyIframeError` | 写入 `applyError`，TempContent 展示错误 + Retry                                  |
+| KYC approved             | poll 回调                | clear timers → createCard → `pendingDetailCard` → `detail`（**直跳 Dashboard**） |
+| 查询到已有卡             | `handleViewDetails`      | clear timers → `pendingDetailCard` → `detail`（**直跳 Dashboard**）              |
 
 `handleApplyRetry` 重新调用 `handleViewDetails(activeProviderId)`，会先重新查询已有卡，
 所以即使是网络抖动导致的"查询失败"也能被 retry 修复，无需用户回到 onboarding 再点一次。
@@ -120,6 +121,8 @@ WalletMainPage (底部 tab 控制)
 
 `CardDashboardView` 同样通过 `createPortal` 全屏挂载到 `document.body` (`position: fixed; inset: 0; z-index: 500`)，包含一个 `TitleBar`，Back 按钮返回供应商列表 (`currentView = 'main'`)。
 
+顶部有一条琥珀色 `CardSimulationBanner`（`当前为模拟模式 / OK 后隐藏`），提醒用户当前数据非真实；仅当父路由从其他视图切回 `detail` 时重新显示（dashboard 组件被重新挂载）。
+
 ## Adapter boundary
 
-`src/features/card/services/adapter/` 隔离所有供应商特定代码，对外暴露统一接口 (`ICardAdapter`)。`MemoryBackedCardAdapter` 是 sandbox/测试实现；`ImmersveAdapter`、`EtherfiAdapter` 是各供应商的包装。`CardApp` 从不直接 import adapter——只通过 `useCardProvider()` 和 `cardProviderRegistry` 访问。
+`src/features/card/services/adapter/` 隔离所有供应商特定代码，对外暴露统一接口 (`CardProviderAdapter`)。`MemoryBackedCardAdapter` 是 sandbox/测试实现；`ImmersveAdapter`、`EtherfiAdapter` 是各供应商的包装。`CardApp` 从不直接 import adapter——只通过 `useCardProvider()` 和 `cardProviderRegistry` 访问。
