@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import TitleBar from '../../../../components/common/TitleBar'
 import { useI18n } from '../../../../i18n'
@@ -23,9 +23,33 @@ const CardDashboardView: React.FC<Props> = ({
 }) => {
   const { t } = useI18n()
   const { transactions, loading, hasMore, loadMore } = useCardTransactions()
+  // Simulation-mode notice: visible on every entry into the card detail
+  // view, dismissed locally by the user. Resets to visible when the user
+  // re-enters the dashboard from a different view (parent re-mounts this
+  // component when `currentView` changes back to 'detail').
+  const [showSimNotice, setShowSimNotice] = useState(true)
 
   const body = (
     <div className="card-dashboard">
+      {showSimNotice && (
+        <div
+          className="card-simulation-banner"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="card-simulation-banner__text">
+            {t('cardSimulationBanner')}
+          </span>
+          <button
+            type="button"
+            className="card-simulation-banner__dismiss"
+            onClick={() => setShowSimNotice(false)}
+          >
+            {t('cardSimulationDismiss')}
+          </button>
+        </div>
+      )}
+
       <CardOverview card={card} onTopUp={onTopUp} />
 
       <div className="card-dashboard__section">

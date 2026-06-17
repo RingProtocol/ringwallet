@@ -518,6 +518,49 @@
 
 /* ─── Dashboard: CardDashboardView ─────────────────── */
 
+.card-simulation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.card-simulation-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-simulation-banner__dismiss {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: transparent;
+  color: #fbbf24;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.card-simulation-banner__dismiss:hover {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.6);
+}
+
+.card-simulation-banner__dismiss:active {
+  transform: scale(0.96);
+}
+
 .card-dashboard {
   display: flex;
   flex-direction: column;
