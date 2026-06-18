@@ -43,7 +43,7 @@ const messages = {
     wallet: 'Wallet',
     welcomeTo: 'Welcome to',
     ring: 'Ring Wallet',
-    welcomeSubtitle: 'Currently in closed beta. Feel free to try it out.',
+    welcomeSubtitle: 'Currently in beta — your feedback is welcome.',
     introSelfCustodyTitle: 'Self-custody and passkey',
     introSelfCustodySub:
       'Keys are encrypted on-device. Only you can sign transactions.',
@@ -572,7 +572,7 @@ const messages = {
     wallet: '钱包',
     welcomeTo: '欢迎使用',
     ring: 'Ring Wallet',
-    welcomeSubtitle: '当前正在内测中，欢迎体验。',
+    welcomeSubtitle: '当前正在内测中，期待您的反馈。',
     introSelfCustodyTitle: '自托管，您的密钥',
     introSelfCustodySub: '密钥在设备端加密。只有您可以签署交易。',
     introMultiChainTitle: '多链合一',
