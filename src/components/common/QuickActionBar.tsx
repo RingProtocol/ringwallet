@@ -131,6 +131,11 @@ function getBridgeIconSvg(name: string, url?: string): string {
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
+// Hidden action entries; set to true to re-enable.
+const ENABLE_MOONPAY_ENTRY = false
+const ENABLE_PREDICT_ENTRY = false
+const ENABLE_DAPP_ENTRY = false
+
 function getMoonPayCurrencyCode(
   isBitcoinChain: boolean,
   isDogecoinChain: boolean,
@@ -403,54 +408,31 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           onClick={() => setShowReceive(true)}
           testId={TESTID.RECEIVE_BUTTON}
         />
-        <ActionCircleEntry
-          variantClass="action-circle-entry--swap"
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="17 1 21 5 17 9" />
-              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-              <polyline points="7 23 3 19 7 15" />
-              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-            </svg>
-          }
-          label={t('walletActionRingSwap')}
-          onClick={handleSwapClick}
-          disabled={!canUseRingSwap}
-          title={swapButtonTitle}
-          testId={TESTID.SWAP_BUTTON}
-        />
-        <ActionCircleEntry
-          variantClass="action-circle-entry--buy"
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          }
-          label={t('walletActionBuy')}
-          onClick={handleMoonPayClick}
-          disabled={!showMoonPayEntry}
-          title={moonPayButtonTitle}
-          testId={TESTID.BUY_BUTTON}
-        />
+        {ENABLE_MOONPAY_ENTRY && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--buy"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            }
+            label={t('walletActionBuy')}
+            onClick={handleMoonPayClick}
+            disabled={!showMoonPayEntry}
+            title={moonPayButtonTitle}
+            testId={TESTID.BUY_BUTTON}
+          />
+        )}
         <ActionCircleEntry
           variantClass="action-circle-entry--earn"
           icon={
@@ -477,7 +459,7 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
           testId={TESTID.EARN_BUTTON}
         />
         <ActionCircleEntry
-          variantClass="action-circle-entry--predict"
+          variantClass="action-circle-entry--swap"
           icon={
             <svg
               width="16"
@@ -489,38 +471,67 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M18 20V10" />
-              <path d="M12 20V4" />
-              <path d="M6 20v-6" />
+              <polyline points="17 1 21 5 17 9" />
+              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+              <polyline points="7 23 3 19 7 15" />
+              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
             </svg>
           }
-          label={t('walletActionPredict')}
-          onClick={() => setPredictListOpen(true)}
-          testId={TESTID.PREDICT_BUTTON}
+          label={t('walletActionRingSwap')}
+          onClick={handleSwapClick}
+          disabled={!canUseRingSwap}
+          title={swapButtonTitle}
+          testId={TESTID.SWAP_BUTTON}
         />
-        <ActionCircleEntry
-          variantClass="action-circle-entry--dapp"
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-          }
-          label={t('walletActionDapp')}
-          onClick={() => setDappListOpen(true)}
-          testId={TESTID.DAPP_BUTTON}
-        />
+        {ENABLE_PREDICT_ENTRY && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--predict"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 20V10" />
+                <path d="M12 20V4" />
+                <path d="M6 20v-6" />
+              </svg>
+            }
+            label={t('walletActionPredict')}
+            onClick={() => setPredictListOpen(true)}
+            testId={TESTID.PREDICT_BUTTON}
+          />
+        )}
+        {ENABLE_DAPP_ENTRY && (
+          <ActionCircleEntry
+            variantClass="action-circle-entry--dapp"
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            }
+            label={t('walletActionDapp')}
+            onClick={() => setDappListOpen(true)}
+            testId={TESTID.DAPP_BUTTON}
+          />
+        )}
         <ActionCircleEntry
           variantClass="action-circle-entry--bridge"
           icon={

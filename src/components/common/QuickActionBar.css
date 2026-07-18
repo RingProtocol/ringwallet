@@ -131,7 +131,7 @@
   flex-wrap: wrap;
   flex-direction: row;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
   gap: clamp(2px, 1vw, 10px);
   width: 100%;
   max-width: 100%;
@@ -140,7 +140,7 @@
 }
 
 .action-buttons .action-circle-entry {
-  flex: 1 1 calc(25% - 8px);
+  flex: 0 1 calc(33.333% - 8px);
   min-width: 0;
   box-sizing: border-box;
 }
@@ -152,7 +152,7 @@
     padding: 0 8px;
   }
   .action-buttons .action-circle-entry {
-    flex: 1 1 calc(25% - 16px);
+    flex: 0 1 calc(33.333% - 16px);
     min-width: 80px;
   }
 }
