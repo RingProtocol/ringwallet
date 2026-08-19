@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useI18n } from '../../i18n'
 import './NativeBalance.css'
 import { TESTID } from './../testids'
+import { ReceiveDialog } from '../transaction'
 
 function shortenAddress(address: string): string {
   if (address.length <= 12) return address
@@ -20,9 +21,10 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
   allChainsUsd,
   onAddressClick,
 }) => {
-  const { activeAccount } = useAuth()
+  const { activeAccount, activeChain } = useAuth()
   const { t } = useI18n()
   const [hideBalance, setHideBalance] = useState(false)
+  const [showReceive, setShowReceive] = useState(false)
 
   if (!activeAccount) return null
 
@@ -83,22 +85,58 @@ const NativeBalance: React.FC<NativeBalanceProps> = ({
         </div> */}
       </div>
 
-      {activeAccount?.address &&
-        (onAddressClick ? (
+      {activeAccount?.address && (
+        <div className="wallet-address-row">
+          {onAddressClick ? (
+            <button
+              type="button"
+              className="wallet-address wallet-address--clickable"
+              data-testid={TESTID.WALLET_ADDRESS}
+              onClick={onAddressClick}
+              aria-label="Accounts and wallets"
+            >
+              {shortenAddress(activeAccount.address)}
+            </button>
+          ) : (
+            <div className="wallet-address" data-testid={TESTID.WALLET_ADDRESS}>
+              {shortenAddress(activeAccount.address)}
+            </div>
+          )}
           <button
             type="button"
-            className="wallet-address wallet-address--clickable"
-            data-testid={TESTID.WALLET_ADDRESS}
-            onClick={onAddressClick}
-            aria-label="Accounts and wallets"
+            className="wallet-receive-btn"
+            onClick={() => setShowReceive(true)}
+            aria-label={t('receive')}
+            data-testid={TESTID.RECEIVE_BUTTON}
+            title={t('receive')}
           >
-            {shortenAddress(activeAccount.address)}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="4" height="4" />
+              <rect x="14" y="20" width="4" height="2" />
+              <rect x="20" y="14" width="2" height="7" />
+            </svg>
           </button>
-        ) : (
-          <div className="wallet-address" data-testid={TESTID.WALLET_ADDRESS}>
-            {shortenAddress(activeAccount.address)}
-          </div>
-        ))}
+          {showReceive && (
+            <ReceiveDialog
+              address={activeAccount.address}
+              chainName={activeChain?.name ?? 'Unknown Chain'}
+              onClose={() => setShowReceive(false)}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

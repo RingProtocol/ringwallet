@@ -15,7 +15,6 @@ import {
   SolanaSendForm,
   BitcoinSendForm,
   DogecoinSendForm,
-  ReceiveDialog,
   SendTokenPickerSheet,
 } from '../transaction'
 import { useI18n } from '../../i18n'
@@ -186,7 +185,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
   const [showSend, setShowSend] = useState(false)
   const [sendStage, setSendStage] = useState<'select' | 'form'>('select')
   const [sendFormKey, setSendFormKey] = useState(0)
-  const [showReceive, setShowReceive] = useState(false)
   const [swapDappOpen, setSwapDappOpen] = useState(false)
   const [showEarn, setShowEarn] = useState(false)
   const [sendToken, setSendToken] = useState<SendTokenOption | undefined>(
@@ -232,7 +230,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
     !isBitcoinChain &&
     !isDogecoinChain &&
     activeWallet?.type === WalletType.SmartContract
-  const receiveAddress = activeAccount.address
   const moonPayApiKey = import.meta.env.VITE_MOONPAY_API_KEY?.trim()
   const moonPayBaseUrl =
     import.meta.env.VITE_MOONPAY_BASE_URL?.trim() || DEFAULT_MOONPAY_BASE_URL
@@ -385,28 +382,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
             setShowSend(true)
           }}
           testId={TESTID.SEND_BUTTON}
-        />
-        <ActionCircleEntry
-          variantClass="action-circle-entry--receive"
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="8 17 12 21 16 17" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-              <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29" />
-            </svg>
-          }
-          label={t('receive')}
-          onClick={() => setShowReceive(true)}
-          testId={TESTID.RECEIVE_BUTTON}
         />
         {ENABLE_MOONPAY_ENTRY && (
           <ActionCircleEntry
@@ -567,14 +542,6 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         ) : (
           renderSendForm()
         ))}
-
-      {showReceive && (
-        <ReceiveDialog
-          address={receiveAddress}
-          chainName={activeChain?.name ?? 'Unknown Chain'}
-          onClose={() => setShowReceive(false)}
-        />
-      )}
 
       {showEarn && <EarnPage onClose={() => setShowEarn(false)} />}
 
