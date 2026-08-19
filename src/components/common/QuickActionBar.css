@@ -140,7 +140,7 @@
 }
 
 .action-buttons .action-circle-entry {
-  flex: 0 1 calc(33.333% - 8px);
+  flex: 0 1 calc(50% - 8px);
   min-width: 0;
   box-sizing: border-box;
 }
@@ -152,7 +152,7 @@
     padding: 0 8px;
   }
   .action-buttons .action-circle-entry {
-    flex: 0 1 calc(33.333% - 16px);
+    flex: 0 1 calc(50% - 16px);
     min-width: 80px;
   }
 }
