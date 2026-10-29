@@ -112,7 +112,7 @@ def stub_provenance() -> dict:
         "chainId": 888888803,
         "networkId": 888888803,
         "explorers": [
-            {"name": "Provenance Explorer", "url": "https://explorer.provenance.io", "standard": "none"},
+            {"name": "Zonescan", "url": "https://zonescan.io/provenance", "standard": "none"},
         ],
     }
 
