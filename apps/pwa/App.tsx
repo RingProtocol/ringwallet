@@ -16,6 +16,7 @@ import type { ChainToken } from '@/models/ChainTokens'
 import { VERSION } from './version'
 import TokenDetailRoute from './routes/TokenDetailRoute'
 import { buildTokenDetailPath } from './routes/tokenRoute'
+import DeprecationBanner from '@/components/DeprecationBanner'
 import './App.css'
 
 function AuthenticatedRoutes() {
@@ -55,6 +56,7 @@ function AppContent() {
 
   return (
     <div className="app">
+      <DeprecationBanner />
       {!isLoggedIn ? (
         <>
           <div className="header-actions">

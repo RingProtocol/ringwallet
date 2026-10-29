@@ -78,6 +78,7 @@ const ReceiveDialog: React.FC<ReceiveDialogProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h3>Receive Address</h3>
+        <p className="receive-warning">{t('receiveDialogWarning')}</p>
         <div className="qr-placeholder">
           <div className="qr-image-shell">
             {isQrLoading && <div className="qr-loading" aria-hidden="true" />}

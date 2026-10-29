@@ -7,6 +7,7 @@
 @import '../src/components/Introduce.css';
 @import '../src/components/law/LegalNotice.css';
 @import '../src/components/RingWalletLogo.css';
+@import '../src/components/DeprecationBanner.css';
 @import '../src/components/accounts/WalletSwitcher.css';
 @import '../src/components/chains/ChainSwitcher.css';
 @import '../src/components/chains/AddChainPage.css';
