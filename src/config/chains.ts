@@ -85,7 +85,6 @@ const RPC_FALLBACK: Record<string, RpcConfigValue> = {
   '10': ['https://mainnet.optimism.io'],
   '42161': ['https://arb1.arbitrum.io/rpc'],
   '8453': ['https://mainnet.base.org'],
-  '137': ['https://polygon-rpc.com'],
   '324': ['https://mainnet.era.zksync.io'],
   '59144': ['https://rpc.linea.build'],
   '534352': ['https://rpc.scroll.io'],

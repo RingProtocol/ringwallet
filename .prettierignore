@@ -1,0 +1,2 @@
+# Keep the vendored chain registry in its existing compact format.
+/public/chainid.json
