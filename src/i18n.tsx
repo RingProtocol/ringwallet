@@ -546,8 +546,9 @@ const messages = {
       'Are you sure you want to close this card? This cannot be undone.',
     cardSimulationBanner: 'Current: simulation mode. Card data is not real.',
     cardSimulationDismiss: 'OK',
-    deprecationNotice:
-      'This website was never officially released and will be shut down in 2026. The open-source code is available for self-hosting.',
+    shutdownNoticeTitle: 'Site Taken Offline',
+    shutdownNoticeBody:
+      'This website was taken offline in October 2026 and is no longer in service. The source is open on github',
     receiveDialogWarning:
       'This website has been shut down. Use at your own risk.',
   },
@@ -1051,8 +1052,9 @@ const messages = {
     cardCloseConfirm: '确定要关闭此卡片吗？此操作无法撤销。',
     cardSimulationBanner: '当前为模拟模式，卡片数据非真实。',
     cardSimulationDismiss: '我知道了',
-    deprecationNotice:
-      '本网站从未正式发布，并将于2026年内关闭。开源代码可供自行部署恢复。',
+    shutdownNoticeTitle: '网站已下架',
+    shutdownNoticeBody:
+      '本网站已于2026年10月下架，停止服务。开源代码可供自行部署。',
     receiveDialogWarning: '本网站已关闭，使用后果自负。',
   },
 } as const
